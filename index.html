@@ -14,7 +14,8 @@
         //   return s.replace(/~and~/g, "&");
         // })
         // .join("?");
-        window.history.replaceState(null, null, l.pathname.slice(0, -1) + decoded + l.hash);
+        // window.history.replaceState(null, null, l.pathname.slice(0, -1) + decoded + l.hash);
+        window.history.replaceState(null, null, "/")
       }
     })(window.location);
   </script>
