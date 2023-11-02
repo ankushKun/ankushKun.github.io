@@ -11,6 +11,7 @@ import Links from './pages/links.tsx'
 import Projects from './pages/projects.tsx'
 import Resume from './pages/resume.tsx'
 import Timeline from './pages/timeline.tsx'
+import E404 from './pages/404.tsx'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -24,6 +25,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <Route path="/projects" element={<Projects />} />
         <Route path="/resume" element={<Resume />} />
         <Route path="/timeline" element={<Timeline />} />
+        <Route path="*" element={<E404 />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,

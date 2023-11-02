@@ -1,12 +1,13 @@
 import { useState } from "react"
+import { Link as NavLink, Outlet } from "react-router-dom";
 import { NavItemType, navItems } from "../data/nav"
 
 const NavItem = (item: NavItemType) => {
-    return <a href={item.path}>
+    return <NavLink to={item.path}>
         <button className="p-2 w-full bg-black/20 hover:bg-green-300 hover:text-black text-[#78e2a0]">
             {item.name}
         </button>
-    </a>
+    </NavLink>
 }
 
 export default function Navbar() {
@@ -14,9 +15,9 @@ export default function Navbar() {
 
     return <div>
         <nav className="flex mb-5 items-center justify-between">
-            <a href="/">
+            <NavLink to="/">
                 <div className="bg-[#78e2a0] text-black w-fit p-2">Ankush Singh</div>
-            </a>
+            </NavLink>
             <div className="gap-1 flex-col hidden xl:flex-row xl:flex">
                 {
                     navItems.map((item: NavItemType, _: number) => {
@@ -36,6 +37,7 @@ export default function Navbar() {
                     </div>
                 }
             </button>
+            <Outlet />
         </nav>
     </div>
 }
