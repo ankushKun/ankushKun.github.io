@@ -3,9 +3,9 @@ import { projects, ProjectItemType } from "../data/projects"
 import Link from "../components/link"
 
 const ProjectItem = (item: ProjectItemType) => {
-    return <div className="bg-black/20 p-5 relative flex flex-col gap-3 sm:flex-row">
-        <div className="text-center text-white/50 absolute top-2 right-2">{item.date}</div>
-        <img src={item.image || "/laptop.png"} alt={item.name} className="object-contain mx-auto max-w-[300px]" />
+    return <div className="bg-black/20 p-5 relative flex flex-col gap-3 md:flex-row">
+        <div className="text-center text-white/50 absolute top-1 right-2">{item.date}</div>
+        <img src={item.image || "/laptop.png"} alt={item.name} className="object-contain mx-auto max-w-[60%] md:max-w-[33%] mt-3" />
         <div className="grow flex flex-col justify-evenly gap-5">
             <div className="text-center font-bold text-xl border-b w-fit mx-auto my-2">{item.name}</div>
             <div className="text-center">{item.description}</div>

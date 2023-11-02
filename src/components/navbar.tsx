@@ -13,8 +13,8 @@ const NavItem = (item: NavItemType) => {
 export default function Navbar() {
     const [mobileVisible, setMobileVisible] = useState(false)
 
-    return <div>
-        <nav className="flex mb-5 items-center justify-between">
+    return <>
+        <nav className="flex mb-5 items-center justify-between relative z-30">
             <NavLink to="/">
                 <div className="bg-[#78e2a0] text-black w-fit p-2">Ankush Singh</div>
             </NavLink>
@@ -39,5 +39,5 @@ export default function Navbar() {
             </button>
             <Outlet />
         </nav>
-    </div>
+    </>
 }
