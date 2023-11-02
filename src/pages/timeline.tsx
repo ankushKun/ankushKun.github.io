@@ -22,16 +22,16 @@ export default function Timeline() {
         {
             Object.keys(yearWiseTimeline).reverse().map((year: string, _: number) => {
                 return <div key={_} className="my-5">
-                    <details>
-                        <summary className={`${_ == 0 ? "font-bold text-xl" : ""}`}>{year}</summary>
+                    <details open={_ == 0}>
+                        <summary className={` cursor-pointer ${_ == 0 ? "font-bold text-xl" : ""}`}>{year}</summary>
                         {
                             yearWiseTimeline[year as unknown as number].map((item: TimelineItemType, __: number) => {
                                 return <div key={__} className="my-4 bg-black/20 p-2">
                                     <div className="font-bold text-lg">{item.title}</div>
-                                    <div className="pl-10 pt-2">
+                                    <div className="pl-9 pt-2">
                                         {
                                             item.description.map((desc: string, ___: number) => {
-                                                return <div key={___}> ~ {desc}</div>
+                                                return <div key={___}> - {desc}</div>
                                             })
                                         }
                                     </div>
