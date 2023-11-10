@@ -12,8 +12,9 @@ export default function Home() {
         <div>💻 Freelance Developer</div>
         <div>🧑‍💻 Web3 lead at GeeXpro Society</div>
         <div>🧑‍💻 Ex-Developer Intern at Physics Wallah</div>
-        <div className="w-full sm:w-fit mx-auto">
+        <div className="w-fit mx-auto flex gap-4 justify-evenly">
           <Link url="/resume" text="view resume" />
+          <Link url="/resume" text="view projects" />
         </div>
       </div>
     </div>

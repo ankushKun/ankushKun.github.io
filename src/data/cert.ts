@@ -32,12 +32,12 @@ type CertItemType = {
 
 const achieveCerts: CertItemType[] = [
     {
-        title: "GCON Vegathon - 2023",
-        image: gconVegathon23,
-    },
-    {
         title: "Hack-O-Octo 1.0 - 2023",
         image: hackocto1,
+    },
+    {
+        title: "GCON Vegathon - 2023",
+        image: gconVegathon23,
     },
     {
         title: "Hash It Out 1.0 - 2022",

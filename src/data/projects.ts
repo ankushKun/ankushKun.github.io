@@ -13,6 +13,16 @@ type ProjectItemType = {
 
 const projects: ProjectItemType[] = [
     {
+        name: "GitAR",
+        description: "Bounty based reward platform for applications in the ARWEAVE ecosystem",
+        deployment: "https://gitar_ankushkun.ar-io.dev",
+        github: "https://github.com/ankushKun/gitar",
+        image: "",
+        tags: ["React", "Vite", "Arweave"],
+        date: "November 2023",
+        featured: false,
+    },
+    {
         name: "ICPixel",
         description: "A pixel art drawing and sharing tool on the Internet Computer Protocol",
         deployment: "https://2zwnx-cqaaa-aaaap-qbyqa-cai.icp0.io/",
@@ -20,7 +30,7 @@ const projects: ProjectItemType[] = [
         image: "https://media.discordapp.net/attachments/952560619264020510/1169640889346428981/wBWflJmNhSiIwAAAABJRU5ErkJggg.png",
         tags: ["React", "Motoko", "Internet Computer Protocol"],
         date: "November 2023",
-        featured: true,
+        featured: false,
     },
     {
         name: "GitRaven",
@@ -99,16 +109,6 @@ const projects: ProjectItemType[] = [
         github: "https://ankushkun.github.io/animedoro-timer/Animedoro/",
         image: "",
         tags: ["HTML", "CSS", "JavaScript"],
-        date: "",
-        featured: false,
-    },
-    {
-        name: "",
-        description: "",
-        deployment: "",
-        github: "",
-        image: "",
-        tags: [],
         date: "",
         featured: false,
     },

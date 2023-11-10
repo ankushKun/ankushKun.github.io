@@ -37,7 +37,7 @@ export default function Projects() {
                 })
             }
         </div>
-        <div className="text-center text-2xl font-bold p-1 border my-10">Other Projects</div>
+        <div className="text-center text-2xl font-bold p-1 border my-10">All Projects</div>
         <div className="flex flex-col gap-5">
             {
                 otherProjects.map((item: ProjectItemType, _: number) => {
