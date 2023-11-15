@@ -14,7 +14,7 @@ export default function Home() {
         <div>🧑‍💻 Ex-Developer Intern at Physics Wallah</div>
         <div className="w-fit mx-auto flex gap-4 justify-evenly">
           <Link url="/resume" text="view resume" />
-          <Link url="/resume" text="view projects" />
+          <Link url="/projects" text="view projects" />
         </div>
       </div>
     </div>
