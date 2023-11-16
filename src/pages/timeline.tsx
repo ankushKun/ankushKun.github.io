@@ -27,7 +27,7 @@ export default function Timeline() {
                         {
                             yearWiseTimeline[year as unknown as number].map((item: TimelineItemType, __: number) => {
                                 return <div key={__} className="my-4 bg-black/20 p-2">
-                                    <div className="font-bold text-lg">{item.title}</div>
+                                    <div className={`text-xl ${item.highlight ? "text-green-300 font-medium" : ""}`}>{item.title}{item.highlight&&"!"}</div>
                                     <div className="pl-9 pt-2">
                                         {
                                             item.description.map((desc: string, ___: number) => {

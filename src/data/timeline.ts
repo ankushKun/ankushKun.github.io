@@ -3,11 +3,30 @@ type TimelineItemType = {
     title: string,
     description: string[],
     year: number,
+    highlight?: boolean
 }
 
 const timeline: TimelineItemType[] = [
     {
-        title: "🎉 Participated in a 3 day workshop on Internet Computer Protocol",
+        title: "🤩 Got selected as an Arweave Scholar",
+        description: [
+            "Built GitAR: A bounty platform for Arweave projects",
+            "Fully sponsored trip to Arweave India Hackerhouse in Bangalore from 3rd to 6th December",
+            "(Kya matlab exams shuru ho rahe hai 1st December se 😭)"
+        ],
+        year: 2023,
+        highlight: true
+    },
+    {
+        title: "🙌 Participated in Polkadot Ink Hackathon by Encode Club",
+        description: [
+            "Built a Polkadot based game item marketplace",
+            "Didn't win anything but atleast it was a good experience, did pitch practice and pitched in front of Judges"
+        ],
+        year: 2023
+    },
+    {
+        title: "🙌 Participated in a 3 day workshop on Internet Computer Protocol",
         description: [
             "Learnt Motoko",
             "Deployed ICPixel on the mainnet"
@@ -19,7 +38,8 @@ const timeline: TimelineItemType[] = [
         description: [
             "Built GitRaven"
         ],
-        year: 2023
+        year: 2023,
+        highlight: true
     },
     {
         title: "😮 Review paper got accepted into SmartTechCon 2023 Singapore",
@@ -40,7 +60,8 @@ const timeline: TimelineItemType[] = [
             "Won first prize 💪",
             "Great experience"
         ],
-        year: 2023
+        year: 2023,
+        highlight: true
     },
     {
         title: "Got shortlisted into top 6 teams to the POC stage of Vegathon",
@@ -75,7 +96,8 @@ const timeline: TimelineItemType[] = [
             "Won 1st prize in the OneAPI Hackathon 🥇",
             "Got ₹12k worth amazon gift card as the prize"
         ],
-        year: 2023
+        year: 2023,
+        highlight: true
     },
     {
         title: "💪 Participated in HackNSUT '23",
@@ -94,7 +116,8 @@ const timeline: TimelineItemType[] = [
             "Built Smart Contracts on Concordium Blockchain",
             "Concordium track runnerup 🥈",
         ],
-        year: 2023
+        year: 2023,
+        highlight: true
     },
     {
         title: "🥳 Attended my first DevFest⌗",
@@ -108,12 +131,14 @@ const timeline: TimelineItemType[] = [
             "Won 'Best educational game' track",
             "Got a one on one session with Kunal Kushwaha 🤩"
         ],
-        year: 2022
+        year: 2022,
+        highlight: true
     },
     {
         title: "🎉 Won Support-a-thon hackathon on Devpost",
         description: ["Won 'Best use of cockroachDB' track"],
-        year: 2022
+        year: 2022,
+        highlight: true
     },
     {
         title: "😲 Joined a winter internship programme",
@@ -123,12 +148,14 @@ const timeline: TimelineItemType[] = [
     {
         title: "🎉 Got an Internship at PhysicsWallah",
         description: ["😳 Tech Intern lessgooooo"],
-        year: 2022
+        year: 2022,
+        highlight: true
     },
     {
         title: "🎉 Placed 2nd in Hash-It-Out Coding Competition",
         description: ["Organised by Computer Society of India"],
-        year: 2022
+        year: 2022,
+        highlight: true
     },
     {
         title: "🎉 Won the Neighbourhood Hacks 2 Hackathon",
@@ -136,7 +163,8 @@ const timeline: TimelineItemType[] = [
             "Won best use of DeSo",
             "Won most creative use of DeSo"
         ],
-        year: 2022
+        year: 2022,
+        highlight: true
     },
     {
         title: "🎉 Got an Internship at OtakuKart",
