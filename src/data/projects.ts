@@ -13,6 +13,16 @@ type ProjectItemType = {
 
 const projects: ProjectItemType[] = [
     {
+        name: "Better IDE",
+        description: "An online IDE for easy developemnt, deployment and testing of Arweave Smartweave contracts",
+        deployment: "https://ankushKun.github.io/betterIDE/",
+        github: "https://github.com/ankushKun/betterIDE",
+        image: "",
+        tags: ["Arweave", "Vite", "Blockchain"],
+        date: "December 2023",
+        featured: true,
+    },
+    {
         name: "GitAR",
         description: "Bounty based reward platform for applications in the ARWEAVE ecosystem",
         deployment: "https://gitar_ankushkun.ar-io.dev",
@@ -50,7 +60,7 @@ const projects: ProjectItemType[] = [
         image: "https://classcompass.github.io/icon.png",
         tags: ["React Native", "Firebase", "Expo"],
         date: "October 2023",
-        featured: true,
+        featured: false,
     },
     {
         name: "GeeXpro.com",

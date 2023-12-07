@@ -7,6 +7,17 @@ type TimelineItemType = {
 
 const timeline: TimelineItemType[] = [
   {
+    title: "⭐️ Arweave Hackerhouse at Bangalore 🤩",
+    description: [
+      "Built a web based IDE for Arweave Smartweave contracts",
+      "Arweave Cohort 1",
+      "Amazing People, Amazing Experience",
+      "Long term friends made",
+    ],
+    year: 2023,
+    highlight: true,
+  },
+  {
     title: "👍 Participated in E-Suraksha hackathon at CU",
     description: [
       "Really bad experience, organisers were not fun, they took away my airplane :(",
