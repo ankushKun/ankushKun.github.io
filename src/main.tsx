@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { HashRouter, Route, Routes } from 'react-router-dom'
 import './index.css'
 
 import Home from './App.tsx'
@@ -15,7 +15,7 @@ import E404 from './pages/404.tsx'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/certificates" element={<Certificates />} />
@@ -27,6 +27,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <Route path="/timeline" element={<Timeline />} />
         <Route path="*" element={<E404 />} />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   </React.StrictMode>,
 )
