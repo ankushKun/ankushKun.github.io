@@ -7,7 +7,7 @@ type TimelineItemType = {
 
 const timeline: TimelineItemType[] = [
   {
-    title: "⭐️ Arweave Hackerhouse at Bangalore 🤩",
+    title: "🥇 Won the Arweave ⓐ Hackerhouse at Bangalore 🤩",
     description: [
       "Built a web based IDE for Arweave Smartweave contracts",
       "Arweave Cohort 1",

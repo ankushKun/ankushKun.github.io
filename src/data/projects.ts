@@ -13,11 +13,11 @@ type ProjectItemType = {
 
 const projects: ProjectItemType[] = [
     {
-        name: "Better IDE",
-        description: "An online IDE for easy developemnt, deployment and testing of Arweave Smartweave contracts",
+        name: "Better IDEⓐ",
+        description: "An online IDE for easy developemnt, deployment and testing of Arweave Smartweave contracts. 🥇 Winner of Arweave India cohort #1 hackerhouse",
         deployment: "https://ankushKun.github.io/betterIDE/",
         github: "https://github.com/ankushKun/betterIDE",
-        image: "",
+        image: "https://media.discordapp.net/attachments/952560619264020510/1184727257684639815/better-ide-logo.png",
         tags: ["Arweave", "Vite", "Blockchain"],
         date: "December 2023",
         featured: true,
