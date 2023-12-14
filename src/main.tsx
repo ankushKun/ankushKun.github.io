@@ -4,7 +4,7 @@ import { HashRouter, Route, Routes } from 'react-router-dom'
 import './index.css'
 
 import Home from './App.tsx'
-import Certificates from './pages/certificates.tsx'
+import Achievements from './pages/achievements.tsx'
 import Charges from './pages/charges.tsx'
 import Blog from './pages/blog.tsx'
 import Links from './pages/links.tsx'
@@ -18,7 +18,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <HashRouter>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/certificates" element={<Certificates />} />
+        <Route path="/achievements" element={<Achievements />} />
         <Route path="/charges" element={<Charges />} />
         <Route path="/links" element={<Links />} />
         <Route path="/blog" element={<Blog />} />

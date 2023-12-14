@@ -32,31 +32,35 @@ type CertItemType = {
 
 const achieveCerts: CertItemType[] = [
     {
-        title: "Hack-O-Octo 1.0 - 2023",
+        title: "🥇 Grand Prize - Arweave India Cohort #1 hackerhouse - 2023",
+        image: "https://media.discordapp.net/attachments/952560619264020510/1184744702491242526/tweet-1734972911163961371_1.png",
+    },
+    {
+        title: "🥈 2nd  - Hack-O-Octo 1.0 - 2023",
         image: hackocto1,
     },
     {
-        title: "GCON Vegathon - 2023",
+        title: "🥇 First  - GCON Vegathon - 2023",
         image: gconVegathon23,
     },
     {
-        title: "Hash It Out 1.0 - 2022",
+        title: "🥈 Second  - Hash It Out 1.0 - 2022",
         image: hashitout1,
     },
     {
-        title: "Hash It Out 2.0 - 2022",
+        title: "🥈 Second - Hash It Out 2.0 - 2022",
         image: hashitout2,
     },
     {
-        title: "Neighbourhood Hacks 2.0 - 2022",
+        title: "🏅 Track Prize - Neighbourhood Hacks 2.0 - 2022",
         image: nh2,
     },
     {
-        title: "Support-a-thon - 2022",
+        title: "🏅 Track Prize - Support-a-thon - 2022",
         image: supportathon,
     },
     {
-        title: "We Make Devs <> Stream hackathon - 2022",
+        title: "🏅 Track Prize - We Make Devs <> Stream hackathon - 2022",
         image: wmd
     },
 ]

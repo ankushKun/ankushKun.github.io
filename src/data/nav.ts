@@ -13,8 +13,8 @@ const navItems: NavItemType[] = [
         path: "/timeline"
     },
     {
-        name: "Certificates",
-        path: "/certificates"
+        name: "Achievements",
+        path: "/achievements"
     },
     {
         name: "Blog",

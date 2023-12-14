@@ -13,7 +13,7 @@ export default function Home() {
         <div>🧑‍💻 Web3 lead at GeeXpro Society</div>
         <div>🧑‍💻 Ex-Developer Intern at Physics Wallah</div>
         <div className="w-fit mx-auto flex gap-4 justify-evenly">
-          <Link url="/resume" text="view resume" />
+          <Link url="https://ankushKun.github.io/resume.pdf" text="view resume" newTab />
           <Link url="/projects" text="view projects" />
         </div>
       </div>
