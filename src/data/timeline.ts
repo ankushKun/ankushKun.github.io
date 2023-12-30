@@ -18,6 +18,12 @@ const timeline: TimelineItemType[] = [
     highlight: true,
   },
   {
+    title: "🥈 Runner up in Crewsphere College level ICP hackathon",
+    description: ["ICPixel"],
+    year: 2023,
+    highlight: true
+  },
+  {
     title: "👍 Participated in E-Suraksha hackathon at CU",
     description: [
       "Really bad experience, organisers were not fun, they took away my airplane :(",
@@ -31,6 +37,15 @@ const timeline: TimelineItemType[] = [
       "Built GitAR: A bounty platform for Arweave projects",
       "Fully sponsored trip to Arweave India Hackerhouse in Bangalore from 3rd to 6th December",
       "(Kya matlab exams shuru ho rahe hai 1st December se 😭)",
+    ],
+    year: 2023,
+    highlight: true,
+  },
+  {
+    title: "🤩 ETH Global 2023",
+    description: [
+      "Won Tableland Prize Pool 🏆️",
+      "Build GitRaven with Tableland database"
     ],
     year: 2023,
     highlight: true,

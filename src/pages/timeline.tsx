@@ -17,7 +17,7 @@ export default function Timeline() {
 
     return <Page title="Timeline">
         <div className="text-center text-2xl font-bold p-1 border my-10">Timeline</div>
-        <div className="my-10">This page contains a list of all <span className=" opacity-50">(hopefully)</span> of my experiences, participations, wins and loses</div>
+        <div className="my-10">This page contains a list of <span className="text-sm opacity-50">(hopefully)</span> all of my experiences, participations, wins and loses</div>
 
         {
             Object.keys(yearWiseTimeline).reverse().map((year: string, _: number) => {
@@ -27,7 +27,7 @@ export default function Timeline() {
                         {
                             yearWiseTimeline[year as unknown as number].map((item: TimelineItemType, __: number) => {
                                 return <div key={__} className="my-4 bg-black/20 p-2">
-                                    <div className={`text-xl ${item.highlight ? "text-green-300 font-medium" : ""}`}>{item.title}{item.highlight&&"!"}</div>
+                                    <div className={`text-xl ${item.highlight ? "text-green-300 font-medium" : ""}`}>{item.title}{item.highlight && "!"}</div>
                                     <div className="pl-9 pt-2">
                                         {
                                             item.description.map((desc: string, ___: number) => {

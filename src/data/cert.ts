@@ -5,6 +5,7 @@ import hashitout2 from "../assets/certificates/achievement/hashitout-2.jpg"
 import nh2 from "../assets/certificates/achievement/nh-2.jpg"
 import supportathon from "../assets/certificates/achievement/supportathon.jpg"
 import wmd from "../assets/certificates/achievement/wemakedevs.jpg"
+import icp from "../assets/certificates/achievement/crewsphere-icp.jpg"
 
 import awscd from "../assets/certificates/participation/aws-cd-2022.jpg"
 import bcPhoto from "../assets/certificates/participation/british-council-photography.jpg"
@@ -34,6 +35,10 @@ const achieveCerts: CertItemType[] = [
     {
         title: "🥇 Grand Prize - Arweave India Cohort #1 hackerhouse - 2023",
         image: "https://media.discordapp.net/attachments/952560619264020510/1184744702491242526/tweet-1734972911163961371_1.png",
+    },
+    {
+        title: "🥈 Crewsphere ICP College level hackathon",
+        image: icp
     },
     {
         title: "🥈 2nd  - Hack-O-Octo 1.0 - 2023",

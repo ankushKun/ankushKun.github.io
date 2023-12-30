@@ -16,10 +16,10 @@ const navItems: NavItemType[] = [
         name: "Achievements",
         path: "/achievements"
     },
-    {
-        name: "Blog",
-        path: "/blog"
-    },
+    // {
+    //     name: "Blog",
+    //     path: "/blog"
+    // },
     {
         name: "Charges",
         path: "/charges"
