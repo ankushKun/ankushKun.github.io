@@ -10,11 +10,13 @@ export default function Home() {
       <div className="flex flex-col gap-7">
         <div>🎓 University Sophomore</div>
         <div>💻 Freelance Developer</div>
+        <div>🏆️ Arweave India Hackerhouse '23 winner</div>
         <div>🧑‍💻 Web3 lead at GeeXpro Society</div>
-        <div>🧑‍💻 Ex-Developer Intern at Physics Wallah</div>
-        <div className="w-fit mx-auto flex gap-4 justify-evenly">
-          <Link url="https://ankushKun.github.io/resume.pdf" text="view resume" newTab />
-          <Link url="/projects" text="view projects" />
+        <div>🧑‍💻 Ex-Developer Intern @ Physics Wallah</div>
+        <div className="w-fit mx-auto flex flex-col md:flex-row gap-4 justify-evenly">
+          <Link url="https://ankushKun.github.io/resume.pdf" text="View Resume" newTab />
+          <Link url="/projects" text="Checkout Projects" />
+          <Link url="/timeline" text="My Events & Experiences" />
         </div>
       </div>
     </div>

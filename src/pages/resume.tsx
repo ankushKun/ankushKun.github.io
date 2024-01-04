@@ -1,7 +1,7 @@
 import Page from "../components/page"
 
 export default function Resume() {
-    return <Page title="Timeline">
+    return <Page title="Resume">
         <object data="https://ankushKun.github.io/resume.pdf" type="application/pdf" className="w-full min-h-[77vh]">
             {/* <p>Resume file missing</p> */}
             <iframe src="https://ankushKun.github.io/resume.pdf" className="w-full min-h-[77vh]"></iframe>
