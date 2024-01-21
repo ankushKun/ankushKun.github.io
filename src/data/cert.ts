@@ -7,6 +7,7 @@ import supportathon from "../assets/certificates/achievement/supportathon.jpg"
 import wmd from "../assets/certificates/achievement/wemakedevs.jpg"
 import icp from "../assets/certificates/achievement/crewsphere-icp.jpg"
 
+import ethonline23 from "../assets/certificates/participation/ethonline23.jpg"
 import awscd from "../assets/certificates/participation/aws-cd-2022.jpg"
 import bcPhoto from "../assets/certificates/participation/british-council-photography.jpg"
 import cpWorkshop from "../assets/certificates/participation/cp-workshop-2022.jpg"
@@ -71,6 +72,10 @@ const achieveCerts: CertItemType[] = [
 ]
 
 const participCerts: CertItemType[] = [
+    {
+        title: "EthOnline 2023",
+        image: ethonline23,
+    },
     {
         title: "ICP Workshop - 2023",
         image: icpWorkshop
