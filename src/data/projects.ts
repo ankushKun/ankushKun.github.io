@@ -23,6 +23,16 @@ const projects: ProjectItemType[] = [
         featured: true,
     },
     {
+        name: "weebletstore",
+        description: "E commerce store for anime merchandise",
+        deployment: "https://weebletstore.in/",
+        github: "https://github.com/ankushKun/weebletstore",
+        image: "https://www.weebletstore.in/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fweebletstore-transparent.d2e8cc0a.png&w=256&q=75",
+        tags: ["NextJS", "SanityCMS", "E-commerce"],
+        date: "November 2023",
+        featured: true,
+    },
+    {
         name: "GitAR",
         description: "Bounty based reward platform for applications in the ARWEAVE ecosystem",
         deployment: "https://gitar_ankushkun.ar-io.dev",
