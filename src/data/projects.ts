@@ -1,137 +1,160 @@
 type ProjectItemType = {
-    name: string,
-    description: string,
-    deployment: string | null,
-    github: string | null,
-    image: string,
-    tags: string[],
-    date: string,
-    featured: boolean,
-}
-
-
+  name: string;
+  description: string;
+  deployment: string | null;
+  github: string | null;
+  image: string;
+  tags: string[];
+  date: string;
+  featured: boolean;
+};
 
 const projects: ProjectItemType[] = [
-    {
-        name: "Better IDEⓐ",
-        description: "An online IDE for easy developemnt, deployment and testing of Arweave Smartweave contracts. 🥇 Winner of Arweave India cohort #1 hackerhouse",
-        deployment: "https://ankushKun.github.io/betterIDE/",
-        github: "https://github.com/ankushKun/betterIDE",
-        image: "https://media.discordapp.net/attachments/952560619264020510/1184727257684639815/better-ide-logo.png",
-        tags: ["Arweave", "Vite", "Blockchain"],
-        date: "December 2023",
-        featured: true,
-    },
-    {
-        name: "weebletstore",
-        description: "E commerce store for anime merchandise",
-        deployment: "https://weebletstore.in/",
-        github: "https://github.com/ankushKun/weebletstore",
-        image: "https://www.weebletstore.in/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fweebletstore-transparent.d2e8cc0a.png&w=256&q=75",
-        tags: ["NextJS", "SanityCMS", "E-commerce"],
-        date: "November 2023",
-        featured: true,
-    },
-    {
-        name: "GitAR",
-        description: "Bounty based reward platform for applications in the ARWEAVE ecosystem",
-        deployment: "https://gitar_ankushkun.ar-io.dev",
-        github: "https://github.com/ankushKun/gitar",
-        image: "",
-        tags: ["React", "Vite", "Arweave"],
-        date: "November 2023",
-        featured: false,
-    },
-    {
-        name: "ICPixel",
-        description: "A pixel art drawing and sharing tool on the Internet Computer Protocol",
-        deployment: "https://2zwnx-cqaaa-aaaap-qbyqa-cai.icp0.io/",
-        github: "https://github.com/ankushKun",
-        image: "https://media.discordapp.net/attachments/952560619264020510/1169640889346428981/wBWflJmNhSiIwAAAABJRU5ErkJggg.png",
-        tags: ["React", "Motoko", "Internet Computer Protocol"],
-        date: "November 2023",
-        featured: false,
-    },
-    {
-        name: "GitRaven",
-        description: "A blockchain based opensource issue bounty platform",
-        deployment: "https://gitraven.vercel.app/",
-        github: "https://github.com/ankushKun/gitraven",
-        image: "https://media.discordapp.net/attachments/952560619264020510/1169641381812240474/gitraven.png",
-        tags: ["React", "Solidity", "Ethereum"],
-        date: "October 2023",
-        featured: false,
-    },
-    {
-        name: "Class Compass",
-        description: "A mobile app to help students find vacant classrooms on campus for recreational activities",
-        deployment: "https://play.google.com/store/apps/details?id=com.darkweeblet.classcompass",
-        github: "https://github.com/ankushKun/class-compass-cu",
-        image: "https://classcompass.github.io/icon.png",
-        tags: ["React Native", "Firebase", "Expo"],
-        date: "October 2023",
-        featured: false,
-    },
-    {
-        name: "GeeXpro.com",
-        description: "Webpage for my university tech society",
-        deployment: "https://geexpro.com/",
-        github: null,
-        image: "https://www.geexpro.com/_next/image?url=%2Flogos%2Fgeexpro.png&w=1920&q=75",
-        tags: ["NextJS", "Firebase", "TailwindCSS"],
-        date: "",
-        featured: false,
-    },
-    {
-        name: "Lucky Knight",
-        description: "Turn based game where you play as randomness and decide the fate of a knight through minigames | Submission for GMTK 2023 game jam with theme 'Roles Reversed'",
-        deployment: "https://weeblet.itch.io/lucky-knight",
-        github: "https://github.com/ankushKun/GMTK2023",
-        image: "https://img.itch.zone/aW1nLzEyNzM0OTYxLnBuZw==/315x250%23c/DuPJzV.png",
-        tags: ["Godot", "GDScript"],
-        date: "",
-        featured: false,
-    },
-    {
-        name: "Unity: In-game item marketplace using DeSo NFTs",
-        description: "Prototype of how NFTs can be used to create a marketplace for cross-game compatible items",
-        deployment: "https://youtu.be/-Ute7GNiZxk?si=sWxH1ou4hawZWU-J",
-        github: "https://github.com/ankushKun/ingame-nft-store-example",
-        image: "",
-        tags: ["Unity", "DeSo", "C#"],
-        date: "",
-        featured: false,
-    },
-    {
-        name: "Desonity",
-        description: "Unity game engine extension that acts as a bridge between DeSo blockchain and Unity",
-        deployment: "https://desonity.github.io/docs",
-        github: "https://github.com/Desonity/Desonity",
-        image: "https://desonity.github.io/docs/images/logo-510d91ce.png",
-        tags: ["Unity", "DeSo", "C#"],
-        date: "",
-        featured: false,
-    },
-    {
-        name: "Untitled Dice Game",
-        description: "Dice based top down shooter game | Submission for GMTK 2022 game jam with theme 'Roll of a dice'",
-        deployment: "https://weeblet.itch.io/untitled-dice-game",
-        github: null,
-        image: "https://img.itch.zone/aW1nLzk0NjQ1MzcucG5n/315x250%23c/Qf7o7S.png",
-        tags: ["Godot", "GDScript"],
-        date: "",
-        featured: false,
-    },
-    {
-        name: "Animedoro Timer",
-        description: "A simple pomodoro timer for anime lovers",
-        deployment: "https://ankushkun.github.io/animedoro-timer/Animedoro/",
-        github: "https://ankushkun.github.io/animedoro-timer/Animedoro/",
-        image: "",
-        tags: ["HTML", "CSS", "JavaScript"],
-        date: "",
-        featured: false,
-    },
-]
-export { projects }
-export type { ProjectItemType }
+  {
+    name: "AntiSus Browser",
+    description:
+      "UPES Hackathon 8.0 submission. An AI enabled web browser to detect sus activity on websites",
+    deployment: "",
+    github: "https://github.com/ankushKun/sudo-apt-uninstall-sleep",
+    image: "",
+    tags: ["ElectronJS", "ANN", "Flask"],
+    date: "March 2024",
+    featured: false,
+  },
+  {
+    name: "Better IDEⓐ",
+    description:
+      "An online IDE for easy developemnt, deployment and testing of Arweave Smartweave contracts. 🥇 Winner of Arweave India cohort #1 hackerhouse",
+    deployment: "https://ankushKun.github.io/betterIDE/",
+    github: "https://github.com/ankushKun/betterIDE",
+    image: "https://betteridea.dev/logo.svg",
+    tags: ["Arweave", "Vite", "Blockchain"],
+    date: "December 2023",
+    featured: true,
+  },
+  {
+    name: "weebletstore",
+    description: "E commerce store for anime merchandise",
+    deployment: "https://weebletstore.in/",
+    github: "https://github.com/ankushKun/weebletstore",
+    image:
+      "https://www.weebletstore.in/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fweebletstore-transparent.d2e8cc0a.png&w=256&q=75",
+    tags: ["NextJS", "SanityCMS", "E-commerce"],
+    date: "November 2023",
+    featured: true,
+  },
+  {
+    name: "GitAR",
+    description:
+      "Bounty based reward platform for applications in the ARWEAVE ecosystem",
+    deployment: "https://gitar_ankushkun.ar-io.dev",
+    github: "https://github.com/ankushKun/gitar",
+    image: "",
+    tags: ["React", "Vite", "Arweave"],
+    date: "November 2023",
+    featured: false,
+  },
+  {
+    name: "ICPixel",
+    description:
+      "A pixel art drawing and sharing tool on the Internet Computer Protocol",
+    deployment: "https://2zwnx-cqaaa-aaaap-qbyqa-cai.icp0.io/",
+    github: "https://github.com/ankushKun",
+    image:
+      "https://media.discordapp.net/attachments/952560619264020510/1169640889346428981/wBWflJmNhSiIwAAAABJRU5ErkJggg.png",
+    tags: ["React", "Motoko", "Internet Computer Protocol"],
+    date: "November 2023",
+    featured: false,
+  },
+  {
+    name: "GitRaven",
+    description: "A blockchain based opensource issue bounty platform",
+    deployment: "https://gitraven.vercel.app/",
+    github: "https://github.com/ankushKun/gitraven",
+    image:
+      "https://media.discordapp.net/attachments/952560619264020510/1169641381812240474/gitraven.png",
+    tags: ["React", "Solidity", "Ethereum"],
+    date: "October 2023",
+    featured: false,
+  },
+  {
+    name: "Class Compass",
+    description:
+      "A mobile app to help students find vacant classrooms on campus for recreational activities",
+    deployment:
+      "https://play.google.com/store/apps/details?id=com.darkweeblet.classcompass",
+    github: "https://github.com/ankushKun/class-compass-cu",
+    image: "https://classcompass.github.io/icon.png",
+    tags: ["React Native", "Firebase", "Expo"],
+    date: "October 2023",
+    featured: false,
+  },
+  {
+    name: "GeeXpro.com",
+    description: "Webpage for my university tech society",
+    deployment: "https://geexpro.com/",
+    github: null,
+    image:
+      "https://www.geexpro.com/_next/image?url=%2Flogos%2Fgeexpro.png&w=1920&q=75",
+    tags: ["NextJS", "Firebase", "TailwindCSS"],
+    date: "",
+    featured: false,
+  },
+  {
+    name: "Lucky Knight",
+    description:
+      "Turn based game where you play as randomness and decide the fate of a knight through minigames | Submission for GMTK 2023 game jam with theme 'Roles Reversed'",
+    deployment: "https://weeblet.itch.io/lucky-knight",
+    github: "https://github.com/ankushKun/GMTK2023",
+    image:
+      "https://img.itch.zone/aW1nLzEyNzM0OTYxLnBuZw==/315x250%23c/DuPJzV.png",
+    tags: ["Godot", "GDScript"],
+    date: "",
+    featured: false,
+  },
+  {
+    name: "Unity: In-game item marketplace using DeSo NFTs",
+    description:
+      "Prototype of how NFTs can be used to create a marketplace for cross-game compatible items",
+    deployment: "https://youtu.be/-Ute7GNiZxk?si=sWxH1ou4hawZWU-J",
+    github: "https://github.com/ankushKun/ingame-nft-store-example",
+    image: "",
+    tags: ["Unity", "DeSo", "C#"],
+    date: "",
+    featured: false,
+  },
+  {
+    name: "Desonity",
+    description:
+      "Unity game engine extension that acts as a bridge between DeSo blockchain and Unity",
+    deployment: "https://desonity.github.io/docs",
+    github: "https://github.com/Desonity/Desonity",
+    image: "https://desonity.github.io/docs/images/logo-510d91ce.png",
+    tags: ["Unity", "DeSo", "C#"],
+    date: "",
+    featured: false,
+  },
+  {
+    name: "Untitled Dice Game",
+    description:
+      "Dice based top down shooter game | Submission for GMTK 2022 game jam with theme 'Roll of a dice'",
+    deployment: "https://weeblet.itch.io/untitled-dice-game",
+    github: null,
+    image: "https://img.itch.zone/aW1nLzk0NjQ1MzcucG5n/315x250%23c/Qf7o7S.png",
+    tags: ["Godot", "GDScript"],
+    date: "",
+    featured: false,
+  },
+  {
+    name: "Animedoro Timer",
+    description: "A simple pomodoro timer for anime lovers",
+    deployment: "https://ankushkun.github.io/animedoro-timer/Animedoro/",
+    github: "https://ankushkun.github.io/animedoro-timer/Animedoro/",
+    image: "",
+    tags: ["HTML", "CSS", "JavaScript"],
+    date: "",
+    featured: false,
+  },
+];
+export { projects };
+export type { ProjectItemType };

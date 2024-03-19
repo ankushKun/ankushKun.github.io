@@ -7,6 +7,32 @@ type TimelineItemType = {
 
 const timeline: TimelineItemType[] = [
   {
+    title: "🎖 UPES, Dehradun: Hackathon 8.0",
+    description: [
+      "Built an AI enabled web browser for detecting sus activities on websites",
+      "Top 5 projects",
+    ],
+    year: 2024,
+  },
+  {
+    title: "🚀 AO testnet Launch - 27th Feb, 2024",
+    description: ["Launched BetterIDEa too"],
+    year: 2024,
+    highlight: true,
+  },
+  {
+    title: "🤩 Participated in Arweave India Launchpad program",
+    description: ["Three month program", "Building BetterIDEa as a product"],
+    year: 2024,
+    highlight: true,
+  },
+  {
+    title: "🤯 Met Sam Williams IRL at Bangalore",
+    description: ["AO reveal to India hackers"],
+    year: 2024,
+    highlight: true,
+  },
+  {
     title: "🥇 Won the Arweave ⓐ Hackerhouse at Bangalore 🤩",
     description: [
       "Built a web based IDE for Arweave Smartweave contracts",
@@ -21,7 +47,7 @@ const timeline: TimelineItemType[] = [
     title: "🥈 Runner up in Crewsphere College level ICP hackathon",
     description: ["ICPixel"],
     year: 2023,
-    highlight: true
+    highlight: true,
   },
   {
     title: "👍 Participated in E-Suraksha hackathon at CU",
@@ -45,7 +71,7 @@ const timeline: TimelineItemType[] = [
     title: "🤩 ETH Global 2023",
     description: [
       "Won Tableland Prize Pool 🏆️",
-      "Build GitRaven with Tableland database"
+      "Build GitRaven with Tableland database",
     ],
     year: 2023,
     highlight: true,
