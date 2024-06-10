@@ -20,14 +20,14 @@ export default function Landing() {
             <span className="text-3xl md:text-5xl ">Hi, I am</span>
             <span className="text-5xl md:text-8xl lg:text-9xl flex py-2.5">Ankush Singh</span>
         </div>
-        <div className="md:absolute bottom-0 left-0 md:p-5 text-2xl md:text-3xl flex flex-col gap-2 justify-center items-center md:items-start">
+        <div className="md:absolute bottom-0 left-0 md:p-5 md:text-2xl text-lg grid grid-cols-2 md:grid-cols-1 gap-y-1 gap-2 justify-center items-center md:items-start">
             {/* <Link href="#blogs" className="">Blogs</Link> */}
-            <Link href="#projects" className="">Projects</Link>
-            <Link href="#timeline" className="">Timeline</Link>
-            <Link href="#publications" className="">Publications</Link>
-            <Link href="#achievements" className="">Achievements</Link>
+            <Link href="#projects" className="w-fit ml-auto md:mx-0">Projects</Link>
+            <Link href="#timeline" className="w-fit mr-auto md:mx-0">Timeline</Link>
+            <Link href="#publications" className="w-fit ml-auto md:mx-0">Publications</Link>
+            <Link href="#achievements" className="w-fit mr-auto md:mx-0">Achievements</Link>
         </div>
-        <div className="m-5 flex flex-col gap-1 items-center justify-center rounded-xl p-2 md:w-2/3">
+        <div className="m-5 text-sm md:text-xl flex flex-col gap-1 items-center justify-center rounded-xl p-2 md:w-2/3">
             <div>Community Manager @ <Link href="https://arweaveindia.com" target="_blank">ArweaveIndia</Link></div>
             <div>Building <Link href="https://betteridea.dev" target="_blank" >BetterIDEa</Link> & <Link href="https://clickoor.arweave.dev" target="_blank">Clickoor</Link></div>
             <div>ArweaveIndia Hackerhouse '23 Winner</div>

@@ -38,7 +38,7 @@ export default function Tineline() {
                                     return (
                                         <div
                                             key={__}
-                                            className="my-4 rounded-lg p-2"
+                                            className="py-4 p-2 border-b"
                                         >
                                             <div
                                                 className={`md:text-xl ${item.highlight ? " font-bold " : ""}`}
