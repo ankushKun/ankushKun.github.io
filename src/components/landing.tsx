@@ -24,7 +24,7 @@ export default function Landing() {
             {/* <Link href="#blogs" className="">Blogs</Link> */}
             <Link href="#projects" className="w-fit ml-auto md:mx-0">Projects</Link>
             <Link href="#timeline" className="w-fit mr-auto md:mx-0">Timeline</Link>
-            <Link href="#publications" className="w-fit ml-auto md:mx-0">Publications</Link>
+            <Link href="#writings" className="w-fit ml-auto md:mx-0">Writings</Link>
             <Link href="#achievements" className="w-fit mr-auto md:mx-0">Achievements</Link>
         </div>
         <div className="m-5 text-sm md:text-xl flex flex-col gap-1 items-center justify-center rounded-xl p-2 md:w-2/3">
@@ -38,6 +38,6 @@ export default function Landing() {
                 socials.map(({ name, link, icon }) => <Link href={link} key={name} target="_blank" className="p-0.5 z-20"> {icon({ size: 30 })} </Link>)
             }
         </div>
-        <Image src={ankush} alt="Ankush" width={450} height={450} className="md:absolute -mb-2 md:mb-0 ml-auto right-0 bottom-0 pl-6 w-[350px] md:w-[450px] z-10" />
+        <Image src={ankush} alt="Ankush" width={450} height={450} className="absolute -mb-2 md:mb-0 ml-auto right-0 bottom-0 pl-6 w-[350px] md:w-[450px] z-10" />
     </Page>
 }

@@ -1,9 +1,8 @@
 import { DM_Sans } from "next/font/google"
 import Landing from "@/components/landing";
-import Blogs from "@/components/blogs";
 import Projects from "@/components/projects";
 import Timeline from "@/components/timeline";
-import Publications from "@/components/publications";
+import Writings from "@/components/writings";
 import Link from "next/link";
 import Achievements from "@/components/achievements";
 import Resume from "@/components/res";
@@ -25,7 +24,7 @@ export default function Home() {
             {/* <Blogs /> */}
             <Projects />
             <Timeline />
-            <Publications />
+            <Writings />
             <Achievements />
             <Resume />
         </main>
