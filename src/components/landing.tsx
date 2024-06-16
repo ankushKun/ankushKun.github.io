@@ -20,12 +20,12 @@ export default function Landing() {
             <span className="text-3xl md:text-5xl ">Hi, I am</span>
             <span className="text-5xl md:text-8xl lg:text-9xl flex py-2.5">Ankush Singh</span>
         </div>
-        <div className="md:absolute bottom-0 left-0 md:p-5 md:text-2xl text-lg grid grid-cols-2 md:grid-cols-1 gap-y-1 gap-2 justify-center items-center md:items-start">
+        <div className="md:absolute bottom-0 left-0 md:p-5 md:text-2xl text-lg flex flex-col gap-y-1 gap-2 justify-center items-center md:items-start">
             {/* <Link href="#blogs" className="">Blogs</Link> */}
-            <Link href="#projects" className="w-fit ml-auto md:mx-0">Projects</Link>
-            <Link href="#timeline" className="w-fit mr-auto md:mx-0">Timeline</Link>
-            <Link href="#writings" className="w-fit ml-auto md:mx-0">Writings</Link>
-            <Link href="#achievements" className="w-fit mr-auto md:mx-0">Achievements</Link>
+            <Link href="#projects" className="w-fit .ml-auto md:mx-0">Projects</Link>
+            <Link href="#timeline" className="w-fit .mr-auto md:mx-0">Timeline</Link>
+            <Link href="#writings" className="w-fit .ml-auto md:mx-0">Writings</Link>
+            <Link href="#achievements" className="w-fit .mr-auto md:mx-0">Achievements</Link>
         </div>
         <div className="m-5 text-sm md:text-xl flex flex-col gap-1 items-center justify-center rounded-xl p-2 md:w-2/3">
             <div>Community Manager @ <Link href="https://arweaveindia.com" target="_blank">ArweaveIndia</Link></div>
@@ -38,6 +38,6 @@ export default function Landing() {
                 socials.map(({ name, link, icon }) => <Link href={link} key={name} target="_blank" className="p-0.5 z-20"> {icon({ size: 30 })} </Link>)
             }
         </div>
-        <Image src={ankush} alt="Ankush" width={450} height={450} className="absolute -mb-2 md:mb-0 ml-auto right-0 bottom-0 pl-6 w-[350px] md:w-[450px] z-10" />
+        <Image src={ankush} alt="Ankush" width={450} height={450} className="md:absolute -mb-2 md:mb-0 ml-auto right-0 bottom-0 pl-6 w-[350px] md:w-[450px] z-10" />
     </Page>
 }

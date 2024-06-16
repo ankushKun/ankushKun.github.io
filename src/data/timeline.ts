@@ -7,9 +7,14 @@ export type TTimeline = {
 
 export const timeline: TTimeline[] = [
     {
-      title: "🚀 Arweave India Demo Day",
-      description: ["Demoed BetterIDEa"],
-      year: 2024,
+        title: "🎉 Showed up to buildspace nights & weekends s5 kickoff",
+        description: ["Just keep building"],
+        year: 2024,
+    },
+    {
+        title: "🚀 Arweave India Demo Day",
+        description: ["Demoed BetterIDEa and clickoor"],
+        year: 2024,
     },
     {
         title: "👨‍💻 Became community manager @ Arweave India",
