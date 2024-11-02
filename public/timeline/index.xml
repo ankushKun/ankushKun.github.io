@@ -246,5 +246,201 @@
       <guid>http://localhost:1313/timeline/2022.started-college/</guid>
       <description>&lt;ul&gt;&#xA;&lt;li&gt;At Chandigarh University&lt;/li&gt;&#xA;&lt;li&gt;Majoring in Computer Science and Engineering&lt;/li&gt;&#xA;&lt;/ul&gt;</description>
     </item>
+    <item>
+      <title>Graduated High School [12th Standard]</title>
+      <link>http://localhost:1313/timeline/2022.bye-school/</link>
+      <pubDate>Mon, 20 Jun 2022 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2022.bye-school/</guid>
+      <description>&lt;p&gt;Phew&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Participated in TezAsia Hackathon</title>
+      <link>http://localhost:1313/timeline/2022.tezasia/</link>
+      <pubDate>Fri, 20 May 2022 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2022.tezasia/</guid>
+      <description>&lt;ul&gt;&#xA;&lt;li&gt;Learnt about SmartPy and Tezos smart contracts&lt;/li&gt;&#xA;&lt;li&gt;Developed an on-chain blogging webapp&lt;/li&gt;&#xA;&lt;/ul&gt;</description>
+    </item>
+    <item>
+      <title>Participated in the GMTK Game Jam 2022</title>
+      <link>http://localhost:1313/timeline/2022.gmtk22/</link>
+      <pubDate>Fri, 20 May 2022 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2022.gmtk22/</guid>
+      <description>&lt;ul&gt;&#xA;&lt;li&gt;Theme: &amp;lsquo;Roll of a dice&amp;rsquo;&lt;/li&gt;&#xA;&lt;li&gt;Ranked 1.6k out of 6.1k+ submissions&lt;/li&gt;&#xA;&lt;/ul&gt;</description>
+    </item>
+    <item>
+      <title>Developed Better PW</title>
+      <link>http://localhost:1313/timeline/2022.better-pw/</link>
+      <pubDate>Wed, 20 Apr 2022 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2022.better-pw/</guid>
+      <description>&lt;p&gt;Lightweight alt client for the Physics Wallah education platform&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Started developing Desonity</title>
+      <link>http://localhost:1313/timeline/2022.desonity/</link>
+      <pubDate>Sun, 10 Apr 2022 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2022.desonity/</guid>
+      <description>&lt;p&gt;A Unity3D extension that allows developers to integrate the DeSo Blockchain into Unity games&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Built a prototype of buying in-game items as NFTs</title>
+      <link>http://localhost:1313/timeline/2022.nft-game/</link>
+      <pubDate>Sat, 09 Apr 2022 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2022.nft-game/</guid>
+      <description>&lt;ul&gt;&#xA;&lt;li&gt;Using Unity 3D game engine and DeSo Blockchain&lt;/li&gt;&#xA;&lt;li&gt;A marketplace could be setup without explicitly needing a backend server to handle in-game purchases as the same could be done through the Blockchain network&lt;/li&gt;&#xA;&lt;/ul&gt;</description>
+    </item>
+    <item>
+      <title>Started building Cordify</title>
+      <link>http://localhost:1313/timeline/2021.cordify/</link>
+      <pubDate>Sun, 20 Jun 2021 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2021.cordify/</guid>
+      <description>&lt;ul&gt;&#xA;&lt;li&gt;Tool to bridge the gap between web2 (twitter, reddit, etc) platforms with web3 DeSo platform&lt;/li&gt;&#xA;&lt;li&gt;Started out as a Discord bot that added features of the blockchain into Discord servers, and now is a full fledged application integrating Discord, Twitter and more platforms with DeSo&lt;/li&gt;&#xA;&lt;li&gt;Made first $1000. Thank you Aditya ;)&lt;/li&gt;&#xA;&lt;/ul&gt;</description>
+    </item>
+    <item>
+      <title>Built Animedoro Timer</title>
+      <link>http://localhost:1313/timeline/2021.animedoro/</link>
+      <pubDate>Fri, 18 Jun 2021 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2021.animedoro/</guid>
+      <description>&lt;p&gt;Timer app built in Vanilla HTML, CSS and Javascript&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Started Discord Bot Development</title>
+      <link>http://localhost:1313/timeline/2020.discord-dev/</link>
+      <pubDate>Thu, 18 Jun 2020 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2020.discord-dev/</guid>
+      <description>&lt;ul&gt;&#xA;&lt;li&gt;Discord.py&lt;/li&gt;&#xA;&lt;li&gt;Did a lot of bot development for fun&lt;/li&gt;&#xA;&lt;li&gt;Did couple of paid gigs too&lt;/li&gt;&#xA;&lt;/ul&gt;</description>
+    </item>
+    <item>
+      <title>Started learning Python</title>
+      <link>http://localhost:1313/timeline/2020.learn-py/</link>
+      <pubDate>Wed, 17 Jun 2020 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2020.learn-py/</guid>
+      <description>&lt;p&gt;print(&amp;lsquo;Hello World!&amp;rsquo;)&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Graduated Middle School [10th Standard]</title>
+      <link>http://localhost:1313/timeline/2020.bye-mid-school/</link>
+      <pubDate>Tue, 16 Jun 2020 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2020.bye-mid-school/</guid>
+      <description>&lt;p&gt;Phew&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>First freelance gig</title>
+      <link>http://localhost:1313/timeline/2020.first-moni/</link>
+      <pubDate>Mon, 15 Jun 2020 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2020.first-moni/</guid>
+      <description>&lt;p&gt;Built an AR application that would scan different birds in childrens picture books and play bird sounds&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Developed a VR game - Cheap Saber</title>
+      <link>http://localhost:1313/timeline/2020.cheap-saber/</link>
+      <pubDate>Sun, 14 Jun 2020 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2020.cheap-saber/</guid>
+      <description>&lt;ul&gt;&#xA;&lt;li&gt;Clone of Beat Saber, playable on android VR devices&lt;/li&gt;&#xA;&lt;li&gt;Utilises Augument Reality marker based tracking to move virtual sabers&lt;/li&gt;&#xA;&lt;/ul&gt;</description>
+    </item>
+    <item>
+      <title>Participated in a VXR hackathon by VRocKS</title>
+      <link>http://localhost:1313/timeline/2020.vrocks/</link>
+      <pubDate>Sat, 13 Jun 2020 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2020.vrocks/</guid>
+      <description>&lt;p&gt;Developed a VR story telling demo for Android VR devices&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Built a Human following Arduino Car</title>
+      <link>http://localhost:1313/timeline/2020.human-following/</link>
+      <pubDate>Fri, 12 Jun 2020 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2020.human-following/</guid>
+      <description>&lt;ul&gt;&#xA;&lt;li&gt;Shortly after the TinkerFest Competition, I built this car that will detect any human through a phones camera and follow them&lt;/li&gt;&#xA;&lt;li&gt;Learnt about OpenCV&lt;/li&gt;&#xA;&lt;li&gt;Felt good because it worked (unlike the one from tinkerfest 🤭)&lt;/li&gt;&#xA;&lt;/ul&gt;</description>
+    </item>
+    <item>
+      <title>Participated in Tinker Fest Robotics Competition</title>
+      <link>http://localhost:1313/timeline/2020.tinkerfest/</link>
+      <pubDate>Thu, 11 Jun 2020 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2020.tinkerfest/</guid>
+      <description>&lt;ul&gt;&#xA;&lt;li&gt;Built an autonomous, trash seggrating robot car using LEGO as the body frame and Arduino + Android Mobile as the Brain 🧠&lt;/li&gt;&#xA;&lt;li&gt;Although our bot did not function as ecpected, we learnt a lot and had fun&lt;/li&gt;&#xA;&lt;/ul&gt;</description>
+    </item>
+    <item>
+      <title>Started learning Game Dev</title>
+      <link>http://localhost:1313/timeline/2019.gamedev/</link>
+      <pubDate>Sun, 30 Jun 2019 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2019.gamedev/</guid>
+      <description>&lt;p&gt;Debug.Log(&amp;ldquo;Published some games on Play Store and got banned afterwards 🤡&amp;rdquo;)&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Built a model version of a Light Interferometer</title>
+      <link>http://localhost:1313/timeline/2019.ligo/</link>
+      <pubDate>Sat, 29 Jun 2019 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2019.ligo/</guid>
+      <description>&lt;ul&gt;&#xA;&lt;li&gt;Using a Microscope slide, 2 pieces of mirrors (that I broke in half), a cheap lazer pointer and a lens I salvaged from another lazer pointer&lt;/li&gt;&#xA;&lt;li&gt;Similar arrangement like the LIGO&lt;/li&gt;&#xA;&lt;li&gt;Interference pattern was slightly visible&lt;/li&gt;&#xA;&lt;/ul&gt;</description>
+    </item>
+    <item>
+      <title>Performed the Double Slit Experiment</title>
+      <link>http://localhost:1313/timeline/2019.double-slit/</link>
+      <pubDate>Fri, 28 Jun 2019 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2019.double-slit/</guid>
+      <description>&lt;ul&gt;&#xA;&lt;li&gt;Using a cheap lazer pointer and insulating tape&lt;/li&gt;&#xA;&lt;li&gt;Learnt about Dual Nature of Light&lt;/li&gt;&#xA;&lt;/ul&gt;</description>
+    </item>
+    <item>
+      <title>My Attempt at building an Arduino CubeSat</title>
+      <link>http://localhost:1313/timeline/2019.cubesat/</link>
+      <pubDate>Thu, 27 Jun 2019 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2019.cubesat/</guid>
+      <description>&lt;ul&gt;&#xA;&lt;li&gt;3D printed frame&lt;/li&gt;&#xA;&lt;li&gt;Got CW telemetry working witha 433MHz RF transmitter &amp;amp; receiver&lt;/li&gt;&#xA;&lt;/ul&gt;</description>
+    </item>
+    <item>
+      <title>Built an Ultrasonic Standing Wave &#39;Levitator&#39;</title>
+      <link>http://localhost:1313/timeline/2019.standing-wave/</link>
+      <pubDate>Wed, 26 Jun 2019 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2019.standing-wave/</guid>
+      <description>&lt;ul&gt;&#xA;&lt;li&gt;Followed an instructable article to and ripped apart couple of ultrasonic modules to build a mini levitator thingie&lt;/li&gt;&#xA;&lt;li&gt;Learnt about Standing Waves&lt;/li&gt;&#xA;&lt;li&gt;Small pieces of paper/styrofoam could be held in air at specific nodes of standing waves&lt;/li&gt;&#xA;&lt;/ul&gt;</description>
+    </item>
+    <item>
+      <title>Assembled my first 3D printer [Ender 3]</title>
+      <link>http://localhost:1313/timeline/2019.3dp/</link>
+      <pubDate>Tue, 25 Jun 2019 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2019.3dp/</guid>
+      <description>&lt;p&gt;Since then I have learnt a lot about the tech behind 3D printing and assembled a whole bunch of other printers&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Got an Arduino UNO</title>
+      <link>http://localhost:1313/timeline/2019.arduino/</link>
+      <pubDate>Mon, 24 Jun 2019 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2019.arduino/</guid>
+      <description>&lt;ul&gt;&#xA;&lt;li&gt;Learnt about IoT, embeded circuits, electronics&lt;/li&gt;&#xA;&lt;li&gt;Built random fun projects with the UNO and various Modules&lt;/li&gt;&#xA;&lt;li&gt;Built cool stuff with the power of LEGO and Arduino. (I still have the LEGO Mindstorms RCX kit)&lt;/li&gt;&#xA;&lt;/ul&gt;</description>
+    </item>
+    <item>
+      <title>Built a LEGO line follower and modified gears to speed it up</title>
+      <link>http://localhost:1313/timeline/2019.line-follower/</link>
+      <pubDate>Sun, 23 Jun 2019 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2019.line-follower/</guid>
+      <description>&lt;p&gt;Learnt about gear ratios and IR&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Made HTML tutorials</title>
+      <link>http://localhost:1313/timeline/2017.html/</link>
+      <pubDate>Fri, 30 Jun 2017 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2017.html/</guid>
+      <description>&lt;p&gt;School had HTML and CSS in our curriculum so I made video tutorials and uploaded them on youtube for my friends to learn from 😆&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Participated in a Cubing Competition for the first time</title>
+      <link>http://localhost:1313/timeline/2017.cubecomp/</link>
+      <pubDate>Thu, 29 Jun 2017 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2017.cubecomp/</guid>
+      <description>&lt;ul&gt;&#xA;&lt;li&gt;Got an average time around 40 seconds and personal best 34 seconds&lt;/li&gt;&#xA;&lt;li&gt;Met Akash Rupela, former Indian record holder for fastest 3x3 solve 😳&lt;/li&gt;&#xA;&lt;/ul&gt;</description>
+    </item>
+    <item>
+      <title>Learnt my first programming language - QBASIC</title>
+      <link>http://localhost:1313/timeline/2016.qbasic/</link>
+      <pubDate>Wed, 29 Jun 2016 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2016.qbasic/</guid>
+      <description>&lt;ul&gt;&#xA;&lt;li&gt;Good ol&amp;rsquo; days&lt;/li&gt;&#xA;&lt;li&gt;For refrence: &lt;a href=&#34;http://tedfelix.com/qbasic/&#34;&gt;http://tedfelix.com/qbasic/&lt;/a&gt;&lt;/li&gt;&#xA;&lt;/ul&gt;</description>
+    </item>
+    <item>
+      <title>Got interested into Science and made videos on youtube</title>
+      <link>http://localhost:1313/timeline/2016.stem/</link>
+      <pubDate>Tue, 28 Jun 2016 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2016.stem/</guid>
+      <description>&lt;ul&gt;&#xA;&lt;li&gt;Homemade Litmus paper and indicator solution&lt;/li&gt;&#xA;&lt;li&gt;Theory behind how LIGO detects gravitational waves&lt;/li&gt;&#xA;&lt;li&gt;and more in the following years 🤩&lt;/li&gt;&#xA;&lt;/ul&gt;</description>
+    </item>
   </channel>
 </rss>

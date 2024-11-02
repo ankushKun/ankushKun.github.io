@@ -331,6 +331,41 @@
       <description>&lt;ul&gt;&#xA;&lt;li&gt;At Chandigarh University&lt;/li&gt;&#xA;&lt;li&gt;Majoring in Computer Science and Engineering&lt;/li&gt;&#xA;&lt;/ul&gt;</description>
     </item>
     <item>
+      <title>Graduated High School [12th Standard]</title>
+      <link>http://localhost:1313/timeline/2022.bye-school/</link>
+      <pubDate>Mon, 20 Jun 2022 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2022.bye-school/</guid>
+      <description>&lt;p&gt;By GDG Ludhiana (it was their first time organising DevFest too)&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Participated in TezAsia Hackathon</title>
+      <link>http://localhost:1313/timeline/2022.tezasia/</link>
+      <pubDate>Fri, 20 May 2022 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2022.tezasia/</guid>
+      <description>&lt;ul&gt;&#xA;&lt;li&gt;Learnt about SmartPy and Tezos smart contracts&lt;/li&gt;&#xA;&lt;li&gt;Developed an on-chain blogging webapp&lt;/li&gt;&#xA;&lt;/ul&gt;</description>
+    </item>
+    <item>
+      <title>Participated in the GMTK Game Jam 2022</title>
+      <link>http://localhost:1313/timeline/2022.gmtk22/</link>
+      <pubDate>Fri, 20 May 2022 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2022.gmtk22/</guid>
+      <description>&lt;ul&gt;&#xA;&lt;li&gt;Theme: &amp;lsquo;Roll of a dice&amp;rsquo;&lt;/li&gt;&#xA;&lt;li&gt;Ranked 1.6k out of 6.1k+ submissions&lt;/li&gt;&#xA;&lt;/ul&gt;</description>
+    </item>
+    <item>
+      <title>Developed Better PW</title>
+      <link>http://localhost:1313/timeline/2022.better-pw/</link>
+      <pubDate>Wed, 20 Apr 2022 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2022.better-pw/</guid>
+      <description>&lt;p&gt;Lightweight alt client for the Physics Wallah education platform&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Started developing Desonity</title>
+      <link>http://localhost:1313/timeline/2022.desonity/</link>
+      <pubDate>Sun, 10 Apr 2022 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/2022.desonity/</guid>
+      <description>&lt;p&gt;A Unity3D extension that allows developers to integrate the DeSo Blockchain into Unity games&lt;/p&gt;</description>
+    </item>
+    <item>
       <title>Desonity</title>
       <link>http://localhost:1313/projects/desonity/</link>
       <pubDate>Tue, 01 Mar 2022 00:00:00 +0000</pubDate>
