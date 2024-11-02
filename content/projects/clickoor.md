@@ -1,0 +1,8 @@
++++
+title = "Clickoor Camera"
+date = "2024-06-01"
++++
+
+A point and shoot camera, powered by the Arweave Blockchain, that has an infinite and paermanent storage for your valuable photos
+
+[Try it yourself](https://clickoor.arweave.dev/) · [View on GitHub](https://github.com/ankushKun/clickoor-v2)

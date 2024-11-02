@@ -1,0 +1,8 @@
++++
+title = "Lucky Knight"
+date = "2023-07-01"
++++
+
+Turn based game where you play as randomness and decide the fate of a knight through minigames. Submission for GMTK 2023 game jam with theme 'Roles Reversed'
+
+[Try it yourself](https://weeblet.itch.io/lucky-knight) · [View on GitHub](https://github.com/ankushKun/GMTK2023)

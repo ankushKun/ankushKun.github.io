@@ -1,0 +1,8 @@
++++
+title = "Unity: In-game item marketplace using DeSo NFTs"
+date = "2022-03-01"
++++
+
+Prototype of how NFTs can be used to create a marketplace for cross-game compatible items
+
+[Try it yourself](https://youtu.be/-Ute7GNiZxk?si=sWxH1ou4hawZWU-J) · [View on GitHub](https://github.com/ankushKun/ingame-nft-store-example)

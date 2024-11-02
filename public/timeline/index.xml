@@ -15,5 +15,82 @@
       <guid>http://localhost:1313/timeline/fwd/</guid>
       <description>&lt;p&gt;BetterIDEa has been aquired and I have been hired by Forward to continue developing developer tools for the ecosystem 🥳&lt;/p&gt;</description>
     </item>
+    <item>
+      <title>Weavers Raid III</title>
+      <link>http://localhost:1313/timeline/weavers3/</link>
+      <pubDate>Thu, 01 Aug 2024 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/weavers3/</guid>
+      <description>&lt;p&gt;Build a Vercel like deployment platform for permaweb apps. Won third place&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>ArweaveIndia Demo Day</title>
+      <link>http://localhost:1313/timeline/demoday/</link>
+      <pubDate>Mon, 01 Jul 2024 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/demoday/</guid>
+      <description>&lt;p&gt;Demoed BetterIDEa and clickoor&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Community Manager @ ArweaveIndia</title>
+      <link>http://localhost:1313/timeline/community-manager/</link>
+      <pubDate>Sat, 01 Jun 2024 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/community-manager/</guid>
+      <description>&lt;ul&gt;&#xA;&lt;li&gt;Helping out the community&lt;/li&gt;&#xA;&lt;li&gt;Managing the Arweave India Discord server&lt;/li&gt;&#xA;&lt;li&gt;Organising cool events&lt;/li&gt;&#xA;&lt;li&gt;Make coold builds&lt;/li&gt;&#xA;&lt;/ul&gt;</description>
+    </item>
+    <item>
+      <title>Launched Clickoor Camera ⓐ!</title>
+      <link>http://localhost:1313/timeline/clickoor/</link>
+      <pubDate>Mon, 01 Apr 2024 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/clickoor/</guid>
+      <description>&lt;p&gt;A point and shoot camera, powered by the Arweave Blockchain, that has an infinite and permanent storage for your valuable photos&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>UPES, Dehradun: Hackathon 8.0</title>
+      <link>http://localhost:1313/timeline/upes/</link>
+      <pubDate>Mon, 01 Apr 2024 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/upes/</guid>
+      <description>&lt;p&gt;Built an AI enabled web browser for detecting sus activities on websites. One of the top 5 projects&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>AO testnet Launch - 27th Feb, 2024!</title>
+      <link>http://localhost:1313/timeline/ao-launch/</link>
+      <pubDate>Tue, 27 Feb 2024 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/ao-launch/</guid>
+      <description>&lt;p&gt;Launched BetterIDEa&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Arweave India Launchpad program!</title>
+      <link>http://localhost:1313/timeline/launchpad/</link>
+      <pubDate>Sat, 27 Jan 2024 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/launchpad/</guid>
+      <description>&lt;ul&gt;&#xA;&lt;li&gt;Three month program&lt;/li&gt;&#xA;&lt;li&gt;Building BetterIDEa as a product&lt;/li&gt;&#xA;&lt;/ul&gt;</description>
+    </item>
+    <item>
+      <title>Met Sam Williams IRL at Bangalore!</title>
+      <link>http://localhost:1313/timeline/sam/</link>
+      <pubDate>Wed, 10 Jan 2024 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/sam/</guid>
+      <description>&lt;p&gt;AO reveal to India hackers&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Won the Arweave ⓐ Hackerhouse at Bangalore</title>
+      <link>http://localhost:1313/timeline/hackerhouse/</link>
+      <pubDate>Thu, 07 Dec 2023 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/hackerhouse/</guid>
+      <description>&lt;ul&gt;&#xA;&lt;li&gt;Built a web based IDE for Arweave Smartweave contracts&lt;/li&gt;&#xA;&lt;li&gt;Arweave Cohort 1&lt;/li&gt;&#xA;&lt;li&gt;Amazing People, Amazing Experience&lt;/li&gt;&#xA;&lt;li&gt;Long term friends made&lt;/li&gt;&#xA;&lt;/ul&gt;</description>
+    </item>
+    <item>
+      <title>Runner up in Crewsphere College level ICP hackathon!</title>
+      <link>http://localhost:1313/timeline/icp/</link>
+      <pubDate>Sun, 03 Dec 2023 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/icp/</guid>
+      <description>&lt;p&gt;Built ICPixel&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Participated in E-Suraksha hackathon at CU</title>
+      <link>http://localhost:1313/timeline/esuraksha/</link>
+      <pubDate>Mon, 20 Nov 2023 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/timeline/esuraksha/</guid>
+      <description>&lt;p&gt;Really bad experience, organisers were not fun, they took away my airplane :(&lt;/p&gt;</description>
+    </item>
   </channel>
 </rss>

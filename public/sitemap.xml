@@ -25,15 +25,106 @@
     
         
         <url>
-            <loc>http://localhost:1313/projects/apm/</loc>
-            <lastmod>2021-01-02T00:00:00+00:00</lastmod>
+            <loc>http://localhost:1313/projects/apm-cli/</loc>
+            <lastmod>2024-07-01T00:00:00+00:00</lastmod>
         </url>
         
     
         
         <url>
             <loc>http://localhost:1313/projects/</loc>
-            <lastmod>2021-01-02T00:00:00+00:00</lastmod>
+            <lastmod>2024-07-01T00:00:00+00:00</lastmod>
+        </url>
+        
+    
+        
+        <url>
+            <loc>http://localhost:1313/projects/apm/</loc>
+            <lastmod>2024-06-01T00:00:00+00:00</lastmod>
+        </url>
+        
+    
+        
+        <url>
+            <loc>http://localhost:1313/projects/clickoor/</loc>
+            <lastmod>2024-06-01T00:00:00+00:00</lastmod>
+        </url>
+        
+    
+        
+        <url>
+            <loc>http://localhost:1313/projects/betteridea/</loc>
+            <lastmod>2023-12-01T00:00:00+00:00</lastmod>
+        </url>
+        
+    
+        
+        <url>
+            <loc>http://localhost:1313/projects/gitar/</loc>
+            <lastmod>2023-11-01T00:00:00+00:00</lastmod>
+        </url>
+        
+    
+        
+        <url>
+            <loc>http://localhost:1313/projects/icpixel/</loc>
+            <lastmod>2023-11-01T00:00:00+00:00</lastmod>
+        </url>
+        
+    
+        
+        <url>
+            <loc>http://localhost:1313/projects/weebletstore/</loc>
+            <lastmod>2023-11-01T00:00:00+00:00</lastmod>
+        </url>
+        
+    
+        
+        <url>
+            <loc>http://localhost:1313/projects/gitraven/</loc>
+            <lastmod>2023-10-15T00:00:00+00:00</lastmod>
+        </url>
+        
+    
+        
+        <url>
+            <loc>http://localhost:1313/projects/class-compass/</loc>
+            <lastmod>2023-10-01T00:00:00+00:00</lastmod>
+        </url>
+        
+    
+        
+        <url>
+            <loc>http://localhost:1313/projects/lucky-knight/</loc>
+            <lastmod>2023-07-01T00:00:00+00:00</lastmod>
+        </url>
+        
+    
+        
+        <url>
+            <loc>http://localhost:1313/projects/antisus/</loc>
+            <lastmod>2023-03-01T00:00:00+00:00</lastmod>
+        </url>
+        
+    
+        
+        <url>
+            <loc>http://localhost:1313/projects/desonity/</loc>
+            <lastmod>2022-03-01T00:00:00+00:00</lastmod>
+        </url>
+        
+    
+        
+        <url>
+            <loc>http://localhost:1313/projects/deso-marketplace/</loc>
+            <lastmod>2022-03-01T00:00:00+00:00</lastmod>
+        </url>
+        
+    
+        
+        <url>
+            <loc>http://localhost:1313/projects/animedoro/</loc>
+            <lastmod>2021-01-01T00:00:00+00:00</lastmod>
         </url>
         
     

@@ -2,21 +2,34 @@
 
 <h1>About</h1>
 
-<div style="display: flex; justify-content: space-between;">
+<div style="display: flex; align-items: start;">
+    <img src="/pfp.png" style="display: inline; width: 150px; height: 150px;" />
     <p>
         Hi, I am <strong>Ankush Singh</strong>, <br /><br />
         Entrepreneur In Residence @ <a href="https://forward.arweave.net/" target="_blank">Forward Research
-            (Arweave)</a>
-        <br />
+            (Arweave)</a><br />
         Community Manager @ <a href="https://arweaveindia.com" target="_blank">ArweaveIndia</a> <br />
         Founder of <a href="https://betteridea.dev" target="_blank">BetterIDEa</a> <br />
-        Previous Tech Intern @ <a href="https://www.pw.live/about-us" target="_blank">Physics Wallah</a> <br />
+        Previous Tech Intern @ <a href="https://www.pw.live/about-us" target="_blank">Physics Wallah</a>
     </p>
-    <img src="/pfp.png" style="display: inline; width: 150px; height: 150px;" />
 </div>
-<br />
 
-<h1>Life Updates</h1>
+<!-- social links -->
+<center>
+    <h1>Connect with me</h1>
+
+    <div class="social-links">
+        <a href="https://github.com/ankushKun" target="_blank">Github</a> ·
+        <a href="https://x.com/ankushkun_" target="_blank">Twitter</a> ·
+        <a href="https://linkedin.com/in/ankushKun" target="_blank">Linkedin</a> ·
+        <a href="https://youtube.com/@AnkushKun" target="_blank">YouTube</a> ·
+        <a href="https://instagram.com/ankushKun_" target="_blank">Instagram</a> ·
+        <a href="https://reddit.com/u/TECHIE6023" target="_blank">Reddit</a>
+    </div>
+</center>
+
+
+<h1>Life Update <a href="/timeline">(more)</a></h1>
 
 <div class="posts-list">
     {{ with .Site.GetPage "/timeline" }}
@@ -32,10 +45,26 @@
     {{ end }}
 </div>
 
-<!-- <h1>Latest Achievements</h1>
+<h1>Recent Projects <a href="/projects">(more)</a></h1>
+
+<div class="posts-list">
+    {{ with .Site.GetPage "/projects" }}
+    {{ range first 3 (sort .Data.Pages "Date" "desc" (where .Pages ".Params.private" "!=" true))}}
+    <div class="post">
+        <p>
+        <div class="date">{{ .PublishDate.Format "Jan. 2006" }}</div>
+        <h1><a href="{{ .Permalink }}" title="{{ .Title }}">{{ .Title }}</a></h1>
+        {{ .Summary }}
+        </p>
+    </div>
+    {{ end }}
+    {{ end }}
+</div>
+
+<!-- <h1>Pictures</h1>
 
 <div class="image-grid">
-    {{ with .Site.GetPage "/photos" }}
+    {{ with .Site.GetPage "/projects" }}
     {{ range first 3 (sort .Data.Pages "Date" "desc")}}
     <a href="{{ .Permalink }}" title="{{ .Title }}">
         {{ $image := .Page.Resources.GetMatch .Params.image }}
@@ -47,17 +76,5 @@
     {{ end }}
     {{ end }}
 </div> -->
-
-<!-- social links -->
-<div class="social-links">
-    <h1>Connect with me</h1>
-    <a href="https://github.com/ankushKun" target="_blank">Github</a> ·
-    <a href="https://x.com/ankushkun_" target="_blank">Twitter</a> ·
-    <a href="https://linkedin.com/in/ankushKun" target="_blank">Linkedin</a> ·
-    <a href="https://youtube.com/@AnkushKun" target="_blank">YouTube</a> ·
-    <a href="https://instagram.com/ankushKun_" target="_blank">Instagram</a> ·
-    <a href="https://reddit.com/u/TECHIE6023" target="_blank">Reddit</a>
-</div>
-
 
 {{ end }}

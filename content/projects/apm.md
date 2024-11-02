@@ -1,8 +1,8 @@
 +++
-title = "APM CLI Tool"
-date = "2021-01-02"
+title = "APM Package Manager"
+date = "2024-06-01"
 +++
 
-A command line interface to manage Arweave AO packages (similar to npm)
+Package manager for the AO supercomputer
 
-[Try it yourself](https://apm.betteridea.dev) · [View on GitHub](https://github.com/ankushKun/apm-cli)
+[Try it yourself](https://apm.betteridea.dev/) · [View on GitHub](https://github.com/betteridea-dev/apm-web)
