@@ -11,9 +11,6 @@ titleCutting = false
 # To disable animations, please remove or comment animationStyle parameter
 animateStyle = "animated zoomIn fast"
 
-# [[params.navlinks]]
-# name = "./about"
-# url = "about/"
 
 [[params.navlinks]]
 name = "./timeline"
@@ -22,3 +19,7 @@ url = "timeline/"
 [[params.navlinks]]
 name = "./projects"
 url = "projects/"
+
+[[params.navlinks]]
+name = "./wins"
+url = "wins/"
