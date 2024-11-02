@@ -23,3 +23,7 @@ url = "projects/"
 [[params.navlinks]]
 name = "./wins"
 url = "wins/"
+
+[[params.navlinks]]
+name = "./resume.pdf"
+url = "/resume.pdf"

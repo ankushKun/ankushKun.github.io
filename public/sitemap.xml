@@ -564,12 +564,6 @@
     
         
         <url>
-            <loc>http://localhost:1313/achievements/</loc>
-        </url>
-        
-    
-        
-        <url>
             <loc>http://localhost:1313/categories/</loc>
         </url>
         
@@ -577,6 +571,12 @@
         
         <url>
             <loc>http://localhost:1313/tags/</loc>
+        </url>
+        
+    
+        
+        <url>
+            <loc>http://localhost:1313/wins/</loc>
         </url>
         
     
