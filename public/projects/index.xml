@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Projects on ankushKun</title>
+    <link>http://localhost:1313/projects/</link>
+    <description>Recent content in Projects on ankushKun</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 02 Jan 2021 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:1313/projects/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>APM CLI Tool</title>
+      <link>http://localhost:1313/projects/apm/</link>
+      <pubDate>Sat, 02 Jan 2021 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/projects/apm/</guid>
+      <description>&lt;p&gt;A command line interface to manage Arweave AO packages (similar to npm)&lt;/p&gt;&#xA;&lt;p&gt;&lt;a href=&#34;https://apm.betteridea.dev&#34;&gt;Try it yourself&lt;/a&gt; · &lt;a href=&#34;https://github.com/ankushKun/apm-cli&#34;&gt;View on GitHub&lt;/a&gt;&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>
