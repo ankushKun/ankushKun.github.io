@@ -1,35 +1,87 @@
 {{ define "main" }}
 
-<h1>About</h1>
+<h1>About my life</h1>
 
 <div style="display: flex; align-items: start;">
-    <img src="/pfp.png" style="display: inline; width: 177px; height: 170px;" />
+    <img src="/pfp.png" style="display: inline; width: 200px; height: auto;" />
     <p>
-        Hi, I am <strong>Ankush Singh</strong>, <br /><br />
-        Founder of <a href="https://betteridea.dev" target="_blank">BetterIDEa</a>, <a href="https://subspace.ar.io"
+        Hi, I'm <strong>Ankush</strong> — a developer, community builder, and lifelong tinkerer who loves turning
+        ideas into products that the world can use.<br /><br />
+
+        Creator of <a href="https://betteridea.ar.io" target="_blank">BetterIDEa</a>, <a href="https://subspace.ar.io"
             target="_blank">Subspace</a>, <a href="https://wauth_subspace.ar.io" target="_blank">WAuth</a> <br />
+
         Community Manager @ <a href="https://arweaveindia.com" target="_blank">ArweaveIndia</a> <br />
-        prev. Entrepreneur @ <a href="https://forward.arweave.net/" target="_blank">Forward Research
+
+        former Entrepreneur @ <a href="https://forward.arweave.net/" target="_blank">Forward Research
             (Arweave)</a><br />
-        prev. Tech Intern @ <a href="https://www.pw.live/about-us" target="_blank">Physics Wallah</a>
+        former Tech Intern @ <a href="https://www.pw.live/about-us" target="_blank">Physics Wallah</a>
     </p>
 </div>
-
-
-<h1>Life Updates <a href="/timeline">(more)</a></h1>
-
-<div class="posts-list">
-    {{ with .Site.GetPage "/timeline" }}
-    {{ range first 3 (sort .Data.Pages "Date" "desc" (where .Pages ".Params.private" "!=" true))}}
-    <div class="post">
+<br />
+<div style="display: flex; align-items: start;">
+    <div>
         <p>
-        <div class="date">{{ .PublishDate.Format "Jan. 2006" }}</div>
-        <h1><a href="{{ .Permalink }}" title="{{ .Title }}">{{ .Title }}</a></h1>
-        {{ .Summary }}
+            Currently I work at the heart of the <strong><a href="https://arweave.org"
+                    target="_blank">Arweave</a></strong> &
+            <strong><a href="https://ao.ar.io" target="_blank">AO</a></strong> ecosystem, <strong>building the
+                tools and developer experiences</strong> that power the <strong>next generation of decentralized
+                apps</strong>.
+        </p>
+        <!-- <p>
+            I'm the Founder of <strong><a href="https://betteridea.ar.io" target="_blank">BetterIDEa</a></strong>, a
+            development suite used by AO builders around the world. What started as a small experiment has
+            grown into a full ecosystem of tools — from <a href="https://apm_betteridea.ar.io">APM</a>, which helps
+            developers manage AO packages, to <a href="https://visual-ao.ar.io">Visual AO</a>, a no-code interface
+            for programming AO processes.
+        </p> -->
+        <!-- <p>
+            I also serve as the <strong>Community Manager</strong> for <a href="https://arweaveindia.com"
+                target="_blank">Arweave India</a>, where I support new builders and help grow the permaweb
+            community across the region.
+            Recently, I joined <a href="https://forward.arweave.net/" target="_blank">Forward Research</a> as an
+            <strong>Entrepreneur in Residence</strong>, working on next-generation developer tools for AO.
+        </p> -->
+        <p>
+            My journey into tech started <strong>long before blockchain</strong>. I come from a <strong>background in
+                STEM</strong>, and I've always
+            loved <strong>experimenting</strong> - from <strong>building robots and mini-satellites</strong> to
+            <strong>making objects levitate with sound waves</strong>.
+            That same curiosity now drives me to explore what's possible in tech.
+        </p>
+        <p>
+            <strong>Since 2017</strong>, I've been an active part of <strong>hackathons and developer contests</strong>
+            across ecosystems like <strong>DeSo</strong>,
+            Ethereum, Tezos, Polygon, and <strong>Arweave</strong>, earning <strong>more than a dozen prizes</strong>
+            along
+            the way.
+            One of my favorite projects, <i>DumDumDeploy</i>, started as a hackathon submission and
+            eventually <strong>evolved
+                into <a href="https://arlink.ar.io" target="_blank">Arlink</a></strong> — a <strong>major deployment
+                tool</strong> in the Arweave
+            ecosystem.
+        </p>
+        <p>
+            In 2023, I <strong>won the first Arweave India Hacker House</strong>, a <strong>turning point in my
+                career</strong>. The story behind it is
+            something I share in this small <strong><a href="https://www.youtube.com/watch?v=LWW4BCZPIUg"
+                    target="_blank">"TEDx"
+                    talk</a></strong>.
+        </p>
+        <p>
+            Outside of coding, I love <strong>sharing ideas, experiments, and live builds</strong> on my <strong><a
+                    href="https://youtube.com/@AnkushKun" target="_blank">YouTube channel</a></strong>. You'll find
+            everything from
+            developer explainers to fun physics demos and sessions with other builders.
+        </p>
+        <p>
+            At my core, I'm someone who believes that <strong>technology is meant to be explored and had fun with, not
+                just
+                used</strong>. Whether it's
+            experimenting with code, physics, or creative ideas, I'm always <strong>chasing that moment of discovery and
+                helping others find it too</strong>.
         </p>
     </div>
-    {{ end }}
-    {{ end }}
 </div>
 
 <!-- <h1>Recent Projects <a href="/projects">(more)</a></h1>
