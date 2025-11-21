@@ -14,15 +14,15 @@ animateStyle = "animated zoomIn fast"
 
 [[params.navlinks]]
 name = "./timeline"
-url = "timeline/"
+url = "/timeline/"
 
 [[params.navlinks]]
 name = "./projects"
-url = "projects/"
+url = "/projects/"
 
 [[params.navlinks]]
 name = "./wins"
-url = "wins/"
+url = "/wins/"
 
 [[params.navlinks]]
 name = "./resume.pdf"
