@@ -163,7 +163,8 @@ figure {
 .footer {
     clear: both;
     margin-top: 100px;
-    padding-top: 10px;;
+    padding-top: 10px;
+    ;
     border-top: 1px solid var(--secondary-color);
     color: var(--global-font-color);
 }
@@ -199,7 +200,8 @@ figure {
     top: 0;
 }
 
-.post h1, .post h2 {
+.post h1,
+.post h2 {
     padding-top: 0;
     margin: 0;
     margin-bottom: 5px;
@@ -256,7 +258,8 @@ figure {
         top: 0;
     }
 
-    .post h1, .post h2 {
+    .post h1,
+    .post h2 {
         padding-top: 0;
     }
 
@@ -272,8 +275,131 @@ figure {
     }
 
 
+
     .footer {
         margin-top: 50px;
-        padding-top: 5px;;
+        padding-top: 5px;
+        ;
     }
+}
+
+.intro-container {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+}
+
+.intro-image {
+    display: inline;
+    width: 200px;
+    height: auto;
+    margin-right: 30px;
+    border: 1px solid var(--global-font-color);
+    box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
+    transition: transform 0.2s ease;
+}
+
+/* Link Hover Effect - Terminal Style */
+a {
+    transition: background-color 0.2s, color 0.2s;
+    text-decoration: none;
+    border-bottom: 1px dotted var(--global-font-color);
+}
+
+a:hover {
+    background-color: var(--global-font-color);
+    color: #fff;
+    text-decoration: none;
+    border-bottom: none;
+}
+
+/* Fix specific link overrides if necessary */
+.terminal-menu a,
+.terminal-logo a {
+    border-bottom: none;
+}
+
+@media only screen and (max-width: 850px) {
+    .intro-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .intro-image {
+        margin-right: 0;
+        margin-bottom: 20px;
+        width: 150px;
+    }
+}
+
+.youtube-container {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    margin: 5px auto 50px auto;
+    border: 1px solid #333;
+    /* matching var(--global-font-color) approx or fallback */
+    border: 1px solid var(--global-font-color);
+    box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
+    background-color: #000;
+    max-width: 80%;
+}
+
+.youtube-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+.github-container {
+    margin: 5px auto 50px auto;
+    border: 1px solid #333;
+    border: 1px solid var(--global-font-color);
+    box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
+    background-color: #000;
+    max-width: 600px;
+    overflow: hidden;
+}
+
+.github-container img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+
+.button-container {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.console-btn {
+    display: inline-block;
+    padding: 12px 24px;
+    border: 2px solid var(--global-font-color);
+    color: var(--global-font-color);
+    text-decoration: none;
+    font-family: var(--font-stack);
+    font-weight: bold;
+    font-size: 18px;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.15);
+    transition: all 0.15s ease-in-out;
+    background-color: #fff;
+}
+
+.console-btn:hover {
+    background-color: var(--global-font-color);
+    color: #fff;
+    box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.15);
+    transform: translate(4px, 4px);
+    text-decoration: none;
+    border-bottom: 2px solid var(--global-font-color);
 }

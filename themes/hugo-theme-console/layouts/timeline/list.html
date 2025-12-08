@@ -4,7 +4,10 @@
 {{ .Content }}
 
 <div class="posts-list">
-    {{ range sort .Data.Pages "Date" "desc" }}
+    {{ $timeline := where .Site.RegularPages "Section" "timeline" }}
+    {{ $projects := where .Site.RegularPages "Section" "projects" }}
+    {{ $all := union $timeline $projects }}
+    {{ range sort $all "Date" "desc" }}
     {{ if not .Params.private }}
     <div class="post">
         <p>
