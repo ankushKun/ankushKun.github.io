@@ -285,7 +285,7 @@ figure {
 
 .intro-container {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     margin-bottom: 2rem;
 }
 
