@@ -2,8 +2,10 @@
 date = '2025-02-19'
 draft = false
 title = "A Noob's Guide to Web APIs"
+description = "Learn what APIs are, how they work, and how to create your own simple API using Node.js and Express. A complete beginner-friendly tutorial with practical code examples covering REST principles, HTTP methods, and building GET/POST endpoints."
 summary = 'Learn what APIs are, how they work, and how to create your own simple API using Node.js and Express.'
 tags = ['nodejs', 'express', 'api', 'web-development', 'backend']
+author = 'Ankush'
 +++
 
 *Alllll riiiight lets do this one more time*, my name is Ankush and I'm your friendly neighbourhood web developer, here to educate your pathetic ass a bit about web APIs, how they can be used to connect your frontend with your backend and how you can write an API using NodeJS 🫡

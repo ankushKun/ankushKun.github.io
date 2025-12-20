@@ -1,5 +1,6 @@
 +++
 title = "Timeline"
+description = "Ankush's journey through tech - a chronological timeline of projects, hackathons, achievements, and milestones in web development and open-source."
 +++
 
 To see just projects, check out the [projects page](/projects/)

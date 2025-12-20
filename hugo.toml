@@ -3,17 +3,40 @@ title = "ankushKun"
 theme = "hugo-theme-console"
 languageCode = "en-us"
 
+# SEO: Sitemap configuration
+[sitemap]
+  changefreq = "weekly"
+  filename = "sitemap.xml"
+  priority = 0.5
+
 [markup.goldmark.renderer]
 unsafe = true
 
 
 [params]
+# SEO: Site description for meta tags
+description = "Ankush's portfolio - Full-stack developer, open-source contributor, and tech enthusiast. Explore my projects, blog posts, hackathon wins, and development journey."
+
+# SEO: Default OG image
+images = ["/pfp.png"]
+
 # Cutting off the page title to two chars for mobile (console-demo -> co)
 titleCutting = false
 
 # Set the animation style -- https://animate.style/
 # To disable animations, please remove or comment animationStyle parameter
 animateStyle = "animated zoomIn fast"
+
+# SEO: Social media handles
+[params.Social]
+  twitter = "ankushKun_"
+  github = "ankushKun"
+
+# SEO: Author information
+[[params.Authors]]
+  name = "Ankush"
+  twitter = "ankushKun_"
+  github = "ankushKun"
 
 
 [[params.navlinks]]
