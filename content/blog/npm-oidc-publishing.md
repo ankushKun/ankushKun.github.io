@@ -2,8 +2,10 @@
 date = '2025-12-09'
 draft = false
 title = 'Publish to NPM from GitHub Actions using OIDC'
+description = "Step-by-step guide to automate npm package publishing through GitHub Actions using OpenID Connect (OIDC). Set up trusted publishing without API keys or access tokens for secure, provenance-verified releases."
 summary = 'Learn how to automate npm package publishing through GitHub Actions using OpenID Connect (OIDC) - no API keys or access tokens required.'
 tags = ['npm', 'github-actions', 'oidc', 'ci-cd', 'nodejs']
+author = 'Ankush'
 +++
 
 I frequently create developer tools and publish node packages on npmjs, but recently classic tokens got deprecated, granular tokens are limited to 90 days, require 2FA and a bunch of changes were introduced to improve security around publishing packages. More about that on [this GitHub announcement](https://github.blog/changelog/2025-12-09-npm-classic-tokens-revoked-session-based-auth-and-cli-token-management-now-available/).
