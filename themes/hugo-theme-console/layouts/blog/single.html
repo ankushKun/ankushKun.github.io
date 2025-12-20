@@ -1,0 +1,42 @@
+{{ define "main" }}
+<article class="blog-post">
+    <h1>{{ .Title }}</h1>
+    
+    <div class="post-meta">
+        {{ .PublishDate.Format "Jan. 2, 2006" }}
+        {{ with .Params.linkedin }}
+            // <a href="{{ . }}">Linkedin</a>
+        {{ end }}
+        {{ with .Params.twitter }}
+            // <a href="{{ . }}">Twitter</a>
+        {{ end }}
+    </div>
+
+    <div class="post-content">
+        {{ .Content }}
+    </div>
+
+    <!-- Next/Previous Navigation -->
+    <nav class="post-navigation">
+        <div class="nav-links">
+            {{ with .PrevInSection }}
+            <a href="{{ .Permalink }}" class="nav-prev">
+                <span class="nav-label">← Previous</span>
+                <span class="nav-title">{{ .Title }}</span>
+            </a>
+            {{ else }}
+            <div class="nav-prev nav-empty"></div>
+            {{ end }}
+
+            {{ with .NextInSection }}
+            <a href="{{ .Permalink }}" class="nav-next">
+                <span class="nav-label">Next →</span>
+                <span class="nav-title">{{ .Title }}</span>
+            </a>
+            {{ else }}
+            <div class="nav-next nav-empty"></div>
+            {{ end }}
+        </div>
+    </nav>
+</article>
+{{ end }}

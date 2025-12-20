@@ -233,12 +233,13 @@ figure {
         align-items: flex-start;
         display: flex;
         flex-direction: row;
+        flex-wrap: wrap;
         justify-content: left;
         margin-top: 0;
     }
 
     .terminal-menu li {
-        margin-right: 20px;
+        white-space: nowrap;
     }
 
     .logo {
@@ -402,4 +403,239 @@ a:hover {
     transform: translate(4px, 4px);
     text-decoration: none;
     border-bottom: 2px solid var(--global-font-color);
+}
+
+/* Modern Code Block Styling */
+pre {
+    background: #1e1e2e !important;
+    border: none !important;
+    border-radius: 8px;
+    padding: 1.25em !important;
+    margin: 1.5em 0;
+    overflow-x: auto;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+pre code {
+    background: transparent !important;
+    color: #cdd6f4 !important;
+    font-size: 0.9em;
+    line-height: 1.6;
+    font-family: 'Roboto Mono', 'Fira Code', 'JetBrains Mono', monospace;
+}
+
+/* Inline code styling */
+:not(pre) > code {
+    background: #f1f3f4 !important;
+    color: #d63384 !important;
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-family: 'Roboto Mono', monospace;
+}
+
+:not(pre) > code::before,
+:not(pre) > code::after {
+    content: "" !important;
+    display: none !important;
+}
+
+/* Modern Blockquote Styling */
+blockquote {
+    border-left: 4px solid #1a95e0;
+    background: #f8f9fa;
+    margin: 1.5em 0;
+    padding: 1em 1.5em;
+    border-radius: 0 8px 8px 0;
+    position: relative;
+}
+
+blockquote::after {
+    content: "" !important;
+    display: none !important;
+}
+
+blockquote p {
+    margin: 0;
+    color: #555;
+}
+
+/* Hugo/Chroma syntax highlighting colors (Catppuccin-inspired) */
+.highlight pre {
+    background: #1e1e2e !important;
+}
+
+/* Keywords */
+.highlight .k,
+.highlight .kd,
+.highlight .kn,
+.highlight .kp,
+.highlight .kr,
+.highlight .kt {
+    color: #cba6f7 !important;
+}
+
+/* Strings */
+.highlight .s,
+.highlight .sa,
+.highlight .sb,
+.highlight .sc,
+.highlight .dl,
+.highlight .sd,
+.highlight .s2,
+.highlight .se,
+.highlight .sh,
+.highlight .si,
+.highlight .sx,
+.highlight .sr,
+.highlight .s1,
+.highlight .ss {
+    color: #a6e3a1 !important;
+}
+
+/* Numbers */
+.highlight .m,
+.highlight .mb,
+.highlight .mf,
+.highlight .mh,
+.highlight .mi,
+.highlight .mo,
+.highlight .il {
+    color: #fab387 !important;
+}
+
+/* Comments */
+.highlight .c,
+.highlight .ch,
+.highlight .cm,
+.highlight .c1,
+.highlight .cs,
+.highlight .cp,
+.highlight .cpf {
+    color: #6c7086 !important;
+    font-style: italic;
+}
+
+/* Functions */
+.highlight .nf,
+.highlight .fm {
+    color: #89b4fa !important;
+}
+
+/* Variables and names */
+.highlight .n,
+.highlight .na,
+.highlight .nb,
+.highlight .nc,
+.highlight .no,
+.highlight .nd,
+.highlight .ni,
+.highlight .ne,
+.highlight .nl,
+.highlight .nn,
+.highlight .nt,
+.highlight .nv,
+.highlight .bp,
+.highlight .vc,
+.highlight .vg,
+.highlight .vi {
+    color: #cdd6f4 !important;
+}
+
+/* Operators */
+.highlight .o,
+.highlight .ow {
+    color: #89dceb !important;
+}
+
+/* Punctuation */
+.highlight .p {
+    color: #cdd6f4 !important;
+}
+
+/* Blog Post Navigation */
+.post-meta {
+    color: #888;
+    margin-bottom: 2em;
+}
+
+.post-navigation {
+    margin-top: 4em;
+    padding-top: 2em;
+    border-top: 1px dashed var(--global-font-color);
+}
+
+.nav-links {
+    display: flex;
+    justify-content: space-between;
+    gap: 1em;
+}
+
+.nav-prev,
+.nav-next {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 1em 1.25em;
+    border: 1px dashed var(--global-font-color);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    max-width: 48%;
+}
+
+.nav-prev {
+    align-items: flex-start;
+}
+
+.nav-next {
+    align-items: flex-end;
+    text-align: right;
+}
+
+.nav-prev:hover,
+.nav-next:hover {
+    background-color: var(--global-font-color);
+    border-style: solid;
+}
+
+.nav-prev:hover .nav-label,
+.nav-prev:hover .nav-title,
+.nav-next:hover .nav-label,
+.nav-next:hover .nav-title {
+    color: #fff;
+}
+
+.nav-label {
+    font-size: 0.85em;
+    color: #888;
+    margin-bottom: 0.25em;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.nav-title {
+    font-weight: bold;
+    color: var(--global-font-color);
+    line-height: 1.4;
+}
+
+.nav-empty {
+    visibility: hidden;
+}
+
+@media only screen and (max-width: 850px) {
+    .nav-links {
+        flex-direction: column;
+        gap: 1em;
+    }
+
+    .nav-prev,
+    .nav-next {
+        max-width: 100%;
+    }
+
+    .nav-next {
+        align-items: flex-start;
+        text-align: left;
+    }
 }
