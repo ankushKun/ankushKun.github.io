@@ -1,5 +1,7 @@
----
-title: "Projects"
----
++++
+title = "Projects"
+description = "Explore Ankush's portfolio of projects - web applications, developer tools, open-source contributions, and hackathon creations built with modern technologies."
++++
 
-Here are some of the projects I've been working on.
+
+Stuff I build (non exhaustive list)
