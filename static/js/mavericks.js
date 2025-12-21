@@ -440,7 +440,7 @@
                 if (windowId && title) {
                     openWindow(windowId, title);
                 }
-                // Else it might have an onclick handler (like Book a Call)
+                // Else it might have an onclick handler (like Schedule Call)
             });
         });
     }

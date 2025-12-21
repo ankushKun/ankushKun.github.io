@@ -4,6 +4,10 @@
     <!-- About Icon -->
     {{ partial "desktop-icon.html" (dict "window" "about" "title" "About Me" "label" "About Me" "image" "/pfp.png") }}
 
+    <!-- Resume Icon -->
+    {{ partial "desktop-icon.html" (dict "window" "resume" "title" "📄 Resume" "label" "Resume" "svg"
+    (partial "icons/resume-desktop.html" .)) }}
+
     <!-- Projects Icon -->
     {{ partial "desktop-icon.html" (dict "window" "projects" "title" "Projects" "label" "Projects" "svg" (partial
     "icons/folder-desktop.html" .)) }}
@@ -24,13 +28,10 @@
     {{ partial "desktop-icon.html" (dict "window" "contact" "title" "Contact" "label" "Contact" "svg" (partial
     "icons/mail-desktop.html" .)) }}
 
-    <!-- Book a Call Icon -->
-    {{ partial "desktop-icon.html" (dict "window" "book-a-call" "title" "🌐 Book a Call" "label" "Book a Call" "svg"
+    <!-- Schedule Call Icon -->
+    {{ partial "desktop-icon.html" (dict "window" "book-a-call" "title" "🌐 Schedule Call" "label" "Schedule Call" "svg"
     (partial "icons/phone-desktop.html" .)) }}
 
-    <!-- Resume Icon -->
-    {{ partial "desktop-icon.html" (dict "window" "resume" "title" "📄 Resume" "label" "Resume" "svg"
-    (partial "icons/resume-desktop.html" .)) }}
 </div>
 
 <!-- ============================================== -->
@@ -225,7 +226,7 @@
         {{ end }}
     </div>
 
-    <!-- BOOK A CALL CONTENT -->
+    <!-- SCHEDULE CALL CONTENT -->
     <div id="content-book-a-call">
         <div class="external-window" style="height: 100%; display: flex; flex-direction: column;">
             <div class="window-toolbar">

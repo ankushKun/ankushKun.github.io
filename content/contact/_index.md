@@ -11,7 +11,7 @@ I'm always open to discussing new projects, creative ideas, or opportunities to 
 ### 📬 Direct Channels
 
 - **Email**: [ankush4singh@gmail.com](mailto:ankush4singh@gmail.com)
-- **Book a Call**: [cal.com/ankushkun](https://cal.com/ankushkun/call)
+- **Schedule Call**: [cal.com/ankushkun](https://cal.com/ankushkun/call)
 
 ### 🌐 Socials
 
