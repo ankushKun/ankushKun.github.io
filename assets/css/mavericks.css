@@ -366,6 +366,19 @@ body::before {
     cursor: pointer;
     border-radius: 6px;
     transition: background 0.1s ease;
+
+    /* Button Reset */
+    background: none;
+    border: none;
+    outline: none;
+    font-family: inherit;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.desktop-icon:focus-visible {
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 0 2px #007AFF;
 }
 
 .desktop-icon:hover {
@@ -387,6 +400,13 @@ body::before {
     align-items: center;
     justify-content: center;
     margin-bottom: 4px;
+}
+
+.icon-image img,
+.icon-image svg {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }
 
 .icon-label {
@@ -2008,6 +2028,12 @@ body::before {
     .finder-row {
         padding: 10px;
         /* Larger touch target */
+        cursor: pointer;
+        outline: none;
+    }
+
+    .finder-row:focus-visible {
+        background: rgba(0, 122, 255, 0.2);
     }
 
     .col-name {
@@ -2392,6 +2418,18 @@ body::before {
     100% {
         transform: translateX(-50%) scale(1);
         opacity: 1;
+    }
+}
+
+/* Mobile Static Window Overrides */
+@media (max-width: 768px) {
+    .static-window {
+        width: calc(100vw - 16px) !important;
+        max-width: calc(100vw - 16px) !important;
+        left: 8px !important;
+        top: calc(var(--menubar-height) + 8px) !important;
+        height: calc(100vh - var(--menubar-height) - 16px) !important;
+        transform: none !important;
     }
 }
 

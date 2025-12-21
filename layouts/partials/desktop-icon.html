@@ -15,13 +15,14 @@ OR for SVG:
 "svg" "<svg>...</svg>"
 ) }}
 */}}
-<div class="desktop-icon" data-window="{{ .window }}" data-title="{{ .title }}">
+<button class="desktop-icon" data-window="{{ .window }}" data-title="{{ .title }}" aria-label="{{ .label }}"
+    tabindex="0">
     <div class="icon-image">
         {{ if .image }}
-        <img src="{{ .image }}" alt="{{ .label }}" width="64" height="64">
+        <img src="{{ .image }}" alt="" width="64" height="64" aria-hidden="true">
         {{ else if .svg }}
         {{ .svg | safeHTML }}
         {{ end }}
     </div>
     <span class="icon-label">{{ .label }}</span>
-</div>
+</button>

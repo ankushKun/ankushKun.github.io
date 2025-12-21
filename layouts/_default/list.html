@@ -22,7 +22,7 @@
 {{/* Finder-style list for sections with child pages */}}
 {{ $finderTitle := "" }}
 {{ if eq .Section "projects" }}{{ $finderTitle = "🚀 Projects" }}
-{{ else if eq .Section "blog" }}{{ $finderTitle = "📝 Blog Posts" }}
+{{ else if eq .Section "blogs" }}{{ $finderTitle = "📝 Blogs" }}
 {{ else if eq .Section "timeline" }}{{ $finderTitle = "⏰ Timeline" }}
 {{ else }}{{ $finderTitle = .Title }}{{ end }}
 
@@ -64,7 +64,7 @@
                         <span class="col-icon">
                             {{ if eq .Section "projects" }}
                             {{ partial "icons/folder.html" (dict "color" "#FF9500" "size" 16) }}
-                            {{ else if eq .Section "blog" }}
+                            {{ else if eq .Section "blogs" }}
                             {{ partial "icons/document.html" (dict "color" "#007AFF" "size" 16) }}
                             {{ else if eq .Section "timeline" }}
                             {{ partial "icons/clock.html" (dict "color" "#FF5E3A" "size" 16) }}

@@ -50,23 +50,30 @@
     <!-- macOS Menu Bar -->
     <div class="menubar">
         <div class="menubar-left">
-            <div class="apple-menu" onclick="toggleAppleMenu(event)">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="white">
+            <div class="apple-menu" role="button" tabindex="0" aria-label="Apple Menu" aria-haspopup="true"
+                aria-expanded="false" onclick="toggleAppleMenu(event)"
+                onkeydown="if(event.key === 'Enter' || event.key === ' ') { toggleAppleMenu(event); event.preventDefault(); }">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="white" aria-hidden="true">
                     <path
                         d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
                 </svg>
-                <div class="apple-dropdown" id="apple-dropdown">
-                    <div class="dropdown-item" onclick="openAboutThisMac(); closeDropdowns()">About This Site</div>
-                    <div class="dropdown-divider"></div>
-                    <div class="dropdown-item" onclick="closeAllWindows(); closeDropdowns()">Close All Windows</div>
-                    <div class="dropdown-item" onclick="tileWindows(); closeDropdowns()">Tile Windows</div>
-                    <div class="dropdown-divider"></div>
-                    <div class="dropdown-item" onclick="location.reload()">Refresh</div>
+                <div class="apple-dropdown" id="apple-dropdown" role="menu">
+                    <div class="dropdown-item" role="menuitem" tabindex="0"
+                        onclick="openAboutThisMac(); closeDropdowns()">About This Site</div>
+                    <div class="dropdown-divider" aria-hidden="true"></div>
+                    <div class="dropdown-item" role="menuitem" tabindex="0"
+                        onclick="closeAllWindows(); closeDropdowns()">Close All Windows</div>
+                    <div class="dropdown-item" role="menuitem" tabindex="0" onclick="tileWindows(); closeDropdowns()">
+                        Tile Windows</div>
+                    <div class="dropdown-divider" aria-hidden="true"></div>
+                    <div class="dropdown-item" role="menuitem" tabindex="0" onclick="location.reload()">Refresh</div>
                 </div>
             </div>
-            <div class="menu-item active finder-menu" onclick="toggleFinderMenu(event)">
+            <div class="menu-item active finder-menu" role="button" tabindex="0" aria-haspopup="true"
+                onclick="toggleFinderMenu(event)"
+                onkeydown="if(event.key === 'Enter' || event.key === ' ') { toggleFinderMenu(event); event.preventDefault(); }">
                 <span id="active-app-name">Finder</span>
-                <div class="finder-dropdown" id="finder-dropdown">
+                <div class="finder-dropdown" id="finder-dropdown" role="menu">
                     <div class="dropdown-label">Windows</div>
                     <div id="finder-windows-list">
                         <div class="dropdown-item empty">No windows open</div>
@@ -75,14 +82,17 @@
             </div>
         </div>
         <div class="menubar-right">
-            <div class="menubar-icon" onclick="toggleSpotlightFromMenu()" title="Search (⌘+Space)">
+            <div class="menubar-icon" role="button" tabindex="0" aria-label="Spotlight Search"
+                onclick="toggleSpotlightFromMenu()"
+                onkeydown="if(event.key === 'Enter' || event.key === ' ') { toggleSpotlightFromMenu(); event.preventDefault(); }"
+                title="Search (⌘+Space)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"
-                    stroke-linecap="round" stroke-linejoin="round">
+                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <circle cx="11" cy="11" r="8"></circle>
                     <path d="m21 21-4.3-4.3"></path>
                 </svg>
             </div>
-            <span class="menu-status" id="clock"></span>
+            <span class="menu-status" id="clock" aria-label="Clock"></span>
         </div>
     </div>
 
