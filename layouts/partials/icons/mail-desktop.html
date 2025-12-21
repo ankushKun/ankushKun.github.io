@@ -1,11 +1,56 @@
-{{/* Mail Desktop Icon - 64x64 SVG */}}
-<svg viewBox="0 0 80 80" width="64" height="64">
+{{/* Mail Desktop Icon - 64x64 SVG - Ultra Skeuomorphic Style */}}
+<svg viewBox="0 0 64 64" width="64" height="64">
     <defs>
-        <linearGradient id="mailGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" style="stop-color:#5AC8FA" />
-            <stop offset="100%" style="stop-color:#007AFF" />
+        <!-- Paper Texture for Envelope -->
+        <linearGradient id="envelopeBody" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#f8fcff" />
+            <stop offset="100%" style="stop-color:#dbe9f4" />
+        </linearGradient>
+
+        <!-- Blue Stamp Gradient -->
+        <linearGradient id="stampBlue" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#4facfe" />
+            <stop offset="100%" style="stop-color:#00f2fe" />
+        </linearGradient>
+
+        <!-- Shadow for the Flap -->
+        <linearGradient id="flapShadow" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:rgba(0,0,0,0.1)" />
+            <stop offset="100%" style="stop-color:rgba(0,0,0,0)" />
         </linearGradient>
     </defs>
-    <rect x="8" y="16" width="64" height="48" rx="4" fill="url(#mailGrad)" />
-    <polyline points="8,20 40,44 72,20" stroke="white" stroke-width="3" fill="none" />
+
+    <filter id="mailShadow">
+        <feGaussianBlur in="SourceAlpha" stdDeviation="2" />
+        <feOffset dx="0" dy="2" />
+        <feComponentTransfer>
+            <feFuncA type="linear" slope="0.3" />
+        </feComponentTransfer>
+        <feMerge>
+            <feMergeNode />
+            <feMergeNode in="SourceGraphic" />
+        </feMerge>
+    </filter>
+
+    <g filter="url(#mailShadow)">
+        <!-- Envelope Body -->
+        <rect x="8" y="20" width="48" height="32" rx="2" fill="url(#envelopeBody)" stroke="#cce0f0"
+            stroke-width="0.5" />
+
+        <!-- Bottom Fold (V shape) -->
+        <path d="M8 20 L32 40 L56 20 L56 52 L8 52 Z" fill="url(#envelopeBody)" />
+        <path d="M8 52 L32 40 L56 52" fill="#bfd6e7" opacity="0.3" /> <!-- Bottom shadow -->
+
+        <!-- Top Flap (Open slightly) -->
+        <path d="M8 20 L32 38 L56 20" fill="#ecf5fb" stroke="#abc" stroke-width="0.5" />
+
+        <!-- Stamp (The Classic 'At' Symbol aesthetics) -->
+        <circle cx="32" cy="34" r="8" fill="url(#stampBlue)" opacity="0.9" />
+        <path d="M32 30 a4 4 0 1 1 -4 4" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" />
+        <path d="M36 34 v0.5 a4.5 4.5 0 0 1 -9 0 a4.5 4.5 0 0 1 9 0" fill="none" stroke="white" stroke-width="1.5"
+            stroke-linecap="round" />
+
+        <!-- Glossy sheen on stamp -->
+        <circle cx="29" cy="31" r="2" fill="white" opacity="0.3" />
+    </g>
 </svg>
