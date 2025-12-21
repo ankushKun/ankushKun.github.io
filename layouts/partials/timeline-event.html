@@ -1,0 +1,20 @@
+{{/* Timeline Event - reusable timeline event layout */}}
+{{/* Usage: {{ partial "timeline-event.html" . }} where . is a Page */}}
+<article class="timeline-event">
+    <!-- Event Header with Date Badge -->
+    <header class="event-header">
+        <div class="event-date-badge">
+            <span class="event-month">{{ .Date.Format "Jan" }}</span>
+            <span class="event-year">{{ .Date.Format "2006" }}</span>
+        </div>
+        <div class="event-title-area">
+            <h1>{{ .Title }}</h1>
+            {{ with .Params.summary }}<p class="event-summary">{{ . }}</p>{{ end }}
+        </div>
+    </header>
+
+    <!-- Event Content -->
+    <div class="event-content">
+        {{ .Content }}
+    </div>
+</article>

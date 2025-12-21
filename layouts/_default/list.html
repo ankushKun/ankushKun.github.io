@@ -1,18 +1,89 @@
 {{ define "main" }}
-<section class="list-section">
-    <h1 class="section-title">{{ .Title }}</h1>
-    {{ .Content }}
+{{/* Check if this is a content-only section (no child pages) */}}
+{{ $hasContent := gt (len .Content) 0 }}
+{{ $hasPages := gt (len .Pages) 0 }}
 
-    <div class="post-list">
-        {{ range .Pages }}
-        <article class="post-card">
-            <h2><a href="{{ .Permalink }}">{{ .Title }}</a></h2>
-            <time datetime="{{ .Date.Format " 2006-01-02" }}">{{ .Date.Format "January 2, 2006" }}</time>
-            {{ if .Summary }}
-            <p>{{ .Summary }}</p>
-            {{ end }}
-        </article>
-        {{ end }}
+{{ if and $hasContent (not $hasPages) }}
+{{/* Content-only sections like Contact, Wins */}}
+<div class="static-window">
+    <!-- Titlebar -->
+    <div class="window-titlebar">
+        {{ partial "traffic-lights.html" (dict "closeLink" "/") }}
+        <div class="window-title">{{ .Title }}</div>
+        <a href="{{ .Permalink }}" target="_blank" class="titlebar-link" title="Open in new tab">↗</a>
     </div>
-</section>
+
+    <!-- Content -->
+    <div class="window-content" style="padding: 24px;">
+        {{ .Content }}
+    </div>
+</div>
+{{ else }}
+{{/* Finder-style list for sections with child pages */}}
+{{ $finderTitle := "" }}
+{{ if eq .Section "projects" }}{{ $finderTitle = "🚀 Projects" }}
+{{ else if eq .Section "blog" }}{{ $finderTitle = "📝 Blog Posts" }}
+{{ else if eq .Section "timeline" }}{{ $finderTitle = "⏰ Timeline" }}
+{{ else }}{{ $finderTitle = .Title }}{{ end }}
+
+{{ $nameHeader := "Name" }}
+{{ if eq .Section "timeline" }}{{ $nameHeader = "Event" }}{{ end }}
+
+{{ $dateHeader := "Date" }}
+{{ if eq .Section "projects" }}{{ $dateHeader = "Year" }}{{ end }}
+
+<div class="static-window">
+    <!-- Titlebar -->
+    <div class="window-titlebar">
+        {{ partial "traffic-lights.html" (dict "closeLink" "/") }}
+        <div class="window-title">{{ .Title }}</div>
+    </div>
+
+    <!-- Content - Finder Style -->
+    <div class="window-content" style="display: flex; flex-direction: column; padding: 0;">
+        <div class="finder-window" style="display: flex; flex-direction: column; height: 100%;">
+            <!-- Toolbar -->
+            <div class="finder-toolbar">
+                <span class="finder-title">{{ $finderTitle }}</span>
+                <span class="finder-count">{{ len .Pages }} items</span>
+            </div>
+
+            <!-- Content Area -->
+            <div class="finder-content">
+                <div class="finder-list-view">
+                    <!-- Header -->
+                    <div class="finder-header">
+                        <span class="col-icon"></span>
+                        <span class="col-name">{{ $nameHeader }}</span>
+                        <span class="col-date">{{ $dateHeader }}</span>
+                    </div>
+
+                    <!-- List Items -->
+                    {{ range .Pages.ByDate.Reverse }}
+                    <a href="{{ .RelPermalink }}" class="finder-row">
+                        <span class="col-icon">
+                            {{ if eq .Section "projects" }}
+                            {{ partial "icons/folder.html" (dict "color" "#FF9500" "size" 16) }}
+                            {{ else if eq .Section "blog" }}
+                            {{ partial "icons/document.html" (dict "color" "#007AFF" "size" 16) }}
+                            {{ else if eq .Section "timeline" }}
+                            {{ partial "icons/clock.html" (dict "color" "#FF5E3A" "size" 16) }}
+                            {{ else }}
+                            {{ partial "icons/document.html" (dict "color" "#999" "size" 16) }}
+                            {{ end }}
+                        </span>
+                        <span class="col-name">{{ .Title }}</span>
+                        <span class="col-date">
+                            {{ if eq .Section "projects" }}{{ .Date.Format "2006" }}
+                            {{ else if eq .Section "timeline" }}{{ .Date.Format "Jan 2006" }}
+                            {{ else }}{{ .Date.Format "Jan 2, 2006" }}{{ end }}
+                        </span>
+                    </a>
+                    {{ end }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{ end }}
 {{ end }}

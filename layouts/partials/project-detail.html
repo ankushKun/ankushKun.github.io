@@ -1,0 +1,43 @@
+{{/* Project Detail - reusable project layout */}}
+{{/* Usage: {{ partial "project-detail.html" . }} where . is a Page */}}
+<article class="project-detail">
+    <!-- Hero Section -->
+    <div class="project-hero">
+        <div class="project-header-content">
+            <h1 class="project-title">{{ .Title }}</h1>
+            <div class="project-meta">
+                <span class="project-badge">{{ .Date.Format "Jan 2006" }}</span>
+                {{ if .Params.tags }}
+                {{ range .Params.tags }}<span class="project-badge tag">{{ . }}</span>{{ end }}
+                {{ end }}
+            </div>
+            {{ with .Params.summary }}<p class="project-lead">{{ . }}</p>{{ end }}
+        </div>
+    </div>
+
+    <!-- Action Bar -->
+    {{ if or .Params.website .Params.github .Params.demo }}
+    <div class="project-actions">
+        {{ with .Params.website }}
+        <a href="{{ . }}" target="_blank" class="action-btn primary">
+            <span class="btn-icon">🌐</span> Website
+        </a>
+        {{ end }}
+        {{ with .Params.demo }}
+        <a href="{{ . }}" target="_blank" class="action-btn">
+            <span class="btn-icon">🎮</span> Demo
+        </a>
+        {{ end }}
+        {{ with .Params.github }}
+        <a href="https://github.com/{{ . }}" target="_blank" class="action-btn secondary">
+            <span class="btn-icon">📦</span> GitHub
+        </a>
+        {{ end }}
+    </div>
+    {{ end }}
+
+    <!-- Main Content -->
+    <div class="project-content markdown-body">
+        {{ .Content }}
+    </div>
+</article>

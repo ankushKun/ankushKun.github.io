@@ -1,0 +1,27 @@
+{{/* Desktop Icon - reusable macOS-style desktop icon */}}
+{{/*
+Usage:
+{{ partial "desktop-icon.html" (dict
+"window" "about"
+"title" "About Me"
+"label" "About Me"
+"image" "/pfp.png"
+) }}
+OR for SVG:
+{{ partial "desktop-icon.html" (dict
+"window" "projects"
+"title" "Projects"
+"label" "Projects"
+"svg" "<svg>...</svg>"
+) }}
+*/}}
+<div class="desktop-icon" data-window="{{ .window }}" data-title="{{ .title }}">
+    <div class="icon-image">
+        {{ if .image }}
+        <img src="{{ .image }}" alt="{{ .label }}" width="64" height="64">
+        {{ else if .svg }}
+        {{ .svg | safeHTML }}
+        {{ end }}
+    </div>
+    <span class="icon-label">{{ .label }}</span>
+</div>
