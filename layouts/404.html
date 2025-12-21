@@ -1,0 +1,101 @@
+{{ define "main" }}
+<div class="static-window centered-window">
+    <div class="window-titlebar">
+        {{ partial "traffic-lights.html" (dict "closeLink" "/") }}
+        <div class="window-title">Error</div>
+    </div>
+    <div class="window-content error-content">
+        <div class="error-icon">⚠️</div>
+        <h1>404</h1>
+        <p>The content you are looking for could not be found.</p>
+        <a href="/" class="action-btn primary">Back to Desktop</a>
+    </div>
+</div>
+
+<style>
+    .centered-window {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 400px;
+        height: auto;
+        min-height: 250px;
+        background: var(--window-bg);
+        border-radius: 6px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--window-border);
+        z-index: 1000;
+        /* Override generic static window animation which only translates X */
+        animation: centeredWindowOpen 0.3s cubic-bezier(0.19, 1, 0.22, 1) !important;
+    }
+
+    @keyframes centeredWindowOpen {
+        0% {
+            transform: translate(-50%, -50%) scale(0.95);
+            opacity: 0;
+        }
+
+        100% {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+    }
+
+    .error-content {
+        padding: 30px 20px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+    }
+
+    .error-icon {
+        font-size: 48px;
+        margin-bottom: 16px;
+    }
+
+    .error-content h1 {
+        font-size: 32px;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #333;
+    }
+
+    .error-content p {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 24px;
+    }
+
+    .action-btn.primary {
+        background: linear-gradient(180deg, #6CB3FA 0%, #007AFF 100%);
+        color: white;
+        border: 1px solid #0056B3;
+        border-radius: 4px;
+        padding: 6px 16px;
+        font-size: 13px;
+        font-weight: 500;
+        text-decoration: none;
+        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+        transition: all 0.1s;
+    }
+
+    .action-btn.primary:active {
+        background: #0056B3;
+        transform: translateY(1px);
+    }
+
+    /* Mobile override for 404 */
+    @media (max-width: 480px) {
+        .centered-window {
+            width: 90%;
+            min-width: 280px;
+        }
+    }
+</style>
+{{ end }}
