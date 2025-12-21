@@ -19,11 +19,384 @@
         setupDesktopClick();
         setupAppleMenuClose();
         setupExternalLinks();
+        setupKeyboardShortcuts();
 
         // Auto-open About Me window on page load
         setTimeout(() => {
             openWindow('about', 'About Me');
         }, 300);
+    }
+
+    // Keyboard Shortcuts
+    function setupKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            const modKey = e.metaKey || e.ctrlKey;
+
+            console.log(modKey, e.key);
+
+            // Cmd/Ctrl + W: Close active window
+            if (modKey && e.key === 'w') {
+                e.preventDefault();
+                if (activeWindow) {
+                    const id = activeWindow.dataset.windowId;
+                    closeWindow(activeWindow, id);
+                }
+            }
+
+            // Cmd/Ctrl + M: Minimize active window
+            if (modKey && e.key === 'm') {
+                e.preventDefault();
+                if (activeWindow) {
+                    const minimizeBtn = activeWindow.querySelector('.traffic-light.minimize');
+                    if (minimizeBtn) minimizeBtn.click();
+                }
+            }
+
+            // Cmd/Ctrl + H: Hide all windows (show desktop)
+            if (modKey && e.key === 'h') {
+                e.preventDefault();
+                openWindows.forEach((win) => {
+                    win.style.display = 'none';
+                });
+                deactivateAllWindows();
+                activeWindow = null;
+                const activeAppName = document.getElementById('active-app-name');
+                if (activeAppName) activeAppName.textContent = 'Finder';
+            }
+
+            // Cmd/Ctrl + ` (backtick): Cycle through windows
+            if (modKey && e.key === '`') {
+                e.preventDefault();
+                cycleWindows();
+            }
+
+            // Cmd/Ctrl + Space: Open Spotlight search
+            if (modKey && e.key === ' ') {
+                e.preventDefault();
+                toggleSpotlight();
+            }
+
+            // Escape: Close Spotlight, deselect everything
+            if (e.key === 'Escape') {
+                // Close Spotlight if open
+                const spotlight = document.getElementById('spotlight-overlay');
+                if (spotlight) {
+                    spotlight.remove();
+                    return;
+                }
+
+                document.querySelectorAll('.desktop-icon').forEach(i => i.classList.remove('selected'));
+                // Close any open dropdowns
+                const appleDropdown = document.getElementById('apple-dropdown');
+                const finderDropdown = document.getElementById('finder-dropdown');
+                if (appleDropdown) appleDropdown.classList.remove('open');
+                if (finderDropdown) finderDropdown.classList.remove('open');
+            }
+        });
+    }
+
+    // Cycle through open windows
+    function cycleWindows() {
+        const windows = Array.from(openWindows.values()).filter(w => w.style.display !== 'none');
+        if (windows.length === 0) return;
+
+        if (!activeWindow || !windows.includes(activeWindow)) {
+            bringToFront(windows[0]);
+            return;
+        }
+
+        const currentIndex = windows.indexOf(activeWindow);
+        const nextIndex = (currentIndex + 1) % windows.length;
+        bringToFront(windows[nextIndex]);
+    }
+
+    // Expose Spotlight toggle for menubar click
+    window.toggleSpotlightFromMenu = function () {
+        toggleSpotlight();
+    };
+
+    // Spotlight Search
+    function toggleSpotlight() {
+        let spotlight = document.getElementById('spotlight-overlay');
+
+        if (spotlight) {
+            spotlight.remove();
+            return;
+        }
+
+        // Create spotlight overlay
+        spotlight = document.createElement('div');
+        spotlight.id = 'spotlight-overlay';
+        spotlight.innerHTML = `
+            <div class="spotlight-container">
+                <div class="spotlight-search">
+                    <svg class="spotlight-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.3-4.3"></path>
+                    </svg>
+                    <input type="text" id="spotlight-input" placeholder="Search..." autocomplete="off" spellcheck="false">
+                </div>
+                <div class="spotlight-results" id="spotlight-results"></div>
+            </div>
+        `;
+        document.body.appendChild(spotlight);
+
+        // Add styles if not already present
+        if (!document.getElementById('spotlight-styles')) {
+            const styles = document.createElement('style');
+            styles.id = 'spotlight-styles';
+            styles.textContent = `
+                #spotlight-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.4);
+                    display: flex;
+                    justify-content: center;
+                    align-items: flex-start;
+                    padding-top: 20vh;
+                    z-index: 100000;
+                    animation: spotlightFadeIn 0.15s ease;
+                }
+                @keyframes spotlightFadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                .spotlight-container {
+                    width: 680px;
+                    max-width: 90%;
+                    background: rgba(30, 30, 30, 0.98);
+                    backdrop-filter: blur(40px);
+                    -webkit-backdrop-filter: blur(40px);
+                    border-radius: 10px;
+                    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6), 
+                                0 0 0 1px rgba(255, 255, 255, 0.1),
+                                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+                    overflow: hidden;
+                    animation: spotlightSlideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+                }
+                @keyframes spotlightSlideIn {
+                    from { transform: scale(0.96) translateY(-10px); opacity: 0; }
+                    to { transform: scale(1) translateY(0); opacity: 1; }
+                }
+                .spotlight-search {
+                    display: flex;
+                    align-items: center;
+                    padding: 14px 18px;
+                    gap: 12px;
+                }
+                .spotlight-icon {
+                    color: rgba(255, 255, 255, 0.5);
+                    flex-shrink: 0;
+                }
+                #spotlight-input {
+                    flex: 1;
+                    background: transparent;
+                    border: none;
+                    outline: none;
+                    font-size: 20px;
+                    color: white;
+                    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+                    font-weight: 300;
+                    letter-spacing: -0.3px;
+                }
+                #spotlight-input::placeholder {
+                    color: rgba(255, 255, 255, 0.35);
+                }
+                .spotlight-results {
+                    max-height: 380px;
+                    overflow-y: auto;
+                    border-top: 1px solid rgba(255, 255, 255, 0.08);
+                }
+                .spotlight-results:empty {
+                    display: none;
+                }
+                .spotlight-result {
+                    display: flex;
+                    align-items: center;
+                    padding: 10px 18px;
+                    cursor: pointer;
+                    transition: background 0.08s;
+                    gap: 12px;
+                }
+                .spotlight-result:hover, .spotlight-result.selected {
+                    background: rgba(0, 122, 255, 0.9);
+                }
+                .spotlight-result-icon {
+                    font-size: 22px;
+                    width: 28px;
+                    text-align: center;
+                    flex-shrink: 0;
+                }
+                .spotlight-result-content {
+                    flex: 1;
+                    min-width: 0;
+                }
+                .spotlight-result-title {
+                    color: white;
+                    font-size: 14px;
+                    font-weight: 500;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                .spotlight-result-type {
+                    color: rgba(255, 255, 255, 0.5);
+                    font-size: 11px;
+                    margin-top: 1px;
+                }
+                .spotlight-result.selected .spotlight-result-type {
+                    color: rgba(255, 255, 255, 0.7);
+                }
+                .spotlight-no-results {
+                    padding: 24px 18px;
+                    text-align: center;
+                    color: rgba(255, 255, 255, 0.4);
+                    font-size: 13px;
+                }
+                .spotlight-hint {
+                    padding: 10px 18px;
+                    color: rgba(255, 255, 255, 0.3);
+                    font-size: 11px;
+                    text-align: center;
+                    border-top: 1px solid rgba(255, 255, 255, 0.06);
+                }
+            `;
+            document.head.appendChild(styles);
+        }
+
+        // Focus input
+        const input = document.getElementById('spotlight-input');
+        input.focus();
+
+        // Build search index from page content
+        const searchIndex = buildSearchIndex();
+
+        // Handle search
+        let selectedIndex = -1;
+        input.addEventListener('input', () => {
+            const query = input.value.toLowerCase().trim();
+            const results = query ? searchIndex.filter(item =>
+                item.title.toLowerCase().includes(query) ||
+                item.type.toLowerCase().includes(query)
+            ).slice(0, 8) : [];
+
+            renderResults(results);
+            selectedIndex = results.length > 0 ? 0 : -1;
+            updateSelection();
+        });
+
+        // Keyboard navigation
+        input.addEventListener('keydown', (e) => {
+            const results = document.querySelectorAll('.spotlight-result');
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                selectedIndex = Math.min(selectedIndex + 1, results.length - 1);
+                updateSelection();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                selectedIndex = Math.max(selectedIndex - 1, 0);
+                updateSelection();
+            } else if (e.key === 'Enter' && selectedIndex >= 0) {
+                e.preventDefault();
+                results[selectedIndex].click();
+            }
+        });
+
+        function updateSelection() {
+            document.querySelectorAll('.spotlight-result').forEach((el, i) => {
+                el.classList.toggle('selected', i === selectedIndex);
+            });
+        }
+
+        function renderResults(results) {
+            const container = document.getElementById('spotlight-results');
+            if (results.length === 0 && input.value.trim()) {
+                container.innerHTML = '<div class="spotlight-no-results">No results found</div>';
+                return;
+            }
+            container.innerHTML = results.map(item => `
+                <div class="spotlight-result" data-window="${item.windowId}" data-title="${item.title}">
+                    <span class="spotlight-result-icon">${item.icon}</span>
+                    <div class="spotlight-result-content">
+                        <div class="spotlight-result-title">${item.title}</div>
+                        <div class="spotlight-result-type">${item.type}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Add click handlers
+            container.querySelectorAll('.spotlight-result').forEach(el => {
+                el.addEventListener('click', () => {
+                    const windowId = el.dataset.window;
+                    const title = el.dataset.title;
+                    spotlight.remove();
+                    openWindow(windowId, title);
+                });
+            });
+        }
+
+        // Click outside to close
+        spotlight.addEventListener('click', (e) => {
+            if (e.target === spotlight) {
+                spotlight.remove();
+            }
+        });
+    }
+
+    // Build search index from page content
+    function buildSearchIndex() {
+        const index = [];
+
+        // Desktop icons (main sections)
+        document.querySelectorAll('.desktop-icon').forEach(icon => {
+            const windowId = icon.dataset.window;
+            const title = icon.dataset.title;
+            if (windowId && title) {
+                index.push({
+                    windowId,
+                    title,
+                    type: 'Section',
+                    icon: getIconForType('section')
+                });
+            }
+        });
+
+        // Finder items (projects, blogs, timeline)
+        document.querySelectorAll('.finder-row[data-window]').forEach(row => {
+            const windowId = row.dataset.window;
+            const title = row.dataset.title;
+            if (windowId && title) {
+                let type = 'Item';
+                let icon = '📄';
+                if (windowId.startsWith('project-')) {
+                    type = 'Project';
+                    icon = '📁';
+                } else if (windowId.startsWith('post-')) {
+                    type = 'Blog Post';
+                    icon = '📝';
+                } else if (windowId.startsWith('timeline-')) {
+                    type = 'Timeline Event';
+                    icon = '⏰';
+                }
+                index.push({ windowId, title, type, icon });
+            }
+        });
+
+        return index;
+    }
+
+    function getIconForType(type) {
+        const icons = {
+            'section': '📂',
+            'project': '📁',
+            'post': '📝',
+            'timeline': '⏰'
+        };
+        return icons[type] || '📄';
     }
 
     // Clock
@@ -41,7 +414,15 @@
                 minute: '2-digit',
                 hour12: true
             };
-            clock.textContent = now.toLocaleDateString('en-US', options);
+            let timeStr = now.toLocaleDateString('en-US', options);
+
+            // Blink the colon on odd seconds
+            if (now.getSeconds() % 2 === 1) {
+                // Replace the time colon (between hour and minute) with a space
+                timeStr = timeStr.replace(/(\d+):(\d{2})/, '$1 $2');
+            }
+
+            clock.textContent = timeStr;
         }
 
         updateClock();

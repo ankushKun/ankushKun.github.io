@@ -5,8 +5,18 @@ title = "AnkushKun OS"
 # Enable emoji support
 enableEmoji = true
 
+# Enable sitemap and robots.txt
+enableRobotsTXT = false # We have custom robots.txt in static/
+
 # Suppress raw HTML warnings
 ignoreLogs = ['warning-goldmark-raw-html']
+
+# Site params for SEO
+[params]
+description = "Ankush Singh - Software Engineer, Developer Tools Builder, Entrepreneur in Residence at Forward Research"
+author = "Ankush Singh"
+twitter = "@ankushKun_"
+github = "ankushKun"
 
 # Syntax highlighting & markdown rendering
 [markup]
@@ -15,6 +25,12 @@ style = 'monokai'
 lineNos = false
 [markup.goldmark.renderer]
 unsafe = true
+
+# Sitemap configuration
+[sitemap]
+changefreq = 'weekly'
+filename = 'sitemap.xml'
+priority = 0.5
 
 # Navigation menu
 [menu]

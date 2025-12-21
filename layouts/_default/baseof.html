@@ -4,8 +4,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ .Site.Title }}{{ end }}">
-    <title>{{ .Site.Title }}</title>
+
+    <!-- SEO Meta Tags -->
+    <title>{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }} | {{ .Site.Title }}{{ end }}</title>
+    <meta name="description"
+        content="{{ with .Description }}{{ . }}{{ else }}{{ with .Summary }}{{ . }}{{ else }}Ankush Singh - Software Engineer, Developer Tools Builder, Entrepreneur in Residence at Forward Research{{ end }}{{ end }}">
+    <meta name="author" content="Ankush Singh">
+    <meta name="keywords"
+        content="Ankush Singh, Software Engineer, Developer Tools, Arweave, AO, Web3, Blockchain, BetterIDEa, Forward Research">
+    <link rel="canonical" href="{{ .Permalink }}">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="{{ if .IsPage }}article{{ else }}website{{ end }}">
+    <meta property="og:url" content="{{ .Permalink }}">
+    <meta property="og:title" content="{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }}{{ end }}">
+    <meta property="og:description"
+        content="{{ with .Description }}{{ . }}{{ else }}{{ with .Summary }}{{ . }}{{ else }}Ankush Singh - Software Engineer & Developer Tools Builder{{ end }}{{ end }}">
+    <meta property="og:image" content="{{ .Site.BaseURL }}pfp.png">
+    <meta property="og:site_name" content="{{ .Site.Title }}">
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@ankushKun_">
+    <meta name="twitter:creator" content="@ankushKun_">
+    <meta name="twitter:title" content="{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }}{{ end }}">
+    <meta name="twitter:description"
+        content="{{ with .Description }}{{ . }}{{ else }}{{ with .Summary }}{{ . }}{{ else }}Ankush Singh - Software Engineer & Developer Tools Builder{{ end }}{{ end }}">
+    <meta name="twitter:image" content="{{ .Site.BaseURL }}pfp.png">
+
+    <!-- Styles -->
     {{ $mainStyle := resources.Get "css/main.css" }}
     <link rel="stylesheet" href="{{ $mainStyle.Permalink }}">
     {{ $style := resources.Get "css/mavericks.css" }}
@@ -14,6 +41,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Text:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="icon" href="/pfp.png" type="image/x-icon">
+
+    <!-- PostHog Analytics -->
+    {{ partial "posthog.html" . }}
 </head>
 
 <body>
@@ -45,6 +75,13 @@
             </div>
         </div>
         <div class="menubar-right">
+            <div class="menubar-icon" onclick="toggleSpotlightFromMenu()" title="Search (⌘+Space)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.3-4.3"></path>
+                </svg>
+            </div>
             <span class="menu-status" id="clock"></span>
         </div>
     </div>
