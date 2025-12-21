@@ -1,20 +1,20 @@
 <!DOCTYPE html>
-<html lang="{{ .Site.LanguageCode }}">
+<html lang="en-us">
 
-<head>
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ .Site.Title }}{{ end }}">
-    <title>{{ .Site.Title }}</title>
-    {{ $style := resources.Get "css/mavericks.css" }}
-    <link rel="stylesheet" href="{{ $style.Permalink }}">
+    <meta name="description" content="Ankush Kun">
+    <title>Ankush Kun</title>
+    
+    <link rel="stylesheet" href="http://localhost:1313/css/mavericks.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Text:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 
 <body>
-    <!-- macOS Menu Bar -->
+    
     <div class="menubar">
         <div class="menubar-left">
             <div class="apple-menu">
@@ -36,12 +36,44 @@
         </div>
     </div>
 
-    <!-- Desktop -->
+    
     <div class="desktop" id="desktop">
-        {{ block "main" . }}{{ end }}
+        
+<article class="single-post">
+    <header class="post-header">
+        <h1>Hello World</h1>
+        <time datetime=" 2024-12-21">December 21, 2024</time>
+    </header>
+
+    <div class="post-content">
+        <p>Welcome to my new blog! 🎉</p>
+<p>This is my first post on this Hugo-powered website. I&rsquo;m excited to share my thoughts, projects, and learnings with you.</p>
+<h2 id="what-to-expect">What to Expect</h2>
+<p>I&rsquo;ll be writing about:</p>
+<ul>
+<li><strong>Development</strong> - Tips, tutorials, and insights from my coding adventures</li>
+<li><strong>Projects</strong> - Deep dives into projects I&rsquo;m working on</li>
+<li><strong>Tech</strong> - Thoughts on new technologies and trends</li>
+</ul>
+<h2 id="stay-tuned">Stay Tuned</h2>
+<p>More posts coming soon. Thanks for visiting!</p>
+
     </div>
 
-    <!-- Window Container -->
+    
+    <div class="post-tags">
+        
+        <a href="/%20/tags/welcome" class="tag">#welcome</a>
+        
+        <a href="/%20/tags/first-post" class="tag">#first-post</a>
+        
+    </div>
+    
+</article>
+
+    </div>
+
+    
     <div class="windows-container" id="windows-container"></div>
 
     <script src="/js/mavericks.js"></script>

@@ -1,20 +1,20 @@
 <!DOCTYPE html>
-<html lang="{{ .Site.LanguageCode }}">
+<html lang="en-us">
 
-<head>
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ .Site.Title }}{{ end }}">
-    <title>{{ .Site.Title }}</title>
-    {{ $style := resources.Get "css/mavericks.css" }}
-    <link rel="stylesheet" href="{{ $style.Permalink }}">
+    <meta name="description" content="Ankush Kun">
+    <title>Ankush Kun</title>
+    
+    <link rel="stylesheet" href="http://localhost:1313/css/mavericks.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Text:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 
 <body>
-    <!-- macOS Menu Bar -->
+    
     <div class="menubar">
         <div class="menubar-left">
             <div class="apple-menu">
@@ -36,12 +36,37 @@
         </div>
     </div>
 
-    <!-- Desktop -->
+    
     <div class="desktop" id="desktop">
-        {{ block "main" . }}{{ end }}
+        
+<section class="list-section">
+    <h1 class="section-title">Contact</h1>
+    <h2 id="get-in-touch">Get in Touch</h2>
+<p>I&rsquo;d love to hear from you! Whether you have a question, want to collaborate, or just want to say hi, feel free to reach out.</p>
+<h3 id="connect-with-me">Connect With Me</h3>
+<ul>
+<li><strong>GitHub</strong> – <a href="https://github.com/ankushKun">github.com/ankushKun</a></li>
+<li><strong>Email</strong> – <a href="mailto:hello@ankush.one">hello@ankush.one</a></li>
+<li><strong>Twitter/X</strong> – <a href="https://twitter.com/ankushKun">@ankushKun</a></li>
+</ul>
+<h3 id="collaborate">Collaborate</h3>
+<p>Interested in working together? I&rsquo;m always open to:</p>
+<ul>
+<li>Open source contributions</li>
+<li>Technical consulting</li>
+<li>Interesting project collaborations</li>
+</ul>
+<p><em>Looking forward to connecting!</em></p>
+
+
+    <div class="post-list">
+        
+    </div>
+</section>
+
     </div>
 
-    <!-- Window Container -->
+    
     <div class="windows-container" id="windows-container"></div>
 
     <script src="/js/mavericks.js"></script>

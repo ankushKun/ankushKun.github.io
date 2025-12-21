@@ -1,20 +1,20 @@
 <!DOCTYPE html>
-<html lang="{{ .Site.LanguageCode }}">
+<html lang="en-us">
 
-<head>
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ .Site.Title }}{{ end }}">
-    <title>{{ .Site.Title }}</title>
-    {{ $style := resources.Get "css/mavericks.css" }}
-    <link rel="stylesheet" href="{{ $style.Permalink }}">
+    <meta name="description" content="Ankush Kun">
+    <title>Ankush Kun</title>
+    
+    <link rel="stylesheet" href="http://localhost:1313/css/mavericks.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Text:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 
 <body>
-    <!-- macOS Menu Bar -->
+    
     <div class="menubar">
         <div class="menubar-left">
             <div class="apple-menu">
@@ -36,12 +36,21 @@
         </div>
     </div>
 
-    <!-- Desktop -->
+    
     <div class="desktop" id="desktop">
-        {{ block "main" . }}{{ end }}
+        
+<section class="list-section">
+    <h1 class="section-title">Categories</h1>
+    
+
+    <div class="post-list">
+        
+    </div>
+</section>
+
     </div>
 
-    <!-- Window Container -->
+    
     <div class="windows-container" id="windows-container"></div>
 
     <script src="/js/mavericks.js"></script>

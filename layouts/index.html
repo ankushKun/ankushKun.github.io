@@ -1,0 +1,194 @@
+{{ define "main" }}
+<!-- Desktop Icons -->
+<div class="desktop-icons">
+    <!-- About Icon -->
+    <div class="desktop-icon" data-window="about" data-title="About Me">
+        <div class="icon-image folder-icon">
+            <svg viewBox="0 0 80 80" width="64" height="64">
+                <defs>
+                    <linearGradient id="folderGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#6DCCF8" />
+                        <stop offset="100%" style="stop-color:#3B9FD8" />
+                    </linearGradient>
+                </defs>
+                <path d="M8 20 L32 20 L36 12 L72 12 L72 68 L8 68 Z" fill="url(#folderGrad)" stroke="#2980b9"
+                    stroke-width="1" />
+                <path d="M8 24 L72 24 L72 68 L8 68 Z" fill="url(#folderGrad)" />
+            </svg>
+        </div>
+        <span class="icon-label">About Me</span>
+    </div>
+
+    <!-- Blog Icon -->
+    <div class="desktop-icon" data-window="blog" data-title="Blog">
+        <div class="icon-image folder-icon">
+            <svg viewBox="0 0 80 80" width="64" height="64">
+                <defs>
+                    <linearGradient id="docGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#FFFFFF" />
+                        <stop offset="100%" style="stop-color:#E8E8E8" />
+                    </linearGradient>
+                </defs>
+                <path d="M16 8 L52 8 L64 20 L64 72 L16 72 Z" fill="url(#docGrad)" stroke="#999" stroke-width="1" />
+                <path d="M52 8 L52 20 L64 20" fill="#DDD" stroke="#999" stroke-width="1" />
+                <line x1="24" y1="32" x2="56" y2="32" stroke="#CCC" stroke-width="2" />
+                <line x1="24" y1="40" x2="56" y2="40" stroke="#CCC" stroke-width="2" />
+                <line x1="24" y1="48" x2="48" y2="48" stroke="#CCC" stroke-width="2" />
+                <line x1="24" y1="56" x2="52" y2="56" stroke="#CCC" stroke-width="2" />
+            </svg>
+        </div>
+        <span class="icon-label">Blog</span>
+    </div>
+
+    <!-- Projects Icon -->
+    <div class="desktop-icon" data-window="projects" data-title="Projects">
+        <div class="icon-image folder-icon">
+            <svg viewBox="0 0 80 80" width="64" height="64">
+                <defs>
+                    <linearGradient id="gearGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#8E8E93" />
+                        <stop offset="100%" style="stop-color:#636366" />
+                    </linearGradient>
+                </defs>
+                <circle cx="40" cy="40" r="28" fill="url(#gearGrad)" />
+                <circle cx="40" cy="40" r="12" fill="#48484A" />
+                <g fill="url(#gearGrad)">
+                    <rect x="36" y="4" width="8" height="12" rx="2" />
+                    <rect x="36" y="64" width="8" height="12" rx="2" />
+                    <rect x="4" y="36" width="12" height="8" rx="2" />
+                    <rect x="64" y="36" width="12" height="8" rx="2" />
+                    <rect x="12" y="12" width="8" height="12" rx="2" transform="rotate(45 16 18)" />
+                    <rect x="60" y="12" width="8" height="12" rx="2" transform="rotate(-45 64 18)" />
+                    <rect x="12" y="56" width="8" height="12" rx="2" transform="rotate(-45 16 62)" />
+                    <rect x="60" y="56" width="8" height="12" rx="2" transform="rotate(45 64 62)" />
+                </g>
+            </svg>
+        </div>
+        <span class="icon-label">Projects</span>
+    </div>
+
+    <!-- Contact Icon -->
+    <div class="desktop-icon" data-window="contact" data-title="Contact">
+        <div class="icon-image folder-icon">
+            <svg viewBox="0 0 80 80" width="64" height="64">
+                <defs>
+                    <linearGradient id="mailGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#5AC8FA" />
+                        <stop offset="100%" style="stop-color:#007AFF" />
+                    </linearGradient>
+                </defs>
+                <rect x="8" y="16" width="64" height="48" rx="4" fill="url(#mailGrad)" />
+                <polyline points="8,20 40,44 72,20" stroke="white" stroke-width="3" fill="none" />
+            </svg>
+        </div>
+        <span class="icon-label">Contact</span>
+    </div>
+</div>
+
+<!-- Hidden content containers for windows -->
+<div id="window-contents" style="display: none;">
+    <!-- About Content -->
+    <div id="content-about">
+        {{ with .Site.GetPage "/about" }}
+        {{ .Content }}
+        {{ else }}
+        <h1>About Me</h1>
+        <p>Welcome to my personal website!</p>
+        {{ end }}
+    </div>
+
+    <!-- Blog Content - Finder-style list -->
+    <div id="content-blog">
+        <h1>📝 Blog Posts</h1>
+        <div class="finder-list">
+            {{ $blog := .Site.GetPage "/blog" }}
+            {{ with $blog }}
+            {{ range .Pages }}
+            <div class="finder-item" data-window="post-{{ .File.UniqueID }}" data-title="{{ .Title }}"
+                data-url="{{ .RelPermalink }}">
+                <svg viewBox="0 0 24 24" width="20" height="20">
+                    <path fill="#007AFF"
+                        d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z" />
+                </svg>
+                <span>{{ .Title }}</span>
+                <span class="finder-date">{{ .Date.Format "Jan 2, 2006" }}</span>
+            </div>
+            {{ end }}
+            {{ else }}
+            <p class="empty-message">No blog posts yet.</p>
+            {{ end }}
+        </div>
+    </div>
+
+    <!-- Projects Content - Finder-style list -->
+    <div id="content-projects">
+        <h1>🚀 Projects</h1>
+        <div class="finder-list">
+            {{ $projects := .Site.GetPage "/projects" }}
+            {{ with $projects }}
+            {{ range .Pages }}
+            <div class="finder-item" data-window="project-{{ .File.UniqueID }}" data-title="{{ .Title }}"
+                data-url="{{ .RelPermalink }}">
+                <svg viewBox="0 0 24 24" width="20" height="20">
+                    <path fill="#FF9500"
+                        d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" />
+                </svg>
+                <span>{{ .Title }}</span>
+            </div>
+            {{ end }}
+            {{ else }}
+            <p class="empty-message">No projects yet.</p>
+            {{ end }}
+        </div>
+    </div>
+
+    <!-- Contact Content -->
+    <div id="content-contact">
+        {{ with .Site.GetPage "/contact" }}
+        {{ .Content }}
+        {{ else }}
+        <h1>📧 Contact</h1>
+        <p>Feel free to reach out!</p>
+        <div class="contact-links">
+            <a href="https://github.com/ankushKun" target="_blank" class="contact-link">
+                <span class="contact-icon">🐙</span> GitHub
+            </a>
+            <a href="mailto:contact@ankush.one" class="contact-link">
+                <span class="contact-icon">✉️</span> Email
+            </a>
+        </div>
+        {{ end }}
+    </div>
+</div>
+
+<!-- Blog post content templates (hidden, used by JS) -->
+{{ $blog := .Site.GetPage "/blog" }}
+{{ with $blog }}
+{{ range .Pages }}
+<div id="content-post-{{ .File.UniqueID }}" style="display: none;">
+    <article class="blog-post">
+        <h1>{{ .Title }}</h1>
+        <time>{{ .Date.Format "January 2, 2006" }}</time>
+        <div class="post-body">
+            {{ .Content }}
+        </div>
+    </article>
+</div>
+{{ end }}
+{{ end }}
+
+<!-- Project content templates (hidden, used by JS) -->
+{{ $projects := .Site.GetPage "/projects" }}
+{{ with $projects }}
+{{ range .Pages }}
+<div id="content-project-{{ .File.UniqueID }}" style="display: none;">
+    <article class="project-page">
+        <h1>{{ .Title }}</h1>
+        <div class="project-body">
+            {{ .Content }}
+        </div>
+    </article>
+</div>
+{{ end }}
+{{ end }}
+{{ end }}

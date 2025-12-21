@@ -1,20 +1,20 @@
 <!DOCTYPE html>
-<html lang="{{ .Site.LanguageCode }}">
+<html lang="en-us">
 
-<head>
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ .Site.Title }}{{ end }}">
-    <title>{{ .Site.Title }}</title>
-    {{ $style := resources.Get "css/mavericks.css" }}
-    <link rel="stylesheet" href="{{ $style.Permalink }}">
+    <meta name="description" content="Ankush Kun">
+    <title>Ankush Kun</title>
+    
+    <link rel="stylesheet" href="http://localhost:1313/css/mavericks.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Text:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 
 <body>
-    <!-- macOS Menu Bar -->
+    
     <div class="menubar">
         <div class="menubar-left">
             <div class="apple-menu">
@@ -36,12 +36,36 @@
         </div>
     </div>
 
-    <!-- Desktop -->
+    
     <div class="desktop" id="desktop">
-        {{ block "main" . }}{{ end }}
+        
+<section class="list-section">
+    <h1 class="section-title">About</h1>
+    <h2 id="hello-">Hello! 👋</h2>
+<p>I&rsquo;m <strong>Ankush</strong>, a passionate developer who loves building innovative software and exploring new technologies.</p>
+<h3 id="what-i-do">What I Do</h3>
+<p>I specialize in creating elegant solutions to complex problems. Whether it&rsquo;s web development, blockchain, or system design, I enjoy diving deep into new challenges.</p>
+<h3 id="skills--interests">Skills &amp; Interests</h3>
+<ul>
+<li><strong>Web Development</strong> – React, Next.js, Hugo, and more</li>
+<li><strong>Blockchain</strong> – Arweave, Ethereum, Smart Contracts</li>
+<li><strong>Languages</strong> – TypeScript, Rust, Python, Go</li>
+<li><strong>Tools</strong> – Git, Docker, Linux</li>
+</ul>
+<h3 id="philosophy">Philosophy</h3>
+<p>I believe in writing clean, maintainable code and building products that make a difference. Every project is an opportunity to learn something new.</p>
+<hr>
+<p><em>Thanks for visiting! Feel free to explore my blog and projects.</em></p>
+
+
+    <div class="post-list">
+        
+    </div>
+</section>
+
     </div>
 
-    <!-- Window Container -->
+    
     <div class="windows-container" id="windows-container"></div>
 
     <script src="/js/mavericks.js"></script>
