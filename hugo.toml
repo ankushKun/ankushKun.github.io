@@ -35,14 +35,15 @@ priority = 0.5
 # Navigation menu
 [menu]
 [[menu.main]]
-name = "About"
-url = "/about/"
-weight = 1
-[[menu.main]]
-name = "Blog"
-url = "/blog/"
-weight = 2
 [[menu.main]]
 name = "Projects"
 url = "/projects/"
+weight = 1
+[[menu.main]]
+name = "Blogs"
+url = "/blogs/"
+weight = 2
+[[menu.main]]
+name = "Timeline"
+url = "/timeline/"
 weight = 3

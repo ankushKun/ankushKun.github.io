@@ -377,7 +377,7 @@
                     type = 'Project';
                     icon = '📁';
                 } else if (windowId.startsWith('post-')) {
-                    type = 'Blog Post';
+                    type = 'Blogs';
                     icon = '📝';
                 } else if (windowId.startsWith('timeline-')) {
                     type = 'Timeline Event';
@@ -651,6 +651,10 @@
 
     window.toggleAppleMenu = function (e) {
         e.stopPropagation();
+
+        // If click is inside the dropdown, do nothing (let item handlers manage it)
+        if (e.target.closest('.apple-dropdown')) return;
+
         const dropdown = document.getElementById('apple-dropdown');
         if (dropdown) {
             dropdown.classList.toggle('open');
@@ -663,6 +667,10 @@
     // Finder Menu - Show open windows
     window.toggleFinderMenu = function (e) {
         e.stopPropagation();
+
+        // If click is inside the dropdown, do nothing
+        if (e.target.closest('.finder-dropdown')) return;
+
         const dropdown = document.getElementById('finder-dropdown');
         if (!dropdown) return;
 
@@ -821,7 +829,7 @@
     };
 
     // Window Management
-    function openWindow(id, title, size = { width: 1000, height: 700 }) {
+    async function openWindow(id, title, size = { width: 1000, height: 700 }, permalink = null) {
         // Check if window already exists
         if (openWindows.has(id)) {
             const existingWindow = openWindows.get(id);
@@ -829,16 +837,23 @@
             return;
         }
 
-        // Get content
+        // 1. Try to get content from existing DOM element (e.g. About, Contact)
         const contentElement = document.getElementById(`content-${id}`);
-        if (!contentElement) {
-            console.error(`Content element not found: content-${id}`);
+        let content = '';
+
+        if (contentElement) {
+            content = contentElement.innerHTML;
+            if (!permalink) {
+                permalink = contentElement.getAttribute('data-permalink');
+            }
+        } else if (permalink) {
+            // 2. If no DOM element but we have a permalink, we need to fetch it
+            console.log(`Fetching content for ${id} from ${permalink}`);
+            content = `<div class="window-loader"><div class="spinner"></div></div>`;
+        } else {
+            console.error(`Content not found for ${id}`);
             return;
         }
-
-        const content = contentElement.innerHTML;
-        const permalink = contentElement.getAttribute('data-permalink');
-        console.log(`OpenWindow: ${id}, Permalink: ${permalink}`);
 
         // Create window
         const win = createWindowElement(id, title, content, size, permalink);
@@ -883,6 +898,45 @@
         setupFinderItems(win);
 
         bringToFront(win);
+
+        // If we need to fetch content, do it now
+        if (!contentElement && permalink) {
+            try {
+                const response = await fetch(permalink);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const html = await response.text();
+
+                // Parse HTML to extract the content
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+
+                // We assume the content is inside .window-content or .static-window .window-content
+                // Based on window-frame.html, it's inside .window-content
+                const fetchedContent = doc.querySelector('.window-content');
+
+                if (fetchedContent) {
+                    const winContent = win.querySelector('.window-content');
+                    if (winContent) {
+                        winContent.innerHTML = fetchedContent.innerHTML;
+                        // Re-setup finder items just in case the fetched content has links
+                        setupFinderItems(win);
+                    }
+                } else {
+                    throw new Error('Could not find content in fetched page');
+                }
+            } catch (err) {
+                console.error('Failed to fetch content:', err);
+                const winContent = win.querySelector('.window-content');
+                if (winContent) {
+                    winContent.innerHTML = `
+                        <div style="padding: 20px; text-align: center; color: #666;">
+                            <p>Failed to load content.</p>
+                            <a href="${permalink}" target="_blank" class="fallback-btn" style="margin-top: 10px;">Open in New Tab</a>
+                        </div>
+                    `;
+                }
+            }
+        }
     }
 
     function createWindowElement(id, title, content, size, permalink = null) {
@@ -1140,12 +1194,25 @@
     function setupFinderItems(win) {
         const items = win.querySelectorAll('.finder-item, .finder-row');
         items.forEach(item => {
-            item.addEventListener('click', () => {
-                const windowId = item.dataset.window;
-                const title = item.dataset.title;
-                if (windowId && title) {
-                    openWindow(windowId, title, { width: 900, height: 650 });
-                }
+            items.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    // If it's a focusable item, allow click
+                    const windowId = item.dataset.window;
+                    const title = item.dataset.title;
+                    const permalink = item.dataset.permalink;
+
+                    if (windowId && title) {
+                        openWindow(windowId, title, { width: 900, height: 650 }, permalink);
+                    }
+                });
+
+                // Allow Enter key to trigger click for accessibility
+                item.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        item.click();
+                    }
+                });
             });
         });
     }

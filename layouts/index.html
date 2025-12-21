@@ -12,8 +12,8 @@
     {{ partial "desktop-icon.html" (dict "window" "projects" "title" "Projects" "label" "Projects" "svg" (partial
     "icons/folder-desktop.html" .)) }}
 
-    <!-- Blog Icon -->
-    {{ partial "desktop-icon.html" (dict "window" "blog" "title" "Blog" "label" "Blog" "svg" (partial
+    <!-- Blogs Icon -->
+    {{ partial "desktop-icon.html" (dict "window" "blogs" "title" "Blogs" "label" "Blogs" "svg" (partial
     "icons/document-desktop.html" .)) }}
 
     <!-- Timeline Icon -->
@@ -156,12 +156,12 @@
     </div>
 
     <!-- BLOG LIST - Finder Layout -->
-    {{ $blog := .Site.GetPage "/blog" }}
+    {{ $blog := .Site.GetPage "/blogs" }}
     {{ with $blog }}
     {{ partial "finder-list.html" (dict
-    "id" "blog"
+    "id" "blogs"
     "icon" "📝"
-    "title" "Blog Posts"
+    "title" "Blogs"
     "pages" .Pages.ByDate.Reverse
     "prefix" "post"
     "countLabel" "items"
@@ -272,36 +272,5 @@
 <!-- ============================================== -->
 <!-- BLOG POST TEMPLATES -->
 <!-- ============================================== -->
-{{ $blog := .Site.GetPage "/blog" }}
-{{ with $blog }}
-{{ range .Pages }}
-<div id="content-post-{{ .File.UniqueID }}" data-permalink="{{ .Permalink }}" style="display: none;">
-    {{ partial "blog-article.html" . }}
-</div>
-{{ end }}
-{{ end }}
-
-<!-- ============================================== -->
-<!-- PROJECT TEMPLATES -->
-<!-- ============================================== -->
-{{ $projects := .Site.GetPage "/projects" }}
-{{ with $projects }}
-{{ range .Pages }}
-<div id="content-project-{{ .File.UniqueID }}" data-permalink="{{ .Permalink }}" style="display: none;">
-    {{ partial "project-detail.html" . }}
-</div>
-{{ end }}
-{{ end }}
-
-<!-- ============================================== -->
-<!-- TIMELINE TEMPLATES -->
-<!-- ============================================== -->
-{{ $timeline := .Site.GetPage "/timeline" }}
-{{ with $timeline }}
-{{ range .Pages }}
-<div id="content-timeline-{{ .File.UniqueID }}" data-permalink="{{ .Permalink }}" style="display: none;">
-    {{ partial "timeline-event.html" . }}
-</div>
-{{ end }}
-{{ end }}
+{{/* Content for posts, projects, and timeline are now lazy-loaded via fetch */}}
 {{ end }}
