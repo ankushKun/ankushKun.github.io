@@ -9,6 +9,7 @@
     let windowZIndex = 100;
     let activeWindow = null;
     const openWindows = new Map();
+    const windowHistory = [];
 
     // Initialize
     document.addEventListener('DOMContentLoaded', init);
@@ -320,7 +321,7 @@
                 return;
             }
             container.innerHTML = results.map(item => `
-                <div class="spotlight-result" data-window="${item.windowId}" data-title="${item.title}">
+                <div class="spotlight-result" data-window="${item.windowId}" data-title="${item.title}" data-permalink="${item.permalink || ''}">
                     <span class="spotlight-result-icon">${item.icon}</span>
                     <div class="spotlight-result-content">
                         <div class="spotlight-result-title">${item.title}</div>
@@ -334,8 +335,9 @@
                 el.addEventListener('click', () => {
                     const windowId = el.dataset.window;
                     const title = el.dataset.title;
+                    const permalink = el.dataset.permalink;
                     spotlight.remove();
-                    openWindow(windowId, title);
+                    openWindow(windowId, title, { width: 900, height: 650 }, permalink || null);
                 });
             });
         }
@@ -370,6 +372,8 @@
         document.querySelectorAll('.finder-row[data-window]').forEach(row => {
             const windowId = row.dataset.window;
             const title = row.dataset.title;
+            const permalink = row.dataset.permalink; // Capture permalink
+
             if (windowId && title) {
                 let type = 'Item';
                 let icon = '📄';
@@ -383,7 +387,7 @@
                     type = 'Timeline Event';
                     icon = '⏰';
                 }
-                index.push({ windowId, title, type, icon });
+                index.push({ windowId, title, type, icon, permalink });
             }
         });
 
@@ -457,6 +461,7 @@
                 // Reset menubar to Finder
                 const activeAppName = document.getElementById('active-app-name');
                 if (activeAppName) activeAppName.textContent = 'Finder';
+                history.replaceState(null, 'Home', '/');
             }
         });
     }
@@ -944,6 +949,26 @@
         win.className = 'window';
         win.dataset.windowId = id;
 
+        // Calculate URL path for deep linking
+        let urlPath = '/';
+        if (permalink) {
+            try {
+                // If permalink is a full URL, extract path
+                urlPath = new URL(permalink, window.location.origin).pathname;
+            } catch (e) { urlPath = permalink; }
+        } else {
+            // Map IDs to paths
+            const map = {
+                'projects': '/projects/',
+                'blogs': '/blogs/',
+                'timeline': '/timeline/',
+                'wins': '/wins/',
+                'contact': '/contact/'
+            };
+            if (map[id]) urlPath = map[id];
+        }
+        win.dataset.path = urlPath;
+
         const linkHtml = permalink
             ? `<a href="${permalink}" target="_blank" class="titlebar-link" title="Open in new tab">↗</a>`
             : '';
@@ -972,12 +997,26 @@
         setTimeout(() => {
             win.remove();
             openWindows.delete(id);
+
+            // Remove from history
+            const histIndex = windowHistory.indexOf(win);
+            if (histIndex > -1) {
+                windowHistory.splice(histIndex, 1);
+            }
+
             if (activeWindow === win) {
                 activeWindow = null;
-                // Reset to Finder if no windows
-                if (openWindows.size === 0) {
+
+                // Try to activate previous window
+                if (windowHistory.length > 0) {
+                    const prevWin = windowHistory[windowHistory.length - 1];
+                    bringToFront(prevWin);
+                } else {
+                    // Reset to Finder if no windows
                     const activeAppName = document.getElementById('active-app-name');
                     if (activeAppName) activeAppName.textContent = 'Finder';
+                    // Reset URL to desktop
+                    history.replaceState(null, 'Home', '/');
                 }
             }
         }, 150);
@@ -999,6 +1038,19 @@
         const activeAppName = document.getElementById('active-app-name');
         if (activeAppName) {
             activeAppName.textContent = title;
+        }
+
+        // Update History
+        const index = windowHistory.indexOf(win);
+        if (index > -1) {
+            windowHistory.splice(index, 1);
+        }
+        windowHistory.push(win);
+
+        // Update Browser URL (Deep Linking)
+        const path = win.dataset.path;
+        if (path && path !== '/') {
+            history.replaceState(null, title, path);
         }
     }
 
