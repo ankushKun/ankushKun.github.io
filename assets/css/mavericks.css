@@ -1873,8 +1873,10 @@ body::before {
     }
 
     .dropdown-item {
-        padding: 8px 14px;
+        padding: 4px 16px;
         font-size: 14px;
+        justify-content: flex-start;
+        align-items: center;
     }
 
     /* ===== Windows ===== */

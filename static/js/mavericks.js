@@ -18,6 +18,7 @@
         setupDesktopIcons();
         setupDesktopClick();
         setupAppleMenuClose();
+        setupDropdownItemClose();
         setupExternalLinks();
         setupKeyboardShortcuts();
 
@@ -633,6 +634,21 @@
         });
     }
 
+    // Close dropdowns when clicking on dropdown items
+    function setupDropdownItemClose() {
+        document.addEventListener('click', (e) => {
+            // Check if clicked element is a dropdown item
+            if (e.target.classList.contains('dropdown-item') || e.target.closest('.dropdown-item')) {
+                const appleDropdown = document.getElementById('apple-dropdown');
+                const finderDropdown = document.getElementById('finder-dropdown');
+
+                // Close both dropdowns
+                if (appleDropdown) appleDropdown.classList.remove('open');
+                if (finderDropdown) finderDropdown.classList.remove('open');
+            }
+        });
+    }
+
     window.toggleAppleMenu = function (e) {
         e.stopPropagation();
         const dropdown = document.getElementById('apple-dropdown');
@@ -696,6 +712,14 @@
             });
         });
     }
+
+    // Global function to close all dropdowns
+    window.closeDropdowns = function () {
+        const appleDropdown = document.getElementById('apple-dropdown');
+        const finderDropdown = document.getElementById('finder-dropdown');
+        if (appleDropdown) appleDropdown.classList.remove('open');
+        if (finderDropdown) finderDropdown.classList.remove('open');
+    };
 
     window.closeAllWindows = function () {
         const dropdown = document.getElementById('apple-dropdown');
