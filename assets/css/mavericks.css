@@ -1,0 +1,574 @@
+/* ================================================
+   macOS X 10.9 Mavericks Theme
+   ================================================ */
+
+/* CSS Variables */
+:root {
+    --menubar-height: 24px;
+    --window-titlebar-height: 22px;
+    --menubar-bg: rgba(36, 36, 36, 0.95);
+    --window-bg: #ECECEC;
+    --window-titlebar: linear-gradient(180deg, #E8E8E8 0%, #D0D0D0 100%);
+    --window-titlebar-inactive: linear-gradient(180deg, #F6F6F6 0%, #E8E8E8 100%);
+    --window-border: #A0A0A0;
+    --window-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 5px 20px rgba(0, 0, 0, 0.3);
+    --text-color: #333;
+    --text-secondary: #666;
+    --accent-blue: #007AFF;
+    --traffic-red: #FF5F57;
+    --traffic-yellow: #FEBC2E;
+    --traffic-green: #28C840;
+    --font-system: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Lucida Grande", sans-serif;
+}
+
+/* Reset */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Base */
+html,
+body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: var(--font-system);
+    font-size: 13px;
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+}
+
+body {
+    /* Mavericks wave wallpaper gradient approximation */
+    background: linear-gradient(180deg,
+            #1a3a5c 0%,
+            #2d5a7b 25%,
+            #4a8ab0 50%,
+            #6bb5d8 75%,
+            #89c9e4 100%);
+    background-attachment: fixed;
+}
+
+/* ================================================
+   Menu Bar
+   ================================================ */
+.menubar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--menubar-height);
+    background: var(--menubar-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 8px;
+    z-index: 10000;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+}
+
+.menubar-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.apple-menu {
+    display: flex;
+    align-items: center;
+    padding: 2px 8px;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+.apple-menu:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.menu-item {
+    color: white;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 2px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.menu-item:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.menu-item.active {
+    font-weight: 600;
+}
+
+.menubar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    color: white;
+    font-size: 12px;
+}
+
+.menu-status {
+    font-weight: 500;
+}
+
+/* ================================================
+   Desktop
+   ================================================ */
+.desktop {
+    position: fixed;
+    top: var(--menubar-height);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 20px;
+}
+
+.desktop-icons {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    align-content: flex-end;
+    gap: 8px;
+    height: 100%;
+    padding-right: 10px;
+}
+
+.desktop-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 80px;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.1s ease;
+}
+
+.desktop-icon:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.desktop-icon.selected {
+    background: rgba(0, 122, 255, 0.4);
+}
+
+.desktop-icon:active {
+    background: rgba(0, 122, 255, 0.6);
+}
+
+.icon-image {
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+}
+
+.icon-label {
+    color: white;
+    font-size: 11px;
+    font-weight: 500;
+    text-align: center;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6), 0 0 10px rgba(0, 0, 0, 0.3);
+    line-height: 1.3;
+    max-width: 76px;
+    word-wrap: break-word;
+}
+
+/* ================================================
+   Windows
+   ================================================ */
+.windows-container {
+    position: fixed;
+    top: var(--menubar-height);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+
+.window {
+    position: absolute;
+    background: var(--window-bg);
+    border-radius: 6px;
+    box-shadow: var(--window-shadow);
+    min-width: 400px;
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    pointer-events: auto;
+    border: 1px solid var(--window-border);
+}
+
+.window.inactive .window-titlebar {
+    background: var(--window-titlebar-inactive);
+}
+
+.window.inactive .window-title {
+    color: #999;
+}
+
+.window.inactive .traffic-light span {
+    background: #CDCDCD !important;
+}
+
+.window-titlebar {
+    height: var(--window-titlebar-height);
+    background: var(--window-titlebar);
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    cursor: grab;
+    flex-shrink: 0;
+    border-bottom: 1px solid #B0B0B0;
+    border-radius: 6px 6px 0 0;
+}
+
+.window-titlebar:active {
+    cursor: grabbing;
+}
+
+.traffic-lights {
+    display: flex;
+    gap: 6px;
+    position: relative;
+}
+
+.traffic-light {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+}
+
+.traffic-light.close {
+    background: var(--traffic-red);
+    border: 1px solid #E14640;
+}
+
+.traffic-light.minimize {
+    background: var(--traffic-yellow);
+    border: 1px solid #DEA123;
+}
+
+.traffic-light.maximize {
+    background: var(--traffic-green);
+    border: 1px solid #1AAB29;
+}
+
+.traffic-light span {
+    display: none;
+    font-size: 10px;
+    font-weight: bold;
+    line-height: 1;
+    color: rgba(0, 0, 0, 0.5);
+}
+
+.window-titlebar:hover .traffic-light span {
+    display: block;
+}
+
+.traffic-light.close span::after {
+    content: "×";
+}
+
+.traffic-light.minimize span::after {
+    content: "−";
+}
+
+.traffic-light.maximize span::after {
+    content: "+";
+}
+
+.window-title {
+    flex: 1;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: #4A4A4A;
+    margin-right: 46px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.window-content {
+    flex: 1;
+    overflow: auto;
+    padding: 16px;
+    background: white;
+    color: var(--text-color);
+}
+
+.window-content::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.window-content::-webkit-scrollbar-track {
+    background: #F0F0F0;
+}
+
+.window-content::-webkit-scrollbar-thumb {
+    background: #C0C0C0;
+    border-radius: 4px;
+}
+
+.window-content::-webkit-scrollbar-thumb:hover {
+    background: #A0A0A0;
+}
+
+/* Window resize handle */
+.window-resize {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 16px;
+    height: 16px;
+    cursor: nwse-resize;
+}
+
+/* ================================================
+   Finder-style Content
+   ================================================ */
+.finder-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 16px;
+}
+
+.finder-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.1s ease;
+}
+
+.finder-item:hover {
+    background: rgba(0, 122, 255, 0.1);
+}
+
+.finder-item:active {
+    background: var(--accent-blue);
+    color: white;
+}
+
+.finder-item:active svg path {
+    fill: white;
+}
+
+.finder-item span {
+    flex: 1;
+}
+
+.finder-date {
+    color: var(--text-secondary);
+    font-size: 11px;
+    flex: 0 0 auto !important;
+}
+
+/* ================================================
+   Content Styling
+   ================================================ */
+.window-content h1 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 16px;
+}
+
+.window-content h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2a2a2a;
+    margin-top: 24px;
+    margin-bottom: 12px;
+}
+
+.window-content h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #3a3a3a;
+    margin-top: 20px;
+    margin-bottom: 8px;
+}
+
+.window-content p {
+    line-height: 1.6;
+    margin-bottom: 12px;
+    color: #444;
+}
+
+.window-content ul,
+.window-content ol {
+    margin: 12px 0;
+    padding-left: 24px;
+}
+
+.window-content li {
+    margin-bottom: 6px;
+    color: #444;
+}
+
+.window-content a {
+    color: var(--accent-blue);
+    text-decoration: none;
+}
+
+.window-content a:hover {
+    text-decoration: underline;
+}
+
+.window-content code {
+    background: #F4F4F4;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: "SF Mono", Menlo, Monaco, monospace;
+    font-size: 12px;
+    color: #E83E8C;
+}
+
+.window-content pre {
+    background: #2D2D2D;
+    color: #F8F8F2;
+    padding: 16px;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 16px 0;
+}
+
+.window-content pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+}
+
+.window-content blockquote {
+    border-left: 3px solid var(--accent-blue);
+    padding-left: 16px;
+    margin: 16px 0;
+    color: #666;
+    font-style: italic;
+}
+
+.window-content img {
+    max-width: 100%;
+    border-radius: 6px;
+    margin: 12px 0;
+}
+
+/* Blog Post */
+.blog-post time {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #E0E0E0;
+}
+
+/* Contact */
+.contact-links {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.contact-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: #F5F5F7;
+    border-radius: 8px;
+    color: var(--text-color);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.contact-link:hover {
+    background: #E8E8EA;
+    text-decoration: none;
+}
+
+.contact-icon {
+    font-size: 20px;
+}
+
+/* ================================================
+   Animations
+   ================================================ */
+@keyframes windowOpen {
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes windowClose {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+}
+
+.window.opening {
+    animation: windowOpen 0.2s ease-out forwards;
+}
+
+.window.closing {
+    animation: windowClose 0.15s ease-in forwards;
+}
+
+/* ================================================
+   Responsive
+   ================================================ */
+@media (max-width: 768px) {
+    .desktop-icons {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        justify-content: center;
+        padding: 10px;
+    }
+
+    .window {
+        min-width: 320px;
+        width: calc(100% - 20px) !important;
+        left: 10px !important;
+    }
+
+    .menu-item:not(.active) {
+        display: none;
+    }
+}

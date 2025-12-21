@@ -1,60 +1,27 @@
-baseurl = "https://ankush.one"
-title = "ankushKun"
-theme = "hugo-theme-console"
-languageCode = "en-us"
+baseURL = 'https://ankush.one/'
+languageCode = 'en-us'
+title = 'Ankush Kun'
 
-# SEO: Sitemap configuration
-[sitemap]
-  changefreq = "weekly"
-  filename = "sitemap.xml"
-  priority = 0.5
+# Enable emoji support
+enableEmoji = true
 
-[markup.goldmark.renderer]
-unsafe = true
+# Syntax highlighting
+[markup]
+[markup.highlight]
+style = 'monokai'
+lineNos = false
 
-
-[params]
-# SEO: Site description for meta tags
-description = "Ankush's portfolio - Full-stack developer, open-source contributor, and tech enthusiast. Explore my projects, blog posts, hackathon wins, and development journey."
-
-# SEO: Default OG image
-images = ["/pfp.png"]
-
-# Cutting off the page title to two chars for mobile (console-demo -> co)
-titleCutting = false
-
-# Set the animation style -- https://animate.style/
-# To disable animations, please remove or comment animationStyle parameter
-animateStyle = "animated zoomIn fast"
-
-# SEO: Social media handles
-[params.Social]
-  twitter = "ankushKun_"
-  github = "ankushKun"
-
-# SEO: Author information
-[[params.Authors]]
-  name = "Ankush"
-  twitter = "ankushKun_"
-  github = "ankushKun"
-
-
-[[params.navlinks]]
-name = "./timeline"
-url = "/timeline/"
-
-[[params.navlinks]]
-name = "./projects"
-url = "/projects/"
-
-[[params.navlinks]]
-name = "./wins"
-url = "/wins/"
-
-[[params.navlinks]]
-name = "./blog"
+# Navigation menu
+[menu]
+[[menu.main]]
+name = "About"
+url = "/about/"
+weight = 1
+[[menu.main]]
+name = "Blog"
 url = "/blog/"
-
-[[params.navlinks]]
-name = "./resume.pdf"
-url = "/resume.pdf"
+weight = 2
+[[menu.main]]
+name = "Projects"
+url = "/projects/"
+weight = 3
