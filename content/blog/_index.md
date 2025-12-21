@@ -1,5 +1,6 @@
----
-title: "Blog"
----
++++
+title = "Blog"
+description = "Ankush's blog - Thoughts, tutorials, and learnings about web development, APIs, CI/CD, and open-source software."
++++
 
-Read my latest thoughts, tutorials, and insights.
+Thoughts, learnings, and things I find interesting.
