@@ -1,15 +1,20 @@
 baseURL = 'https://ankush.one/'
 languageCode = 'en-us'
-title = 'Ankush Kun'
+title = "AnkushKun OS"
 
 # Enable emoji support
 enableEmoji = true
 
-# Syntax highlighting
+# Suppress raw HTML warnings
+ignoreLogs = ['warning-goldmark-raw-html']
+
+# Syntax highlighting & markdown rendering
 [markup]
 [markup.highlight]
 style = 'monokai'
 lineNos = false
+[markup.goldmark.renderer]
+unsafe = true
 
 # Navigation menu
 [menu]

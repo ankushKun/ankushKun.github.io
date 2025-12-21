@@ -1,22 +1,29 @@
 ---
 title: "Contact"
+date: 2024-12-21
+description: "Get in touch with Ankush"
 ---
 
-## Get in Touch
+# Let's Connect
 
-I'd love to hear from you! Whether you have a question, want to collaborate, or just want to say hi, feel free to reach out.
+I'm always open to discussing new projects, creative ideas, or opportunities to be part of your visions.
 
-### Connect With Me
+### 📬 Direct Channels
 
-- **GitHub** – [github.com/ankushKun](https://github.com/ankushKun)
-- **Email** – [hello@ankush.one](mailto:hello@ankush.one)
-- **Twitter/X** – [@ankushKun](https://twitter.com/ankushKun)
+- **Email**: [ankush4singh@gmail.com](mailto:ankush4singh@gmail.com)
+- **Book a Call**: [cal.com/ankushkun](https://cal.com/ankushkun/call)
 
-### Collaborate
+### 🌐 Socials
 
-Interested in working together? I'm always open to:
-- Open source contributions
-- Technical consulting
-- Interesting project collaborations
+- **Twitter**: [@ankushKun_](https://x.com/ankushKun_)
+- **GitHub**: [ankushKun](https://github.com/ankushKun) 
+- **Telegram**: [@ankushKun](https://t.me/ankushKun)
+- **Instagram**: [@ankushKun_](https://instagram.com/ankushKun_)
+- **Reddit**: [u/TECHIE6023](https://reddit.com/user/TECHIE6023)
+- **Medium**: [ankushkun.medium.com](https://ankushkun.medium.com)
+- **LinkedIn**: [Ankush Singh](https://linkedin.com/in/ankushkun)
+- **YouTube**: [@AnkushKun](https://youtube.com/@ankushkun) 
 
-*Looking forward to connecting!*
+---
+
+*Feel free to reach out on any of these platforms!*

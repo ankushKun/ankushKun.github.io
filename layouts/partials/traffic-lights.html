@@ -1,0 +1,11 @@
+{{/* Traffic Lights - macOS window control buttons */}}
+{{/* Usage: {{ partial "traffic-lights.html" (dict "closeLink" "/" "showLink" true "permalink" .Permalink) }} */}}
+<div class="traffic-lights">
+    {{ if .closeLink }}
+    <a href="{{ .closeLink }}" class="traffic-light close" title="Close to Desktop"><span></span></a>
+    {{ else }}
+    <div class="traffic-light close"><span></span></div>
+    {{ end }}
+    <div class="traffic-light minimize"><span></span></div>
+    <div class="traffic-light maximize"><span></span></div>
+</div>

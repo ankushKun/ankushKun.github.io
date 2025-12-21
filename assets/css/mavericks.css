@@ -6,12 +6,12 @@
 :root {
     --menubar-height: 24px;
     --window-titlebar-height: 22px;
-    --menubar-bg: rgba(36, 36, 36, 0.95);
-    --window-bg: #ECECEC;
-    --window-titlebar: linear-gradient(180deg, #E8E8E8 0%, #D0D0D0 100%);
-    --window-titlebar-inactive: linear-gradient(180deg, #F6F6F6 0%, #E8E8E8 100%);
-    --window-border: #A0A0A0;
-    --window-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 5px 20px rgba(0, 0, 0, 0.3);
+    --menubar-bg: rgba(36, 36, 36, 0.8);
+    --window-bg: rgba(255, 255, 255, 0.8);
+    --window-titlebar: linear-gradient(180deg, rgba(232, 232, 232, 0.8) 0%, rgba(208, 208, 208, 0.8) 100%);
+    --window-titlebar-inactive: linear-gradient(180deg, rgba(246, 246, 246, 0.8) 0%, rgba(232, 232, 232, 0.8) 100%);
+    --window-border: rgba(160, 160, 160, 0.6);
+    --window-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 5px 20px rgba(0, 0, 0, 0.2);
     --text-color: #333;
     --text-secondary: #666;
     --accent-blue: #007AFF;
@@ -43,14 +43,21 @@ body {
 }
 
 body {
-    /* Mavericks wave wallpaper gradient approximation */
-    background: linear-gradient(180deg,
-            #1a3a5c 0%,
-            #2d5a7b 25%,
-            #4a8ab0 50%,
-            #6bb5d8 75%,
-            #89c9e4 100%);
-    background-attachment: fixed;
+    /* Wallpaper handled by ::before pseudo-element */
+    position: relative;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('/wallpaper.webp') no-repeat center center;
+    background-size: cover;
+    /* transform: scaleX(-1); */
+    z-index: -1;
 }
 
 /* ================================================
@@ -73,10 +80,21 @@ body {
     border-bottom: 1px solid rgba(0, 0, 0, 0.3);
 }
 
+#active-app-name {
+    /* truncate */
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    max-width: calc(100vw - 250px);
+    min-width: 0;
+}
+
 .menubar-left {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 2px;
+    padding-left: 4px;
 }
 
 .apple-menu {
@@ -85,10 +103,54 @@ body {
     padding: 2px 8px;
     cursor: pointer;
     border-radius: 3px;
+    position: relative;
 }
 
 .apple-menu:hover {
     background: rgba(255, 255, 255, 0.1);
+}
+
+.apple-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 2px;
+    background: rgba(40, 40, 40, 0.98);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 6px;
+    min-width: 200px;
+    padding: 4px 0;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-5px);
+    transition: all 0.15s ease;
+    z-index: 10001;
+}
+
+.apple-dropdown.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-item {
+    padding: 6px 16px;
+    color: white;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.1s ease;
+}
+
+.dropdown-item:hover {
+    background: #007AFF;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 4px 0;
 }
 
 .menu-item {
@@ -108,6 +170,61 @@ body {
     font-weight: 600;
 }
 
+/* Finder Menu Dropdown */
+.finder-menu {
+    position: relative;
+}
+
+.finder-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 200px;
+    max-width: 300px;
+    background: rgba(50, 50, 50, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 6px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    padding: 4px 0;
+    margin-top: 4px;
+    z-index: 10000;
+}
+
+.finder-dropdown.open {
+    display: block;
+}
+
+.dropdown-label {
+    padding: 6px 16px 4px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.dropdown-item.empty {
+    color: rgba(255, 255, 255, 0.4);
+    cursor: default;
+}
+
+.dropdown-item.empty:hover {
+    background: none;
+}
+
+.dropdown-item.active-window {
+    font-weight: 600;
+}
+
+.dropdown-item.window-item {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
 .menubar-right {
     display: flex;
     align-items: center;
@@ -118,6 +235,88 @@ body {
 
 .menu-status {
     font-weight: 500;
+}
+
+.status-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 6px;
+    border-radius: 3px;
+    transition: background 0.15s ease;
+}
+
+.status-icon:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.status-icon svg {
+    opacity: 0.9;
+}
+
+.status-icon:hover svg {
+    opacity: 1;
+}
+
+/* About This Mac Window */
+.about-window {
+    min-width: 320px !important;
+    min-height: auto !important;
+}
+
+.about-this-mac {
+    text-align: center;
+    padding: 20px;
+}
+
+.about-this-mac .about-icon {
+    font-size: 64px;
+    margin-bottom: 12px;
+}
+
+.about-this-mac h1 {
+    font-size: 22px;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.about-this-mac .about-version {
+    color: #666;
+    font-size: 12px;
+    margin-bottom: 20px;
+}
+
+.about-this-mac .about-specs {
+    text-align: left;
+    background: #F5F5F7;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.about-this-mac .about-specs p {
+    margin: 6px 0;
+    font-size: 12px;
+}
+
+.about-this-mac .about-links {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+.about-this-mac .about-links a {
+    padding: 6px 12px;
+    background: var(--accent-blue);
+    color: white;
+    border-radius: 4px;
+    font-size: 12px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.about-this-mac .about-links a:hover {
+    background: #0056CC;
 }
 
 /* ================================================
@@ -200,10 +399,13 @@ body {
 .window {
     position: absolute;
     background: var(--window-bg);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
     border-radius: 6px;
     box-shadow: var(--window-shadow);
     min-width: 400px;
     min-height: 300px;
+    height: fit-content;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -219,8 +421,40 @@ body {
     color: #999;
 }
 
-.window.inactive .traffic-light span {
+/* Traffic lights turn gray when inactive */
+.window.inactive .traffic-light {
     background: #CDCDCD !important;
+    border-color: #B0B0B0 !important;
+}
+
+/* Remove background from the symbol span */
+.window.inactive .traffic-light span {
+    background: transparent !important;
+}
+
+.titlebar-link {
+    color: #666;
+    text-decoration: none;
+    font-size: 14px;
+    padding: 2px 6px;
+    margin-right: -4px;
+    /* Align nicer with edge */
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    opacity: 0.7;
+}
+
+.titlebar-link:hover {
+    color: #333;
+    background: rgba(0, 0, 0, 0.05);
+    opacity: 1;
+}
+
+.window.inactive .titlebar-link {
+    display: none;
 }
 
 .window-titlebar {
@@ -310,9 +544,24 @@ body {
 .window-content {
     flex: 1;
     overflow: auto;
-    padding: 16px;
-    background: white;
+    padding: 0;
+    background: rgba(255, 255, 255, 0.8);
     color: var(--text-color);
+    min-height: 0;
+}
+
+/* Child windows (individual items) get padding */
+.window-content .project-detail,
+.window-content .blog-post,
+.window-content .timeline-event,
+.window-content .about-this-mac {
+    padding: 16px;
+}
+
+/* Wins and Contact pages get padding */
+[data-window-id="wins"] .window-content,
+[data-window-id="contact"] .window-content {
+    padding: 16px;
 }
 
 .window-content::-webkit-scrollbar {
@@ -343,6 +592,161 @@ body {
     cursor: nwse-resize;
 }
 
+/* Window Loading Spinner */
+.window-loader {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    z-index: 5;
+    pointer-events: none;
+}
+
+.spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top-color: #007AFF;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* External Window (iframe) Styles */
+.external-window .window-toolbar {
+    display: flex;
+    align-items: center;
+    padding: 6px 12px;
+    background: linear-gradient(180deg, #F0F0F0 0%, #E0E0E0 100%);
+    border-bottom: 1px solid #C0C0C0;
+    gap: 8px;
+}
+
+.url-bar {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    background: white;
+    border: 1px solid #C8C8C8;
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.url-icon {
+    font-size: 11px;
+}
+
+.url-text {
+    color: #666;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+}
+
+.open-external {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: #E8E8E8;
+    border: 1px solid #C8C8C8;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #555;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.open-external:hover {
+    background: #007AFF;
+    color: white;
+    border-color: #007AFF;
+}
+
+.window-iframe-container {
+    flex: 1;
+    background: white;
+    overflow: hidden;
+    position: relative;
+}
+
+.window-iframe-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.iframe-blocked-fallback {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(180deg, #F5F5F7 0%, #E8E8EA 100%);
+    text-align: center;
+    padding: 40px;
+}
+
+.fallback-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.iframe-blocked-fallback h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.iframe-blocked-fallback p {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.fallback-btn {
+    display: inline-block;
+    padding: 10px 24px;
+    background: #007AFF;
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.fallback-btn:hover {
+    background: #0056CC;
+}
+
+.external-window {
+    display: flex;
+    flex-direction: column;
+}
+
+.external-window .window-content {
+    display: none;
+}
+
 /* ================================================
    Finder-style Content
    ================================================ */
@@ -353,37 +757,299 @@ body {
     margin-top: 16px;
 }
 
-.finder-item {
+/* ================================================
+   Finder Window Layout (Lists)
+   ================================================ */
+.finder-window {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.finder-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    background: linear-gradient(180deg, #F6F6F6 0%, #E8E8E8 100%);
+    border-bottom: 1px solid #C0C0C0;
+}
+
+.finder-title {
+    font-weight: 600;
+    font-size: 13px;
+    color: #333;
+}
+
+.finder-count {
+    font-size: 11px;
+    color: #666;
+}
+
+.finder-content {
+    flex: 1;
+    overflow: auto;
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.finder-list-view {
+    display: flex;
+    flex-direction: column;
+}
+
+.finder-header {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 8px;
-    border-radius: 4px;
+    padding: 6px 12px;
+    background: #F5F5F7;
+    border-bottom: 1px solid #D0D0D0;
+    font-size: 11px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: sticky;
+    top: 0;
+}
+
+.finder-row {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid #F0F0F0;
     cursor: pointer;
     transition: background 0.1s ease;
 }
 
-.finder-item:hover {
-    background: rgba(0, 122, 255, 0.1);
+.finder-row:hover {
+    background: rgba(0, 122, 255, 0.08);
 }
 
-.finder-item:active {
+.finder-row:active,
+.finder-row.selected {
     background: var(--accent-blue);
     color: white;
 }
 
-.finder-item:active svg path {
+.finder-row:active .col-date,
+.finder-row.selected .col-date {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.finder-row:active svg path,
+.finder-row.selected svg path {
     fill: white;
 }
 
-.finder-item span {
-    flex: 1;
+.col-icon {
+    width: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.finder-date {
-    color: var(--text-secondary);
+.col-name {
+    flex: 1;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: 12px;
+}
+
+.col-date {
+    width: 100px;
+    font-size: 12px;
+    color: #666;
+    text-align: right;
+}
+
+/* ================================================
+   Project Detail Layout
+   ================================================ */
+.project-header {
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #E0E0E0;
+}
+
+.project-year {
+    font-size: 13px;
+    color: #666;
+}
+
+.project-summary {
+    font-size: 15px;
+    color: #444;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.project-links-bar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 12px 16px;
+    background: #F5F5F7;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.project-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.project-link.website {
+    background: #007AFF;
+    color: white;
+}
+
+.project-link.website:hover {
+    background: #0056CC;
+}
+
+.project-link.github {
+    background: #24292e;
+    color: white;
+}
+
+.project-link.github:hover {
+    background: #1a1e22;
+}
+
+.project-link.demo {
+    background: #34C759;
+    color: white;
+}
+
+.project-link.demo:hover {
+    background: #2da44e;
+}
+
+.project-content {
+    line-height: 1.7;
+}
+
+.project-content h2,
+.project-content h3 {
+    margin-top: 24px;
+    margin-bottom: 12px;
+    color: #1a1a1a;
+}
+
+.project-content h2 {
+    font-size: 20px;
+}
+
+.project-content h3 {
+    font-size: 16px;
+}
+
+/* ================================================
+   Timeline Event Layout
+   ================================================ */
+.timeline-event {
+    max-width: 100%;
+}
+
+.event-header {
+    display: flex;
+    gap: 16px;
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #E0E0E0;
+}
+
+.event-date-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #FF9500 0%, #FF5E3A 100%);
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+
+.event-date-badge .event-month {
+    font-size: 12px;
+    font-weight: 600;
+    color: white;
+    text-transform: uppercase;
+}
+
+.event-date-badge .event-year {
+    font-size: 18px;
+    font-weight: 700;
+    color: white;
+}
+
+.event-title-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.event-title-area h1 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+}
+
+.event-summary {
+    font-size: 14px;
+    color: #666;
+    margin: 0;
+}
+
+.event-content {
+    line-height: 1.7;
+}
+
+.event-content p {
+    margin-bottom: 12px;
+}
+
+/* ================================================
+   Blog Post Layout - See main.css for blog-specific styles
+   ================================================ */
+/* Base blog-post constraints inherited from main.css */
+
+/* Additional styles for blog elements in window context */
+.post-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.post-meta time {
+    font-size: 13px;
+    color: #666;
+}
+
+.post-tags {
+    display: flex;
+    gap: 6px;
+}
+
+.post-tags .tag {
+    padding: 3px 10px;
+    background: #E8E8EA;
+    border-radius: 12px;
     font-size: 11px;
-    flex: 0 0 auto !important;
+    color: #555;
 }
 
 /* ================================================
@@ -470,10 +1136,208 @@ body {
     font-style: italic;
 }
 
+/* ================================================
+   Project Layout - New Consistent Design
+   ================================================ */
+
+.project-detail {
+    max-width: 800px;
+    margin: 0 auto;
+    padding-bottom: 40px;
+}
+
+.project-hero {
+    margin-bottom: 24px;
+    border-bottom: 1px solid #E5E5E5;
+    padding-bottom: 20px;
+}
+
+.project-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 12px 0;
+    line-height: 1.2;
+    color: #1a1a1a;
+}
+
+.project-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.project-badge {
+    background: #F0F0F0;
+    color: #555;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.project-badge.tag {
+    background: #E8F2FF;
+    color: #0066CC;
+}
+
+.project-lead {
+    font-size: 16px;
+    line-height: 1.5;
+    color: #444;
+    margin: 0;
+}
+
+.project-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 32px;
+}
+
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    background: #F5F5F7;
+    color: #333;
+    border: 1px solid #D1D1D6;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.action-btn:hover {
+    background: #E5E5E5;
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+.action-btn.primary {
+    background: #007AFF;
+    color: white;
+    border-color: #0062CC;
+}
+
+.action-btn.primary:hover {
+    background: #0062CC;
+}
+
+.btn-icon {
+    font-size: 14px;
+}
+
+/* Markdown Content Styling */
+.markdown-body {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #333;
+}
+
+.markdown-body h2 {
+    font-size: 20px;
+    margin: 32px 0 16px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #EAEAEA;
+    font-weight: 600;
+}
+
+.markdown-body h3 {
+    font-size: 17px;
+    margin: 24px 0 12px 0;
+    font-weight: 600;
+}
+
+.markdown-body p {
+    margin-bottom: 16px;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+    margin-bottom: 16px;
+    padding-left: 24px;
+}
+
+.markdown-body li {
+    margin-bottom: 6px;
+}
+
+.markdown-body img,
+.markdown-body p img {
+    max-width: min(640px, calc(100% - 48px)) !important;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin: 24px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+    display: block;
+}
+
+.markdown-body blockquote {
+    border-left: 4px solid #DFDFDF;
+    margin: 20px 0;
+    padding: 8px 16px;
+    background: #F9F9F9;
+    color: #666;
+    font-style: italic;
+    border-radius: 0 4px 4px 0;
+}
+
 .window-content img {
     max-width: 100%;
     border-radius: 6px;
     margin: 12px 0;
+}
+
+/* Tables */
+.window-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 13px;
+}
+
+.window-content th,
+.window-content td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid #E0E0E0;
+}
+
+.window-content th {
+    background: #F5F5F7;
+    font-weight: 600;
+    color: #333;
+}
+
+.window-content tr:hover {
+    background: rgba(0, 122, 255, 0.05);
+}
+
+.window-content td a {
+    color: var(--accent-blue);
+}
+
+/* Timeline & Project entry styling */
+.timeline-entry time,
+.project-page time {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #E0E0E0;
+}
+
+/* Better select for window content text */
+.window-content {
+    user-select: text;
+    padding: 0px;
 }
 
 /* Blog Post */
@@ -518,18 +1382,6 @@ body {
 /* ================================================
    Animations
    ================================================ */
-@keyframes windowOpen {
-    0% {
-        opacity: 0;
-        transform: scale(0.8);
-    }
-
-    100% {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
 @keyframes windowClose {
     0% {
         opacity: 1;
@@ -542,12 +1394,371 @@ body {
     }
 }
 
+@keyframes windowOpen {
+    0% {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes windowOpenCentered {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.95);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
 .window.opening {
     animation: windowOpen 0.2s ease-out forwards;
 }
 
+.window.centered.opening {
+    animation: windowOpenCentered 0.2s ease-out forwards;
+}
+
 .window.closing {
     animation: windowClose 0.15s ease-in forwards;
+}
+
+/* ================================================
+   Shortcodes
+   ================================================ */
+.shortcode-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: var(--accent-blue);
+    color: white !important;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 13px;
+    text-decoration: none !important;
+    transition: all 0.2s ease;
+    margin: 4px 4px 4px 0;
+}
+
+.shortcode-button:hover {
+    background: #0056CC;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+}
+
+.shortcode-github {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: #24292e;
+    color: white !important;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 13px;
+    text-decoration: none !important;
+    transition: all 0.2s ease;
+    margin: 4px 4px 4px 0;
+}
+
+.shortcode-github:hover {
+    background: #1a1e22;
+    transform: translateY(-1px);
+}
+
+.shortcode-github svg {
+    flex-shrink: 0;
+}
+
+.youtube-embed {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%;
+    margin: 16px 0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #000;
+}
+
+.youtube-embed iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* ================================================
+   About Section - macOS Finder Style
+   ================================================ */
+.about-finder {
+    height: 100%;
+}
+
+.about-finder .finder-toolbar {
+    border-radius: 0;
+}
+
+.finder-split {
+    display: flex;
+    height: calc(100% - 33px);
+}
+
+/* Sidebar */
+.finder-sidebar {
+    width: 180px;
+    background: linear-gradient(180deg, #E8E8EC 0%, #D8D8DC 100%);
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-right: 1px solid #C0C0C0;
+    flex-shrink: 0;
+}
+
+.sidebar-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    margin-bottom: 12px;
+}
+
+.sidebar-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.sidebar-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: #1a1a1a;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.sidebar-status {
+    font-size: 11px;
+    color: #555;
+    margin-bottom: 16px;
+}
+
+.sidebar-section {
+    width: 100%;
+    margin-bottom: 12px;
+}
+
+.sidebar-label {
+    font-size: 11px;
+    font-weight: bold;
+    color: #7A7A7A;
+    letter-spacing: 0.5px;
+    margin-top: 12px;
+    margin-bottom: 6px;
+    padding-left: 10px;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.sidebar-value {
+    font-size: 12px;
+    color: #333;
+}
+
+.sidebar-links {
+    display: flex;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 16px;
+}
+
+.sidebar-links a {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 12px;
+    color: #333;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+.sidebar-links a:hover {
+    background: var(--accent-blue);
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Main Content */
+.finder-main {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+    background: #F5F5F7;
+}
+
+/* Stats Bar */
+.about-stats-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    padding: 16px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    margin-bottom: 16px;
+}
+
+.stat-item {
+    text-align: center;
+    color: white;
+}
+
+.stat-value {
+    display: block;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.stat-label {
+    display: block;
+    font-size: 10px;
+    opacity: 0.9;
+    margin-top: 2px;
+}
+
+/* Info Panels */
+.info-panel {
+    background: #F5F5F7;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+}
+
+.info-header {
+    font-size: 11px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #E0E0E0;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 13px;
+}
+
+.info-row:not(:last-child) {
+    border-bottom: 1px solid #EAEAEA;
+}
+
+.info-label {
+    color: #333;
+    font-weight: 500;
+}
+
+.info-row a {
+    color: var(--accent-blue);
+    text-decoration: none;
+}
+
+.info-row a:hover {
+    text-decoration: underline;
+}
+
+.info-badge {
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.info-badge.acquired {
+    background: #34C759;
+    color: white;
+}
+
+.info-badge.core {
+    background: #007AFF;
+    color: white;
+}
+
+.info-badge.funded {
+    background: #FF9500;
+    color: white;
+}
+
+.info-text {
+    font-size: 13px;
+    line-height: 1.6;
+    color: #444;
+    margin: 0 0 8px 0;
+}
+
+.info-text:last-child {
+    margin-bottom: 0;
+}
+
+.info-text a {
+    color: var(--accent-blue);
+    text-decoration: none;
+}
+
+.info-text a:hover {
+    text-decoration: underline;
+}
+
+/* Action Buttons - main styles in Project Layout section (~L1203) */
+.about-actions {
+    display: flex;
+    gap: 10px;
+    padding-top: 8px;
+}
+
+/* About page specific overrides for action buttons */
+.about-actions .action-btn {
+    flex: 1;
+    text-align: center;
+}
+
+.about-actions .action-btn.primary {
+    background: #34C759;
+}
+
+.about-actions .action-btn.primary:hover {
+    background: #2da44e;
+}
+
+.about-actions .action-btn.secondary {
+    background: #E8E8EA;
+    color: #333;
+}
+
+.about-actions .action-btn.secondary:hover {
+    background: #D8D8DA;
 }
 
 /* ================================================
@@ -571,4 +1782,127 @@ body {
     .menu-item:not(.active) {
         display: none;
     }
+
+    .about-intro {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .experience-item {
+        flex-direction: column;
+    }
+
+    .experience-item .role {
+        min-width: auto;
+    }
+}
+
+/* Static Window Styles for Direct Links */
+.static-window {
+    position: fixed;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    height: calc(100vh - 90px);
+    max-width: 1200px;
+    background: var(--window-bg);
+    border-radius: 6px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--window-border);
+    animation: staticWindowOpen 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+    z-index: 10;
+}
+
+@keyframes staticWindowOpen {
+    0% {
+        transform: translateX(-50%) scale(0.95);
+        opacity: 0;
+    }
+
+    100% {
+        transform: translateX(-50%) scale(1);
+        opacity: 1;
+    }
+}
+
+/* Ensure link-based finder rows behave well */
+a.finder-row {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+}
+
+/* Sidebar Connect Items - .sidebar-label styles consolidated above (~L1571) */
+
+.connect-item {
+    display: flex;
+    align-items: center;
+    height: 26px;
+    /* Fixed height for finder items */
+    padding: 0 10px;
+    margin-bottom: 0px;
+    border-radius: 4px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: none;
+    /* Finder items are snappy */
+}
+
+.connect-item:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.connect-item:active {
+    background-color: rgba(0, 0, 0, 0.08);
+}
+
+.connect-item img.icon {
+    width: 17px;
+    /* Standard sidebar icon size */
+    height: 17px;
+    margin-right: 8px;
+    /* Mavericks (10.9) had grey sidebar icons */
+    filter: grayscale(100%);
+    opacity: 0.65;
+    transition: all 0.2s ease;
+}
+
+.connect-item:hover img.icon {
+    filter: none;
+    opacity: 1;
+}
+
+.connect-item a {
+    /* The link text itself */
+    flex: 1;
+    color: #333;
+    font-size: 13px;
+    /* Standard system size */
+    text-decoration: none;
+    font-weight: 400;
+    letter-spacing: -0.2px;
+    pointer-events: none;
+    /* Make the whole row clickable via main element if possible, or just style the a to fill */
+}
+
+/* Since HTML has <a> inside div, we need to make sure clicks work or style <a> to fill */
+/* Re-targeting structure: .connect-item is the div, inside is img and a */
+.connect-item a {
+    pointer-events: auto;
+    /* Let clicks pass to a */
+    display: flex;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+}
+
+/* Actually, the HTML is: div.connect-item > img + a */
+/* So I should style the div as the container and let a be the text */
+
+.connect-item a {
+    color: #262626;
 }

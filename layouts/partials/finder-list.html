@@ -1,0 +1,47 @@
+{{/* Finder List - reusable Finder-style list view */}}
+{{/*
+Usage:
+{{ partial "finder-list.html" (dict
+"id" "blog"
+"icon" "📝"
+"title" "Blog Posts"
+"pages" $pages
+"prefix" "post"
+"countLabel" "items"
+"nameHeader" "Name"
+"dateHeader" "Date"
+"dateFormat" "Jan 2, 2006"
+"iconPartial" "icons/document.html"
+"iconColor" "#007AFF"
+) }}
+*/}}
+<div id="content-{{ .id }}">
+    <div class="finder-window">
+        <div class="finder-toolbar">
+            <span class="finder-title">{{ .icon }} {{ .title }}</span>
+            <span class="finder-count">{{ len .pages }} {{ .countLabel }}</span>
+        </div>
+        <div class="finder-content">
+            <div class="finder-list-view">
+                <div class="finder-header">
+                    <span class="col-icon"></span>
+                    <span class="col-name">{{ .nameHeader }}</span>
+                    <span class="col-date">{{ .dateHeader }}</span>
+                </div>
+                {{ $prefix := .prefix }}
+                {{ $dateFormat := .dateFormat }}
+                {{ $iconPartial := .iconPartial }}
+                {{ $iconColor := .iconColor }}
+                {{ range .pages }}
+                <div class="finder-row" data-window="{{ $prefix }}-{{ .File.UniqueID }}" data-title="{{ .Title }}">
+                    <span class="col-icon">
+                        {{ partial $iconPartial (dict "color" $iconColor "size" 16) }}
+                    </span>
+                    <span class="col-name">{{ .Title }}</span>
+                    <span class="col-date">{{ .Date.Format $dateFormat }}</span>
+                </div>
+                {{ end }}
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,73 @@
+{{/* Blog Article - reusable blog post layout */}}
+{{/* Usage: {{ partial "blog-article.html" . }} where . is a Page */}}
+<article class="blog-post">
+    {{ if .Params.image }}
+    <div class="post-cover-image">
+        <img src="{{ .Params.image }}" alt="{{ .Title }}">
+    </div>
+    {{ end }}
+
+    <header class="post-header">
+        {{ if .Params.categories }}
+        <div class="post-category">
+            {{ range first 1 .Params.categories }}
+            <span class="category-badge">{{ . }}</span>
+            {{ end }}
+        </div>
+        {{ end }}
+
+        <h1 class="post-title">{{ .Title }}</h1>
+
+        <div class="post-meta-bar">
+            <div class="meta-item">
+                <span class="meta-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                </span>
+                <div>{{ .Date.Format "January 2, 2006" }}</div>
+            </div>
+            <div class="meta-item">
+                <span class="meta-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                </span>
+                <span>{{ .ReadingTime }} min read</span>
+            </div>
+        </div>
+
+        {{ if .Params.tags }}
+        <div class="post-tags-container">
+            {{ range .Params.tags }}<a href="/tags/{{ . | urlize }}" class="post-tag">#{{ . }}</a>{{ end }}
+        </div>
+        {{ end }}
+    </header>
+
+    <div class="post-content markdown-body">
+        {{ .Content }}
+    </div>
+
+    <footer class="post-footer">
+        <div class="post-navigation">
+            {{ with .PrevInSection }}
+            <a href="{{ .Permalink }}" class="nav-link prev">
+                <span class="nav-label">Previous</span>
+                <span class="nav-title">← {{ .Title }}</span>
+            </a>
+            {{ end }}
+            {{ with .NextInSection }}
+            <a href="{{ .Permalink }}" class="nav-link next">
+                <span class="nav-label">Next</span>
+                <span class="nav-title">{{ .Title }} →</span>
+            </a>
+            {{ end }}
+        </div>
+    </footer>
+</article>
