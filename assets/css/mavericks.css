@@ -504,6 +504,7 @@ body::before {
     justify-content: center;
     cursor: pointer;
     position: relative;
+    text-decoration: none;
 }
 
 .traffic-light.close {
@@ -1780,25 +1781,467 @@ body::before {
 /* ================================================
    Responsive
    ================================================ */
+/* ================================================
+   Mobile Optimizations
+   ================================================ */
+
+/* Tablet and Below */
+@media (max-width: 1024px) {
+
+    /* Smaller windows on tablets */
+    .window {
+        min-width: 350px;
+    }
+
+    /* Adjust menubar active app name */
+    #active-app-name {
+        max-width: calc(100vw - 300px);
+    }
+}
+
+/* Mobile Devices */
 @media (max-width: 768px) {
+
+    /* ===== Desktop Icons ===== */
     .desktop-icons {
         flex-direction: row;
         flex-wrap: wrap;
         align-content: flex-start;
         justify-content: center;
-        padding: 10px;
+        gap: 12px;
+        padding: 12px;
+        height: auto;
+        max-height: calc(100vh - var(--menubar-height));
+        overflow-y: auto;
     }
 
-    .window {
-        min-width: 320px;
-        width: calc(100% - 20px) !important;
-        left: 10px !important;
+    .desktop-icon {
+        width: 70px;
+        padding: 6px;
     }
 
+    .icon-image {
+        width: 48px;
+        height: 48px;
+    }
+
+    .icon-label {
+        font-size: 10px;
+        max-width: 70px;
+    }
+
+    /* ===== Menu Bar ===== */
+    .menubar {
+        padding: 0 4px;
+    }
+
+    .menubar-left {
+        gap: 0;
+        padding-left: 0;
+        min-width: 0;
+        flex: 1;
+    }
+
+    .menubar-right {
+        gap: 8px;
+        font-size: 11px;
+    }
+
+    #active-app-name {
+        max-width: calc(100vw - 150px);
+        font-size: 12px;
+    }
+
+    /* Hide non-active menu items to save space */
     .menu-item:not(.active) {
         display: none;
     }
 
+    .menubar-icon {
+        padding: 2px 6px;
+    }
+
+    .apple-menu {
+        padding: 2px 6px;
+    }
+
+    /* ====== Simplified Dropdowns ===== */
+    .apple-dropdown,
+    .finder-dropdown {
+        min-width: 180px;
+        max-width: calc(100vw - 20px);
+    }
+
+    .dropdown-item {
+        padding: 8px 14px;
+        font-size: 14px;
+    }
+
+    /* ===== Windows ===== */
+    .window {
+        min-width: 300px !important;
+        width: calc(100vw - 16px) !important;
+        max-width: calc(100vw - 16px) !important;
+        left: 8px !important;
+        top: 8px !important;
+        height: calc(100vh - var(--menubar-height) - 16px) !important;
+        max-height: calc(100vh - var(--menubar-height) - 16px) !important;
+        border-radius: 6px;
+    }
+
+    /* Position all windows similarly on mobile */
+    .window.centered {
+        transform: none;
+        left: 8px !important;
+        top: 8px !important;
+    }
+
+    .window-titlebar {
+        padding: 0 8px;
+        cursor: default;
+        /* Disable dragging on mobile */
+    }
+
+    .window-title {
+        font-size: 12px;
+        margin-right: 40px;
+    }
+
+    /* Make traffic lights more touch-friendly */
+    .traffic-lights {
+        gap: 8px;
+    }
+
+    .traffic-light {
+        width: 14px;
+        height: 14px;
+        /* Always show symbols on mobile for clarity */
+    }
+
+    .traffic-light span {
+        display: block !important;
+        font-size: 11px;
+    }
+
+    /* Disable window dragging and resizing on mobile */
+    .window-resize {
+        display: none;
+    }
+
+    /* ===== Finder Layouts ===== */
+    .finder-split {
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .finder-sidebar {
+        width: 100%;
+        max-height: auto;
+        padding: 16px 12px;
+        border-right: none;
+        border-bottom: 1px solid #C0C0C0;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px;
+    }
+
+    .sidebar-avatar {
+        width: 60px;
+        height: 60px;
+        margin-bottom: 0;
+    }
+
+    .sidebar-name {
+        width: 100%;
+        margin-bottom: 8px;
+        font-size: 13px;
+    }
+
+    .sidebar-section {
+        width: auto;
+        margin-bottom: 0;
+    }
+
+    .sidebar-label {
+        font-size: 10px;
+        margin-top: 8px;
+        margin-bottom: 4px;
+        padding-left: 0;
+        text-align: center;
+    }
+
+    .sidebar-value {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        justify-content: center;
+    }
+
+    .connect-item {
+        height: auto;
+        text-align: center;
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+
+    .connect-item img.icon {
+        width: 14px;
+        height: 14px;
+        margin-right: 6px;
+    }
+
+    .finder-main {
+        padding: 12px;
+        overflow-y: visible;
+        flex: none;
+    }
+
+    /* ===== Finder List View ===== */
+    .finder-header {
+        padding: 6px 10px;
+        font-size: 10px;
+    }
+
+    .finder-row {
+        padding: 10px;
+        /* Larger touch target */
+    }
+
+    .col-name {
+        font-size: 14px;
+        /* Slightly larger for readability */
+    }
+
+    .col-date {
+        width: 80px;
+        font-size: 11px;
+    }
+
+    .col-icon {
+        width: 20px;
+    }
+
+    /* ===== Info Panels ===== */
+    .info-panel {
+        padding: 10px 12px;
+        margin-bottom: 10px;
+    }
+
+    .info-header {
+        font-size: 10px;
+        margin-bottom: 8px;
+    }
+
+    .info-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+        padding: 8px 0;
+        font-size: 12px;
+    }
+
+    .info-label {
+        font-size: 12px;
+    }
+
+    .info-text {
+        font-size: 13px;
+        line-height: 1.6;
+    }
+
+    /* ===== Stats Bar ===== */
+    .about-stats-bar {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .stat-value {
+        font-size: 18px;
+    }
+
+    .stat-label {
+        font-size: 9px;
+    }
+
+    /* ===== Project Links ===== */
+    .project-links-bar {
+        padding: 10px 12px;
+        gap: 6px;
+    }
+
+    .project-link {
+        padding: 10px 16px;
+        /* Larger touch target */
+        font-size: 14px;
+    }
+
+    /* ===== Blog Post ===== */
+    .blog-post {
+        padding: 12px;
+    }
+
+    .post-header {
+        padding-bottom: 12px;
+        margin-bottom: 16px;
+    }
+
+    .post-title {
+        font-size: 22px;
+    }
+
+    .post-meta {
+        font-size: 12px;
+    }
+
+    .post-content {
+        font-size: 14px;
+        line-height: 1.7;
+    }
+
+    .post-content h2 {
+        font-size: 20px;
+        margin-top: 20px;
+    }
+
+    .post-content h3 {
+        font-size: 17px;
+        margin-top: 18px;
+    }
+
+    .post-content pre {
+        font-size: 12px;
+        padding: 12px;
+        border-radius: 6px;
+        overflow-x: auto;
+    }
+
+    .post-content code {
+        font-size: 12px;
+    }
+
+    .post-content img {
+        border-radius: 6px;
+    }
+
+    /* ===== Timeline Event ===== */
+    .event-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .event-date-badge {
+        width: 50px;
+        height: 50px;
+    }
+
+    .event-month {
+        font-size: 11px;
+    }
+
+    .event-day {
+        font-size: 18px;
+    }
+
+    .event-title {
+        font-size: 18px;
+    }
+
+    .event-type {
+        font-size: 11px;
+    }
+
+    /* ===== External Windows (iframes) ===== */
+    .window-toolbar {
+        padding: 6px 8px;
+    }
+
+    .url-bar {
+        padding: 6px 8px;
+        font-size: 11px;
+    }
+
+    .url-text {
+        font-size: 10px;
+    }
+
+    .open-external {
+        width: 28px;
+        height: 28px;
+        font-size: 16px;
+    }
+
+    /* ===== Spotlight Search ===== */
+    .spotlight-container {
+        width: calc(100vw - 20px);
+        max-width: calc(100vw - 20px);
+    }
+
+    #spotlight-input {
+        font-size: 18px;
+    }
+
+    .spotlight-search {
+        padding: 12px 14px;
+    }
+
+    .spotlight-result {
+        padding: 12px 14px;
+        /* Larger touch target */
+    }
+
+    .spotlight-result-title {
+        font-size: 15px;
+    }
+
+    .spotlight-result-type {
+        font-size: 12px;
+    }
+
+    /* ===== Scrollbars ===== */
+    .window-content::-webkit-scrollbar,
+    .finder-content::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    .window-content::-webkit-scrollbar-thumb,
+    .finder-content::-webkit-scrollbar-thumb {
+        border-radius: 3px;
+    }
+
+    /* ===== Contact & Wins Pages ===== */
+    [data-window-id="wins"] .window-content,
+    [data-window-id="contact"] .window-content {
+        padding: 12px;
+    }
+
+    /* ===== About This Mac Window ===== */
+    .about-window {
+        width: calc(100vw - 32px) !important;
+        min-width: 280px !important;
+        left: 16px !important;
+        top: 50px !important;
+        transform: none !important;
+        height: auto !important;
+        max-height: calc(100vh - var(--menubar-height) - 66px) !important;
+    }
+
+    .about-this-mac {
+        padding: 16px;
+    }
+
+    .about-this-mac .about-icon {
+        font-size: 48px;
+    }
+
+    .about-this-mac h1 {
+        font-size: 20px;
+    }
+
+    /* ===== Generic Content Improvements ===== */
     .about-intro {
         flex-direction: column;
         align-items: center;
@@ -1811,6 +2254,111 @@ body::before {
 
     .experience-item .role {
         min-width: auto;
+    }
+
+    /* ===== Touch Improvements ===== */
+    /* Make all clickable elements easier to tap */
+    .action-btn,
+    .contact-link,
+    .project-link,
+    .finder-row,
+    .desktop-icon,
+    .traffic-light,
+    .menubar-icon,
+    .dropdown-item {
+        min-height: 44px;
+        /* iOS recommended minimum */
+    }
+
+    .action-btn,
+    .contact-link,
+    .project-link {
+        display: inline-flex;
+        align-items: center;
+    }
+
+    /* Adjust exceptions */
+    .traffic-light,
+    .menubar-icon {
+        min-height: auto;
+    }
+
+    /* These should remain as full-width flex blocks */
+    .finder-row,
+    .desktop-icon,
+    .dropdown-item,
+    .contact-link {
+        display: flex;
+    }
+
+    /* Remove hover effects that don't work well on touch */
+    @media (hover: none) {
+
+        .desktop-icon:hover,
+        .finder-row:hover,
+        .traffic-light:hover span {
+            background: transparent;
+        }
+
+        /* Always show traffic light symbols */
+        .traffic-light span {
+            display: block !important;
+        }
+    }
+}
+
+/* Small Mobile Devices */
+@media (max-width: 480px) {
+    .desktop-icon {
+        width: 60px;
+    }
+
+    .icon-image {
+        width: 42px;
+        height: 42px;
+    }
+
+    .icon-label {
+        font-size: 9px;
+        max-width: 60px;
+    }
+
+    #active-app-name {
+        max-width: calc(100vw - 120px);
+        font-size: 11px;
+    }
+
+    .window-title {
+        font-size: 11px;
+    }
+
+    .about-stats-bar {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .stat-item {
+        padding: 8px 0;
+    }
+
+    .finder-sidebar {
+        padding: 12px 8px;
+    }
+
+    .post-title {
+        font-size: 20px;
+    }
+
+    .post-content {
+        font-size: 13px;
+    }
+
+    .post-content h2 {
+        font-size: 18px;
+    }
+
+    .post-content h3 {
+        font-size: 16px;
     }
 }
 
@@ -1902,6 +2450,7 @@ a.finder-row {
     font-weight: 400;
     letter-spacing: -0.2px;
     pointer-events: none;
+    text-align: center;
     /* Make the whole row clickable via main element if possible, or just style the a to fill */
 }
 
@@ -1912,6 +2461,7 @@ a.finder-row {
     /* Let clicks pass to a */
     display: flex;
     align-items: center;
+    text-align: center;
     height: 100%;
     width: 100%;
 }
@@ -1921,4 +2471,5 @@ a.finder-row {
 
 .connect-item a {
     color: #262626;
+    text-align: center;
 }

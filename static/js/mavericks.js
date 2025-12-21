@@ -818,20 +818,32 @@
 
         // Create window
         const win = createWindowElement(id, title, content, size, permalink);
-        // Position - cascade windows
-        const offsetX = (openWindows.size) * 30;
-        const offsetY = (openWindows.size) * 30;
 
-        // Clamp size to screen
-        const maxWidth = window.innerWidth - 100;
-        const maxHeight = window.innerHeight - 100;
-        const finalWidth = Math.min(size.width, maxWidth);
-        const finalHeight = Math.min(size.height, maxHeight);
+        // Check if mobile device
+        const isMobile = window.innerWidth <= 768;
 
-        win.style.left = `${100 + offsetX}px`;
-        win.style.top = `${50 + offsetY}px`;
-        win.style.width = `${finalWidth}px`;
-        win.style.height = `${finalHeight}px`;
+        if (isMobile) {
+            // On mobile, make windows fullscreen
+            win.style.left = '8px';
+            win.style.top = '8px';
+            win.style.width = `calc(100vw - 16px)`;
+            win.style.height = `calc(100vh - var(--menubar-height) - 16px)`;
+        } else {
+            // Desktop: Position - cascade windows
+            const offsetX = (openWindows.size) * 30;
+            const offsetY = (openWindows.size) * 30;
+
+            // Clamp size to screen
+            const maxWidth = window.innerWidth - 100;
+            const maxHeight = window.innerHeight - 100;
+            const finalWidth = Math.min(size.width, maxWidth);
+            const finalHeight = Math.min(size.height, maxHeight);
+
+            win.style.left = `${100 + offsetX}px`;
+            win.style.top = `${50 + offsetY}px`;
+            win.style.width = `${finalWidth}px`;
+            win.style.height = `${finalHeight}px`;
+        }
 
         document.getElementById('windows-container').appendChild(win);
         openWindows.set(id, win);
@@ -921,10 +933,18 @@
     // Window Dragging
     function setupWindowDrag(win) {
         const titlebar = win.querySelector('.window-titlebar');
+        const isMobile = window.innerWidth <= 768;
+
+        // Disable dragging on mobile
+        if (isMobile) return;
+
         let isDragging = false;
         let startX, startY, startLeft, startTop;
 
-        titlebar.addEventListener('mousedown', (e) => {
+        const onStart = (e) => {
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+
             if (e.target.classList.contains('traffic-light') ||
                 e.target.parentElement.classList.contains('traffic-light') ||
                 e.target.classList.contains('titlebar-link')) {
@@ -932,8 +952,8 @@
             }
 
             isDragging = true;
-            startX = e.clientX;
-            startY = e.clientY;
+            startX = clientX;
+            startY = clientY;
 
             // Handle centered windows - use getBoundingClientRect for accurate position
             if (win.style.transform.includes('translate')) {
@@ -950,13 +970,21 @@
 
             document.addEventListener('mousemove', onDrag);
             document.addEventListener('mouseup', stopDrag);
-        });
+            document.addEventListener('touchmove', onDrag);
+            document.addEventListener('touchend', stopDrag);
+        };
+
+        titlebar.addEventListener('mousedown', onStart);
+        titlebar.addEventListener('touchstart', onStart);
 
         function onDrag(e) {
             if (!isDragging) return;
 
-            const dx = e.clientX - startX;
-            const dy = e.clientY - startY;
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+
+            const dx = clientX - startX;
+            const dy = clientY - startY;
 
             let newLeft = startLeft + dx;
             let newTop = startTop + dy;
@@ -972,6 +1000,8 @@
             isDragging = false;
             document.removeEventListener('mousemove', onDrag);
             document.removeEventListener('mouseup', stopDrag);
+            document.removeEventListener('touchmove', onDrag);
+            document.removeEventListener('touchend', stopDrag);
         }
     }
 
@@ -980,13 +1010,21 @@
         const resizeHandle = win.querySelector('.window-resize');
         if (!resizeHandle) return;
 
+        const isMobile = window.innerWidth <= 768;
+
+        // Disable resizing on mobile
+        if (isMobile) return;
+
         let isResizing = false;
         let startX, startY, startWidth, startHeight;
 
-        resizeHandle.addEventListener('mousedown', (e) => {
+        const onStart = (e) => {
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+
             isResizing = true;
-            startX = e.clientX;
-            startY = e.clientY;
+            startX = clientX;
+            startY = clientY;
             startWidth = win.offsetWidth;
             startHeight = win.offsetHeight;
 
@@ -994,14 +1032,22 @@
 
             document.addEventListener('mousemove', onResize);
             document.addEventListener('mouseup', stopResize);
+            document.addEventListener('touchmove', onResize);
+            document.addEventListener('touchend', stopResize);
             e.preventDefault();
-        });
+        };
+
+        resizeHandle.addEventListener('mousedown', onStart);
+        resizeHandle.addEventListener('touchstart', onStart);
 
         function onResize(e) {
             if (!isResizing) return;
 
-            const dx = e.clientX - startX;
-            const dy = e.clientY - startY;
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+
+            const dx = clientX - startX;
+            const dy = clientY - startY;
 
             const newWidth = Math.max(400, startWidth + dx);
             const newHeight = Math.max(300, startHeight + dy);
@@ -1014,6 +1060,8 @@
             isResizing = false;
             document.removeEventListener('mousemove', onResize);
             document.removeEventListener('mouseup', stopResize);
+            document.removeEventListener('touchmove', onResize);
+            document.removeEventListener('touchend', stopResize);
         }
     }
 
