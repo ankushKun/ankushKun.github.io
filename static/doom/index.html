@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html dir="null">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=windows-1252">
+  <title>Yet Another Doom Clone
+  </title>
+</head>
+
+<body dir="null">
+  <style>
+    body {
+      margin: 0px;
+      background: #000
+    }
+
+    #qQ {
+      position: absolute;
+      left: 35vw;
+      top: 4em;
+      font-size: 2em;
+      font-variant: small-caps;
+      color: #aaa;
+      animation: z 9s;
+    }
+
+    #cQ {
+      height: 100%;
+      width: 100%
+    }
+
+    #hQ {
+      top: 0px;
+      width: 10vw;
+      height: 2vh;
+      border: 3px solid #008;
+      border-radius: 3px;
+      display: none
+    }
+
+    #fps {
+      display: none
+    }
+
+    #hW {
+      height: 2vh;
+      background: #00a
+    }
+
+    @keyframes q {
+      50% {
+        opacity: 0
+      }
+    }
+
+    .b {
+      animation: q 1s linear infinite
+    }
+
+    @keyframes z {
+      from {
+        opacity: 0
+      }
+
+      to {
+        opacity: 1
+      }
+    }
+  </style>
+  <canvas id="cQ" dir="null" width="800" height="549">
+  </canvas>
+  <div id="qQ" style="top: 5vh; left: 45vw;">
+    <div id="jQ"></div>
+    <div id="hE"></div>
+    <div id="hQ" style="display: block;">
+      <div id="hW" style="width: 6vw;" class="undefined">
+      </div>
+    </div>
+  </div>
+
+  <script src="doom.js">
+  </script>
+</body>
+
+</html>
