@@ -5,6 +5,9 @@
 (function () {
     'use strict';
 
+    // Configuration
+    const ENABLE_DEEP_LINKING = false; // Set to true to enable URL state updates
+
     // State
     let windowZIndex = 100;
     let activeWindow = null;
@@ -503,7 +506,7 @@
                 // Reset menubar to Finder
                 const activeAppName = document.getElementById('active-app-name');
                 if (activeAppName) activeAppName.textContent = 'Finder';
-                history.replaceState(null, 'Home', '/');
+                if (ENABLE_DEEP_LINKING) history.replaceState(null, 'Home', '/');
             }
         });
     }
@@ -1061,7 +1064,7 @@
                     const activeAppName = document.getElementById('active-app-name');
                     if (activeAppName) activeAppName.textContent = 'Finder';
                     // Reset URL to desktop
-                    history.replaceState(null, 'Home', '/');
+                    if (ENABLE_DEEP_LINKING) history.replaceState(null, 'Home', '/');
                 }
             }
         }, 150);
@@ -1095,7 +1098,7 @@
         // Update Browser URL (Deep Linking)
         const path = win.dataset.path;
         if (path && path !== '/') {
-            history.replaceState(null, title, path);
+            if (ENABLE_DEEP_LINKING) history.replaceState(null, title, path);
         }
     }
 
