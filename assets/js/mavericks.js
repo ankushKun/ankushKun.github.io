@@ -63,6 +63,27 @@
         });
     }
 
+    // Activate Twitter Embeds
+    function activateTwitterEmbeds(container) {
+        // Check if we have twitter blockquotes
+        if (!container.querySelector('.twitter-tweet')) return;
+
+        // If the twitter object is available, re-scan the container
+        if (window.twttr && window.twttr.widgets) {
+            window.twttr.widgets.load(container);
+        } else {
+            // Load the script if not present
+            if (!document.getElementById('twitter-wjs')) {
+                const script = document.createElement('script');
+                script.id = 'twitter-wjs';
+                script.src = "https://platform.twitter.com/widgets.js";
+                script.async = true;
+                script.charset = "utf-8";
+                document.head.appendChild(script);
+            }
+        }
+    }
+
     // Activate lazy-loaded iframes (iframes with data-src instead of src)
     // This is called when a window containing iframes is opened
     function activateLazyIframes(container) {
@@ -537,7 +558,7 @@
                     'youtube.com', 'youtu.be', 'linkedin.com',
                     'instagram.com', 'facebook.com', 'medium.com',
                     't.me', 'discord.com', 'discord.gg', 'reddit.com',
-                    'pw.live', 'devfolio.co'
+                    'pw.live', 'devfolio.co', 'npmjs.com'
                 ];
 
                 // Get the domain for the window title
@@ -939,6 +960,7 @@
 
         // Activate any lazy-loaded iframes in the window
         activateLazyIframes(win);
+        activateTwitterEmbeds(win);
 
         bringToFront(win);
 
@@ -963,6 +985,7 @@
                         winContent.innerHTML = fetchedContent.innerHTML;
                         // Re-setup finder items just in case the fetched content has links
                         setupFinderItems(win);
+                        activateTwitterEmbeds(win);
                     }
                 } else {
                     throw new Error('Could not find content in fetched page');
