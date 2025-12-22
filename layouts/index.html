@@ -148,6 +148,20 @@
     "title" "Games"
     ) }}
 
+    <!-- ITCH GAME EMBED CONTENT -->
+    <div id="content-itch-game">
+        <div class="external-window" style="height: 100%; display: flex; flex-direction: column;">
+            <div class="window-iframe-container" style="flex: 1; position: relative;">
+                <div class="window-loader">
+                    <div class="spinner"></div>
+                </div>
+                <iframe data-src="https://itch.io/embed-upload/15250063?color=EEF2F6" frameborder="0" allowfullscreen
+                    onload="this.previousElementSibling.style.display='none'"
+                    style="width: 100%; height: 100%;"></iframe>
+            </div>
+        </div>
+    </div>
+
     <!-- DOOM CONTENT -->
     <div id="content-doom">
         <div class="external-window" style="height: 100%; display: flex; flex-direction: column;">
@@ -165,6 +179,28 @@
                 </div>
                 <iframe data-src="/doom/" frameborder="0" onload="this.previousElementSibling.style.display='none'"
                     style="width: 100%; height: 100%; background: #000;"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- ITCH.IO CONTENT -->
+    <div id="content-itchio">
+        <div class="external-window" style="height: 100%; display: flex; flex-direction: column;">
+            <div class="window-toolbar">
+                <div class="url-bar">
+                    <span class="url-icon">🎮</span>
+                    <span class="url-text">ankushkun.itch.io</span>
+                </div>
+                <a href="https://ankushkun.itch.io/" target="_blank" class="open-external" title="Open in new tab">{{
+                    partial "icons/open-external.html" . }}</a>
+            </div>
+            <div class="window-iframe-container" style="flex: 1; position: relative;">
+                <div class="window-loader">
+                    <div class="spinner"></div>
+                </div>
+                <iframe data-src="https://ankushkun.itch.io/" frameborder="0"
+                    onload="this.previousElementSibling.style.display='none'"
+                    style="width: 100%; height: 100%;"></iframe>
             </div>
         </div>
     </div>
