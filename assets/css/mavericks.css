@@ -2,23 +2,116 @@
    macOS X 10.9 Mavericks Theme
    ================================================ */
 
-/* CSS Variables */
+/* CSS Variables - macOS X 10.9 Mavericks Color Palette */
 :root {
+    /* Layout */
     --menubar-height: 24px;
     --window-titlebar-height: 22px;
-    --menubar-bg: rgba(36, 36, 36, 0.8);
-    --window-bg: rgba(255, 255, 255, 0.8);
-    --window-titlebar: linear-gradient(180deg, rgba(232, 232, 232, 0.8) 0%, rgba(208, 208, 208, 0.8) 100%);
-    --window-titlebar-inactive: linear-gradient(180deg, rgba(246, 246, 246, 0.8) 0%, rgba(232, 232, 232, 0.8) 100%);
-    --window-border: rgba(160, 160, 160, 0.6);
-    --window-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 5px 20px rgba(0, 0, 0, 0.2);
-    --text-color: #333;
-    --text-secondary: #666;
+
+    /* === MAVERICKS ACCENT COLORS === */
+    /* Primary Blue - The classic Aqua blue from Mavericks */
     --accent-blue: #007AFF;
+    --accent-blue-hover: #0066D6;
+    --accent-blue-active: #0055B3;
+    --accent-blue-light: #E8F2FC;
+    --accent-blue-subtle: rgba(0, 122, 255, 0.08);
+
+    /* Secondary Blue - Softer Aqua blue for headers/sections */
+    --accent-blue-muted: #5A8CBB;
+    --accent-blue-muted-light: #6B9BC3;
+
+    /* === MAVERICKS BLUISH-GRAY PALETTE === */
+    /* Authentic Mavericks colors with subtle blue tint */
+    /* Based on Finder sidebar color #DFE4EA (RGB 223, 228, 234) */
+    --gray-50: #F7F9FB;
+    /* Lightest - subtle blue tint */
+    --gray-100: #EEF2F6;
+    /* Light surface */
+    --gray-150: #E6EAEF;
+    /* Sidebar/content bg */
+    --gray-200: #DFE4EA;
+    /* Mavericks Finder sidebar - THE key color */
+    --gray-300: #C9D1D9;
+    /* Borders light */
+    --gray-400: #B4BEC8;
+    /* Borders medium */
+    --gray-500: #8E99A4;
+    /* Disabled text */
+    --gray-600: #6E7A85;
+    /* Secondary text */
+    --gray-700: #525D66;
+    /* Primary text muted */
+    --gray-800: #3A4249;
+    /* Dark text */
+    --gray-900: #2C3338;
+    /* Darker text */
+    --gray-950: #1C2024;
+    /* Darkest */
+
+    /* === TEXT COLORS === */
+    --text-primary: #1C2024;
+    --text-color: #2C3338;
+    --text-secondary: #525D66;
+    --text-tertiary: #6E7A85;
+    --text-placeholder: #8E99A4;
+    --text-inverse: #FFFFFF;
+
+    /* === WINDOW CHROME === */
+    /* Mavericks window chrome with bluish-gray tint */
+    --menubar-bg: rgba(40, 44, 50, 0.85);
+    --window-bg: rgba(247, 249, 251, 0.92);
+    --window-bg-solid: #F7F9FB;
+    --window-titlebar: linear-gradient(180deg, #E8ECF0 0%, #D4DAE0 100%);
+    --window-titlebar-inactive: linear-gradient(180deg, #F0F3F6 0%, #E4E8EC 100%);
+    --window-border: rgba(140, 150, 160, 0.5);
+    --window-shadow: 0 20px 60px rgba(0, 0, 0, 0.25), 0 5px 20px rgba(0, 0, 0, 0.15);
+    --toolbar-bg: linear-gradient(180deg, #EEF2F6 0%, #DFE4EA 100%);
+    --toolbar-border: #C9D1D9;
+
+    /* === TRAFFIC LIGHTS === */
     --traffic-red: #FF5F57;
+    --traffic-red-border: #E14640;
     --traffic-yellow: #FEBC2E;
+    --traffic-yellow-border: #DEA123;
     --traffic-green: #28C840;
+    --traffic-green-border: #1AAB29;
+    --traffic-inactive: #C9D1D9;
+
+    /* === FINDER ICON COLORS === */
+    --folder-orange: #FF9500;
+    --folder-orange-dark: #E68600;
+    --document-blue: #007AFF;
+    --document-blue-dark: #0066D6;
+
+    /* === SEMANTIC COLORS === */
+    --success: #34C759;
+    --warning: #FF9500;
+    --error: #FF3B30;
+    --info: #5856D6;
+
+    /* === EVENT/TAG TYPE COLORS === */
+    --type-hackathon: #5856D6;
+    --type-fellowship: #34C759;
+    --type-work: #FF9500;
+    --type-open-source: #007AFF;
+    --type-speaking: #FF2D55;
+    --type-achievement: #FFCC00;
+
+    /* === SCROLLBAR === */
+    --scrollbar-track: #E6EAEF;
+    --scrollbar-thumb: #B4BEC8;
+    --scrollbar-thumb-hover: #8E99A4;
+
+    /* === SHADOWS === */
+    --shadow-sm: 0 1px 2px rgba(28, 32, 36, 0.06);
+    --shadow-md: 0 2px 8px rgba(28, 32, 36, 0.1);
+    --shadow-lg: 0 4px 16px rgba(28, 32, 36, 0.14);
+    --shadow-card: 0 1px 3px rgba(28, 32, 36, 0.08);
+    --shadow-card-hover: 0 4px 12px rgba(28, 32, 36, 0.12);
+
+    /* === TYPOGRAPHY === */
     --font-system: "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Geneva, Verdana, sans-serif;
+    --font-mono: 'Menlo', 'Monaco', monospace;
 }
 
 /* Reset */

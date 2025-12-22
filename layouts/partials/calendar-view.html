@@ -117,13 +117,13 @@ Set "standalone" to false for desktop window (events open in window)
 </div>
 
 <style>
-    /* Timeline Window Styles - Light Theme with macOS Blue */
+    /* Timeline Window Styles - Using Mavericks CSS Variables */
     .timeline-window {
         display: flex;
         flex-direction: column;
         height: 100%;
-        background: #f5f5f7;
-        color: #1d1d1f;
+        background: var(--gray-100);
+        color: var(--text-primary);
     }
 
     .timeline-toolbar {
@@ -131,8 +131,8 @@ Set "standalone" to false for desktop window (events open in window)
         justify-content: space-between;
         align-items: center;
         padding: 12px 16px;
-        background: #ffffff;
-        border-bottom: 1px solid #e5e5e5;
+        background: var(--window-bg-solid);
+        border-bottom: 1px solid var(--gray-200);
         flex-shrink: 0;
     }
 
@@ -142,7 +142,7 @@ Set "standalone" to false for desktop window (events open in window)
         gap: 8px;
         font-size: 15px;
         font-weight: 600;
-        color: #1d1d1f;
+        color: var(--text-primary);
     }
 
     .timeline-icon {
@@ -157,7 +157,7 @@ Set "standalone" to false for desktop window (events open in window)
 
     .timeline-count {
         font-size: 12px;
-        color: #86868b;
+        color: var(--text-tertiary);
     }
 
 
@@ -181,13 +181,13 @@ Set "standalone" to false for desktop window (events open in window)
     .year-header {
         font-size: 24px;
         font-weight: 700;
-        color: #1d1d1f;
+        color: var(--text-primary);
         padding: 12px 0;
         margin-bottom: 12px;
-        border-bottom: 2px solid #5E8DB8;
+        border-bottom: 2px solid var(--accent-blue-muted);
         position: sticky;
         top: -16px;
-        background: #f5f5f7;
+        background: var(--gray-100);
         z-index: 10;
     }
 
@@ -198,11 +198,11 @@ Set "standalone" to false for desktop window (events open in window)
     }
 
     .month-section {
-        background: #ffffff;
+        background: var(--window-bg-solid);
         border-radius: 12px;
         overflow: hidden;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-        border: 1px solid #e5e5e5;
+        box-shadow: var(--shadow-card);
+        border: 1px solid var(--gray-200);
     }
 
     .month-label {
@@ -210,14 +210,14 @@ Set "standalone" to false for desktop window (events open in window)
         justify-content: space-between;
         align-items: center;
         padding: 12px 16px;
-        background: linear-gradient(135deg, #6B9BC3 0%, #5E8DB8 100%);
+        background: linear-gradient(135deg, var(--accent-blue-muted-light) 0%, var(--accent-blue-muted) 100%);
         border-bottom: none;
     }
 
     .month-name {
         font-size: 15px;
         font-weight: 600;
-        color: #ffffff;
+        color: var(--text-inverse);
     }
 
     .month-count {
@@ -237,7 +237,7 @@ Set "standalone" to false for desktop window (events open in window)
         padding: 12px 16px;
         cursor: pointer;
         transition: all 0.15s ease;
-        border-bottom: 1px solid #f0f0f0;
+        border-bottom: 1px solid var(--gray-150);
     }
 
     .event-item:last-child {
@@ -245,12 +245,12 @@ Set "standalone" to false for desktop window (events open in window)
     }
 
     .event-item:hover {
-        background: #f5f5f7;
+        background: var(--gray-100);
     }
 
     .event-item:focus {
         outline: none;
-        background: #e8f4fd;
+        background: var(--accent-blue-light);
     }
 
     /* Ensure link version looks the same as div version */
@@ -265,8 +265,8 @@ Set "standalone" to false for desktop window (events open in window)
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #5E8DB8;
-        color: #ffffff;
+        background: var(--accent-blue-muted);
+        color: var(--text-inverse);
         font-size: 13px;
         font-weight: 600;
         border-radius: 8px;
@@ -275,7 +275,7 @@ Set "standalone" to false for desktop window (events open in window)
     .event-title {
         flex: 1;
         font-size: 14px;
-        color: #1d1d1f;
+        color: var(--text-primary);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -291,33 +291,33 @@ Set "standalone" to false for desktop window (events open in window)
     }
 
     .event-type.hackathon {
-        background: #5856d6;
-        color: #ffffff;
+        background: var(--type-hackathon);
+        color: var(--text-inverse);
     }
 
     .event-type.fellowship {
-        background: #34c759;
-        color: #ffffff;
+        background: var(--type-fellowship);
+        color: var(--text-inverse);
     }
 
     .event-type.work {
-        background: #ff9500;
-        color: #ffffff;
+        background: var(--type-work);
+        color: var(--text-inverse);
     }
 
     .event-type.open-source {
-        background: #007aff;
-        color: #ffffff;
+        background: var(--type-open-source);
+        color: var(--text-inverse);
     }
 
     .event-type.speaking {
-        background: #ff2d55;
-        color: #ffffff;
+        background: var(--type-speaking);
+        color: var(--text-inverse);
     }
 
     .event-type.achievement {
-        background: #ffcc00;
-        color: #1d1d1f;
+        background: var(--type-achievement);
+        color: var(--text-primary);
     }
 
     /* Scrollbar styling */
@@ -326,16 +326,16 @@ Set "standalone" to false for desktop window (events open in window)
     }
 
     .timeline-content::-webkit-scrollbar-track {
-        background: #f0f0f0;
+        background: var(--scrollbar-track);
     }
 
     .timeline-content::-webkit-scrollbar-thumb {
-        background: #c7c7cc;
+        background: var(--scrollbar-thumb);
         border-radius: 4px;
     }
 
     .timeline-content::-webkit-scrollbar-thumb:hover {
-        background: #a1a1a6;
+        background: var(--scrollbar-thumb-hover);
     }
 
     /* Responsive */
