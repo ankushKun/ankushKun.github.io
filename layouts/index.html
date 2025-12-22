@@ -36,9 +36,9 @@
     "svg"
     (partial "icons/phone-desktop.html" .)) }} */}}
 
-    <!-- DOOM Icon -->
-    {{ partial "desktop-icon.html" (dict "window" "doom" "title" "🎮 DOOM" "label" "DOOM" "svg"
-    (partial "icons/doom-desktop.html" .)) }}
+    <!-- Games Folder Icon -->
+    {{ partial "desktop-icon.html" (dict "window" "games" "title" "Games" "label" "Games" "svg"
+    (partial "icons/games-folder-desktop.html" .)) }}
 
 </div>
 
@@ -141,6 +141,12 @@
             </div>
         </div>
     </div>
+
+    <!-- GAMES FOLDER CONTENT - Finder Icon View -->
+    {{ partial "games-grid.html" (dict
+    "id" "games"
+    "title" "Games"
+    ) }}
 
     <!-- DOOM CONTENT -->
     <div id="content-doom">
