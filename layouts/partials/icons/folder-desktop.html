@@ -1,69 +1,86 @@
-{{/* Folder Desktop Icon - 64x64 SVG - Ultra Skeuomorphic Style */}}
-<svg viewBox="0 0 64 64" width="64" height="64">
+{{/* Projects Folder Desktop Icon - 64x64 SVG - Engineering/Dev Style */}}
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
     <defs>
-        <!-- Rich Blue Gradient for Body -->
-        <linearGradient id="folderBody" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" style="stop-color:#74bafb" />
-            <stop offset="10%" style="stop-color:#5db0f9" />
-            <stop offset="50%" style="stop-color:#2a91eb" />
-            <stop offset="100%" style="stop-color:#167ad8" />
+        <!-- Deep Navy Gradient -->
+        <linearGradient id="projBody" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#3b82f6" />
+            <stop offset="100%" style="stop-color:#1e40af" />
         </linearGradient>
 
-        <!-- Tab Gradient -->
-        <linearGradient id="folderTab" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" style="stop-color:#6eb6f9" />
-            <stop offset="100%" style="stop-color:#3a9ceb" />
+        <linearGradient id="projBack" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#2563eb" />
+            <stop offset="100%" style="stop-color:#1e3a8a" />
         </linearGradient>
 
-        <!-- Inner Shadow/Depth -->
-        <linearGradient id="innerDepth" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" style="stop-color:#135ba8" />
-            <stop offset="100%" style="stop-color:#2075c7" />
-        </linearGradient>
+        <!-- blueprint grid pattern -->
+        <pattern id="gridPat" width="8" height="8" patternUnits="userSpaceOnUse">
+            <path d="M 8 0 L 0 0 0 8" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="0.5" />
+        </pattern>
 
-        <!-- Glossy Overlay -->
-        <linearGradient id="gloss" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" style="stop-color:rgba(255,255,255,0.45)" />
-            <stop offset="50%" style="stop-color:rgba(255,255,255,0.1)" />
-            <stop offset="51%" style="stop-color:rgba(255,255,255,0.0)" />
-            <stop offset="100%" style="stop-color:rgba(255,255,255,0.0)" />
+        <filter id="projShadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="2" />
+            <feOffset dx="0" dy="2" result="offsetblur" />
+            <feComponentTransfer>
+                <feFuncA type="linear" slope="0.4" />
+            </feComponentTransfer>
+            <feMerge>
+                <feMergeNode />
+                <feMergeNode in="SourceGraphic" />
+            </feMerge>
+        </filter>
+
+        <!-- Metal gradients for tools -->
+        <linearGradient id="metalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#e2e8f0" />
+            <stop offset="50%" style="stop-color:#94a3b8" />
+            <stop offset="100%" style="stop-color:#475569" />
         </linearGradient>
     </defs>
 
-    <!-- Drop Shadow (Soft & Realistic) -->
-    <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
-        <feGaussianBlur in="SourceAlpha" stdDeviation="2" />
-        <feOffset dx="0" dy="2" result="offsetblur" />
-        <feComponentTransfer>
-            <feFuncA type="linear" slope="0.3" />
-        </feComponentTransfer>
-        <feMerge>
-            <feMergeNode />
-            <feMergeNode in="SourceGraphic" />
-        </feMerge>
-    </filter>
+    <!-- Folder Back with Grid -->
+    <g filter="url(#projShadow)">
+        <path d="M6 14 L18 14 L22 18 L58 18 L58 56 L6 56 Z" fill="url(#projBack)" />
+        <path d="M6 14 L18 14 L22 18 L58 18 L58 56 L6 56 Z" fill="url(#gridPat)" />
+    </g>
 
-    <g filter="url(#dropShadow)">
-        <!-- Back of Folder tab -->
-        <path d="M6 14 L18 14 L22 18 L58 18 L58 56 L6 56 Z" fill="url(#innerDepth)" />
+    <!-- Content sticking out: Blueprint papers & Ruler -->
+    <g transform="translate(10, 16)">
+        <!-- Paper 1 -->
+        <path d="M4 4 L40 4 L40 30 L4 30 Z" fill="#f8fafc" transform="rotate(-5)" stroke="#cbd5e1" stroke-width="0.5" />
+        <!-- Fake code lines -->
+        <g transform="rotate(-5)">
+            <rect x="8" y="8" width="12" height="2" fill="#3b82f6" rx="0.5" />
+            <rect x="8" y="12" width="20" height="2" fill="#94a3b8" rx="0.5" />
+            <rect x="8" y="16" width="16" height="2" fill="#94a3b8" rx="0.5" />
+            <rect x="8" y="20" width="8" height="2" fill="#ef4444" rx="0.5" />
+        </g>
 
-        <!-- Paper Sheet inside (Add realism) -->
-        <rect x="10" y="16" width="44" height="40" fill="white" rx="1" />
-        <line x1="14" y1="22" x2="50" y2="22" stroke="#e0e0e0" stroke-width="1" />
-        <line x1="14" y1="26" x2="50" y2="26" stroke="#e0e0e0" stroke-width="1" />
-        <line x1="14" y1="30" x2="50" y2="30" stroke="#e0e0e0" stroke-width="1" />
+        <!-- Ruler / T-Square -->
+        <path d="M28 2 L34 2 L34 35 L28 35 Z" fill="#eab308" transform="rotate(15)" stroke="#a16207"
+            stroke-width="0.5" />
+        <!-- Ruler markings -->
+        <g transform="rotate(15)">
+            <line x1="29" y1="5" x2="31" y2="5" stroke="#713f12" stroke-width="0.5" />
+            <line x1="29" y1="10" x2="31" y2="10" stroke="#713f12" stroke-width="0.5" />
+            <line x1="29" y1="15" x2="32" y2="15" stroke="#713f12" stroke-width="0.5" />
+            <line x1="29" y1="20" x2="31" y2="20" stroke="#713f12" stroke-width="0.5" />
+            <line x1="29" y1="25" x2="31" y2="25" stroke="#713f12" stroke-width="0.5" />
+        </g>
+    </g>
 
-        <!-- Front of Folder -->
-        <!-- Main Shape -->
-        <path d="M4 26 L60 26 L60 54 Q60 58 56 58 L8 58 Q4 58 4 54 Z" fill="url(#folderBody)" />
+    <!-- Folder Front -->
+    <g filter="url(#projShadow)">
+        <path d="M4 26 L60 26 L60 54 Q60 58 56 58 L8 58 Q4 58 4 54 Z" fill="url(#projBody)" />
+        <!-- Subtle highlight edge -->
+        <path d="M4 26 L60 26" stroke="rgba(255,255,255,0.3)" stroke-width="1" />
 
-        <!-- Subtle Inner Stroke -->
-        <path d="M4 26 L60 26 L60 54 Q60 58 56 58 L8 58 Q4 58 4 54 Z" fill="none" stroke="rgba(255,255,255,0.4)"
-            stroke-width="1" />
-
-        <!-- Gloss Highlight (The Aqua Look) -->
-        <path d="M5 27 L59 27 L59 40 Q32 44 5 40 Z" fill="url(#gloss)" />
-
-        <!-- Embossed logo/icon on folder (optional, keeping clean for now) -->
+        <!-- Embossed Code Brackets Icon -->
+        <g transform="translate(32, 42)" opacity="0.25">
+            <path d="M-8 -6 L-14 0 L-8 6" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"
+                stroke-linejoin="round" />
+            <path d="M8 -6 L14 0 L8 6" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"
+                stroke-linejoin="round" />
+            <path d="M-3 8 L3 -8" stroke="white" stroke-width="3" stroke-linecap="round" />
+        </g>
     </g>
 </svg>

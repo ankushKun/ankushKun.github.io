@@ -1,88 +1,105 @@
-{{/* Games Folder Desktop Icon - 64x64 SVG - Dark Leather Folder with Controller */}}
+{{/* Games Folder Desktop Icon - 64x64 SVG - Ultra Realistic Style */}}
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
     <defs>
-        <!-- Dark leather gradient for folder body -->
-        <linearGradient id="gamesLeather" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" style="stop-color:#3a3a3a" />
-            <stop offset="50%" style="stop-color:#252525" />
-            <stop offset="100%" style="stop-color:#1a1a1a" />
+        <!-- Gradients -->
+        <linearGradient id="folderBlack" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#383838" />
+            <stop offset="100%" style="stop-color:#101010" />
         </linearGradient>
 
-        <!-- Folder back gradient -->
-        <linearGradient id="gamesFolderBack" x1="0%" y1="0%" x2="0%" y2="100%">
+        <linearGradient id="folderInner" x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" style="stop-color:#2a2a2a" />
-            <stop offset="100%" style="stop-color:#151515" />
+            <stop offset="100%" style="stop-color:#000000" />
         </linearGradient>
 
-        <!-- Controller metallic gradient -->
-        <linearGradient id="controllerMetal" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" style="stop-color:#c0c0c0" />
-            <stop offset="30%" style="stop-color:#a0a0a0" />
-            <stop offset="70%" style="stop-color:#808080" />
-            <stop offset="100%" style="stop-color:#606060" />
+        <linearGradient id="controllerBody" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#e0e0e0" />
+            <stop offset="50%" style="stop-color:#f5f5f5" />
+            <stop offset="100%" style="stop-color:#bdbdbd" />
         </linearGradient>
 
-        <!-- Drop shadow filter -->
-        <filter id="gamesFolderShadow" x="-20%" y="-20%" width="140%" height="150%">
-            <feDropShadow dx="0" dy="3" stdDeviation="2" flood-color="#000" flood-opacity="0.4" />
+        <filter id="realShadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="2" />
+            <feOffset dx="0" dy="3" result="offsetblur" />
+            <feComponentTransfer>
+                <feFuncA type="linear" slope="0.5" />
+            </feComponentTransfer>
+            <feMerge>
+                <feMergeNode />
+                <feMergeNode in="SourceGraphic" />
+            </feMerge>
         </filter>
 
-        <!-- Subtle noise texture -->
-        <filter id="leatherTexture">
-            <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" result="noise" />
-            <feColorMatrix type="saturate" values="0" />
-            <feBlend in="SourceGraphic" mode="overlay" />
+        <filter id="insetShadow">
+            <feComponentTransfer in="SourceAlpha">
+                <feFuncA type="table" tableValues="1 0" />
+            </feComponentTransfer>
+            <feGaussianBlur stdDeviation="1" />
+            <feOffset dx="0" dy="1" result="shadow" />
+            <feComposite in2="SourceAlpha" operator="in" />
+            <feComposite in2="SourceGraphic" operator="over" />
         </filter>
     </defs>
 
-    <!-- Folder back/tab -->
-    <path d="M6 16 L18 16 L22 20 L58 20 L58 54 L6 54 Z" fill="url(#gamesFolderBack)" filter="url(#gamesFolderShadow)" />
+    <!-- Folder Back -->
+    <path d="M4 14 L18 14 L23 18 L60 18 L60 56 L4 56 Z" fill="url(#folderInner)" filter="url(#realShadow)" />
 
-    <!-- Controller sticking out of folder -->
-    <g transform="translate(20, 6) rotate(-20)">
-        <!-- Controller body -->
-        <ellipse cx="12" cy="14" rx="14" ry="8" fill="url(#controllerMetal)" />
+    <!-- Game Controller Object (Sticking out) -->
+    <g transform="translate(14, 10) rotate(-15)">
+        <!-- Body -->
+        <path
+            d="M8 18 C8 18 2 24 2 32 C2 38 6 42 10 42 C12 42 14 40 16 36 C18 40 20 42 22 42 C26 42 30 38 30 32 C30 24 24 18 24 18 L8 18 Z"
+            fill="url(#controllerBody)" stroke="#999" stroke-width="0.5" />
 
-        <!-- Left grip -->
-        <ellipse cx="2" cy="18" rx="5" ry="6" fill="url(#controllerMetal)" />
+        <!-- Grips handles shadow -->
+        <path d="M2 32 C2 38 6 42 10 42 C12 42 14 40 16 36" fill="none" stroke="rgba(0,0,0,0.1)" stroke-width="1" />
+        <path d="M30 32 C30 38 26 42 22 42 C20 42 18 40 16 36" fill="none" stroke="rgba(0,0,0,0.1)" stroke-width="1" />
 
-        <!-- Right grip -->
-        <ellipse cx="22" cy="18" rx="5" ry="6" fill="url(#controllerMetal)" />
+        <!-- D-Pad -->
+        <g transform="translate(7, 24) scale(0.8)">
+            <path d="M4 0 L6 0 L6 4 L10 4 L10 6 L6 6 L6 10 L4 10 L4 6 L0 6 L0 4 L4 4 Z" fill="#333" />
+        </g>
 
-        <!-- D-pad area -->
-        <circle cx="6" cy="12" r="4" fill="#555" />
-        <rect x="4" y="10" width="4" height="1" fill="#333" rx="0.5" />
-        <rect x="5" y="9" width="2" height="3" fill="#333" rx="0.5" />
+        <!-- Action Buttons -->
+        <g transform="translate(21, 24) scale(0.8)">
+            <circle cx="5" cy="1" r="1.5" fill="#4CAF50" /> <!-- Triangle/Y -->
+            <circle cx="9" cy="5" r="1.5" fill="#F44336" /> <!-- Circle/B -->
+            <circle cx="5" cy="9" r="1.5" fill="#2196F3" /> <!-- Cross/A -->
+            <circle cx="1" cy="5" r="1.5" fill="#FFEB3B" /> <!-- Square/X -->
+        </g>
 
-        <!-- Button cluster -->
-        <circle cx="16" cy="10" r="1.5" fill="#7fb0d4" /> <!-- Triangle/blue -->
-        <circle cx="19" cy="13" r="1.5" fill="#d47f7f" /> <!-- Circle/red -->
-        <circle cx="16" cy="16" r="1.5" fill="#7fd47f" /> <!-- X/green -->
-        <circle cx="13" cy="13" r="1.5" fill="#d47fd4" /> <!-- Square/pink -->
+        <!-- Analog Sticks -->
+        <circle cx="10" cy="32" r="3.5" fill="#222" stroke="#111" stroke-width="0.5" />
+        <circle cx="22" cy="32" r="3.5" fill="#222" stroke="#111" stroke-width="0.5" />
+        <circle cx="10" cy="32" r="2.5" fill="#333" />
+        <circle cx="22" cy="32" r="2.5" fill="#333" />
 
-        <!-- Center buttons -->
-        <ellipse cx="10" cy="14" rx="1.5" ry="1" fill="#444" />
-        <ellipse cx="14" cy="14" rx="1.5" ry="1" fill="#444" />
-
-        <!-- Analog sticks -->
-        <circle cx="8" cy="18" r="2" fill="#333" />
-        <circle cx="16" cy="18" r="2" fill="#333" />
-
-        <!-- Highlight -->
-        <ellipse cx="10" cy="10" rx="8" ry="3" fill="rgba(255,255,255,0.15)" />
+        <!-- Center Buttons -->
+        <rect x="13" y="26" width="2" height="1" fill="#555" rx="0.5" />
+        <rect x="17" y="26" width="2" height="1" fill="#555" rx="0.5" />
     </g>
 
-    <!-- Folder front -->
-    <path d="M4 26 L60 26 L60 56 Q60 58 58 58 L6 58 Q4 58 4 56 Z" fill="url(#gamesLeather)" />
+    <!-- Folder Front -->
+    <path d="M2 24 L62 24 L62 56 Q62 60 58 60 L6 60 Q2 60 2 56 Z" fill="url(#folderBlack)" filter="url(#realShadow)" />
 
-    <!-- Subtle top edge highlight -->
-    <line x1="5" y1="27" x2="59" y2="27" stroke="rgba(255,255,255,0.1)" stroke-width="1" />
+    <!-- Front Detail: Glossy top edge -->
+    <path d="M2 24 L62 24 L62 26 L2 26 Z" fill="rgba(255,255,255,0.1" />
 
-    <!-- Embossed controller silhouette on folder -->
-    <g transform="translate(20, 38)" opacity="0.3">
-        <!-- Controller silhouette -->
-        <ellipse cx="12" cy="6" rx="10" ry="5" fill="#000" />
-        <ellipse cx="4" cy="10" rx="4" ry="5" fill="#000" />
-        <ellipse cx="20" cy="10" rx="4" ry="5" fill="#000" />
+    <!-- Embossed Controller Icon on the Front -->
+    <g transform="translate(32, 42) scale(0.6)" opacity="0.3">
+        <path d="M-15 -5 L15 -5 L18 5 L10 12 L-10 12 L-18 5 Z" fill="black" />
+        <!-- Simple shape representing controller -->
+        <path d="M-20 0 C-25 10 -15 20 -5 15 L0 10 L5 15 C15 20 25 10 20 0 Z" fill="black" />
     </g>
+
+    <!-- Subtle Noise Texture Overlay -->
+    <rect x="2" y="24" width="60" height="36" fill="url(#noisePattern)" opacity="0.05"
+        style="mix-blend-mode: overlay;" />
+    <defs>
+        <pattern id="noisePattern" width="4" height="4" patternUnits="userSpaceOnUse">
+            <rect width="2" height="2" fill="#000" />
+            <rect x="2" y="2" width="2" height="2" fill="#000" />
+        </pattern>
+    </defs>
+
 </svg>
