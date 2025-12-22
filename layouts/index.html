@@ -47,128 +47,10 @@
 <div id="window-contents" style="display: none;">
 
     <!-- ABOUT CONTENT - macOS Finder Style -->
-    <div id="content-about">
-        <div class="finder-window about-finder">
-            <!-- Finder Toolbar -->
-            <div class="finder-toolbar">
-                <span class="finder-title">👤 About Ankush</span>
-                <span class="finder-count">Software Engineer</span>
-            </div>
-
-            <!-- Two-column Finder layout -->
-            <div class="finder-split">
-                <!-- Sidebar -->
-                <div class="finder-sidebar">
-                    <div class="sidebar-avatar">
-                        <img src="/pfp.png" alt="Ankush" onerror="this.parentElement.innerHTML='👨‍💻'" />
-                    </div>
-                    <div class="sidebar-name">Ankush Singh</div>
-
-                    <div class="sidebar-section">
-                        <div class="sidebar-label">SOCIALS</div>
-                        <div class="sidebar-value">
-                            <div class="connect-item">
-                                <img src="/icons/github.svg" alt="GitHub" class="icon" />
-                                <a href="https://github.com/ankushKun" target="_blank">GitHub</a>
-                            </div>
-                            <div class="connect-item">
-                                <img src="/icons/twitter.svg" alt="Twitter" class="icon" />
-                                <a href="https://x.com/ankushKun_" target="_blank">Twitter</a>
-                            </div>
-                            <div class="connect-item">
-                                <img src="/icons/telegram.svg" alt="Telegram" class="icon" />
-                                <a href="https://t.me/ankushKun" target="_blank">Telegram</a>
-                            </div>
-                            <div class="connect-item">
-                                <img src="/icons/youtube.svg" alt="YouTube" class="icon" />
-                                <a href="https://youtube.com/@ankushkun" target="_blank">YouTube</a>
-                            </div>
-                            <div class="connect-item">
-                                <img src="/icons/linkedin.svg" alt="LinkedIn" class="icon" />
-                                <a href="https://linkedin.com/in/ankushkun" target="_blank">LinkedIn</a>
-                            </div>
-                            <div class="connect-item">
-                                <img src="/icons/instagram.svg" alt="Instagram" class="icon" />
-                                <a href="https://instagram.com/ankushkun_" target="_blank">Instagram</a>
-                            </div>
-                            <div class="connect-item">
-                                <img src="/icons/reddit.svg" alt="Reddit" class="icon" />
-                                <a href="https://reddit.com/user/TECHIE6023" target="_blank">Reddit</a>
-                            </div>
-                            <div class="connect-item">
-                                <img src="/icons/email.svg" alt="Email" class="icon" />
-                                <a href="mailto:ankush4singh@gmail.com">Email</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Main Content -->
-                <div class="finder-main">
-                    <!-- Info Sections -->
-                    <div class="info-panel">
-                        <div class="info-header">Experience</div>
-                        <div class="info-row">
-                            <span class="info-label">Entrepreneur in Residence</span>
-                            <a href="https://forward.arweave.net/" target="_blank">Forward Research</a>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Devrel Engineer + Community Manager</span>
-                            <a href="https://arweaveindia.com" target="_blank">Arweave India</a>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Software Engineer Intern</span>
-                            <a href="https://www.pw.live/about-us" target="_blank">Physics Wallah</a>
-                        </div>
-                    </div>
-
-                    <div class="info-panel about-expanded">
-                        <div class="info-header">About</div>
-                        <p class="info-text">
-                            I build developer tools that scale. As an <strong>Entrepreneur in Residence at Forward
-                                Research</strong>,
-                            I shipped 5+ production-ready developer tools used by 1K+ developers across the ecosystem —
-                            including <a href="https://betteridea.ar.io" target="_blank">BetterIDEa</a> (acquired),
-                            <a href="https://apm.betteridea.dev" target="_blank">AO Package Manager</a> (now part of AO
-                            core infra),
-                            and <a href="https://subspace.ar.io" target="_blank">Subspace</a>.
-                        </p>
-                        <p class="info-text">
-                            At <strong>Arweave India</strong>, I provided technical mentorship to 100+ developers,
-                            helping teams ship on-chain projects, and co-organized 4+ hacker houses to grow the builder
-                            community.
-                        </p>
-                        <p class="info-text">
-                            Earlier, at <strong>Physics Wallah</strong>, I built an interactive live-class system that
-                            processed 10K+ real-time chat messages for classes with 50K+ concurrent viewers.
-                        </p>
-                        <p class="info-text">
-                            My journey into tech started long before blockchain. I've always loved experimenting — from
-                            building robots and mini-satellites to making objects levitate with sound waves.
-                        </p>
-                        <p class="info-text">
-                            Since 2017, I've competed in 50+ hackathons across ecosystems like Ethereum, Solana,
-                            Arweave,
-                            and more — earning more than a dozen prizes. One of my favorite projects evolved into
-                            <a href="https://arlink.ar.io" target="_blank">Arlink</a> — Arweave's flagship deployment
-                            tool
-                            that raised a seed round at $2.5M valuation.
-                        </p>
-                        <p class="info-text">
-                            In 2023, I won the first Arweave India Hacker House. The story behind it is something I
-                            share
-                            in my <a href="https://www.youtube.com/watch?v=LWW4BCZPIUg" target="_blank">"TEDx" talk</a>.
-                        </p>
-                        <p class="info-text">
-                            Outside of coding, I love sharing ideas, experiments, and live builds on my
-                            <a href="https://youtube.com/@AnkushKun" target="_blank">YouTube channel</a>. You'll find
-                            everything from developer explainers to fun physics demos.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    {{ partial "about-finder.html" (dict
+    "id" "about"
+    "title" "About Ankush"
+    ) }}
 
     <!-- BLOG LIST - Mavericks Mail Style -->
     {{ $blog := .Site.GetPage "/blogs" }}
@@ -224,7 +106,7 @@
                     <span class="url-text">https://cal.com/ankushkun/call</span>
                 </div>
                 <a href="https://cal.com/ankushkun/call" target="_blank" class="open-external"
-                    title="Open in new tab">↗</a>
+                    title="Open in new tab">{{ partial "icons/open-external.html" . }}</a>
             </div>
             <div class="window-iframe-container" style="flex: 1; position: relative;">
                 <div class="window-loader">
@@ -266,7 +148,7 @@
                     <span class="url-text">Yet Another Doom Clone</span>
                 </div>
                 <a href="https://nicholas.carlini.com/writing/2019/javascript-doom-clone-13k.html" target="_blank"
-                    class="open-external" title="Open source article">↗</a>
+                    class="open-external" title="Open source article">{{ partial "icons/open-external.html" . }}</a>
             </div>
             <div class="window-iframe-container" style="flex: 1; position: relative;">
                 <div class="window-loader">

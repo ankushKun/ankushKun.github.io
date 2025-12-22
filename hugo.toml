@@ -1,6 +1,6 @@
 baseURL = 'https://ankush.one/'
 languageCode = 'en-us'
-title = "AnkushKun OS"
+title = "Ankush Kun"
 
 # Enable emoji support
 enableEmoji = true
