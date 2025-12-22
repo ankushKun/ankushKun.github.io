@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    {{ if .IsHome }}
     <!-- macOS Boot Screen Loader - Inline to prevent FOUC -->
     <style id="loader-styles">
         /* macOS Boot Screen Loader */
@@ -177,6 +178,7 @@
             window.completeBootLoader = hideLoader;
         })();
     </script>
+    {{ end }}
 
     <!-- SEO Meta Tags -->
     <title>{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }} | {{ .Site.Title }}{{ end }}</title>
@@ -223,6 +225,7 @@
 </head>
 
 <body>
+    {{ if .IsHome }}
     <!-- macOS Boot Screen Loader -->
     <div id="macos-boot-loader">
         <!-- Apple Logo -->
@@ -248,6 +251,7 @@
             <div class="boot-spinner-blade"></div>
         </div>
     </div>
+    {{ end }}
 
     <!-- macOS Menu Bar -->
     <div class="menubar">
