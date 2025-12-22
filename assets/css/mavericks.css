@@ -2731,3 +2731,173 @@ a.finder-row {
     color: #262626;
     text-align: center;
 }
+
+/* ================================================
+   Notification System - macOS Mavericks Style
+   ================================================ */
+
+#notification-container {
+    position: fixed;
+    top: calc(var(--menubar-height) + 12px);
+    right: 12px;
+    z-index: 100000;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+    max-width: 360px;
+    width: 100%;
+}
+
+.notification {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 14px;
+    background: rgba(245, 245, 247, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 10px;
+    box-shadow:
+        0 4px 24px rgba(0, 0, 0, 0.15),
+        0 1px 4px rgba(0, 0, 0, 0.1),
+        inset 0 0.5px 0 rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    pointer-events: auto;
+    transform: translateX(400px);
+    opacity: 0;
+    cursor: default;
+    min-width: 280px;
+    will-change: transform, opacity;
+}
+
+.notification.visible {
+    animation: notificationSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.notification.dismissing {
+    animation: notificationSlideOut 0.3s ease-in forwards;
+}
+
+@keyframes notificationSlideIn {
+    0% {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+
+    60% {
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes notificationSlideOut {
+    0% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+}
+
+.notification.clickable {
+    cursor: pointer;
+}
+
+.notification.clickable:hover {
+    background: rgba(240, 240, 245, 0.98);
+}
+
+.notification-icon {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notification-icon-img {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.notification-icon-emoji {
+    font-size: 28px;
+    line-height: 1;
+}
+
+.notification-content {
+    flex: 1;
+    min-width: 0;
+    padding-top: 2px;
+}
+
+.notification-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1d1d1f;
+    line-height: 1.3;
+    margin-bottom: 2px;
+}
+
+.notification-message {
+    font-size: 12px;
+    color: #6e6e73;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+
+.notification-close {
+    flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.06);
+    border: none;
+    border-radius: 100%;
+    color: #86868b;
+    font-size: 16px;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 0;
+    padding-bottom: 2px;
+    line-height: 1;
+    margin-top: 2px;
+}
+
+.notification-close:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: #1d1d1f;
+}
+
+.notification-close:active {
+    background: rgba(0, 0, 0, 0.15);
+    transform: scale(0.95);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    #notification-container {
+        right: 8px;
+        left: 8px;
+        max-width: none;
+        width: auto;
+    }
+
+    .notification {
+        min-width: 0;
+    }
+}

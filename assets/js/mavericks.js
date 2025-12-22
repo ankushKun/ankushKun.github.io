@@ -35,6 +35,33 @@
         setTimeout(() => {
             openWindow('about', 'About Me');
         }, 300);
+
+        // Show hire notification 2 seconds after first user interaction (so sound can play)
+        let hasShownHireNotification = false;
+        const showHireNotification = () => {
+            if (hasShownHireNotification) return;
+            hasShownHireNotification = true;
+
+            // Remove listeners
+            document.removeEventListener('click', showHireNotification);
+            document.removeEventListener('keydown', showHireNotification);
+            document.removeEventListener('touchstart', showHireNotification);
+
+            setTimeout(() => {
+                showNotification({
+                    title: "I am Available for Hire!",
+                    message: "Looking for an engineer or know someone who is? Click here to see resume.",
+                    icon: "/pfp.png",
+                    onClick: () => {
+                        openWindow('resume', 'Resume');
+                    }
+                });
+            }, 2000);
+        };
+
+        document.addEventListener('click', showHireNotification);
+        document.addEventListener('keydown', showHireNotification);
+        document.addEventListener('touchstart', showHireNotification);
     }
 
     // Preload high-resolution wallpaper
@@ -1385,6 +1412,164 @@
             }
         });
     };
+
+    // ================================================
+    // Notification System - macOS Mavericks Style
+    // ================================================
+
+    let notificationContainer = null;
+    let audioContext = null;
+
+    function ensureNotificationContainer() {
+        if (!notificationContainer) {
+            notificationContainer = document.createElement('div');
+            notificationContainer.id = 'notification-container';
+            document.body.appendChild(notificationContainer);
+        }
+        return notificationContainer;
+    }
+
+    // Play notification sound using Web Audio API
+    function playNotificationSound() {
+        try {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            // Resume context if suspended (due to autoplay policies)
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+
+            const now = audioContext.currentTime;
+
+            // Create a pleasant two-tone chime (like macOS)
+            const frequencies = [880, 1318.5]; // A5 and E6 - pleasant interval
+
+            frequencies.forEach((freq, i) => {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                oscillator.frequency.value = freq;
+                oscillator.type = 'sine';
+
+                // Stagger the notes slightly
+                const startTime = now + (i * 0.08);
+
+                // Quick attack, gentle decay
+                gainNode.gain.setValueAtTime(0, startTime);
+                gainNode.gain.linearRampToValueAtTime(0.15, startTime + 0.02);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4);
+
+                oscillator.start(startTime);
+                oscillator.stop(startTime + 0.5);
+            });
+        } catch (e) {
+            // Audio not supported or blocked, fail silently
+            console.log('Notification sound unavailable:', e.message);
+        }
+    }
+
+    /**
+     * Show a macOS-style notification
+     * @param {Object} options - Notification options
+     * @param {string} options.title - Notification title
+     * @param {string} options.message - Notification message
+     * @param {string} [options.icon] - Icon (emoji or image URL)
+     * @param {Function} [options.onClick] - Callback when notification is clicked
+     * @param {number} [options.duration] - Auto-dismiss after ms (0 = never)
+     * @returns {HTMLElement} The notification element
+     */
+    function showNotification(options) {
+        const container = ensureNotificationContainer();
+
+        const notification = document.createElement('div');
+        notification.className = 'notification';
+
+        // Determine icon content
+        let iconHtml = '';
+        if (options.icon) {
+            if (options.icon.startsWith('http') || options.icon.startsWith('/')) {
+                iconHtml = `<img src="${options.icon}" alt="" class="notification-icon-img">`;
+            } else {
+                iconHtml = `<span class="notification-icon-emoji">${options.icon}</span>`;
+            }
+        }
+
+        notification.innerHTML = `
+            <div class="notification-icon">${iconHtml}</div>
+            <div class="notification-content">
+                <div class="notification-title">${options.title || ''}</div>
+                <div class="notification-message">${options.message || ''}</div>
+            </div>
+            <button class="notification-close" aria-label="Close notification">×</button>
+        `;
+
+        // Close button handler
+        const closeBtn = notification.querySelector('.notification-close');
+        closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dismissNotification(notification);
+        });
+
+        // Click handler (if provided)
+        if (options.onClick) {
+            notification.classList.add('clickable');
+            notification.addEventListener('click', (e) => {
+                if (!e.target.classList.contains('notification-close')) {
+                    options.onClick(e);
+                    dismissNotification(notification);
+                }
+            });
+        }
+
+        // Add to container
+        container.appendChild(notification);
+
+        // Trigger slide-in animation and play sound
+        requestAnimationFrame(() => {
+            notification.classList.add('visible');
+
+            // Play notification sound (unless muted)
+            if (options.sound !== false) {
+                playNotificationSound();
+            }
+        });
+
+        // Auto-dismiss if duration is set
+        if (options.duration && options.duration > 0) {
+            setTimeout(() => {
+                dismissNotification(notification);
+            }, options.duration);
+        }
+
+        return notification;
+    }
+
+    function dismissNotification(notification) {
+        if (!notification || notification.classList.contains('dismissing')) return;
+
+        notification.classList.add('dismissing');
+        notification.classList.remove('visible');
+
+        notification.addEventListener('transitionend', () => {
+            notification.remove();
+        }, { once: true });
+
+        // Fallback removal
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 400);
+    }
+
+    // Expose globally
+    window.showNotification = showNotification;
+    window.dismissNotification = dismissNotification;
 
 })();
 
