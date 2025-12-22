@@ -1,0 +1,36 @@
+profile:
+  name: Ankush Singh
+  role: Software Engineer
+  avatar: /pfp.png
+  email: ankush4singh@gmail.com
+  schedule: https://cal.com/ankushkun/call
+  schedule_label: "cal.com/ankushkun/call"
+
+socials:
+  - platform: Twitter
+    handle: "@ankushKun_"
+    url: "https://x.com/ankushKun_"
+  - platform: GitHub
+    handle: "ankushKun"
+    url: "https://github.com/ankushKun"
+  - platform: Telegram
+    handle: "@ankushKun"
+    url: "https://t.me/ankushKun"
+  - platform: Discord
+    handle: "@ankushkun"
+    url: "https://discord.com/users/666578281142812673"
+  - platform: Instagram
+    handle: "@ankushKun_"
+    url: "https://instagram.com/ankushKun_"
+  - platform: Reddit
+    handle: "u/TECHIE6023"
+    url: "https://reddit.com/user/TECHIE6023"
+  - platform: Medium
+    handle: "ankushkun.medium.com"
+    url: "https://ankushkun.medium.com"
+  - platform: LinkedIn
+    handle: "Ankush Singh"
+    url: "https://linkedin.com/in/ankushkun"
+  - platform: YouTube
+    handle: "@AnkushKun"
+    url: "https://youtube.com/@ankushkun"

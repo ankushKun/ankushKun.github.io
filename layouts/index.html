@@ -203,22 +203,17 @@
     ) }}
     {{ end }}
 
-    <!-- WINS CONTENT -->
-    <div id="content-wins">
-        {{ with .Site.GetPage "/wins" }}
-        {{ .Content }}
-        {{ else }}
-        <h1>🏆 Wins</h1>
-        <p>Hackathon wins and achievements coming soon!</p>
-        {{ end }}
-    </div>
+    <!-- WINS CONTENT - Awards Style -->
+    {{ partial "wins-list.html" (dict
+    "id" "wins"
+    "title" "Wins"
+    ) }}
 
-    <!-- CONTACT CONTENT -->
-    <div id="content-contact">
-        {{ with .Site.GetPage "/contact" }}
-        {{ .Content }}
-        {{ end }}
-    </div>
+    <!-- CONTACT CONTENT - Address Book Style -->
+    {{ partial "contact-book.html" (dict
+    "id" "contact"
+    "title" "Contacts"
+    ) }}
 
     <!-- SCHEDULE CALL CONTENT -->
     <div id="content-book-a-call">
