@@ -710,9 +710,10 @@ body.wallpaper-loaded::before {
 }
 
 /* Wins and Contact pages get padding */
+/* Wins and Contact get no padding (handled internally) */
 [data-window-id="wins"] .window-content,
 [data-window-id="contact"] .window-content {
-    padding: 16px;
+    padding: 0;
 }
 
 .window-content::-webkit-scrollbar {

@@ -3,8 +3,42 @@
 {{ $hasContent := gt (len .Content) 0 }}
 {{ $hasPages := gt (len .Pages) 0 }}
 
-{{ if and $hasContent (not $hasPages) }}
-{{/* Content-only sections like Contact, Wins */}}
+{{ if eq .Section "wins" }}
+{{/* Wins section uses wins-list */}}
+<div class="static-window">
+    <!-- Titlebar -->
+    <div class="window-titlebar">
+        {{ partial "traffic-lights.html" (dict "closeLink" "/") }}
+        <div class="window-title">{{ .Title }}</div>
+    </div>
+
+    <!-- Content - Wins List -->
+    <div class="window-content" style="display: flex; flex-direction: column; padding: 0;">
+        {{ partial "wins-list.html" (dict
+        "id" "wins-page"
+        "title" "Wins"
+        ) }}
+    </div>
+</div>
+{{ else if eq .Section "contact" }}
+{{/* Contact section uses contact-book */}}
+<div class="static-window">
+    <!-- Titlebar -->
+    <div class="window-titlebar">
+        {{ partial "traffic-lights.html" (dict "closeLink" "/") }}
+        <div class="window-title">{{ .Title }}</div>
+    </div>
+
+    <!-- Content - Address Book -->
+    <div class="window-content" style="display: flex; flex-direction: column; padding: 0;">
+        {{ partial "contact-book.html" (dict
+        "id" "contact-page"
+        "title" "Contacts"
+        ) }}
+    </div>
+</div>
+{{ else if and $hasContent (not $hasPages) }}
+{{/* Content-only sections like Contact (but not Wins anymore) */}}
 <div class="static-window">
     <!-- Titlebar -->
     <div class="window-titlebar">
@@ -78,6 +112,7 @@
         ) }}
     </div>
 </div>
+
 {{ else }}
 {{/* Finder-style list for other sections */}}
 {{ $finderTitle := "" }}

@@ -1,0 +1,75 @@
+wins:
+  - year: 2024
+    prize: "Third prize + Pools"
+    medal: "🥉"
+    competition: "ETHIndia '24"
+    url: "https://devfolio.co/projects/hackadome-daf3"
+  - year: 2024
+    prize: "Third prize"
+    medal: "🥉"
+    competition: "Weavers dev bounty III"
+    url: "https://x.com/Weavers_Org/status/1821262463897075745"
+  - year: 2023
+    prize: "Grand Prize"
+    medal: "🥇"
+    competition: "Arweave India Cohort #1 hackerhouse"
+    url: "https://x.com/arweaveindia/status/1734972911163961371"
+  - year: 2023
+    prize: "Second"
+    medal: "🥈"
+    competition: "Crewsphere ICP College level hackathon"
+  - year: 2023
+    prize: "Second"
+    medal: "🥈"
+    competition: "Hack-O-Octo 1.0"
+  - year: 2023
+    prize: "First"
+    medal: "🥇"
+    competition: "CDAC's GCON Vegathon"
+  - year: 2023
+    prize: "First"
+    medal: "🥇"
+    competition: "IIT Roorkee Intel OneAPI workshop & hackathon"
+  - year: 2023
+    prize: "Track Prize"
+    medal: "🏅"
+    competition: "SheBuilds Hackathon"
+    url: "https://devfolio.co/projects/pokemonzilla-c051"
+  - year: 2022
+    prize: "Second"
+    medal: "🥈"
+    competition: "Hash It Out 1.0"
+  - year: 2022
+    prize: "Track Prize"
+    medal: "🏅"
+    competition: "Neighbourhood Hacks 2.0"
+  - year: 2022
+    prize: "Track Prize"
+    medal: "🏅"
+    competition: "Support-a-thon"
+  - year: 2022
+    prize: "Track Prize"
+    medal: "🏅"
+    competition: "We Make Devs <> Stream hackathon"
+
+participations:
+  - year: 2024
+    competition: "LFGHO '24"
+  - year: 2023
+    competition: "NASA CanSat '24 (cleared PDR round)"
+  - year: 2023
+    competition: "EthOnline 2023"
+  - year: 2023
+    competition: "SIH Tekathon 2.0"
+  - year: 2023
+    competition: "Hack NSUT '23"
+  - year: 2022
+    competition: "AWS Community Day Quizes"
+  - year: 2022
+    competition: "Hack The Mountains 3.0"
+  - year: 2022
+    competition: "IC Hack '22"
+  - year: 2019
+    competition: "Tinkerfest Junior Robotics competition"
+  - year: 2019
+    competition: "MIT Appinventor hackathon"
