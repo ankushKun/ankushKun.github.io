@@ -319,7 +319,8 @@
     <!-- Window Container -->
     <div class="windows-container" id="windows-container"></div>
 
-    <script src="/js/mavericks.js"></script>
+    {{ $js := resources.Get "js/mavericks.js" | resources.Minify | resources.Fingerprint }}
+    <script src="{{ $js.Permalink }}"></script>
 </body>
 
 </html>
