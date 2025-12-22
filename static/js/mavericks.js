@@ -547,7 +547,8 @@
                     'github.com', 'twitter.com', 'x.com',
                     'youtube.com', 'youtu.be', 'linkedin.com',
                     'instagram.com', 'facebook.com', 'medium.com',
-                    't.me', 'discord.com', 'discord.gg', 'reddit.com'
+                    't.me', 'discord.com', 'discord.gg', 'reddit.com',
+                    'pw.live', 'devfolio.co'
                 ];
 
                 // Get the domain for the window title
