@@ -35,6 +35,10 @@
     {{ partial "desktop-icon.html" (dict "window" "book-a-call" "title" "🌐 Schedule Call" "label" "Schedule Call" "svg"
     (partial "icons/phone-desktop.html" .)) }}
 
+    <!-- DOOM Icon -->
+    {{ partial "desktop-icon.html" (dict "window" "doom" "title" "🎮 DOOM" "label" "DOOM" "svg"
+    (partial "icons/doom-desktop.html" .)) }}
+
 </div>
 
 <!-- ============================================== -->
@@ -267,6 +271,27 @@
                 </div>
                 <iframe data-src="/resume.pdf" frameborder="0" onload="this.previousElementSibling.style.display='none'"
                     style="width: 100%; height: 100%;"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- DOOM CONTENT -->
+    <div id="content-doom">
+        <div class="external-window" style="height: 100%; display: flex; flex-direction: column;">
+            <div class="window-toolbar">
+                <div class="url-bar">
+                    <span class="url-icon">🎮</span>
+                    <span class="url-text">Yet Another Doom Clone (13K JavaScript)</span>
+                </div>
+                <a href="https://nicholas.carlini.com/writing/2019/javascript-doom-clone-13k.html" target="_blank"
+                    class="open-external" title="Open source article">↗</a>
+            </div>
+            <div class="window-iframe-container" style="flex: 1; position: relative;">
+                <div class="window-loader">
+                    <div class="spinner"></div>
+                </div>
+                <iframe data-src="/doom/" frameborder="0" onload="this.previousElementSibling.style.display='none'"
+                    style="width: 100%; height: 100%; background: #000;"></iframe>
             </div>
         </div>
     </div>
