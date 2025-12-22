@@ -15,18 +15,41 @@ Usage:
                 <span>{{ .title }}</span>
             </div>
             <div class="games-controls">
-                <span class="games-count">1 item</span>
+                <span class="games-count">3 items</span>
             </div>
         </div>
 
+
         <div class="games-content">
+            <!-- Itch.io Link -->
+            <div class="itchio-banner" onclick="window.open('https://ankushkun.itch.io/', '_blank');">
+                <span class="itchio-text">Check out my games on itch.io →</span>
+            </div>
+
             <div class="games-icon-grid">
+                <!-- Last Cat Standing -->
+                <div class="game-icon-item" onclick="window.openContentWindow('itch-game', 'Last Cat Standing', null);">
+                    <div class="game-icon-image">
+                        <img src="/games/cat.png" alt="Last Cat Standing" />
+                    </div>
+                    <div class="game-icon-label">Last Cat Standing</div>
+                </div>
+
                 <!-- DOOM Game -->
                 <div class="game-icon-item" onclick="window.openContentWindow('doom', 'DOOM', null);">
                     <div class="game-icon-image">
                         {{ partial "icons/doom-desktop.html" . }}
                     </div>
                     <div class="game-icon-label">DOOM</div>
+                </div>
+
+                <!-- Crysis Game -->
+                <div class="game-icon-item"
+                    onclick="window.showNotification({ title: 'Crysis', message: 'You cannot run Crysis', icon: '⚠️', duration: 3000 })">
+                    <div class="game-icon-image">
+                        <img src="/games/crysis.png" alt="Crysis" />
+                    </div>
+                    <div class="game-icon-label">Crysis</div>
                 </div>
 
             </div>
@@ -127,6 +150,13 @@ Usage:
         filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
     }
 
+    .game-icon-image img {
+        width: 64px;
+        height: 64px;
+        object-fit: contain;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    }
+
     .game-icon-label {
         font-size: 12px;
         font-weight: 500;
@@ -188,5 +218,23 @@ Usage:
         .game-icon-label {
             font-size: 11px;
         }
+    }
+
+    /* Itch.io Link */
+    .itchio-banner {
+        display: inline-block;
+        margin-bottom: 26px;
+        margin-left: 20px;
+        cursor: pointer;
+    }
+
+    .itchio-text {
+        font-size: 13px;
+        color: var(--accent-blue, #007aff);
+        text-decoration: none;
+    }
+
+    .itchio-banner:hover .itchio-text {
+        text-decoration: underline;
     }
 </style>
