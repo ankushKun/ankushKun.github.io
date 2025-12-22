@@ -38,6 +38,26 @@
         ) }}
     </div>
 </div>
+{{ else if eq .Section "projects" }}
+{{/* Projects section uses projects-grid for consistency with desktop window */}}
+<div class="static-window">
+    <!-- Titlebar -->
+    <div class="window-titlebar">
+        {{ partial "traffic-lights.html" (dict "closeLink" "/") }}
+        <div class="window-title">{{ .Title }}</div>
+    </div>
+
+    <!-- Content - Projects Grid -->
+    <div class="window-content" style="display: flex; flex-direction: column; padding: 0;">
+        {{ partial "projects-grid.html" (dict
+        "id" "projects-page"
+        "title" "Projects"
+        "pages" .Pages.ByDate.Reverse
+        "prefix" "project"
+        "standalone" true
+        ) }}
+    </div>
+</div>
 {{ else }}
 {{/* Finder-style list for sections with child pages */}}
 {{ $finderTitle := "" }}

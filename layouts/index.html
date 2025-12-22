@@ -188,21 +188,14 @@
     ) }}
     {{ end }}
 
-    <!-- PROJECTS LIST - Finder Layout -->
+    <!-- PROJECTS GRID - macOS Finder Card Layout -->
     {{ $projects := .Site.GetPage "/projects" }}
     {{ with $projects }}
-    {{ partial "finder-list.html" (dict
+    {{ partial "projects-grid.html" (dict
     "id" "projects"
-    "icon" "🚀"
     "title" "Projects"
     "pages" .Pages.ByDate.Reverse
     "prefix" "project"
-    "countLabel" "items"
-    "nameHeader" "Name"
-    "dateHeader" "Year"
-    "dateFormat" "2006"
-    "iconPartial" "icons/folder.html"
-    "iconColor" "#FF9500"
     ) }}
     {{ end }}
 
