@@ -170,21 +170,14 @@
         </div>
     </div>
 
-    <!-- BLOG LIST - Finder Layout -->
+    <!-- BLOG LIST - Mavericks Mail Style -->
     {{ $blog := .Site.GetPage "/blogs" }}
     {{ with $blog }}
-    {{ partial "finder-list.html" (dict
+    {{ partial "blogs-list.html" (dict
     "id" "blogs"
-    "icon" "📝"
     "title" "Blogs"
     "pages" .Pages.ByDate.Reverse
     "prefix" "post"
-    "countLabel" "items"
-    "nameHeader" "Name"
-    "dateHeader" "Date"
-    "dateFormat" "Jan 2, 2006"
-    "iconPartial" "icons/document.html"
-    "iconColor" "#007AFF"
     ) }}
     {{ end }}
 

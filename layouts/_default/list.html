@@ -58,8 +58,28 @@
         ) }}
     </div>
 </div>
+{{ else if eq .Section "blogs" }}
+{{/* Blogs section uses blogs-list for consistency with desktop window */}}
+<div class="static-window">
+    <!-- Titlebar -->
+    <div class="window-titlebar">
+        {{ partial "traffic-lights.html" (dict "closeLink" "/") }}
+        <div class="window-title">{{ .Title }}</div>
+    </div>
+
+    <!-- Content - Blogs List -->
+    <div class="window-content" style="display: flex; flex-direction: column; padding: 0;">
+        {{ partial "blogs-list.html" (dict
+        "id" "blogs-page"
+        "title" "Blogs"
+        "pages" .Pages.ByDate.Reverse
+        "prefix" "post"
+        "standalone" true
+        ) }}
+    </div>
+</div>
 {{ else }}
-{{/* Finder-style list for sections with child pages */}}
+{{/* Finder-style list for other sections */}}
 {{ $finderTitle := "" }}
 {{ if eq .Section "projects" }}{{ $finderTitle = "🚀 Projects" }}
 {{ else if eq .Section "blogs" }}{{ $finderTitle = "📝 Blogs" }}
