@@ -360,10 +360,11 @@ body.wallpaper-loaded::before {
     display: flex;
     flex-direction: column;
     flex-wrap: wrap;
-    align-content: flex-end;
+    align-content: flex-start;
     gap: 8px;
     height: 100%;
     padding-right: 10px;
+    direction: rtl;
 }
 
 .desktop-icon {
@@ -375,6 +376,7 @@ body.wallpaper-loaded::before {
     cursor: pointer;
     border-radius: 6px;
     transition: background 0.1s ease;
+    direction: ltr;
 
     /* Button Reset */
     background: none;
