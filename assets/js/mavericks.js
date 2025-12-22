@@ -13,6 +13,7 @@
     let activeWindow = null;
     const openWindows = new Map();
     const windowHistory = [];
+    let globalSearchIndex = [];
 
     // Initialize
     document.addEventListener('DOMContentLoaded', init);
@@ -26,7 +27,9 @@
         setupExternalLinks();
         setupKeyboardShortcuts();
         preloadHighResWallpaper();
+        preloadHighResWallpaper();
         lazyLoadImages();
+        setupSearchIndex();
 
         // Auto-open About Me window on page load
         setTimeout(() => {
@@ -316,17 +319,36 @@
         const input = document.getElementById('spotlight-input');
         input.focus();
 
-        // Build search index from page content
-        const searchIndex = buildSearchIndex();
+        // Create icon mapping helper
+        const getIcon = (item) => {
+            if (item.type === 'app') {
+                if (item.title === 'Wins') return '🥇';
+                if (item.title === 'Contact') return '📇';
+                if (item.title === 'Schedule Call') return '📅';
+                if (item.title === 'Timeline') return '⏳';
+                if (item.title === 'Projects') return '🚀';
+                if (item.title === 'Blogs') return '📝';
+                if (item.title === 'Resume') return '📄';
+                if (item.title === 'DOOM') return '🎮';
+                if (item.title === 'About Me') return '🍎';
+                return '🖥️';
+            }
+            return getIconForType(item.type);
+        };
 
         // Handle search
         let selectedIndex = -1;
         input.addEventListener('input', () => {
             const query = input.value.toLowerCase().trim();
-            const results = query ? searchIndex.filter(item =>
+            const results = query ? globalSearchIndex.filter(item =>
                 item.title.toLowerCase().includes(query) ||
-                item.type.toLowerCase().includes(query)
-            ).slice(0, 8) : [];
+                (item.description && item.description.toLowerCase().includes(query)) ||
+                (item.content && item.content.toLowerCase().includes(query))
+            ).slice(0, 8).map(item => ({
+                ...item,
+                icon: getIcon(item),
+                windowId: item.openWindow || ('content-' + item.permalink.replace(/[^a-z0-9]/gi, '-'))
+            })) : [];
 
             renderResults(results);
             selectedIndex = results.length > 0 ? 0 : -1;
@@ -393,58 +415,27 @@
         });
     }
 
-    // Build search index from page content
-    function buildSearchIndex() {
-        const index = [];
+    // Old buildSearchIndex was replaced below by setupSearchIndex logic
+    // Removing the residual body lines
 
-        // Desktop icons (main sections)
-        document.querySelectorAll('.desktop-icon').forEach(icon => {
-            const windowId = icon.dataset.window;
-            const title = icon.dataset.title;
-            if (windowId && title) {
-                index.push({
-                    windowId,
-                    title,
-                    type: 'Section',
-                    icon: getIconForType('section')
-                });
-            }
-        });
 
-        // Finder items (projects, blogs, timeline)
-        document.querySelectorAll('.finder-row[data-window]').forEach(row => {
-            const windowId = row.dataset.window;
-            const title = row.dataset.title;
-            const permalink = row.dataset.permalink; // Capture permalink
-
-            if (windowId && title) {
-                let type = 'Item';
-                let icon = '📄';
-                if (windowId.startsWith('project-')) {
-                    type = 'Project';
-                    icon = '📁';
-                } else if (windowId.startsWith('post-')) {
-                    type = 'Blogs';
-                    icon = '📝';
-                } else if (windowId.startsWith('timeline-')) {
-                    type = 'Timeline Event';
-                    icon = '⏰';
-                }
-                index.push({ windowId, title, type, icon, permalink });
-            }
-        });
-
-        return index;
+    function setupSearchIndex() {
+        fetch('/index.json')
+            .then(r => r.json())
+            .then(data => { globalSearchIndex = data; })
+            .catch(e => console.error('Failed to load search index', e));
     }
 
+    // Unused but kept for reference or legacy functionality
+    function buildSearchIndex() { return []; }
+
     function getIconForType(type) {
-        const icons = {
-            'section': '📂',
-            'project': '📁',
-            'post': '📝',
-            'timeline': '⏰'
-        };
-        return icons[type] || '📄';
+        const t = (type || '').toLowerCase();
+        if (t.includes('blog') || t.includes('post')) return '📝';
+        if (t.includes('project')) return '📁';
+        if (t.includes('timeline')) return '⏰';
+        if (t.includes('app')) return '🚀';
+        return '📄';
     }
 
     // Clock

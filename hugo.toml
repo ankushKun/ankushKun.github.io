@@ -8,12 +8,16 @@ enableEmoji = true
 # Enable sitemap and robots.txt
 enableRobotsTXT = false # We have custom robots.txt in static/
 
+# Output formats including JSON for search index
+[outputs]
+home = ["HTML", "JSON"]
+
 # Suppress raw HTML warnings
 ignoreLogs = ['warning-goldmark-raw-html']
 
 # Site params for SEO
 [params]
-description = "Ankush Singh - Software Engineer, Developer Tools Builder, Entrepreneur in Residence at Forward Research"
+description = "Ankush Singh - Software Engineer & Community Builder"
 author = "Ankush Singh"
 twitter = "@ankushKun_"
 github = "ankushKun"

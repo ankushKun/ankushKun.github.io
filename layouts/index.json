@@ -1,0 +1,36 @@
+{{- $results := slice -}}
+
+{{/* 1. Static Apps/System shortcuts */}}
+{{- $apps := slice
+    (dict "title" "About Me" "type" "app" "permalink" "/" "openWindow" "about" "description" "Ankush Singh Profile")
+    (dict "title" "Projects" "type" "app" "permalink" "/projects/" "openWindow" "projects" "description" "My Portfolio Projects")
+    (dict "title" "Blogs" "type" "app" "permalink" "/blogs/" "openWindow" "blogs" "description" "Technical Articles and Thoughts")
+    (dict "title" "Timeline" "type" "app" "permalink" "/timeline/" "openWindow" "timeline" "description" "Career History")
+    (dict "title" "Wins" "type" "app" "permalink" "/wins/" "openWindow" "wins" "description" "Hackathon Wins & Awards")
+    (dict "title" "Contact" "type" "app" "permalink" "/contact/" "openWindow" "contact" "description" "Get in Touch")
+    (dict "title" "Schedule Call" "type" "app" "permalink" "/schedule/" "openWindow" "book-a-call" "description" "Book a meeting")
+    (dict "title" "Resume" "type" "app" "permalink" "/resume.pdf" "openWindow" "resume" "description" "My CV / Resume")
+    (dict "title" "DOOM" "type" "app" "permalink" "/doom/" "openWindow" "doom" "description" "Play Doom in Browser")
+-}}
+{{- $results = $results | append $apps -}}
+
+{{/* 2. Content Pages (Blogs, Projects) */}}
+{{- range .Site.RegularPages -}}
+    {{- $title := .Title -}}
+    {{- $type := .Section -}}
+    {{- if eq $type "" }}{{ $type = "page" }}{{ end -}}
+    {{- $content := .Plain | truncate 300 -}}
+    
+    {{/* Exclude sections that are handled by apps if needed, but keeping them allows content search */}}
+    {{- if not (or (eq $title "Wins") (eq $title "Contact") (eq $title "Schedule Call")) -}}
+        {{- $item := dict 
+            "title" $title 
+            "type" $type 
+            "permalink" .RelPermalink 
+            "content" $content
+        -}}
+        {{- $results = $results | append $item -}}
+    {{- end -}}
+{{- end -}}
+
+{{- $results | jsonify -}}
