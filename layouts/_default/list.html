@@ -95,10 +95,12 @@
 
     <!-- Content - Calendar View -->
     <div class="window-content" style="display: flex; flex-direction: column; padding: 0;">
+        {{ $projectPages := where .Site.RegularPages "Section" "projects" }}
+        {{ $allPages := .Pages | union $projectPages }}
         {{ partial "calendar-view.html" (dict
         "id" "timeline-page"
         "title" "Timeline"
-        "pages" .Pages.ByDate.Reverse
+        "pages" $allPages.ByDate.Reverse
         "prefix" "timeline"
         "standalone" true
         ) }}

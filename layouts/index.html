@@ -77,10 +77,12 @@
     <!-- TIMELINE CALENDAR VIEW -->
     {{ $timeline := .Site.GetPage "/timeline" }}
     {{ with $timeline }}
+    {{ $projectPages := where .Site.RegularPages "Section" "projects" }}
+    {{ $allPages := .Pages | union $projectPages }}
     {{ partial "calendar-view.html" (dict
     "id" "timeline"
     "title" "Timeline"
-    "pages" .Pages.ByDate.Reverse
+    "pages" $allPages.ByDate.Reverse
     "prefix" "timeline"
     ) }}
     {{ end }}
