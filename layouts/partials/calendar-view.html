@@ -87,12 +87,17 @@ Set "standalone" to false for desktop window (events open in window)
                         </div>
                         <div class="events-list">
                             {{ range $monthData.events }}
+                            {{ $type := .page.Params.type }}
+                            {{ if and (not $type) (eq .page.Section "projects") }}
+                            {{ $type = "project" }}
+                            {{ end }}
+
                             {{ if $standalone }}
                             <a href="{{ .page.RelPermalink }}" class="event-item event-link" tabindex="0">
                                 <span class="event-date">{{ .day }}</span>
                                 <span class="event-title">{{ .page.Title }}</span>
-                                {{ with .page.Params.type }}
-                                <span class="event-type {{ . }}">{{ . }}</span>
+                                {{ with $type }}
+                                <span class="event-type {{ . | lower }}">{{ . }}</span>
                                 {{ end }}
                             </a>
                             {{ else }}
@@ -100,8 +105,8 @@ Set "standalone" to false for desktop window (events open in window)
                                 data-title="{{ .page.Title }}" data-permalink="{{ .page.Permalink }}" tabindex="0">
                                 <span class="event-date">{{ .day }}</span>
                                 <span class="event-title">{{ .page.Title }}</span>
-                                {{ with .page.Params.type }}
-                                <span class="event-type {{ . }}">{{ . }}</span>
+                                {{ with $type }}
+                                <span class="event-type {{ . | lower }}">{{ . }}</span>
                                 {{ end }}
                             </div>
                             {{ end }}
@@ -318,6 +323,11 @@ Set "standalone" to false for desktop window (events open in window)
     .event-type.achievement {
         background: var(--type-achievement);
         color: var(--text-primary);
+    }
+
+    .event-type.project {
+        background: var(--type-project);
+        color: var(--text-inverse);
     }
 
     /* Scrollbar styling */
