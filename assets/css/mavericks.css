@@ -8,10 +8,10 @@
     --menubar-height: 24px;
     --window-titlebar-height: 22px;
 
-    /* Dynamic viewport height for mobile Safari - fallback to vh for older browsers */
+    /* Small viewport height for mobile Safari - fallback to vh for older browsers */
     --vh-full: 100vh;
-    --vh-full: 100dvh;
-    /* Overrides previous line in browsers that support dvh */
+    --vh-full: 100svh;
+    /* Overrides previous line in browsers that support svh */
 
     /* === MAVERICKS ACCENT COLORS === */
     /* Primary Blue - The classic Aqua blue from Mavericks */
@@ -134,8 +134,8 @@ html,
 body {
     width: 100%;
     height: 100vh;
-    height: 100dvh;
-    /* Dynamic viewport height for mobile Safari */
+    height: 100svh;
+    /* Small viewport height for mobile Safari */
     overflow: hidden;
     font-family: var(--font-system);
     font-size: 13px;
@@ -2063,8 +2063,8 @@ body.wallpaper-loaded::before {
         gap: 12px;
         padding: 12px;
         height: auto;
-        max-height: calc(100vh - var(--menubar-height));
-        max-height: calc(100dvh - var(--menubar-height));
+        max-height: calc(100vh - var(--menubar-height) - env(safe-area-inset-bottom, 0px));
+        max-height: calc(100svh - var(--menubar-height));
         overflow-y: auto;
     }
 
@@ -2139,11 +2139,12 @@ body.wallpaper-loaded::before {
         max-width: calc(100vw - 16px) !important;
         left: 8px !important;
         top: 8px !important;
-        /* Use dvh for mobile Safari, with vh fallback */
-        height: calc(100vh - var(--menubar-height) - 16px) !important;
-        height: calc(100dvh - var(--menubar-height) - 16px) !important;
-        max-height: calc(100vh - var(--menubar-height) - 16px) !important;
-        max-height: calc(100dvh - var(--menubar-height) - 16px) !important;
+        /* Use svh (small viewport height) for mobile Safari - this ensures 
+           content fits even when Safari's bottom toolbar is visible */
+        height: calc(100vh - var(--menubar-height) - 16px - env(safe-area-inset-bottom, 0px)) !important;
+        height: calc(100svh - var(--menubar-height) - 16px) !important;
+        max-height: calc(100vh - var(--menubar-height) - 16px - env(safe-area-inset-bottom, 0px)) !important;
+        max-height: calc(100svh - var(--menubar-height) - 16px) !important;
         border-radius: 6px;
     }
 
@@ -2490,8 +2491,8 @@ body.wallpaper-loaded::before {
         top: 50px !important;
         transform: none !important;
         height: auto !important;
-        max-height: calc(100vh - var(--menubar-height) - 66px) !important;
-        max-height: calc(100dvh - var(--menubar-height) - 66px) !important;
+        max-height: calc(100vh - var(--menubar-height) - 66px - env(safe-area-inset-bottom, 0px)) !important;
+        max-height: calc(100svh - var(--menubar-height) - 66px) !important;
     }
 
     .about-this-mac {
@@ -2635,7 +2636,7 @@ body.wallpaper-loaded::before {
     transform: translateX(-50%);
     width: 90%;
     height: calc(100vh - 90px);
-    height: calc(100dvh - 90px);
+    height: calc(100svh - 90px);
     max-width: 1200px;
     background: var(--window-bg);
     border-radius: 6px;
@@ -2667,8 +2668,8 @@ body.wallpaper-loaded::before {
         max-width: calc(100vw - 16px) !important;
         left: 8px !important;
         top: calc(var(--menubar-height) + 8px) !important;
-        height: calc(100vh - var(--menubar-height) - 16px) !important;
-        height: calc(100dvh - var(--menubar-height) - 16px) !important;
+        height: calc(100vh - var(--menubar-height) - 16px - env(safe-area-inset-bottom, 0px)) !important;
+        height: calc(100svh - var(--menubar-height) - 16px) !important;
         transform: none !important;
     }
 }
