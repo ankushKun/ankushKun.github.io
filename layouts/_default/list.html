@@ -18,16 +18,34 @@
         {{ .Content }}
     </div>
 </div>
+{{ else if eq .Section "timeline" }}
+{{/* Timeline section uses calendar-view for consistency with desktop window */}}
+<div class="static-window">
+    <!-- Titlebar -->
+    <div class="window-titlebar">
+        {{ partial "traffic-lights.html" (dict "closeLink" "/") }}
+        <div class="window-title">{{ .Title }}</div>
+    </div>
+
+    <!-- Content - Calendar View -->
+    <div class="window-content" style="display: flex; flex-direction: column; padding: 0;">
+        {{ partial "calendar-view.html" (dict
+        "id" "timeline-page"
+        "title" "Timeline"
+        "pages" .Pages.ByDate.Reverse
+        "prefix" "timeline"
+        "standalone" true
+        ) }}
+    </div>
+</div>
 {{ else }}
 {{/* Finder-style list for sections with child pages */}}
 {{ $finderTitle := "" }}
 {{ if eq .Section "projects" }}{{ $finderTitle = "🚀 Projects" }}
 {{ else if eq .Section "blogs" }}{{ $finderTitle = "📝 Blogs" }}
-{{ else if eq .Section "timeline" }}{{ $finderTitle = "⏰ Timeline" }}
 {{ else }}{{ $finderTitle = .Title }}{{ end }}
 
 {{ $nameHeader := "Name" }}
-{{ if eq .Section "timeline" }}{{ $nameHeader = "Event" }}{{ end }}
 
 {{ $dateHeader := "Date" }}
 {{ if eq .Section "projects" }}{{ $dateHeader = "Year" }}{{ end }}
@@ -66,8 +84,6 @@
                             {{ partial "icons/folder.html" (dict "color" "#FF9500" "size" 16) }}
                             {{ else if eq .Section "blogs" }}
                             {{ partial "icons/document.html" (dict "color" "#007AFF" "size" 16) }}
-                            {{ else if eq .Section "timeline" }}
-                            {{ partial "icons/clock.html" (dict "color" "#FF5E3A" "size" 16) }}
                             {{ else }}
                             {{ partial "icons/document.html" (dict "color" "#999" "size" 16) }}
                             {{ end }}
@@ -75,7 +91,6 @@
                         <span class="col-name">{{ .Title }}</span>
                         <span class="col-date">
                             {{ if eq .Section "projects" }}{{ .Date.Format "2006" }}
-                            {{ else if eq .Section "timeline" }}{{ .Date.Format "Jan 2006" }}
                             {{ else }}{{ .Date.Format "Jan 2, 2006" }}{{ end }}
                         </span>
                     </a>
