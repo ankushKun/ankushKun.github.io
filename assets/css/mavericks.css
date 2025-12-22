@@ -18,7 +18,7 @@
     --traffic-red: #FF5F57;
     --traffic-yellow: #FEBC2E;
     --traffic-green: #28C840;
-    --font-system: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Lucida Grande", sans-serif;
+    --font-system: "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Geneva, Verdana, sans-serif;
 }
 
 /* Reset */
