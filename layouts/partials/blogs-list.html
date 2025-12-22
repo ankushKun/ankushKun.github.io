@@ -1,0 +1,302 @@
+{{/* Blogs List - macOS Mail/Notes style list view */}}
+{{/*
+Usage:
+{{ partial "blogs-list.html" (dict
+"id" "blogs"
+"title" "Blogs"
+"pages" $pages
+"prefix" "post"
+"standalone" false
+) }}
+*/}}
+
+{{ $pages := .pages }}
+{{ $prefix := .prefix }}
+{{ $standalone := default false .standalone }}
+
+<div id="content-{{ .id }}" data-permalink="/{{ .id }}/">
+    <div class="blogs-window" id="blogs-container-{{ .id }}">
+        <div class="blogs-toolbar">
+            <div class="blogs-title">
+                <span class="blogs-icon">📝</span>
+                <span>{{ .title }}</span>
+            </div>
+            <div class="blogs-controls">
+                <div class="blogs-search">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="search-input-{{ .id }}" class="search-input" placeholder="Search"
+                        aria-label="Search blogs">
+                </div>
+                <span class="blogs-count">{{ len $pages }} posts</span>
+            </div>
+        </div>
+
+        <div class="blogs-content" id="blogs-scroll-{{ .id }}">
+            <div class="blogs-list">
+                {{ range $pages }}
+                {{ if $standalone }}
+                <a href="{{ .RelPermalink }}" class="blog-row" tabindex="0">
+                    <div class="blog-row-content">
+                        <div class="blog-header">
+                            <span class="blog-title">{{ .Title }}</span>
+                            <span class="blog-date">{{ .Date.Format "Jan 2, 2006" }}</span>
+                        </div>
+                        <div class="blog-summary">{{ .Summary | plainify | truncate 120 }}</div>
+                    </div>
+                </a>
+                {{ else }}
+                <div class="blog-row" data-window="{{ $prefix }}-{{ .File.UniqueID }}" data-title="{{ .Title }}"
+                    data-permalink="{{ .Permalink }}" tabindex="0">
+                    <div class="blog-row-content">
+                        <div class="blog-header">
+                            <span class="blog-title">{{ .Title }}</span>
+                            <span class="blog-date">{{ .Date.Format "Jan 2, 2006" }}</span>
+                        </div>
+                        <div class="blog-summary">{{ .Summary | plainify | truncate 120 }}</div>
+                    </div>
+                </div>
+                {{ end }}
+                {{ end }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Blogs Window Styles - Inspired by macOS Mail/Notes */
+    .blogs-window {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        background: var(--window-bg-solid);
+        color: var(--text-primary);
+    }
+
+    .blogs-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        background: var(--toolbar-bg);
+        border-bottom: 1px solid var(--toolbar-border);
+        flex-shrink: 0;
+        height: 44px;
+        box-sizing: border-box;
+    }
+
+    .blogs-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .blogs-icon {
+        font-size: 16px;
+    }
+
+    .blogs-controls {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .blogs-search {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: #ffffff;
+        border: 1px solid var(--gray-400);
+        border-radius: 4px;
+        padding: 4px 8px;
+        width: 160px;
+        height: 24px;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .search-icon {
+        font-size: 12px;
+        opacity: 0.5;
+    }
+
+    .search-input {
+        border: none;
+        background: transparent;
+        font-size: 12px;
+        color: var(--text-primary);
+        width: 100%;
+        outline: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .search-input::placeholder {
+        color: var(--text-placeholder);
+    }
+
+    .blogs-count {
+        font-size: 11px;
+        color: var(--text-tertiary);
+    }
+
+    .blogs-content {
+        flex: 1;
+        overflow-y: auto;
+        background: #ffffff;
+    }
+
+    .blogs-list {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .blog-row {
+        display: flex;
+        width: 100%;
+        padding: 10px 20px;
+        border-bottom: 1px solid var(--gray-150);
+        cursor: pointer;
+        transition: background 0.1s ease;
+        text-decoration: none;
+        color: inherit;
+        box-sizing: border-box;
+    }
+
+    .blog-row:hover {
+        background: var(--gray-50);
+        /* Subtle blue tint hover from our palette */
+    }
+
+    .blog-row:active,
+    .blog-row:focus {
+        background: var(--accent-blue);
+        outline: none;
+    }
+
+    /* Content Layout */
+    .blog-row-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .blog-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+    }
+
+    .blog-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+        line-height: 1.3;
+    }
+
+    .blog-date {
+        font-size: 12px;
+        color: var(--text-tertiary);
+        margin-left: 12px;
+        white-space: nowrap;
+    }
+
+    .blog-summary {
+        font-size: 13px;
+        color: var(--text-secondary);
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    /* Selected State Typography */
+    .blog-row:active .blog-title,
+    .blog-row:focus .blog-title {
+        color: #ffffff;
+    }
+
+    .blog-row:active .blog-date,
+    .blog-row:focus .blog-date {
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    .blog-row:active .blog-summary,
+    .blog-row:focus .blog-summary {
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    /* Scrollbar */
+    .blogs-content::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .blogs-content::-webkit-scrollbar-track {
+        background: var(--scrollbar-track);
+    }
+
+    .blogs-content::-webkit-scrollbar-thumb {
+        background: var(--scrollbar-thumb);
+        border-radius: 4px;
+    }
+
+    .blogs-content::-webkit-scrollbar-thumb:hover {
+        background: var(--scrollbar-thumb-hover);
+    }
+
+    /* Mobile */
+    @media (max-width: 640px) {
+        .blogs-search {
+            width: 120px;
+        }
+
+        .blog-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 2px;
+        }
+
+        .blog-date {
+            margin-left: 0;
+            font-size: 11px;
+        }
+    }
+</style>
+
+<script>
+    (function () {
+        // Use event delegation to handle search in both the static page and dynamic windows
+        // This is necessary because mavericks.js clones content using innerHTML, which creates duplicate IDs and loses listeners
+        document.addEventListener('input', (e) => {
+            if (e.target.classList.contains('search-input')) {
+                const container = e.target.closest('.blogs-window');
+                if (!container) return;
+
+                const query = e.target.value.toLowerCase();
+                const rows = container.querySelectorAll('.blog-row');
+                const countEl = container.querySelector('.blogs-count');
+
+                let visibleCount = 0;
+
+                rows.forEach(row => {
+                    const title = row.querySelector('.blog-title').textContent.toLowerCase();
+                    const summary = row.querySelector('.blog-summary').textContent.toLowerCase();
+
+                    if (title.includes(query) || summary.includes(query)) {
+                        row.style.display = 'flex';
+                        visibleCount++;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                if (countEl) {
+                    countEl.textContent = `${visibleCount} post${visibleCount !== 1 ? 's' : ''}`;
+                }
+            }
+        });
+    })();
+</script>
