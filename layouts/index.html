@@ -198,21 +198,14 @@
     ) }}
     {{ end }}
 
-    <!-- TIMELINE LIST - Finder Layout -->
+    <!-- TIMELINE CALENDAR VIEW -->
     {{ $timeline := .Site.GetPage "/timeline" }}
     {{ with $timeline }}
-    {{ partial "finder-list.html" (dict
+    {{ partial "calendar-view.html" (dict
     "id" "timeline"
-    "icon" "⏰"
     "title" "Timeline"
     "pages" .Pages.ByDate.Reverse
     "prefix" "timeline"
-    "countLabel" "events"
-    "nameHeader" "Event"
-    "dateHeader" "Date"
-    "dateFormat" "Jan 2006"
-    "iconPartial" "icons/clock.html"
-    "iconColor" "#FF5E3A"
     ) }}
     {{ end }}
 

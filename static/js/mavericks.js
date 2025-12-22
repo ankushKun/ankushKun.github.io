@@ -79,8 +79,6 @@
         document.addEventListener('keydown', (e) => {
             const modKey = e.metaKey || e.ctrlKey;
 
-            console.log(modKey, e.key);
-
             // Cmd/Ctrl + W: Close active window
             if (modKey && e.key === 'w') {
                 e.preventDefault();
@@ -1316,6 +1314,63 @@
                 });
             });
         });
+
+        // Also handle calendar tooltip events
+        const calendarEvents = win.querySelectorAll('.tooltip-event');
+        calendarEvents.forEach(event => {
+            event.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const windowId = event.dataset.window;
+                const title = event.dataset.title;
+                const permalink = event.dataset.permalink;
+
+                if (windowId && title) {
+                    openWindow(windowId, title, { width: 900, height: 650 }, permalink);
+                }
+            });
+        });
     }
 
+    // Expose openWindow globally for calendar view and other modules
+    window.openContentWindow = function (windowId, title, permalink) {
+        openWindow(windowId, title, { width: 900, height: 650 }, permalink);
+    };
+
+    // Listen for custom event from calendar view
+    window.addEventListener('openContentWindow', function (e) {
+        const { windowId, title, permalink } = e.detail;
+        if (windowId && title) {
+            openWindow(windowId, title, { width: 900, height: 650 }, permalink);
+        }
+    });
+
+    // Global function for timeline year switching
+    // This needs to be global because inline onclick handlers in dynamically loaded HTML need it
+    window.switchTimelineYear = function (year, id) {
+        const container = document.getElementById('timeline-container-' + id);
+        if (!container) {
+            console.warn('Timeline container not found:', 'timeline-container-' + id);
+            return;
+        }
+
+        // Update tabs
+        container.querySelectorAll('.year-tab').forEach(function (tab) {
+            if (tab.dataset.year === year) {
+                tab.classList.add('active');
+            } else {
+                tab.classList.remove('active');
+            }
+        });
+
+        // Update sections
+        container.querySelectorAll('.timeline-year-section').forEach(function (section) {
+            if (section.dataset.year === year) {
+                section.classList.add('active');
+            } else {
+                section.classList.remove('active');
+            }
+        });
+    };
+
 })();
+
