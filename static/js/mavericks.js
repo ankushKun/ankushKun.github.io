@@ -22,11 +22,53 @@
         setupDropdownItemClose();
         setupExternalLinks();
         setupKeyboardShortcuts();
+        preloadHighResWallpaper();
+        lazyLoadImages();
 
         // Auto-open About Me window on page load
         setTimeout(() => {
             openWindow('about', 'About Me');
         }, 300);
+    }
+
+    // Preload high-resolution wallpaper
+    function preloadHighResWallpaper() {
+        const highResImage = new Image();
+        highResImage.onload = function () {
+            // High-res image loaded, add class to trigger CSS transition
+            document.body.classList.add('wallpaper-loaded');
+        };
+        highResImage.src = '/wallpaper.webp';
+    }
+
+    // Lazy load images with data-src attribute
+    function lazyLoadImages() {
+        const lazyImages = document.querySelectorAll('img.lazy-image[data-src]');
+        lazyImages.forEach(img => {
+            const fullSrc = img.dataset.src;
+            if (!fullSrc) return;
+
+            const highResImage = new Image();
+            highResImage.onload = function () {
+                img.src = fullSrc;
+                img.classList.add('loaded');
+            };
+            highResImage.src = fullSrc;
+        });
+    }
+
+    // Activate lazy-loaded iframes (iframes with data-src instead of src)
+    // This is called when a window containing iframes is opened
+    function activateLazyIframes(container) {
+        const lazyIframes = container.querySelectorAll('iframe[data-src]');
+        lazyIframes.forEach(iframe => {
+            const src = iframe.dataset.src;
+            if (src && !iframe.src) {
+                iframe.src = src;
+                // Remove data-src to prevent re-loading
+                iframe.removeAttribute('data-src');
+            }
+        });
     }
 
     // Keyboard Shortcuts
@@ -901,6 +943,9 @@
         setupWindowResize(win);
         setupWindowControls(win, id);
         setupFinderItems(win);
+
+        // Activate any lazy-loaded iframes in the window
+        activateLazyIframes(win);
 
         bringToFront(win);
 

@@ -6,6 +6,7 @@ Usage:
 "title" "About Me"
 "label" "About Me"
 "image" "/pfp.png"
+"placeholder" "data:image/jpeg;base64,..."
 ) }}
 OR for SVG:
 {{ partial "desktop-icon.html" (dict
@@ -19,7 +20,9 @@ OR for SVG:
     tabindex="0">
     <div class="icon-image">
         {{ if .image }}
-        <img src="{{ .image }}" alt="" width="64" height="64" aria-hidden="true">
+        <img src="{{ if .placeholder }}{{ .placeholder }}{{ else }}{{ .image }}{{ end }}" 
+             {{ if .placeholder }}data-src="{{ .image }}"{{ end }}
+             alt="" width="64" height="64" aria-hidden="true" class="lazy-image">
         {{ else if .svg }}
         {{ .svg | safeHTML }}
         {{ end }}
