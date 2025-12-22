@@ -2914,8 +2914,8 @@ a.finder-row {
 /* Mobile responsive */
 @media (max-width: 768px) {
     #notification-container {
-        top: calc(var(--menubar-height) + 32px);
-        /* 20px lower on mobile */
+        top: calc(var(--menubar-height) + 40px);
+        /* 40px lower on mobile */
         right: 8px;
         left: 8px;
         max-width: none;
