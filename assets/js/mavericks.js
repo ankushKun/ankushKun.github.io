@@ -1526,6 +1526,9 @@
             });
         }
 
+        // Setup swipe-to-dismiss
+        setupNotificationSwipe(notification);
+
         // Add to container
         container.appendChild(notification);
 
@@ -1565,6 +1568,90 @@
                 notification.remove();
             }
         }, 400);
+    }
+
+    /**
+     * Setup swipe-to-dismiss gesture for a notification
+     * @param {HTMLElement} notification - The notification element
+     */
+    function setupNotificationSwipe(notification) {
+        let startX = 0;
+        let currentX = 0;
+        let isDragging = false;
+
+        const onStart = (e) => {
+            // Don't interfere with close button
+            if (e.target.classList.contains('notification-close')) return;
+
+            isDragging = true;
+            startX = e.clientX || (e.touches && e.touches[0].clientX);
+            currentX = startX;
+
+            // Cancel any running animation and remove transition during drag
+            notification.style.animation = 'none';
+            notification.style.transition = 'none';
+            // Force the current position to be translateX(0) since animation is now cancelled
+            notification.style.transform = 'translateX(0)';
+            notification.style.opacity = '1';
+
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onEnd);
+            document.addEventListener('touchmove', onMove, { passive: false });
+            document.addEventListener('touchend', onEnd);
+        };
+
+        const onMove = (e) => {
+            if (!isDragging) return;
+
+            currentX = e.clientX || (e.touches && e.touches[0].clientX);
+            const deltaX = currentX - startX;
+
+            // Only allow dragging to the right (positive deltaX)
+            if (deltaX > 0) {
+                notification.style.transform = `translateX(${deltaX}px)`;
+                // Fade out as user drags further
+                notification.style.opacity = Math.max(0.3, 1 - (deltaX / 200));
+            }
+
+            // Prevent scrolling while swiping
+            if (e.cancelable) {
+                e.preventDefault();
+            }
+        };
+
+        const onEnd = () => {
+            if (!isDragging) return;
+            isDragging = false;
+
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onEnd);
+            document.removeEventListener('touchmove', onMove);
+            document.removeEventListener('touchend', onEnd);
+
+            const deltaX = currentX - startX;
+
+            // If dragged more than 80px to the right, dismiss
+            if (deltaX > 80) {
+                // Animate out
+                notification.style.transition = 'transform 0.2s ease-out, opacity 0.2s ease-out';
+                notification.style.transform = 'translateX(400px)';
+                notification.style.opacity = '0';
+
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 200);
+            } else {
+                // Snap back
+                notification.style.transition = 'transform 0.2s ease-out, opacity 0.2s ease-out';
+                notification.style.transform = 'translateX(0)';
+                notification.style.opacity = '1';
+            }
+        };
+
+        notification.addEventListener('mousedown', onStart);
+        notification.addEventListener('touchstart', onStart, { passive: true });
     }
 
     // Expose globally

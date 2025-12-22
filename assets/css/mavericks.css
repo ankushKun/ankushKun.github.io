@@ -2891,6 +2891,7 @@ a.finder-row {
 /* Mobile responsive */
 @media (max-width: 768px) {
     #notification-container {
+        top: calc(var(--menubar-height) + 32px); /* 20px lower on mobile */
         right: 8px;
         left: 8px;
         max-width: none;
@@ -2899,5 +2900,7 @@ a.finder-row {
 
     .notification {
         min-width: 0;
+        /* Hint for swipe gesture */
+        touch-action: pan-y pinch-zoom;
     }
 }
