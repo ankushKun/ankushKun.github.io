@@ -2,9 +2,9 @@
 date = '2023-03-30'
 draft = false
 title = 'Automating Mandelbrot Fractal generation with SYCL Programming'
-description = "Step-by-step guide to automate npm package publishing through GitHub Actions using OpenID Connect (OIDC). Set up trusted publishing without API keys or access tokens for secure, provenance-verified releases."
-summary = 'Learn how to automate npm package publishing through GitHub Actions using OpenID Connect (OIDC) - no API keys or access tokens required.'
-tags = ['SYCL', 'Mandelbrot', 'Intel OneAPI']
+description = "Learn how to generate Mandelbrot fractals using Intel oneAPI and SYCL programming. Includes a bash script to automate fractal generation at various resolutions and iterations on Intel DevCloud."
+summary = 'A walkthrough of generating Mandelbrot fractals with Intel oneAPI SYCL, plus an automation script — from a hackathon-winning project at IIT Roorkee.'
+tags = ['Mandelbrot', 'Intel OneAPI', 'SYCL', 'bash scripting']
 author = 'Ankush'
 +++
 
