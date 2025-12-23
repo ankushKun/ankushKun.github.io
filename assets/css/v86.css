@@ -1,0 +1,163 @@
+/* v86 Terminal - Combined VGA + Serial Interface */
+
+/* Main container */
+.v86-terminal-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: #1e1e1e;
+    overflow: hidden;
+}
+
+/* Tab bar for switching between VGA and Serial */
+.v86-tab-bar {
+    display: flex;
+    align-items: center;
+    background: linear-gradient(to bottom, #3a3a3a 0%, #2a2a2a 100%);
+    border-bottom: 1px solid #1a1a1a;
+    padding: 0 8px;
+    height: 32px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 100;
+}
+
+.v86-tab {
+    padding: 6px 16px;
+    font-size: 12px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    color: #999;
+    background: transparent;
+    border: none;
+    border-radius: 4px 4px 0 0;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    margin-right: 4px;
+}
+
+.v86-tab:hover {
+    color: #ccc;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.v86-tab.active {
+    color: #fff;
+    background: #1e1e1e;
+    border: 1px solid #1a1a1a;
+    border-bottom: 1px solid #1e1e1e;
+    margin-bottom: -1px;
+}
+
+/* Status indicator */
+.v86-status {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #888;
+}
+
+.v86-status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #666;
+    transition: background 0.3s ease;
+}
+
+.v86-status-indicator.running {
+    background: #4cd964;
+    box-shadow: 0 0 6px rgba(76, 217, 100, 0.5);
+}
+
+.v86-status-text {
+    font-family: "SF Mono", Monaco, monospace;
+}
+
+/* Panels */
+.v86-panel {
+    display: none;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.v86-panel.active {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Serial panel (xterm.js) */
+.v86-serial-panel {
+    background: #1e1e1e;
+}
+
+.v86-serial-panel .terminal-xterm-container {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+.v86-serial-panel .xterm {
+    height: 100%;
+}
+
+.v86-serial-panel .xterm-viewport {
+    overflow-y: auto !important;
+}
+
+/* VGA panel (canvas) */
+.v86-vga-panel {
+    background: #000;
+    align-items: center;
+    justify-content: center;
+}
+
+/* v86 Screen Container - for VGA output */
+.v86-screen-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.v86-screen-container>div {
+    color: #fff;
+    font-family: monospace;
+    white-space: pre;
+    font-size: 14px;
+    line-height: 16px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.v86-screen-container canvas {
+    max-width: 100%;
+    max-height: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+/* Window content adjustments for terminal */
+.window-content:has(.v86-terminal-container) {
+    padding: 0 !important;
+    overflow: hidden;
+}
+
+/* Make sure canvas is visible when in graphical mode */
+.v86-screen-container canvas:not([style*="display: none"]) {
+    display: block;
+}
+
+/* Hide text div when canvas is showing */
+.v86-screen-container canvas:not([style*="display: none"])~div {
+    display: none;
+}
