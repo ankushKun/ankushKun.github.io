@@ -45,7 +45,7 @@ Usage:
 
                 <!-- Crysis Game -->
                 <div class="game-icon-item"
-                    onclick="window.showNotification({ title: 'Crysis', message: 'You cannot run Crysis', icon: '⚠️', duration: 3000 })">
+                    onclick="window.playErrorSound(); window.showNotification({ title: 'Crysis', message: 'But can it run Crysis? No. No it cannot.', icon: '⚠️', duration: 3000, sound: false })">
                     <div class="game-icon-image">
                         <img src="/games/crysis.png" alt="Crysis" />
                     </div>
