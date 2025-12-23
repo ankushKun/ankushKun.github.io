@@ -465,7 +465,8 @@ Also, that's not very nice! This portfolio took effort to build. 😢`;
         term.focus();
     }
 
-    // Expose globally
+    // Expose globally - setupFakeTerminal for v86 fallback
     window.setupTerminal = setupTerminal;
+    window.setupFakeTerminal = setupTerminal;
 
 })();
