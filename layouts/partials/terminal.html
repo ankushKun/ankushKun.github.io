@@ -1,4 +1,4 @@
-{{/* Terminal Window - v86 Linux Emulator with VGA + Serial xterm.js */}}
+{{/* Terminal Window - v86 Linux Emulator with VGA Display */}}
 {{/*
 Usage:
 {{ partial "terminal.html" (dict
@@ -8,29 +8,11 @@ Usage:
 */}}
 
 <div id="content-{{ .id }}" data-permalink="/terminal/">
-    <!-- Wrapper with all the styling -->
     <div class="v86-terminal-container">
-        <!-- Tab Bar for switching between VGA and Serial -->
-        <div class="v86-tab-bar">
-            <button class="v86-tab active" data-tab="serial" type="button">Serial Console</button>
-            <button class="v86-tab" data-tab="vga" type="button">VGA Display</button>
-            <div class="v86-status">
-                <span class="v86-status-indicator"></span>
-                <span class="v86-status-text">Initializing...</span>
-            </div>
-        </div>
-
-        <!-- Serial Console (xterm.js) - Primary interface -->
-        <div class="v86-panel v86-serial-panel active" data-panel="serial">
-            <div class="terminal-xterm-container" id="v86-serial-{{ .id }}"></div>
-        </div>
-
-        <!-- VGA Display (Canvas) - Secondary interface -->
-        <div class="v86-panel v86-vga-panel" data-panel="vga">
-            <div id="screen_container" class="v86-screen-container">
-                <div style="white-space: pre; font: 14px monospace; line-height: 14px"></div>
-                <canvas></canvas>
-            </div>
+        <!-- VGA Display (Canvas) -->
+        <div id="screen_container" class="v86-screen-container">
+            <div style="white-space: pre; font: 14px monospace; line-height: 14px"></div>
+            <canvas></canvas>
         </div>
     </div>
 </div>
