@@ -1332,7 +1332,7 @@
 
     // Finder Items - SINGLE CLICK to open
     function setupFinderItems(win) {
-        const items = win.querySelectorAll('.finder-item, .finder-row');
+        const items = win.querySelectorAll('.finder-item, .finder-row, .blog-row');
         items.forEach(item => {
             items.forEach(item => {
                 item.addEventListener('click', (e) => {
