@@ -86,7 +86,9 @@ Usage (detailed - for specific customization):
                     <span class="col-date">{{ .Date.Format $dateFormat }}</span>
                 </a>
                 {{ else }}
-                <div class="finder-row" role="button" tabindex="0" data-window="{{ $prefix }}-{{ .File.UniqueID }}"
+                {{ $uniqueId := "" }}
+                {{ with .File }}{{ $uniqueId = .UniqueID }}{{ else }}{{ $uniqueId = .RelPermalink | urlize }}{{ end }}
+                <div class="finder-row" role="button" tabindex="0" data-window="{{ $prefix }}-{{ $uniqueId }}"
                     data-title="{{ .Title }}" data-permalink="{{ .Permalink }}">
                     <span class="col-icon">
                         {{ partial $iconPartial (dict "color" $iconColor "size" 16) }}

@@ -1,0 +1,43 @@
+{{/* External Window - reusable iframe embed template */}}
+{{/*
+Usage:
+{{ partial "external-embed.html" (dict
+"id" "resume"
+"icon" "📄"
+"title" "resume.pdf"
+"url" "/resume.pdf"
+"showToolbar" true
+"downloadLabel" "⬇"
+"external" false
+) }}
+*/}}
+
+{{ $id := .id }}
+{{ $icon := default "🌐" .icon }}
+{{ $title := .title }}
+{{ $url := .url }}
+{{ $showToolbar := default true .showToolbar }}
+{{ $downloadLabel := default "↗" .downloadLabel }}
+{{ $external := default false .external }}
+
+<div id="content-{{ $id }}">
+    <div class="external-window" style="height: 100%; display: flex; flex-direction: column;">
+        {{ if $showToolbar }}
+        <div class="window-toolbar">
+            <div class="url-bar">
+                <span class="url-icon">{{ $icon }}</span>
+                <span class="url-text">{{ $title }}</span>
+            </div>
+            <a href="{{ $url }}" target="_blank" class="open-external" title="Open in new tab">{{ $downloadLabel }}</a>
+        </div>
+        {{ end }}
+        <div class="window-iframe-container" style="flex: 1; position: relative;">
+            <div class="window-loader">
+                <div class="spinner"></div>
+            </div>
+            <iframe data-src="{{ $url }}" frameborder="0" {{ if $external }}allowfullscreen{{ end }}
+                onload="this.previousElementSibling.style.display='none'"
+                style="width: 100%; height: 100%;{{ if eq $id " doom" }} background: #000;{{ end }}"></iframe>
+        </div>
+    </div>
+</div>
