@@ -378,6 +378,8 @@
                 if (item.title === 'Resume') return '📄';
                 if (item.title === 'DOOM') return '🎮';
                 if (item.title === 'About Me') return '🍎';
+                if (item.title === 'Terminal') return '💻';
+                if (item.title === 'Games') return '🕹️';
                 return '🖥️';
             }
             return getIconForType(item.type);
@@ -466,7 +468,23 @@
     function setupSearchIndex() {
         fetch('/index.json')
             .then(r => r.json())
-            .then(data => { globalSearchIndex = data; })
+            .then(data => {
+                // Add desktop apps to search index
+                const apps = [
+                    { title: 'About Me', type: 'app', openWindow: 'about', description: 'About Ankush' },
+                    { title: 'Resume', type: 'app', openWindow: 'resume', description: 'View resume' },
+                    { title: 'Projects', type: 'app', openWindow: 'projects', description: 'Project portfolio' },
+                    { title: 'Blogs', type: 'app', openWindow: 'blogs', description: 'Blog posts' },
+                    { title: 'Timeline', type: 'app', openWindow: 'timeline', description: 'Career timeline' },
+                    { title: 'Games', type: 'app', openWindow: 'games', description: 'Games folder' },
+                    { title: 'Terminal', type: 'app', openWindow: 'terminal', description: 'Terminal emulator' },
+                    { title: 'Contact', type: 'app', openWindow: 'contact', description: 'Contact information' },
+                    { title: 'Wins', type: 'app', openWindow: 'wins', description: 'Hackathon wins' },
+                    { title: 'Schedule Call', type: 'app', openWindow: 'book-a-call', description: 'Book a call' },
+                    { title: 'DOOM', type: 'app', openWindow: 'doom', description: 'Play DOOM' },
+                ];
+                globalSearchIndex = [...apps, ...data];
+            })
             .catch(e => console.error('Failed to load search index', e));
     }
 
@@ -981,6 +999,11 @@
         // Activate any lazy-loaded iframes in the window
         activateLazyIframes(win);
         activateTwitterEmbeds(win);
+
+        // Setup terminal if this is a terminal window
+        if (id === 'terminal') {
+            setupTerminal('terminal');
+        }
 
         bringToFront(win);
 
@@ -1846,6 +1869,5 @@
     // Expose error sound globally for use in onclick handlers
     window.playErrorSound = playErrorSound;
 
+
 })();
-
-
