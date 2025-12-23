@@ -60,10 +60,9 @@
     };
 
     // ============================================================
-    // ACTIVE PROFILE - Change this to switch boot images!
-    // Options: 'stillalive', 'linux4', 'nodeos', 'buildroot'
+    // DEFAULT PROFILE
     // ============================================================
-    const ACTIVE_PROFILE = 'buildroot';
+    const DEFAULT_PROFILE = 'buildroot';
 
     // ============================================================
     // v86 Core Configuration
@@ -144,7 +143,7 @@
             return;
         }
 
-        const screenContainer = contentContainer.querySelector('#screen_container');
+        const screenContainer = contentContainer.querySelector('.v86-screen-container');
         const serialContainer = contentContainer.querySelector('.v86-serial-container');
         const xtermContainer = serialContainer?.querySelector('.v86-xterm');
 
@@ -166,13 +165,24 @@
 
             console.log('Initializing v86 emulator...');
 
+            // Determine profile based on ID
+            let profileKey = DEFAULT_PROFILE;
+            if (terminalId === 'portal') {
+                profileKey = 'stillalive';
+            }
+
             // Build v86 options
-            const profile = BOOT_PROFILES[ACTIVE_PROFILE];
+            const profile = BOOT_PROFILES[profileKey];
             if (!profile) {
-                throw new Error(`Unknown boot profile: ${ACTIVE_PROFILE}`);
+                throw new Error(`Unknown boot profile: ${profileKey}`);
             }
 
             console.log(`Booting: ${profile.name}`);
+
+            // cleanup existing emulator if any
+            if (v86Emulator) {
+                destroyV86();
+            }
 
             // Store profile and containers for input capture
             currentProfile = profile;
@@ -357,6 +367,6 @@
 
     // Expose for debugging
     window.V86_PROFILES = BOOT_PROFILES;
-    window.V86_ACTIVE = ACTIVE_PROFILE;
+    window.V86_ACTIVE = DEFAULT_PROFILE;
 
 })();

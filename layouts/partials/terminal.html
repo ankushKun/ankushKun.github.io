@@ -7,7 +7,7 @@ Usage:
 ) }}
 */}}
 
-<div id="content-{{ .id }}" data-permalink="/terminal/">
+<div id="content-{{ .id }}" data-permalink="{{ .permalink | default (printf " /%s/" .id) }}">
     <div class="v86-terminal-container">
         <!-- Serial Console (xterm.js) - shown when serial mode is active -->
         <div class="v86-serial-container" style="display: none;">
@@ -15,7 +15,7 @@ Usage:
         </div>
 
         <!-- VGA Display (Canvas) - shown when graphical/text mode is active -->
-        <div id="screen_container" class="v86-screen-container">
+        <div class="v86-screen-container">
             <div style="white-space: pre; font: 14px monospace; line-height: 14px"></div>
             <canvas></canvas>
         </div>
