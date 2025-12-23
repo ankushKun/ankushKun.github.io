@@ -5,7 +5,7 @@
    ================================================ */
 
 /* ================================================
-   Projects Grid (projects-grid.html)
+   Projects Grid (apps/projects/grid.html)
    ================================================ */
 .projects-window {
     display: flex;
@@ -233,7 +233,7 @@ a.project-card {
 }
 
 /* ================================================
-   Blogs List (blogs-list.html)
+   Blogs List (apps/blog/list.html)
    ================================================ */
 .blogs-window {
     display: flex;
@@ -432,7 +432,7 @@ a.project-card {
 }
 
 /* ================================================
-   Timeline / Calendar View (calendar-view.html)
+   Timeline / Calendar View (apps/timeline/calendar.html)
    ================================================ */
 .timeline-window {
     display: flex;
@@ -684,7 +684,7 @@ a.event-item.event-link {
 }
 
 /* ================================================
-   Wins List (wins-list.html)
+   Wins List (apps/wins/list.html)
    ================================================ */
 .wins-window {
     display: flex;
@@ -866,7 +866,7 @@ a.event-item.event-link {
 }
 
 /* ================================================
-   Contact Book (contact-book.html)
+   Contact Book (apps/contact/book.html)
    ================================================ */
 .contact-window {
     display: flex;
@@ -1027,7 +1027,7 @@ a.event-item.event-link {
 }
 
 /* ================================================
-   Games Grid (games-grid.html)
+   Games Grid (apps/games/grid.html)
    ================================================ */
 .games-window {
     display: flex;
@@ -1204,7 +1204,7 @@ a.event-item.event-link {
 }
 
 /* ================================================
-   Terminal Window (terminal.html)
+   Terminal Window (apps/terminal/window.html)
    ================================================ */
 .terminal-window {
     display: flex;

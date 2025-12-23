@@ -2,34 +2,34 @@
 <!-- Desktop Icons -->
 <div class="desktop-icons">
     <!-- About Icon -->
-    {{ partial "desktop-icon.html" (dict "window" "about" "title" "About Me" "label" "About Me" "image" "/pfp.png"
+    {{ partial "os/desktop/icon.html" (dict "window" "about" "title" "About Me" "label" "About Me" "image" "/pfp.png"
     "placeholder"
     "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQABLAEsAAD/4QD0RXhpZgAATU0AKgAAAAgABgEaAAUAAAABAAAAVgEbAAUAAAABAAAAXgEoAAMAAAABAAIAAAEyAAIAAAAUAAAAZgE7AAIAAAAHAAAAeodpAAQAAAABAAAAggAAAAAAAAEsAAAAAQAAASwAAAABMjAyNToxMjowNCAxMjo0OToyMwBBbmt1c2gAAAAFkAMAAgAAABQAAADEkAQAAgAAABQAAADYoAEAAwAAAAEAAQAAoAIABAAAAAEAAAAQoAMABAAAAAEAAAAQAAAAADIwMjU6MTI6MDQgMTI6NDQ6NDYAMjAyNToxMjowNCAxMjo0NDo0NgD/7QBSUGhvdG9zaG9wIDMuMAA4QklNBAQAAAAAABocAVoAAxslRxwCAAACAAIcAlAABkFua3VzaDhCSU0EJQAAAAAAEPKMig2ZcH6Bwu5pNpbTSYP/wAARCAAQABADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9sAQwACAgICAgIDAgIDBQMDAwUGBQUFBQYIBgYGBgYICggICAgICAoKCgoKCgoKDAwMDAwMDg4ODg4PDw8PDw8PDw8P/9sAQwECAgIEBAQHBAQHEAsJCxAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ/90ABAAB/9oADAMBAAIRAxEAPwD70/b5+Lnxr+H+jeEvCfwRkew1TxNPOZr2O2a5lSO3kt0WKJFDNudpwzEKcIje9Sf8E/8A4pfG3x74T8V+G/jfNLqGqeFL9LeK9uYVhuZVcyK6SKgAOxo/lLfOVYFhjaT9YfFjxPYeHfDGoSSFRfQ2N1d2275Tut4yxCvg7CRkZIIxkEEZBzvg7caSNBWeyht7W58QO+r3EMMhlZZroKxLSHHmHbtG7A6YxgZqby5rdDq9mvY89utj/9k=")
     }}
 
     <!-- Resume Icon -->
-    {{ partial "desktop-icon.html" (dict "window" "resume" "title" "📄 Resume" "label" "Resume" "svg"
+    {{ partial "os/desktop/icon.html" (dict "window" "resume" "title" "📄 Resume" "label" "Resume" "svg"
     (partial "icons/resume-desktop.html" .)) }}
 
     <!-- Projects Icon -->
-    {{ partial "desktop-icon.html" (dict "window" "projects" "title" "Projects" "label" "Projects" "svg" (partial
+    {{ partial "os/desktop/icon.html" (dict "window" "projects" "title" "Projects" "label" "Projects" "svg" (partial
     "icons/folder-desktop.html" .)) }}
 
     <!-- Blogs Icon -->
-    {{ partial "desktop-icon.html" (dict "window" "blogs" "title" "Blogs" "label" "Blogs" "svg" (partial
+    {{ partial "os/desktop/icon.html" (dict "window" "blogs" "title" "Blogs" "label" "Blogs" "svg" (partial
     "icons/document-desktop.html" .)) }}
 
     <!-- Timeline Icon -->
-    {{ partial "desktop-icon.html" (dict "window" "timeline" "title" "Timeline" "label" "Timeline" "svg" (partial
+    {{ partial "os/desktop/icon.html" (dict "window" "timeline" "title" "Timeline" "label" "Timeline" "svg" (partial
     "icons/clock-desktop.html" .)) }}
 
 
     <!-- Games Folder Icon -->
-    {{ partial "desktop-icon.html" (dict "window" "games" "title" "Games" "label" "Games" "svg"
+    {{ partial "os/desktop/icon.html" (dict "window" "games" "title" "Games" "label" "Games" "svg"
     (partial "icons/games-folder-desktop.html" .)) }}
 
     <!-- Terminal Icon -->
-    {{ partial "desktop-icon.html" (dict "window" "terminal" "title" "Terminal" "label" "Terminal" "svg"
+    {{ partial "os/desktop/icon.html" (dict "window" "terminal" "title" "Terminal" "label" "Terminal" "svg"
     (partial "icons/terminal-desktop.html" .)) }}
 
 </div>
@@ -40,7 +40,7 @@
 <div id="window-contents" style="display: none;">
 
     <!-- ABOUT CONTENT - macOS Finder Style -->
-    {{ partial "about-finder.html" (dict
+    {{ partial "apps/about/window.html" (dict
     "id" "about"
     "title" "About Ankush"
     ) }}
@@ -48,7 +48,7 @@
     <!-- BLOG LIST - Mavericks Mail Style -->
     {{ $blog := .Site.GetPage "/blogs" }}
     {{ with $blog }}
-    {{ partial "blogs-list.html" (dict
+    {{ partial "apps/blog/list.html" (dict
     "id" "blogs"
     "title" "Blogs"
     "pages" .Pages.ByDate.Reverse
@@ -59,7 +59,7 @@
     <!-- PROJECTS GRID - macOS Finder Card Layout -->
     {{ $projects := .Site.GetPage "/projects" }}
     {{ with $projects }}
-    {{ partial "projects-grid.html" (dict
+    {{ partial "apps/projects/grid.html" (dict
     "id" "projects"
     "title" "Projects"
     "pages" .Pages.ByDate.Reverse
@@ -72,7 +72,7 @@
     {{ with $timeline }}
     {{ $projectPages := where .Site.RegularPages "Section" "projects" }}
     {{ $allPages := .Pages | union $projectPages }}
-    {{ partial "calendar-view.html" (dict
+    {{ partial "apps/timeline/calendar.html" (dict
     "id" "timeline"
     "title" "Timeline"
     "pages" $allPages.ByDate.Reverse
@@ -81,19 +81,19 @@
     {{ end }}
 
     <!-- WINS CONTENT - Awards Style -->
-    {{ partial "wins-list.html" (dict
+    {{ partial "apps/wins/list.html" (dict
     "id" "wins"
     "title" "Wins"
     ) }}
 
     <!-- CONTACT CONTENT - Address Book Style -->
-    {{ partial "contact-book.html" (dict
+    {{ partial "apps/contact/book.html" (dict
     "id" "contact"
     "title" "Contacts"
     ) }}
 
     <!-- SCHEDULE CALL CONTENT -->
-    {{ partial "external-embed.html" (dict
+    {{ partial "components/embed-external.html" (dict
     "id" "book-a-call"
     "icon" "🔒"
     "title" "https://cal.com/ankushkun/call"
@@ -102,7 +102,7 @@
     ) }}
 
     <!-- RESUME CONTENT -->
-    {{ partial "external-embed.html" (dict
+    {{ partial "components/embed-external.html" (dict
     "id" "resume"
     "icon" "📄"
     "title" "resume.pdf"
@@ -111,13 +111,13 @@
     ) }}
 
     <!-- GAMES FOLDER CONTENT - Finder Icon View -->
-    {{ partial "games-grid.html" (dict
+    {{ partial "apps/games/grid.html" (dict
     "id" "games"
     "title" "Games"
     ) }}
 
     <!-- ITCH GAME EMBED CONTENT -->
-    {{ partial "external-embed.html" (dict
+    {{ partial "components/embed-external.html" (dict
     "id" "itch-game"
     "url" "https://itch.io/embed-upload/15250063?color=EEF2F6"
     "showToolbar" false
@@ -125,7 +125,7 @@
     ) }}
 
     <!-- DOOM CONTENT -->
-    {{ partial "external-embed.html" (dict
+    {{ partial "components/embed-external.html" (dict
     "id" "doom"
     "icon" "🎮"
     "title" "Yet Another Doom Clone"
@@ -134,7 +134,7 @@
     ) }}
 
     <!-- ITCH.IO CONTENT -->
-    {{ partial "external-embed.html" (dict
+    {{ partial "components/embed-external.html" (dict
     "id" "itchio"
     "icon" "🎮"
     "title" "ankushkun.itch.io"
@@ -143,13 +143,13 @@
     ) }}
 
     <!-- TERMINAL CONTENT -->
-    {{ partial "terminal.html" (dict
+    {{ partial "apps/terminal/window.html" (dict
     "id" "terminal"
     "title" "Terminal"
     ) }}
 
     <!-- PORTAL CONTENT -->
-    {{ partial "terminal.html" (dict
+    {{ partial "apps/terminal/window.html" (dict
     "id" "portal"
     "title" "Portal"
     ) }}
