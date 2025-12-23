@@ -1,6 +1,9 @@
 {{/* Finder List - reusable Finder-style list view */}}
 {{/*
-Usage:
+Usage (simple - for fallback in list.html):
+{{ partial "finder-list.html" (dict "pages" $pages "section" "projects") }}
+
+Usage (detailed - for specific customization):
 {{ partial "finder-list.html" (dict
 "id" "blog"
 "icon" "📝"
@@ -13,26 +16,76 @@ Usage:
 "dateFormat" "Jan 2, 2006"
 "iconPartial" "icons/document.html"
 "iconColor" "#007AFF"
+"standalone" false
 ) }}
 */}}
-<div id="content-{{ .id }}">
-    <div class="finder-window">
+
+{{/* Auto-detect settings based on section if not provided */}}
+{{ $section := .section }}
+{{ $id := default $section .id }}
+{{ $prefix := default $section .prefix }}
+{{ $standalone := default false .standalone }}
+
+{{/* Section-specific defaults */}}
+{{ $icon := "📄" }}
+{{ $title := "Items" }}
+{{ $countLabel := "items" }}
+{{ $dateFormat := "Jan 2, 2006" }}
+{{ $iconPartial := "icons/document.html" }}
+{{ $iconColor := "#999" }}
+
+{{ if eq $section "projects" }}
+{{ $icon = "🚀" }}
+{{ $title = "Projects" }}
+{{ $countLabel = "projects" }}
+{{ $dateFormat = "2006" }}
+{{ $iconPartial = "icons/folder.html" }}
+{{ $iconColor = "#FF9500" }}
+{{ else if eq $section "blogs" }}
+{{ $icon = "📝" }}
+{{ $title = "Blogs" }}
+{{ $countLabel = "posts" }}
+{{ $iconPartial = "icons/document.html" }}
+{{ $iconColor = "#007AFF" }}
+{{ else if eq $section "timeline" }}
+{{ $icon = "📅" }}
+{{ $title = "Timeline" }}
+{{ $countLabel = "events" }}
+{{ $iconPartial = "icons/document.html" }}
+{{ $iconColor = "#5856D6" }}
+{{ end }}
+
+{{/* Override with explicit values if provided */}}
+{{ $icon = default $icon .icon }}
+{{ $title = default $title .title }}
+{{ $countLabel = default $countLabel .countLabel }}
+{{ $dateFormat = default $dateFormat .dateFormat }}
+{{ $iconPartial = default $iconPartial .iconPartial }}
+{{ $iconColor = default $iconColor .iconColor }}
+
+<div id="content-{{ $id }}">
+    <div class="finder-window" style="display: flex; flex-direction: column; height: 100%;">
         <div class="finder-toolbar">
-            <span class="finder-title">{{ .icon }} {{ .title }}</span>
-            <span class="finder-count">{{ len .pages }} {{ .countLabel }}</span>
+            <span class="finder-title">{{ $icon }} {{ $title }}</span>
+            <span class="finder-count">{{ len .pages }} {{ $countLabel }}</span>
         </div>
         <div class="finder-content">
             <div class="finder-list-view">
                 <div class="finder-header">
                     <span class="col-icon"></span>
-                    <span class="col-name">{{ .nameHeader }}</span>
-                    <span class="col-date">{{ .dateHeader }}</span>
+                    <span class="col-name">{{ default "Name" .nameHeader }}</span>
+                    <span class="col-date">{{ default "Date" .dateHeader }}</span>
                 </div>
-                {{ $prefix := .prefix }}
-                {{ $dateFormat := .dateFormat }}
-                {{ $iconPartial := .iconPartial }}
-                {{ $iconColor := .iconColor }}
                 {{ range .pages }}
+                {{ if $standalone }}
+                <a href="{{ .RelPermalink }}" class="finder-row">
+                    <span class="col-icon">
+                        {{ partial $iconPartial (dict "color" $iconColor "size" 16) }}
+                    </span>
+                    <span class="col-name">{{ .Title }}</span>
+                    <span class="col-date">{{ .Date.Format $dateFormat }}</span>
+                </a>
+                {{ else }}
                 <div class="finder-row" role="button" tabindex="0" data-window="{{ $prefix }}-{{ .File.UniqueID }}"
                     data-title="{{ .Title }}" data-permalink="{{ .Permalink }}">
                     <span class="col-icon">
@@ -41,6 +94,7 @@ Usage:
                     <span class="col-name">{{ .Title }}</span>
                     <span class="col-date">{{ .Date.Format $dateFormat }}</span>
                 </div>
+                {{ end }}
                 {{ end }}
             </div>
         </div>

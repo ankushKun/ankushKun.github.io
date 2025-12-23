@@ -1,0 +1,33 @@
+{{/*
+Static Window - Unified wrapper for route pages (/projects, /blogs, etc.)
+Provides consistent window chrome across all section pages.
+
+Usage:
+{{ partial "static-window.html" (dict
+"title" "Page Title"
+"content" "partial-name.html"
+"contentData" $dataForPartial
+"rawContent" .Content (optional - for raw HTML content)
+"padding" "24px" (optional - default is 0)
+) }}
+*/}}
+
+<div class="static-window">
+    {{/* Window Titlebar */}}
+    <div class="window-titlebar">
+        {{ partial "traffic-lights.html" (dict "closeLink" "/") }}
+        <div class="window-title">{{ .title }}</div>
+    </div>
+
+    {{/* Window Content */}}
+    {{ $padding := default "0" .padding }}
+    <div class="window-content" style="display: flex; flex-direction: column; padding: {{ $padding }};">
+        {{ if .content }}
+        {{/* Render a partial with provided data */}}
+        {{ partial .content .contentData }}
+        {{ else if .rawContent }}
+        {{/* Render raw HTML content */}}
+        {{ .rawContent | safeHTML }}
+        {{ end }}
+    </div>
+</div>

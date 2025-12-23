@@ -1,213 +1,86 @@
 {{ define "main" }}
-{{/* Check if this is a content-only section (no child pages) */}}
+{{/*
+Unified list template for all section pages.
+Uses static-window.html for consistent window chrome.
+Each section maps to a specific content partial.
+*/}}
+
+{{/* Build section-specific data */}}
+{{ $contentPartial := "" }}
+{{ $contentData := dict }}
+
+{{ if eq .Section "wins" }}
+{{ $contentPartial = "wins-list.html" }}
+{{ $contentData = dict "id" "wins-page" "title" "Wins" }}
+
+{{ else if eq .Section "contact" }}
+{{ $contentPartial = "contact-book.html" }}
+{{ $contentData = dict "id" "contact-page" "title" "Contacts" }}
+
+{{ else if eq .Section "schedule" }}
+{{ $contentPartial = "schedule-embed.html" }}
+{{ $contentData = dict }}
+
+{{ else if eq .Section "timeline" }}
+{{ $contentPartial = "calendar-view.html" }}
+{{ $projectPages := where .Site.RegularPages "Section" "projects" }}
+{{ $allPages := .Pages | union $projectPages }}
+{{ $contentData = dict
+"id" "timeline-page"
+"title" "Timeline"
+"pages" $allPages.ByDate.Reverse
+"prefix" "timeline"
+"standalone" true
+}}
+
+{{ else if eq .Section "projects" }}
+{{ $contentPartial = "projects-grid.html" }}
+{{ $contentData = dict
+"id" "projects-page"
+"title" "Projects"
+"pages" .Pages.ByDate.Reverse
+"prefix" "project"
+"standalone" true
+}}
+
+{{ else if eq .Section "blogs" }}
+{{ $contentPartial = "blogs-list.html" }}
+{{ $contentData = dict
+"id" "blogs-page"
+"title" "Blogs"
+"pages" .Pages.ByDate.Reverse
+"prefix" "post"
+"standalone" true
+}}
+
+{{ end }}
+
+{{/* Render the static window with the appropriate content */}}
+{{ if $contentPartial }}
+{{ partial "static-window.html" (dict
+"title" .Title
+"content" $contentPartial
+"contentData" $contentData
+) }}
+{{ else }}
+{{/* Fallback for sections with raw content but no child pages */}}
 {{ $hasContent := gt (len .Content) 0 }}
 {{ $hasPages := gt (len .Pages) 0 }}
 
-{{ if eq .Section "wins" }}
-{{/* Wins section uses wins-list */}}
-<div class="static-window">
-    <!-- Titlebar -->
-    <div class="window-titlebar">
-        {{ partial "traffic-lights.html" (dict "closeLink" "/") }}
-        <div class="window-title">{{ .Title }}</div>
-    </div>
-
-    <!-- Content - Wins List -->
-    <div class="window-content" style="display: flex; flex-direction: column; padding: 0;">
-        {{ partial "wins-list.html" (dict
-        "id" "wins-page"
-        "title" "Wins"
-        ) }}
-    </div>
-</div>
-{{ else if eq .Section "contact" }}
-{{/* Contact section uses contact-book */}}
-<div class="static-window">
-    <!-- Titlebar -->
-    <div class="window-titlebar">
-        {{ partial "traffic-lights.html" (dict "closeLink" "/") }}
-        <div class="window-title">{{ .Title }}</div>
-    </div>
-
-    <!-- Content - Address Book -->
-    <div class="window-content" style="display: flex; flex-direction: column; padding: 0;">
-        {{ partial "contact-book.html" (dict
-        "id" "contact-page"
-        "title" "Contacts"
-        ) }}
-    </div>
-</div>
-{{ else if eq .Section "schedule" }}
-{{/* Schedule section uses browser-style embed */}}
-<div class="static-window">
-    <!-- Titlebar -->
-    <div class="window-titlebar">
-        {{ partial "traffic-lights.html" (dict "closeLink" "/") }}
-        <div class="window-title">{{ .Title }}</div>
-    </div>
-
-    <!-- Content - Browser Embed -->
-    <div class="window-content" style="display: flex; flex-direction: column; padding: 0;">
-        <div class="external-window" style="height: 100%; display: flex; flex-direction: column;">
-            <div class="window-toolbar">
-                <div class="url-bar">
-                    <span class="url-icon">🔒</span>
-                    <span class="url-text">https://cal.com/ankushkun/call</span>
-                </div>
-                <a href="https://cal.com/ankushkun/call" target="_blank" class="open-external"
-                    title="Open in new tab">{{ partial "icons/open-external.html" . }}</a>
-            </div>
-            <div class="window-iframe-container" style="flex: 1; position: relative;">
-                <div class="window-loader">
-                    <div class="spinner"></div>
-                </div>
-                <iframe src="https://cal.com/ankushkun/call" frameborder="0"
-                    onload="this.previousElementSibling.style.display='none'"
-                    style="width: 100%; height: 100%;"></iframe>
-            </div>
-        </div>
-    </div>
-</div>
-{{ else if and $hasContent (not $hasPages) }}
-{{/* Content-only sections like Contact (but not Wins anymore) */}}
-<div class="static-window">
-    <!-- Titlebar -->
-    <div class="window-titlebar">
-        {{ partial "traffic-lights.html" (dict "closeLink" "/") }}
-        <div class="window-title">{{ .Title }}</div>
-        <a href="{{ .Permalink }}" target="_blank" class="titlebar-link" title="Open in new tab">{{ partial
-            "icons/open-external.html" . }}</a>
-    </div>
-
-    <!-- Content -->
-    <div class="window-content" style="padding: 24px;">
-        {{ .Content }}
-    </div>
-</div>
-{{ else if eq .Section "timeline" }}
-{{/* Timeline section uses calendar-view for consistency with desktop window */}}
-<div class="static-window">
-    <!-- Titlebar -->
-    <div class="window-titlebar">
-        {{ partial "traffic-lights.html" (dict "closeLink" "/") }}
-        <div class="window-title">{{ .Title }}</div>
-    </div>
-
-    <!-- Content - Calendar View -->
-    <div class="window-content" style="display: flex; flex-direction: column; padding: 0;">
-        {{ $projectPages := where .Site.RegularPages "Section" "projects" }}
-        {{ $allPages := .Pages | union $projectPages }}
-        {{ partial "calendar-view.html" (dict
-        "id" "timeline-page"
-        "title" "Timeline"
-        "pages" $allPages.ByDate.Reverse
-        "prefix" "timeline"
-        "standalone" true
-        ) }}
-    </div>
-</div>
-{{ else if eq .Section "projects" }}
-{{/* Projects section uses projects-grid for consistency with desktop window */}}
-<div class="static-window">
-    <!-- Titlebar -->
-    <div class="window-titlebar">
-        {{ partial "traffic-lights.html" (dict "closeLink" "/") }}
-        <div class="window-title">{{ .Title }}</div>
-    </div>
-
-    <!-- Content - Projects Grid -->
-    <div class="window-content" style="display: flex; flex-direction: column; padding: 0;">
-        {{ partial "projects-grid.html" (dict
-        "id" "projects-page"
-        "title" "Projects"
-        "pages" .Pages.ByDate.Reverse
-        "prefix" "project"
-        "standalone" true
-        ) }}
-    </div>
-</div>
-{{ else if eq .Section "blogs" }}
-{{/* Blogs section uses blogs-list for consistency with desktop window */}}
-<div class="static-window">
-    <!-- Titlebar -->
-    <div class="window-titlebar">
-        {{ partial "traffic-lights.html" (dict "closeLink" "/") }}
-        <div class="window-title">{{ .Title }}</div>
-    </div>
-
-    <!-- Content - Blogs List -->
-    <div class="window-content" style="display: flex; flex-direction: column; padding: 0;">
-        {{ partial "blogs-list.html" (dict
-        "id" "blogs-page"
-        "title" "Blogs"
-        "pages" .Pages.ByDate.Reverse
-        "prefix" "post"
-        "standalone" true
-        ) }}
-    </div>
-</div>
-
+{{ if and $hasContent (not $hasPages) }}
+{{ partial "static-window.html" (dict
+"title" .Title
+"rawContent" .Content
+"padding" "24px"
+) }}
 {{ else }}
-{{/* Finder-style list for other sections */}}
-{{ $finderTitle := "" }}
-{{ if eq .Section "projects" }}{{ $finderTitle = "🚀 Projects" }}
-{{ else if eq .Section "blogs" }}{{ $finderTitle = "📝 Blogs" }}
-{{ else }}{{ $finderTitle = .Title }}{{ end }}
-
-{{ $nameHeader := "Name" }}
-
-{{ $dateHeader := "Date" }}
-{{ if eq .Section "projects" }}{{ $dateHeader = "Year" }}{{ end }}
-
-<div class="static-window">
-    <!-- Titlebar -->
-    <div class="window-titlebar">
-        {{ partial "traffic-lights.html" (dict "closeLink" "/") }}
-        <div class="window-title">{{ .Title }}</div>
-    </div>
-
-    <!-- Content - Finder Style -->
-    <div class="window-content" style="display: flex; flex-direction: column; padding: 0;">
-        <div class="finder-window" style="display: flex; flex-direction: column; height: 100%;">
-            <!-- Toolbar -->
-            <div class="finder-toolbar">
-                <span class="finder-title">{{ $finderTitle }}</span>
-                <span class="finder-count">{{ len .Pages }} items</span>
-            </div>
-
-            <!-- Content Area -->
-            <div class="finder-content">
-                <div class="finder-list-view">
-                    <!-- Header -->
-                    <div class="finder-header">
-                        <span class="col-icon"></span>
-                        <span class="col-name">{{ $nameHeader }}</span>
-                        <span class="col-date">{{ $dateHeader }}</span>
-                    </div>
-
-                    <!-- List Items -->
-                    {{ range .Pages.ByDate.Reverse }}
-                    <a href="{{ .RelPermalink }}" class="finder-row">
-                        <span class="col-icon">
-                            {{ if eq .Section "projects" }}
-                            {{ partial "icons/folder.html" (dict "color" "#FF9500" "size" 16) }}
-                            {{ else if eq .Section "blogs" }}
-                            {{ partial "icons/document.html" (dict "color" "#007AFF" "size" 16) }}
-                            {{ else }}
-                            {{ partial "icons/document.html" (dict "color" "#999" "size" 16) }}
-                            {{ end }}
-                        </span>
-                        <span class="col-name">{{ .Title }}</span>
-                        <span class="col-date">
-                            {{ if eq .Section "projects" }}{{ .Date.Format "2006" }}
-                            {{ else }}{{ .Date.Format "Jan 2, 2006" }}{{ end }}
-                        </span>
-                    </a>
-                    {{ end }}
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+{{/* Generic Finder-style list for undefined sections */}}
+{{ partial "static-window.html" (dict
+"title" .Title
+"content" "finder-list.html"
+"contentData" (dict "pages" .Pages.ByDate.Reverse "section" .Section)
+) }}
 {{ end }}
+{{ end }}
+
 {{ end }}
