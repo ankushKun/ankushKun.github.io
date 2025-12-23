@@ -100,6 +100,47 @@
         });
     }
 
+    // Load xterm.js, FitAddon, and v86 CSS lazily
+    let xtermLoading = null;
+    function loadXterm() {
+        if (xtermLoading) return xtermLoading;
+        if (typeof Terminal !== 'undefined' && typeof FitAddon !== 'undefined') {
+            return Promise.resolve();
+        }
+
+        xtermLoading = new Promise((resolve, reject) => {
+            // Load v86 CSS
+            if (window.V86_CSS_URL) {
+                const v86Link = document.createElement('link');
+                v86Link.rel = 'stylesheet';
+                v86Link.href = window.V86_CSS_URL;
+                document.head.appendChild(v86Link);
+            }
+
+            // Load xterm CSS
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = '/xterm/xterm.css';
+            document.head.appendChild(link);
+
+            // Load xterm.js
+            const xtermScript = document.createElement('script');
+            xtermScript.src = '/xterm/xterm.js';
+            xtermScript.onload = () => {
+                // Load FitAddon after xterm
+                const addonScript = document.createElement('script');
+                addonScript.src = '/xterm/addon.js';
+                addonScript.onload = resolve;
+                addonScript.onerror = () => reject(new Error('Failed to load xterm-addon-fit'));
+                document.head.appendChild(addonScript);
+            };
+            xtermScript.onerror = () => reject(new Error('Failed to load xterm.js'));
+            document.head.appendChild(xtermScript);
+        });
+
+        return xtermLoading;
+    }
+
     // Switch display mode between VGA and Serial
     function setDisplayMode(mode, screenContainer, serialContainer) {
         if (mode === displayMode) return;
@@ -153,15 +194,8 @@
         }
 
         try {
-            console.log('Loading v86 script...');
-            await loadV86Script();
-
-            // Wait for xterm.js to be available
-            if (typeof Terminal === 'undefined') {
-                console.log('Waiting for xterm.js...');
-                setTimeout(() => setupV86Terminal(terminalId), 100);
-                return;
-            }
+            console.log('Loading xterm.js and v86...');
+            await Promise.all([loadXterm(), loadV86Script()]);
 
             console.log('Initializing v86 emulator...');
 

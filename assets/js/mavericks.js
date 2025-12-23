@@ -1035,9 +1035,18 @@
 
         // Setup terminal if this is a terminal window or portal window
         if (id === 'terminal' || id === 'portal') {
-            // v86 will dynamically resize window based on VGA resolution
-            if (window.setupV86Terminal) {
-                setupV86Terminal(id);
+            // Lazy load v86-terminal.js if not loaded yet
+            if (!window.setupV86Terminal && window.V86_TERMINAL_URL) {
+                const script = document.createElement('script');
+                script.src = window.V86_TERMINAL_URL;
+                script.onload = () => {
+                    if (window.setupV86Terminal) {
+                        window.setupV86Terminal(id);
+                    }
+                };
+                document.head.appendChild(script);
+            } else if (window.setupV86Terminal) {
+                window.setupV86Terminal(id);
             }
         }
 
