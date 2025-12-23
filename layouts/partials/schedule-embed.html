@@ -1,0 +1,22 @@
+{{/*
+Schedule Embed - Cal.com booking widget embedded in browser-style frame
+Used on /schedule route page
+*/}}
+
+<div class="external-window" style="height: 100%; display: flex; flex-direction: column;">
+    <div class="window-toolbar">
+        <div class="url-bar">
+            <span class="url-icon">🔒</span>
+            <span class="url-text">https://cal.com/ankushkun/call</span>
+        </div>
+        <a href="https://cal.com/ankushkun/call" target="_blank" class="open-external" title="Open in new tab">{{
+            partial "icons/open-external.html" . }}</a>
+    </div>
+    <div class="window-iframe-container" style="flex: 1; position: relative;">
+        <div class="window-loader">
+            <div class="spinner"></div>
+        </div>
+        <iframe src="https://cal.com/ankushkun/call" frameborder="0"
+            onload="this.previousElementSibling.style.display='none'" style="width: 100%; height: 100%;"></iframe>
+    </div>
+</div>

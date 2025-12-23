@@ -221,6 +221,8 @@
     <link rel="stylesheet" href="{{ $mainStyle.Permalink }}">
     {{ $style := resources.Get "css/mavericks.css" }}
     <link rel="stylesheet" href="{{ $style.Permalink }}">
+    {{ $partialsStyle := resources.Get "css/partials.css" }}
+    <link rel="stylesheet" href="{{ $partialsStyle.Permalink }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
