@@ -29,12 +29,20 @@
     height: 100%;
 }
 
+/* Force xterm.js to fill the container */
 .v86-serial-container .xterm {
-    height: 100%;
+    width: 100% !important;
+    height: 100% !important;
     padding: 8px;
 }
 
+.v86-serial-container .xterm-screen {
+    width: 100% !important;
+    height: 100% !important;
+}
+
 .v86-serial-container .xterm-viewport {
+    width: 100% !important;
     overflow-y: auto !important;
 }
 
@@ -121,14 +129,16 @@
     font-size: 11px;
 }
 
-/* Hide hint when keyboard is captured */
+/* Hide hint when keyboard/input is captured */
 .v86-screen-container.keyboard-captured .v86-keyboard-hint,
+.v86-screen-container.input-captured .v86-keyboard-hint,
 .v86-serial-container.keyboard-captured .v86-keyboard-hint {
     opacity: 0;
 }
 
-/* Visual indicator when keyboard is captured */
+/* Visual indicator when keyboard/input is captured */
 .v86-screen-container.keyboard-captured,
+.v86-screen-container.input-captured,
 .v86-serial-container.keyboard-captured {
     box-shadow: inset 0 0 0 2px rgba(76, 217, 100, 0.6);
 }
@@ -138,6 +148,7 @@
     cursor: pointer;
 }
 
-.v86-screen-container.keyboard-captured {
-    cursor: text;
+.v86-screen-container.keyboard-captured,
+.v86-screen-container.input-captured {
+    cursor: default;
 }
