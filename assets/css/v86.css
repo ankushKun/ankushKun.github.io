@@ -1,4 +1,4 @@
-/* v86 Terminal - VGA Display */
+/* v86 Terminal - VGA/Serial Display */
 
 /* Main container */
 .v86-terminal-container {
@@ -7,9 +7,41 @@
     height: 100%;
     background-color: #000;
     overflow: hidden;
+    position: relative;
 }
 
-/* v86 Screen Container - for VGA output */
+/* ============================================================
+   Serial Console (xterm.js)
+   ============================================================ */
+
+.v86-serial-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #1e1e1e;
+    z-index: 10;
+}
+
+.v86-serial-container .v86-xterm {
+    width: 100%;
+    height: 100%;
+}
+
+.v86-serial-container .xterm {
+    height: 100%;
+    padding: 8px;
+}
+
+.v86-serial-container .xterm-viewport {
+    overflow-y: auto !important;
+}
+
+/* ============================================================
+   VGA Display (Canvas)
+   ============================================================ */
+
 .v86-screen-container {
     position: relative;
     width: 100%;
@@ -90,12 +122,14 @@
 }
 
 /* Hide hint when keyboard is captured */
-.v86-screen-container.keyboard-captured .v86-keyboard-hint {
+.v86-screen-container.keyboard-captured .v86-keyboard-hint,
+.v86-serial-container.keyboard-captured .v86-keyboard-hint {
     opacity: 0;
 }
 
 /* Visual indicator when keyboard is captured */
-.v86-screen-container.keyboard-captured {
+.v86-screen-container.keyboard-captured,
+.v86-serial-container.keyboard-captured {
     box-shadow: inset 0 0 0 2px rgba(76, 217, 100, 0.6);
 }
 

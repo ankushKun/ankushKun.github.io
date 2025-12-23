@@ -1,4 +1,4 @@
-{{/* Terminal Window - v86 Linux Emulator with VGA Display */}}
+{{/* Terminal Window - v86 Linux Emulator with VGA/Serial Display */}}
 {{/*
 Usage:
 {{ partial "terminal.html" (dict
@@ -9,7 +9,12 @@ Usage:
 
 <div id="content-{{ .id }}" data-permalink="/terminal/">
     <div class="v86-terminal-container">
-        <!-- VGA Display (Canvas) -->
+        <!-- Serial Console (xterm.js) - shown when serial mode is active -->
+        <div class="v86-serial-container" style="display: none;">
+            <div class="v86-xterm"></div>
+        </div>
+
+        <!-- VGA Display (Canvas) - shown when graphical/text mode is active -->
         <div id="screen_container" class="v86-screen-container">
             <div style="white-space: pre; font: 14px monospace; line-height: 14px"></div>
             <canvas></canvas>
