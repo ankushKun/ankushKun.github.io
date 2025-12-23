@@ -106,12 +106,6 @@
 
         } catch (error) {
             console.error('v86 loading error:', error);
-
-            // Fall back to the fake terminal if available
-            if (window.setupFakeTerminal) {
-                console.log('Falling back to fake terminal...');
-                window.setupFakeTerminal(terminalId);
-            }
         }
     }
 
