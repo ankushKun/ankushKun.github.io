@@ -325,6 +325,13 @@
                     text-align: center;
                     flex-shrink: 0;
                 }
+                .spotlight-result-icon-img {
+                    width: 28px;
+                    height: 28px;
+                    object-fit: contain;
+                    flex-shrink: 0;
+                    border-radius: 4px;
+                }
                 .spotlight-result-content {
                     flex: 1;
                     min-width: 0;
@@ -376,7 +383,10 @@
                 if (item.title === 'Projects') return '🚀';
                 if (item.title === 'Blogs') return '📝';
                 if (item.title === 'Resume') return '📄';
-                if (item.title === 'DOOM') return '🎮';
+                if (item.title === 'DOOM') return '/games/doom.svg';
+                if (item.title === 'Portal') return '/games/portal.webp';
+                if (item.title === 'Last Cat Standing') return '/games/cat.png';
+                if (item.title === 'Crysis') return '/games/crysis.png';
                 if (item.title === 'About Me') return '🍎';
                 if (item.title === 'Terminal') return '💻';
                 if (item.title === 'Games') return '🕹️';
@@ -434,15 +444,20 @@
                 container.innerHTML = '<div class="spotlight-no-results">No results found</div>';
                 return;
             }
-            container.innerHTML = results.map(item => `
+            container.innerHTML = results.map(item => {
+                const iconHtml = (item.icon.startsWith('/') || item.icon.startsWith('http'))
+                    ? `<img src="${item.icon}" class="spotlight-result-icon-img" alt="">`
+                    : `<span class="spotlight-result-icon">${item.icon}</span>`;
+
+                return `
                 <div class="spotlight-result" data-window="${item.windowId}" data-title="${item.title}" data-permalink="${item.permalink || ''}">
-                    <span class="spotlight-result-icon">${item.icon}</span>
+                    ${iconHtml}
                     <div class="spotlight-result-content">
                         <div class="spotlight-result-title">${item.title}</div>
                         <div class="spotlight-result-type">${item.type}</div>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
 
             // Add click handlers
             container.querySelectorAll('.spotlight-result').forEach(el => {
@@ -482,6 +497,9 @@
                     { title: 'Wins', type: 'app', openWindow: 'wins', description: 'Hackathon wins' },
                     { title: 'Schedule Call', type: 'app', openWindow: 'book-a-call', description: 'Book a call' },
                     { title: 'DOOM', type: 'app', openWindow: 'doom', description: 'Play DOOM' },
+                    { title: 'Portal', type: 'app', openWindow: 'portal', description: 'Aperture Science Handheld Portal Device' },
+                    { title: 'Last Cat Standing', type: 'app', openWindow: 'itch-game', description: 'Play Last Cat Standing' },
+                    { title: 'Crysis', type: 'app', openWindow: 'crysis', description: 'Can it run Crysis?' },
                 ];
                 globalSearchIndex = [...apps, ...data];
             })
@@ -936,6 +954,21 @@
             return;
         }
 
+        // Handle Special Case: Crysis (The Meme)
+        if (id === 'crysis') {
+            if (window.playErrorSound) window.playErrorSound();
+            if (window.showNotification) {
+                window.showNotification({
+                    title: 'Crysis',
+                    message: 'But can it run Crysis? No. No it cannot.',
+                    icon: '⚠️',
+                    duration: 3000,
+                    sound: false
+                });
+            }
+            return;
+        }
+
         // 1. Try to get content from existing DOM element (e.g. About, Contact)
         const contentElement = document.getElementById(`content-${id}`);
         let content = '';
@@ -1000,11 +1033,11 @@
         activateLazyIframes(win);
         activateTwitterEmbeds(win);
 
-        // Setup terminal if this is a terminal window
-        if (id === 'terminal') {
+        // Setup terminal if this is a terminal window or portal window
+        if (id === 'terminal' || id === 'portal') {
             // v86 will dynamically resize window based on VGA resolution
             if (window.setupV86Terminal) {
-                setupV86Terminal('terminal');
+                setupV86Terminal(id);
             }
         }
 
@@ -1100,8 +1133,8 @@
     }
 
     function closeWindow(win, id) {
-        // Cleanup v86 emulator if this is the terminal window
-        if (id === 'terminal' && window.destroyV86) {
+        // Cleanup v86 emulator if this is the terminal or portal window
+        if ((id === 'terminal' || id === 'portal') && window.destroyV86) {
             window.destroyV86();
         }
 
