@@ -1651,5 +1651,201 @@
     window.showNotification = showNotification;
     window.dismissNotification = dismissNotification;
 
+    // ================================================
+    // Easter Eggs
+    // ================================================
+
+    // Konami Code: ↑↑↓↓←→←→BA
+    const konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown',
+        'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight',
+        'KeyB', 'KeyA'];
+    let konamiProgress = 0;
+    let konamiActivated = false;
+
+    function setupKonamiCode() {
+        document.addEventListener('keydown', (e) => {
+            // Don't trigger if user is typing in an input
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+            const expectedKey = konamiCode[konamiProgress];
+            const pressedKey = e.code;
+
+            if (pressedKey === expectedKey) {
+                konamiProgress++;
+
+                if (konamiProgress === konamiCode.length) {
+                    konamiProgress = 0;
+                    if (!konamiActivated) {
+                        activateKonamiEasterEgg();
+                    }
+                }
+            } else {
+                konamiProgress = 0;
+            }
+        });
+    }
+
+    function activateKonamiEasterEgg() {
+        konamiActivated = true;
+
+        // Play a fun sound
+        playKonamiSound();
+
+        // Add rainbow effect to the page
+        document.body.classList.add('konami-active');
+
+        // Create floating emojis
+        const emojis = ['🎮', '🕹️', '👾', '🚀', '⭐', '🌈', '🎉', '✨'];
+        for (let i = 0; i < 30; i++) {
+            setTimeout(() => {
+                const emoji = document.createElement('div');
+                emoji.className = 'konami-emoji';
+                emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                emoji.style.cssText = `
+                    position: fixed;
+                    font-size: ${20 + Math.random() * 30}px;
+                    left: ${Math.random() * 100}vw;
+                    top: -50px;
+                    z-index: 999999;
+                    pointer-events: none;
+                    animation: konami-fall ${3 + Math.random() * 2}s linear forwards;
+                `;
+                document.body.appendChild(emoji);
+
+                setTimeout(() => emoji.remove(), 5000);
+            }, i * 100);
+        }
+
+        // Add the animation keyframes if not present
+        if (!document.getElementById('konami-styles')) {
+            const style = document.createElement('style');
+            style.id = 'konami-styles';
+            style.textContent = `
+                @keyframes konami-fall {
+                    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+                    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+                }
+                .konami-active {
+                    animation: konami-rainbow 2s ease;
+                }
+                @keyframes konami-rainbow {
+                    0% { filter: hue-rotate(0deg); }
+                    50% { filter: hue-rotate(180deg); }
+                    100% { filter: hue-rotate(0deg); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Show notification
+        showNotification({
+            title: "🎮 Cheat Code Activated!",
+            message: "+30 lives, all weapons unlocked, big head mode enabled!",
+            icon: "👾",
+            duration: 5000,
+            sound: false // We already played a sound
+        });
+
+        // Remove effect after animation
+        setTimeout(() => {
+            document.body.classList.remove('konami-active');
+            konamiActivated = false;
+        }, 2000);
+    }
+
+    function playKonamiSound() {
+        try {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+
+            const now = audioContext.currentTime;
+
+            // Play a triumphant arpeggio (C-E-G-C)
+            const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+
+            notes.forEach((freq, i) => {
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(freq, now);
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+
+                const startTime = now + (i * 0.1);
+                gain.gain.setValueAtTime(0, startTime);
+                gain.gain.linearRampToValueAtTime(0.1, startTime + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.3);
+
+                osc.start(startTime);
+                osc.stop(startTime + 0.4);
+            });
+        } catch (e) {
+            console.log('Konami sound unavailable:', e.message);
+        }
+    }
+
+    // Error/Bonk sound for error notifications
+    function playErrorSound() {
+        try {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+
+            const now = audioContext.currentTime;
+
+            // Classic Mac "Sosumi" / bonk style sound
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(200, now);
+            osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
+
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+            osc.start(now);
+            osc.stop(now + 0.2);
+
+            // Add a second lower bonk
+            const osc2 = audioContext.createOscillator();
+            const gain2 = audioContext.createGain();
+
+            osc2.type = 'triangle';
+            osc2.frequency.setValueAtTime(150, now + 0.08);
+            osc2.frequency.exponentialRampToValueAtTime(80, now + 0.2);
+
+            osc2.connect(gain2);
+            gain2.connect(audioContext.destination);
+
+            gain2.gain.setValueAtTime(0, now);
+            gain2.gain.setValueAtTime(0.25, now + 0.08);
+            gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+            osc2.start(now + 0.08);
+            osc2.stop(now + 0.3);
+        } catch (e) {
+            console.log('Error sound unavailable:', e.message);
+        }
+    }
+
+    // Initialize Konami Code listener
+    setupKonamiCode();
+
+    // Expose error sound globally for use in onclick handlers
+    window.playErrorSound = playErrorSound;
+
 })();
+
 
