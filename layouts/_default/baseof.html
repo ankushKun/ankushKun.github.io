@@ -321,6 +321,11 @@
     <!-- Window Container -->
     <div class="windows-container" id="windows-container"></div>
 
+    <!-- xterm.js for Serial Console -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
+    <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+
     {{ $v86css := resources.Get "css/v86.css" | resources.Minify | resources.Fingerprint }}
     <link rel="stylesheet" href="{{ $v86css.Permalink }}">
 

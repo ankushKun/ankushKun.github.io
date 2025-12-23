@@ -1002,6 +1002,7 @@
 
         // Setup terminal if this is a terminal window
         if (id === 'terminal') {
+            // v86 will dynamically resize window based on VGA resolution
             if (window.setupV86Terminal) {
                 setupV86Terminal('terminal');
             }
