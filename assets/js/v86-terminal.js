@@ -34,21 +34,36 @@
         },
 
         // NodeOS - Linux kernel bzImage (v4.8.5)
+        // Uses VGA output (not serial) - matches official v86 demo
         nodeos: {
             name: 'NodeOS Kernel',
             type: 'bzimage',
             path: '/v86/images/nodeos-kernel.bin',
             memory: 128 * 1024 * 1024,     // 128 MB
             vgaMemory: 8 * 1024 * 1024,    // 8 MB
-            cmdline: 'console=ttyS0',      // Output to serial console
+            // Official v86 cmdline - uses VGA, not serial console
+            cmdline: 'tsc=reliable mitigations=off random.trust_cpu=on',
+            // Use VGA output (not serial)
+            vga: true,
+        },
+
+        // Buildroot - Minimal Linux kernel v5.6.15 with busybox
+        buildroot: {
+            name: 'Buildroot Linux',
+            type: 'bzimage',
+            path: '/v86/bzimage/buildroot.bin',
+            memory: 64 * 1024 * 1024,      // 64 MB
+            vgaMemory: 8 * 1024 * 1024,    // 8 MB
+            cmdline: 'tsc=reliable mitigations=off random.trust_cpu=on',
+            // vga: true
         },
     };
 
     // ============================================================
     // ACTIVE PROFILE - Change this to switch boot images!
-    // Options: 'stillalive', 'linux4', 'nodeos'
+    // Options: 'stillalive', 'linux4', 'nodeos', 'buildroot'
     // ============================================================
-    const ACTIVE_PROFILE = 'nodeos';
+    const ACTIVE_PROFILE = 'buildroot';
 
     // ============================================================
     // v86 Core Configuration
@@ -64,6 +79,11 @@
     let v86Emulator = null;
     let v86Loaded = false;
     let displayMode = 'vga'; // 'vga' or 'serial'
+    let inputCaptured = false;
+    let currentProfile = null;
+    let currentScreenContainer = null;
+    let currentWindowElement = null;
+    let serialFitAddon = null;
 
     // Load v86 library dynamically
     function loadV86Script() {
@@ -92,6 +112,14 @@
             // Show serial, hide VGA
             if (serialContainer) serialContainer.style.display = 'block';
             if (screenContainer) screenContainer.style.display = 'none';
+
+            // Fit the terminal after it becomes visible
+            if (serialFitAddon) {
+                setTimeout(() => {
+                    serialFitAddon.fit();
+                    console.log('Serial terminal fitted on mode switch');
+                }, 50);
+            }
         } else {
             // Show VGA, hide serial
             if (serialContainer) serialContainer.style.display = 'none';
@@ -146,6 +174,11 @@
 
             console.log(`Booting: ${profile.name}`);
 
+            // Store profile and containers for input capture
+            currentProfile = profile;
+            currentScreenContainer = screenContainer;
+            currentWindowElement = windowElement;
+
             const options = {
                 wasm_path: V86_CORE.wasmUrl,
                 memory_size: profile.memory,
@@ -156,8 +189,10 @@
                 // v86 will create its own Terminal and call open() on this element
                 serial_container_xtermjs: xtermContainer,
 
-                disable_keyboard: true,
-                disable_mouse: true,
+                // If vga mode, we manage keyboard/mouse capture manually
+                // Otherwise disable them for serial mode
+                disable_keyboard: !profile.vga,
+                disable_mouse: !profile.vga,
 
                 bios: { url: V86_CORE.biosUrl },
                 vga_bios: { url: V86_CORE.vgaBiosUrl },
@@ -190,8 +225,9 @@
             let serialOutputReceived = false;
 
             // Listen for serial output to switch display mode
+            // Only switch if the profile doesn't have vga: true
             v86Emulator.add_listener("serial0-output-byte", function (byte) {
-                if (!serialOutputReceived) {
+                if (!serialOutputReceived && !profile.vga) {
                     serialOutputReceived = true;
                     console.log('Serial output detected, switching to serial mode');
                     setDisplayMode('serial', screenContainer, serialContainer);
@@ -201,11 +237,41 @@
             // Listen for emulator events
             v86Emulator.add_listener("emulator-ready", function () {
                 console.log('v86 emulator ready!');
+
+                // Try to attach FitAddon to v86's xterm terminal
+                if (v86Emulator.serial_adapter && v86Emulator.serial_adapter.term) {
+                    try {
+                        const term = v86Emulator.serial_adapter.term;
+                        if (typeof FitAddon !== 'undefined') {
+                            serialFitAddon = new FitAddon.FitAddon();
+                            term.loadAddon(serialFitAddon);
+                            setTimeout(() => {
+                                serialFitAddon.fit();
+                                console.log('Serial terminal fitted');
+                            }, 100);
+
+                            // Re-fit on container resize
+                            if (serialContainer) {
+                                const resizeObserver = new ResizeObserver(() => {
+                                    serialFitAddon.fit();
+                                });
+                                resizeObserver.observe(serialContainer);
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('Could not attach FitAddon to v86 terminal:', e);
+                    }
+                }
             });
 
             v86Emulator.add_listener("emulator-started", function () {
                 console.log('v86 emulator started!');
             });
+
+            // Setup VGA input capture if profile uses VGA
+            if (profile.vga) {
+                setupVGAInputCapture(screenContainer, windowElement);
+            }
 
             v86Loaded = true;
             console.log('v86 setup complete!');
@@ -215,14 +281,74 @@
         }
     }
 
+    // Toggle VGA input capture
+    function setInputCapture(enabled) {
+        if (!v86Emulator || !currentProfile?.vga) return;
+
+        inputCaptured = enabled;
+        v86Emulator.keyboard_set_enabled(enabled);
+        v86Emulator.mouse_set_enabled(enabled);
+
+        // Update visual indicator
+        if (currentScreenContainer) {
+            currentScreenContainer.classList.toggle('input-captured', enabled);
+        }
+
+        console.log(`Input capture: ${enabled ? 'LOCKED' : 'UNLOCKED'}`);
+    }
+
+    // Setup VGA input capture handlers
+    function setupVGAInputCapture(screenContainer, windowElement) {
+        // Start with input NOT captured
+        setInputCapture(false);
+
+        // Click on screen to capture input
+        screenContainer.addEventListener('click', () => {
+            if (!inputCaptured) {
+                setInputCapture(true);
+            }
+        });
+
+        // Escape key releases capture
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && inputCaptured) {
+                e.preventDefault();
+                e.stopPropagation();
+                setInputCapture(false);
+            }
+        });
+
+        // Click outside window releases capture
+        document.addEventListener('mousedown', (e) => {
+            if (inputCaptured && windowElement && !windowElement.contains(e.target)) {
+                setInputCapture(false);
+            }
+        });
+
+        // Add hint overlay
+        const hint = document.createElement('div');
+        hint.className = 'v86-keyboard-hint';
+        hint.innerHTML = 'Click to capture input • <kbd>Esc</kbd> to release';
+        screenContainer.appendChild(hint);
+    }
+
     // Cleanup when terminal window is closed
     function destroyV86() {
+        // Release input capture first
+        if (inputCaptured) {
+            setInputCapture(false);
+        }
+
         if (v86Emulator) {
             v86Emulator.stop();
             v86Emulator = null;
         }
         v86Loaded = false;
         displayMode = 'vga';
+        inputCaptured = false;
+        currentProfile = null;
+        currentScreenContainer = null;
+        currentWindowElement = null;
     }
 
     // Expose functions globally
