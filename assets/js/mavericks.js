@@ -1002,11 +1002,8 @@
 
         // Setup terminal if this is a terminal window
         if (id === 'terminal') {
-            // Try v86 first (real Linux emulator), fall back to fake terminal
             if (window.setupV86Terminal) {
                 setupV86Terminal('terminal');
-            } else if (window.setupTerminal) {
-                setupTerminal('terminal');
             }
         }
 
