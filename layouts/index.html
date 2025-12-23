@@ -28,6 +28,10 @@
     {{ partial "desktop-icon.html" (dict "window" "games" "title" "Games" "label" "Games" "svg"
     (partial "icons/games-folder-desktop.html" .)) }}
 
+    <!-- Terminal Icon -->
+    {{ partial "desktop-icon.html" (dict "window" "terminal" "title" "Terminal" "label" "Terminal" "svg"
+    (partial "icons/terminal-desktop.html" .)) }}
+
 </div>
 
 <!-- ============================================== -->
@@ -136,6 +140,12 @@
     "title" "ankushkun.itch.io"
     "url" "https://ankushkun.itch.io/"
     "downloadLabel" (partial "icons/open-external.html" .)
+    ) }}
+
+    <!-- TERMINAL CONTENT -->
+    {{ partial "terminal.html" (dict
+    "id" "terminal"
+    "title" "Terminal"
     ) }}
 </div>
 {{ end }}

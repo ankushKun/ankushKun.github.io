@@ -1,0 +1,14 @@
+{{/* Terminal Window - macOS Terminal using xterm.js */}}
+{{/*
+Usage:
+{{ partial "terminal.html" (dict
+"id" "terminal"
+"title" "Terminal"
+) }}
+*/}}
+
+<div id="content-{{ .id }}" data-permalink="/terminal/">
+    <div class="terminal-xterm-container" id="terminal-container-{{ .id }}">
+        <!-- xterm.js will render here -->
+    </div>
+</div>
