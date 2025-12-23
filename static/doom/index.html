@@ -1,84 +1,398 @@
-<!DOCTYPE html>
-<html dir="null">
+<!doctype html>
+<html>
 
 <head>
-  <meta http-equiv="content-type" content="text/html; charset=windows-1252">
-  <title>Yet Another Doom Clone
-  </title>
-</head>
-
-<body dir="null">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DOOM - Original 1997</title>
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html,
     body {
-      margin: 0px;
-      background: #000
-    }
-
-    #qQ {
-      position: absolute;
-      left: 35vw;
-      top: 4em;
-      font-size: 2em;
-      font-variant: small-caps;
-      color: #aaa;
-      animation: z 9s;
-    }
-
-    #cQ {
+      width: 100%;
       height: 100%;
-      width: 100%
+      background: #000;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
 
-    #hQ {
-      top: 0px;
-      width: 10vw;
-      height: 2vh;
-      border: 3px solid #008;
+    .doom-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .game-wrapper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    #screen {
+      display: block;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      background: #000;
+      cursor: crosshair;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .focus-hint {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.85);
+      color: #cc0000;
+      padding: 20px 30px;
+      border-radius: 8px;
+      font-size: 16px;
+      text-align: center;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+      border: 2px solid #cc0000;
+      text-shadow: 0 0 10px #cc0000;
+    }
+
+    .focus-hint.visible {
+      opacity: 1;
+    }
+
+    .focus-hint kbd {
+      background: #333;
+      padding: 2px 6px;
       border-radius: 3px;
-      display: none
+      border: 1px solid #555;
     }
 
-    #fps {
-      display: none
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.8);
+      max-width: 640px;
     }
 
-    #hW {
-      height: 2vh;
-      background: #00a
+    .controls button {
+      background: #222;
+      color: #cc0000;
+      border: 2px solid #cc0000;
+      padding: 12px 16px;
+      font-size: 18px;
+      cursor: pointer;
+      border-radius: 4px;
+      min-width: 50px;
+      font-weight: bold;
+      transition: all 0.1s;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
     }
 
-    @keyframes q {
+    .controls button:active,
+    .controls button.pressed {
+      background: #cc0000;
+      color: #000;
+      transform: scale(0.95);
+    }
+
+    .controls button:hover {
+      background: #331111;
+    }
+
+    .loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #cc0000;
+      font-size: 24px;
+      text-shadow: 0 0 20px #cc0000;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
       50% {
-        opacity: 0
+        opacity: 0.5;
       }
     }
 
-    .b {
-      animation: q 1s linear infinite
+    .stats {
+      position: fixed;
+      bottom: 5px;
+      right: 5px;
+      color: #666;
+      font-size: 10px;
+      font-family: monospace;
     }
 
-    @keyframes z {
-      from {
-        opacity: 0
+    /* Mobile controls - only show on touch devices */
+    @media (hover: none) and (pointer: coarse) {
+      .controls {
+        display: flex !important;
       }
+    }
 
-      to {
-        opacity: 1
+    @media (hover: hover) and (pointer: fine) {
+      .controls {
+        display: none;
       }
+    }
+
+    /* Hide output log in embedded mode */
+    #output {
+      display: none;
     }
   </style>
-  <canvas id="cQ" dir="null" width="800" height="549">
-  </canvas>
-  <div id="qQ" style="top: 5vh; left: 45vw;">
-    <div id="jQ"></div>
-    <div id="hE"></div>
-    <div id="hQ" style="display: block;">
-      <div id="hW" style="width: 6vw;" class="undefined">
+</head>
+
+<body>
+  <div class="doom-container">
+    <div class="game-wrapper">
+      <div id="loading" class="loading">Loading DOOM...</div>
+      <canvas id="screen" width="640" height="400" tabindex="0">
+        This is where the DOOM screen should render.
+      </canvas>
+      <div id="focushint" class="focus-hint">
+        Click to play • Use arrow keys to move<br>
+        <kbd>Ctrl</kbd> shoot • <kbd>Space</kbd> open doors • <kbd>Enter</kbd> start
       </div>
+    </div>
+
+    <!-- Mobile touch controls -->
+    <div class="controls">
+      <button id="enterButton">⏎</button>
+      <button id="upButton">↑</button>
+      <button id="ctrlButton">🔫</button>
+      <button id="leftButton">←</button>
+      <button id="downButton">↓</button>
+      <button id="rightButton">→</button>
+      <button id="spaceButton">Door</button>
+      <button id="altButton">Strafe</button>
     </div>
   </div>
 
-  <script src="doom.js">
+  <!-- Hidden output for debug -->
+  <div id="output"></div>
+
+  <!-- Stats (optional, hidden by default) -->
+  <div class="stats">
+    <span id="fps_stats">0</span> FPS |
+    <span id="drawframes_stats">0</span> frames
+  </div>
+
+  <script>
+    'use strict';
+
+    const loading = document.getElementById('loading');
+    const focushint = document.getElementById('focushint');
+    const canvas = document.getElementById('screen');
+    const output = document.getElementById('output');
+
+    // WebAssembly memory
+    var memory = new WebAssembly.Memory({ initial: 108 });
+
+    // String reading from WASM memory
+    function readWasmString(offset, length) {
+      const bytes = new Uint8Array(memory.buffer, offset, length);
+      return new TextDecoder('utf8').decode(bytes);
+    }
+
+    function appendOutput(style) {
+      return function (offset, length) {
+        const string = readWasmString(offset, length);
+        console.log(`[DOOM ${style}]`, string);
+      }
+    }
+
+    // Time tracking for DOOM's game loop
+    function getMilliseconds() {
+      return performance.now();
+    }
+
+    // Screen dimensions (DOOM renders at 320x200, scaled 2x)
+    const doom_screen_width = 320 * 2;
+    const doom_screen_height = 200 * 2;
+
+    // FPS counter
+    const fps_stats = document.getElementById("fps_stats");
+    const drawframes_stats = document.getElementById("drawframes_stats");
+    var number_of_draws_total = 0;
+    var number_of_draws = 0;
+
+    window.setInterval(function () {
+      number_of_draws_total += number_of_draws;
+      drawframes_stats.innerText = number_of_draws_total;
+      fps_stats.innerText = number_of_draws;
+      number_of_draws = 0;
+    }, 1000);
+
+    // Draw the DOOM screen to canvas
+    function drawCanvas(ptr) {
+      var doom_screen = new Uint8ClampedArray(memory.buffer, ptr, doom_screen_width * doom_screen_height * 4);
+      var render_screen = new ImageData(doom_screen, doom_screen_width, doom_screen_height);
+      var ctx = canvas.getContext('2d');
+      ctx.putImageData(render_screen, 0, 0);
+      ++number_of_draws;
+    }
+
+    // WASM import object
+    var importObject = {
+      js: {
+        js_console_log: appendOutput("log"),
+        js_stdout: appendOutput("stdout"),
+        js_stderr: appendOutput("stderr"),
+        js_milliseconds_since_start: getMilliseconds,
+        js_draw_screen: drawCanvas,
+      },
+      env: {
+        memory: memory
+      }
+    };
+
+    // Load and run DOOM
+    WebAssembly.instantiateStreaming(fetch('doom.wasm'), importObject)
+      .then(obj => {
+        // Hide loading indicator
+        loading.style.display = 'none';
+
+        // Initialize Doom
+        obj.instance.exports.main();
+
+        // Key code mapping (Browser -> DOOM)
+        let doomKeyCode = function (keyCode) {
+          switch (keyCode) {
+            case 8: return 127;           // Backspace
+            case 17: return (0x80 + 0x1d); // Ctrl
+            case 18: return (0x80 + 0x38); // Alt
+            case 37: return 0xac;          // Left arrow
+            case 38: return 0xad;          // Up arrow
+            case 39: return 0xae;          // Right arrow
+            case 40: return 0xaf;          // Down arrow
+            default:
+              if (keyCode >= 65 && keyCode <= 90) {
+                return keyCode + 32; // Lowercase
+              }
+              if (keyCode >= 112 && keyCode <= 123) {
+                return keyCode + 75; // F1-F12
+              }
+              return keyCode;
+          }
+        };
+
+        let keyDown = function (keyCode) {
+          obj.instance.exports.add_browser_event(0, keyCode);
+        };
+        let keyUp = function (keyCode) {
+          obj.instance.exports.add_browser_event(1, keyCode);
+        };
+
+        // Keyboard input
+        canvas.addEventListener('keydown', function (event) {
+          keyDown(doomKeyCode(event.keyCode));
+          event.preventDefault();
+        }, false);
+
+        canvas.addEventListener('keyup', function (event) {
+          keyUp(doomKeyCode(event.keyCode));
+          event.preventDefault();
+        }, false);
+
+        // Mobile touch controls
+        const controls = [
+          ["enterButton", 13],
+          ["leftButton", 0xac],
+          ["rightButton", 0xae],
+          ["upButton", 0xad],
+          ["downButton", 0xaf],
+          ["ctrlButton", 0x80 + 0x1d],
+          ["spaceButton", 32],
+          ["altButton", 0x80 + 0x38]
+        ];
+
+        controls.forEach(([elementID, keyCode]) => {
+          var button = document.getElementById(elementID);
+          if (button) {
+            button.addEventListener("touchstart", (e) => {
+              e.preventDefault();
+              button.classList.add('pressed');
+              keyDown(keyCode);
+            });
+            button.addEventListener("touchend", (e) => {
+              e.preventDefault();
+              button.classList.remove('pressed');
+              keyUp(keyCode);
+            });
+            button.addEventListener("touchcancel", () => {
+              button.classList.remove('pressed');
+              keyUp(keyCode);
+            });
+            // Also support mouse for testing
+            button.addEventListener("mousedown", () => {
+              button.classList.add('pressed');
+              keyDown(keyCode);
+            });
+            button.addEventListener("mouseup", () => {
+              button.classList.remove('pressed');
+              keyUp(keyCode);
+            });
+            button.addEventListener("mouseleave", () => {
+              button.classList.remove('pressed');
+              keyUp(keyCode);
+            });
+          }
+        });
+
+        // Focus hint management
+        canvas.addEventListener('focusin', function () {
+          focushint.classList.remove('visible');
+        }, false);
+
+        canvas.addEventListener('focusout', function () {
+          focushint.classList.add('visible');
+        }, false);
+
+        // Click to focus
+        canvas.addEventListener('click', function () {
+          canvas.focus();
+        });
+
+        // Initial focus
+        canvas.focus();
+
+        // Main game loop
+        function step(timestamp) {
+          obj.instance.exports.doom_loop_step();
+          window.requestAnimationFrame(step);
+        }
+        window.requestAnimationFrame(step);
+      })
+      .catch(err => {
+        loading.innerHTML = 'Failed to load DOOM<br><small>' + err.message + '</small>';
+        loading.style.color = '#ff4444';
+        console.error('DOOM loading error:', err);
+      });
   </script>
 </body>
 
