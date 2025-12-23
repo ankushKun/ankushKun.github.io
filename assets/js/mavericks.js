@@ -27,7 +27,6 @@
         setupExternalLinks();
         setupKeyboardShortcuts();
         preloadHighResWallpaper();
-        preloadHighResWallpaper();
         lazyLoadImages();
         setupSearchIndex();
 
@@ -463,19 +462,13 @@
         });
     }
 
-    // Old buildSearchIndex was replaced below by setupSearchIndex logic
-    // Removing the residual body lines
-
-
+    // Load search index for Spotlight
     function setupSearchIndex() {
         fetch('/index.json')
             .then(r => r.json())
             .then(data => { globalSearchIndex = data; })
             .catch(e => console.error('Failed to load search index', e));
     }
-
-    // Unused but kept for reference or legacy functionality
-    function buildSearchIndex() { return []; }
 
     function getIconForType(type) {
         const t = (type || '').toLowerCase();

@@ -23,18 +23,6 @@
     {{ partial "desktop-icon.html" (dict "window" "timeline" "title" "Timeline" "label" "Timeline" "svg" (partial
     "icons/clock-desktop.html" .)) }}
 
-    <!-- Wins Icon -->
-    {{/* {{ partial "desktop-icon.html" (dict "window" "wins" "title" "Wins" "label" "Wins" "svg" (partial
-    "icons/trophy-desktop.html" .)) }} */}}
-
-    <!-- Contact Icon -->
-    {{/* {{ partial "desktop-icon.html" (dict "window" "contact" "title" "Contact" "label" "Contact" "svg" (partial
-    "icons/mail-desktop.html" .)) }} */}}
-
-    <!-- Schedule Call Icon -->
-    {{/* {{ partial "desktop-icon.html" (dict "window" "book-a-call" "title" "🌐 Schedule Call" "label" "Schedule Call"
-    "svg"
-    (partial "icons/phone-desktop.html" .)) }} */}}
 
     <!-- Games Folder Icon -->
     {{ partial "desktop-icon.html" (dict "window" "games" "title" "Games" "label" "Games" "svg"
@@ -101,46 +89,22 @@
     ) }}
 
     <!-- SCHEDULE CALL CONTENT -->
-    <div id="content-book-a-call">
-        <div class="external-window" style="height: 100%; display: flex; flex-direction: column;">
-            <div class="window-toolbar">
-                <div class="url-bar">
-                    <span class="url-icon">🔒</span>
-                    <span class="url-text">https://cal.com/ankushkun/call</span>
-                </div>
-                <a href="https://cal.com/ankushkun/call" target="_blank" class="open-external"
-                    title="Open in new tab">{{ partial "icons/open-external.html" . }}</a>
-            </div>
-            <div class="window-iframe-container" style="flex: 1; position: relative;">
-                <div class="window-loader">
-                    <div class="spinner"></div>
-                </div>
-                <iframe data-src="https://cal.com/ankushkun/call" frameborder="0"
-                    onload="this.previousElementSibling.style.display='none'"
-                    style="width: 100%; height: 100%;"></iframe>
-            </div>
-        </div>
-    </div>
+    {{ partial "external-embed.html" (dict
+    "id" "book-a-call"
+    "icon" "🔒"
+    "title" "https://cal.com/ankushkun/call"
+    "url" "https://cal.com/ankushkun/call"
+    "downloadLabel" (partial "icons/open-external.html" .)
+    ) }}
 
     <!-- RESUME CONTENT -->
-    <div id="content-resume">
-        <div class="external-window" style="height: 100%; display: flex; flex-direction: column;">
-            <div class="window-toolbar">
-                <div class="url-bar">
-                    <span class="url-icon">📄</span>
-                    <span class="url-text">resume.pdf</span>
-                </div>
-                <a href="/resume.pdf" target="_blank" class="open-external" title="Download PDF">⬇</a>
-            </div>
-            <div class="window-iframe-container" style="flex: 1; position: relative;">
-                <div class="window-loader">
-                    <div class="spinner"></div>
-                </div>
-                <iframe data-src="/resume.pdf" frameborder="0" onload="this.previousElementSibling.style.display='none'"
-                    style="width: 100%; height: 100%;"></iframe>
-            </div>
-        </div>
-    </div>
+    {{ partial "external-embed.html" (dict
+    "id" "resume"
+    "icon" "📄"
+    "title" "resume.pdf"
+    "url" "/resume.pdf"
+    "downloadLabel" "⬇"
+    ) }}
 
     <!-- GAMES FOLDER CONTENT - Finder Icon View -->
     {{ partial "games-grid.html" (dict
@@ -149,65 +113,29 @@
     ) }}
 
     <!-- ITCH GAME EMBED CONTENT -->
-    <div id="content-itch-game">
-        <div class="external-window" style="height: 100%; display: flex; flex-direction: column;">
-            <div class="window-iframe-container" style="flex: 1; position: relative;">
-                <div class="window-loader">
-                    <div class="spinner"></div>
-                </div>
-                <iframe data-src="https://itch.io/embed-upload/15250063?color=EEF2F6" frameborder="0" allowfullscreen
-                    onload="this.previousElementSibling.style.display='none'"
-                    style="width: 100%; height: 100%;"></iframe>
-            </div>
-        </div>
-    </div>
+    {{ partial "external-embed.html" (dict
+    "id" "itch-game"
+    "url" "https://itch.io/embed-upload/15250063?color=EEF2F6"
+    "showToolbar" false
+    "external" true
+    ) }}
 
     <!-- DOOM CONTENT -->
-    <div id="content-doom">
-        <div class="external-window" style="height: 100%; display: flex; flex-direction: column;">
-            <div class="window-toolbar">
-                <div class="url-bar">
-                    <span class="url-icon">🎮</span>
-                    <span class="url-text">Yet Another Doom Clone</span>
-                </div>
-                <a href="https://nicholas.carlini.com/writing/2019/javascript-doom-clone-13k.html" target="_blank"
-                    class="open-external" title="Open source article">{{ partial "icons/open-external.html" . }}</a>
-            </div>
-            <div class="window-iframe-container" style="flex: 1; position: relative;">
-                <div class="window-loader">
-                    <div class="spinner"></div>
-                </div>
-                <iframe data-src="/doom/" frameborder="0" onload="this.previousElementSibling.style.display='none'"
-                    style="width: 100%; height: 100%; background: #000;"></iframe>
-            </div>
-        </div>
-    </div>
+    {{ partial "external-embed.html" (dict
+    "id" "doom"
+    "icon" "🎮"
+    "title" "Yet Another Doom Clone"
+    "url" "/doom/"
+    "downloadLabel" (partial "icons/open-external.html" .)
+    ) }}
 
     <!-- ITCH.IO CONTENT -->
-    <div id="content-itchio">
-        <div class="external-window" style="height: 100%; display: flex; flex-direction: column;">
-            <div class="window-toolbar">
-                <div class="url-bar">
-                    <span class="url-icon">🎮</span>
-                    <span class="url-text">ankushkun.itch.io</span>
-                </div>
-                <a href="https://ankushkun.itch.io/" target="_blank" class="open-external" title="Open in new tab">{{
-                    partial "icons/open-external.html" . }}</a>
-            </div>
-            <div class="window-iframe-container" style="flex: 1; position: relative;">
-                <div class="window-loader">
-                    <div class="spinner"></div>
-                </div>
-                <iframe data-src="https://ankushkun.itch.io/" frameborder="0"
-                    onload="this.previousElementSibling.style.display='none'"
-                    style="width: 100%; height: 100%;"></iframe>
-            </div>
-        </div>
-    </div>
+    {{ partial "external-embed.html" (dict
+    "id" "itchio"
+    "icon" "🎮"
+    "title" "ankushkun.itch.io"
+    "url" "https://ankushkun.itch.io/"
+    "downloadLabel" (partial "icons/open-external.html" .)
+    ) }}
 </div>
-
-<!-- ============================================== -->
-<!-- BLOG POST TEMPLATES -->
-<!-- ============================================== -->
-{{/* Content for posts, projects, and timeline are now lazy-loaded via fetch */}}
 {{ end }}
