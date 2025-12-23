@@ -1550,7 +1550,7 @@
         let iconHtml = '';
         if (options.icon) {
             if (options.icon.startsWith('http') || options.icon.startsWith('/')) {
-                iconHtml = `<img src="${options.icon}" alt="" class="notification-icon-img">`;
+                iconHtml = `<img src="${options.icon}" draggable="false" alt="" class="notification-icon-img">`;
             } else {
                 iconHtml = `<span class="notification-icon-emoji">${options.icon}</span>`;
             }

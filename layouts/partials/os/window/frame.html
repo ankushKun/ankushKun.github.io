@@ -2,7 +2,7 @@
 {{/* Usage: {{ partial "window-frame.html" (dict "title" .Title "permalink" .Permalink "content" .Content) }} */}}
 <div class="static-window">
     <div class="window-titlebar">
-        {{ partial "traffic-lights.html" (dict "closeLink" "/") }}
+        {{ partial "os/window/controls.html" (dict "closeLink" "/") }}
         <div class="window-title">{{ .title }}</div>
         {{ with .permalink }}
         <a href="{{ . }}" target="_blank" class="titlebar-link" title="Open in new tab">↗</a>

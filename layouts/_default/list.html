@@ -10,19 +10,19 @@ Each section maps to a specific content partial.
 {{ $contentData := dict }}
 
 {{ if eq .Section "wins" }}
-{{ $contentPartial = "wins-list.html" }}
+{{ $contentPartial = "apps/wins/list.html" }}
 {{ $contentData = dict "id" "wins-page" "title" "Wins" }}
 
 {{ else if eq .Section "contact" }}
-{{ $contentPartial = "contact-book.html" }}
+{{ $contentPartial = "apps/contact/book.html" }}
 {{ $contentData = dict "id" "contact-page" "title" "Contacts" }}
 
 {{ else if eq .Section "schedule" }}
-{{ $contentPartial = "schedule-embed.html" }}
+{{ $contentPartial = "apps/contact/schedule.html" }}
 {{ $contentData = dict }}
 
 {{ else if eq .Section "timeline" }}
-{{ $contentPartial = "calendar-view.html" }}
+{{ $contentPartial = "apps/timeline/calendar.html" }}
 {{ $projectPages := where .Site.RegularPages "Section" "projects" }}
 {{ $allPages := .Pages | union $projectPages }}
 {{ $contentData = dict
@@ -34,7 +34,7 @@ Each section maps to a specific content partial.
 }}
 
 {{ else if eq .Section "projects" }}
-{{ $contentPartial = "projects-grid.html" }}
+{{ $contentPartial = "apps/projects/grid.html" }}
 {{ $contentData = dict
 "id" "projects-page"
 "title" "Projects"
@@ -44,7 +44,7 @@ Each section maps to a specific content partial.
 }}
 
 {{ else if eq .Section "blogs" }}
-{{ $contentPartial = "blogs-list.html" }}
+{{ $contentPartial = "apps/blog/list.html" }}
 {{ $contentData = dict
 "id" "blogs-page"
 "title" "Blogs"
@@ -57,7 +57,7 @@ Each section maps to a specific content partial.
 
 {{/* Render the static window with the appropriate content */}}
 {{ if $contentPartial }}
-{{ partial "static-window.html" (dict
+{{ partial "os/window/static.html" (dict
 "title" .Title
 "content" $contentPartial
 "contentData" $contentData
@@ -68,16 +68,16 @@ Each section maps to a specific content partial.
 {{ $hasPages := gt (len .Pages) 0 }}
 
 {{ if and $hasContent (not $hasPages) }}
-{{ partial "static-window.html" (dict
+{{ partial "os/window/static.html" (dict
 "title" .Title
 "rawContent" .Content
 "padding" "24px"
 ) }}
 {{ else }}
 {{/* Generic Finder-style list for undefined sections */}}
-{{ partial "static-window.html" (dict
+{{ partial "os/window/static.html" (dict
 "title" .Title
-"content" "finder-list.html"
+"content" "apps/finder/list.html"
 "contentData" (dict "pages" .Pages.ByDate.Reverse "section" .Section)
 ) }}
 {{ end }}

@@ -2,14 +2,14 @@
 {{/* Determine content based on section */}}
 {{ $content := "" }}
 {{ if eq .Section "projects" }}
-{{ $content = partial "project-detail.html" . }}
+{{ $content = partial "apps/projects/detail.html" . }}
 {{ else if eq .Section "timeline" }}
-{{ $content = partial "timeline-event.html" . }}
+{{ $content = partial "apps/timeline/event.html" . }}
 {{ else }}
-{{ $content = partial "blog-article.html" . }}
+{{ $content = partial "apps/blog/article.html" . }}
 {{ end }}
 
-{{ partial "window-frame.html" (dict
+{{ partial "os/window/frame.html" (dict
 "title" .Title
 "permalink" .Permalink
 "content" $content
