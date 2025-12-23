@@ -14,7 +14,7 @@ Usage (detailed - for specific customization):
 "nameHeader" "Name"
 "dateHeader" "Date"
 "dateFormat" "Jan 2, 2006"
-"iconPartial" "icons/document.html"
+"iconPartial" "icons/ui/document.html"
 "iconColor" "#007AFF"
 "standalone" false
 ) }}
@@ -31,7 +31,7 @@ Usage (detailed - for specific customization):
 {{ $title := "Items" }}
 {{ $countLabel := "items" }}
 {{ $dateFormat := "Jan 2, 2006" }}
-{{ $iconPartial := "icons/document.html" }}
+{{ $iconPartial := "icons/ui/document.html" }}
 {{ $iconColor := "#999" }}
 
 {{ if eq $section "projects" }}
@@ -39,19 +39,19 @@ Usage (detailed - for specific customization):
 {{ $title = "Projects" }}
 {{ $countLabel = "projects" }}
 {{ $dateFormat = "2006" }}
-{{ $iconPartial = "icons/folder.html" }}
+{{ $iconPartial = "icons/ui/folder.html" }}
 {{ $iconColor = "#FF9500" }}
 {{ else if eq $section "blogs" }}
 {{ $icon = "📝" }}
 {{ $title = "Blogs" }}
 {{ $countLabel = "posts" }}
-{{ $iconPartial = "icons/document.html" }}
+{{ $iconPartial = "icons/ui/document.html" }}
 {{ $iconColor = "#007AFF" }}
 {{ else if eq $section "timeline" }}
 {{ $icon = "📅" }}
 {{ $title = "Timeline" }}
 {{ $countLabel = "events" }}
-{{ $iconPartial = "icons/document.html" }}
+{{ $iconPartial = "icons/ui/document.html" }}
 {{ $iconColor = "#5856D6" }}
 {{ end }}
 

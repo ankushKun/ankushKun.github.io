@@ -57,7 +57,7 @@ Usage:
                     {{ if $standalone }}
                     <a href="{{ .RelPermalink }}" class="project-card finder-row project-link" tabindex="0">
                         <div class="project-card-icon">
-                            {{ partial "icons/folder.html" (dict "color" "#5A8CBB" "size" 48) }}
+                            {{ partial "icons/ui/folder.html" (dict "color" "#5A8CBB" "size" 48) }}
                             <span class="project-card-date">{{ .Date.Format " Jan " }}</span>
                         </div>
                         <div class="project-card-content">
@@ -71,7 +71,7 @@ Usage:
                     <div class="project-card finder-row" data-window="{{ $prefix }}-{{ .File.UniqueID }}"
                         data-title="{{ .Title }}" data-permalink="{{ .Permalink }}" tabindex="0">
                         <div class="project-card-icon">
-                            {{ partial "icons/folder.html" (dict "color" "#5A8CBB" "size" 48) }}
+                            {{ partial "icons/ui/folder.html" (dict "color" "#5A8CBB" "size" 48) }}
                             <span class="project-card-date">{{ .Date.Format " Jan " }}</span>
                         </div>
                         <div class="project-card-content">
