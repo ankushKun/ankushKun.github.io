@@ -492,6 +492,36 @@ hr {
     font-size: 16px;
 }
 
+.widget-icon.blink-new {
+    font-size: 10px;
+    font-weight: 800;
+    font-family: 'Arial Black', 'Impact', sans-serif;
+    padding: 2px 5px;
+    border-radius: 3px;
+    animation: blink-colors 0.5s linear infinite;
+    text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
+}
+
+@keyframes blink-colors {
+
+    0%,
+    100% {
+        color: #FF0000;
+    }
+
+    25% {
+        color: #FF00FF;
+    }
+
+    50% {
+        color: #00FF00;
+    }
+
+    75% {
+        color: #FFFF00;
+    }
+}
+
 .widget-title {
     font-size: 13px;
     font-weight: 600;
@@ -504,8 +534,8 @@ hr {
 
 .widget-blog-item {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 8px;
     padding: 10px 12px;
     border-radius: 8px;
     text-decoration: none;
@@ -518,18 +548,48 @@ hr {
 }
 
 .widget-blog-title {
+    flex: 1;
     font-size: 12px;
     font-weight: 500;
     color: #333;
-    flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    margin-right: 12px;
+}
+
+.widget-blog-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.widget-blog-type {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+}
+
+.widget-type-blogs {
+    background: rgba(88, 86, 214, 0.15);
+    color: #5856D6;
+}
+
+.widget-type-projects {
+    background: rgba(0, 122, 255, 0.15);
+    color: #007AFF;
+}
+
+.widget-type-timeline {
+    background: rgba(255, 149, 0, 0.15);
+    color: #FF9500;
 }
 
 .widget-blog-date {
-    font-size: 11px;
+    font-size: 10px;
     color: #888;
     flex-shrink: 0;
 }

@@ -1,18 +1,26 @@
-{{/* Recent Blogs Widget */}}
+{{/* Recent Activity Widget */}}
 {{ $blogs := where .Site.RegularPages "Section" "blogs" }}
-{{ $recentBlogs := first 3 ($blogs.ByDate.Reverse) }}
+{{ $projects := where .Site.RegularPages "Section" "projects" }}
+{{ $timeline := where .Site.RegularPages "Section" "timeline" }}
+{{ $allPages := $blogs | union $projects | union $timeline }}
+{{ $recentPages := first 5 ($allPages.ByDate.Reverse) }}
 
 <div class="desktop-widget recent-blogs-widget">
     <div class="widget-header">
-        <span class="widget-icon">📝</span>
-        <span class="widget-title">Recent Posts</span>
+        <span class="widget-icon blink-new">NEW!</span>
+        <span class="widget-title">Recent Activity</span>
     </div>
     <div class="widget-content">
-        {{ range $recentBlogs }}
+        {{ range $recentPages }}
+        {{ $prefix := "post" }}
+        {{ $label := "blog" }}
+        {{ if eq .Section "projects" }}{{ $prefix = "project" }}{{ $label = "proj" }}{{ end }}
+        {{ if eq .Section "timeline" }}{{ $prefix = "timeline" }}{{ $label = "TL" }}{{ end }}
         <a href="{{ .Permalink }}" class="widget-blog-item"
-            onclick="event.preventDefault(); openContentWindow('post-{{ .File.UniqueID }}', '{{ .Title | safeJS }}', '{{ .Permalink }}');">
-            <div class="widget-blog-title">{{ .Title }}</div>
-            <div class="widget-blog-date">{{ .Date.Format "Jan 2" }}</div>
+            onclick="event.preventDefault(); openContentWindow('{{ $prefix }}-{{ .File.UniqueID }}', '{{ .Title | safeJS }}', '{{ .Permalink }}');">
+            <span class="widget-blog-type widget-type-{{ .Section }}">{{ $label }}</span>
+            <span class="widget-blog-title">{{ .Title }}</span>
+            <span class="widget-blog-date">{{ .Date.Format "Jan 2" }}</span>
         </a>
         {{ end }}
     </div>
