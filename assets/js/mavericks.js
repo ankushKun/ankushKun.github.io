@@ -375,6 +375,10 @@
 
         // Create icon mapping helper
         const getIcon = (item) => {
+            // Use icon from search index if available
+            if (item.icon) return item.icon;
+
+            // App-specific icons
             if (item.type === 'app') {
                 if (item.title === 'Wins') return '🥇';
                 if (item.title === 'Contact') return '📇';
@@ -383,10 +387,6 @@
                 if (item.title === 'Projects') return '🚀';
                 if (item.title === 'Blogs') return '📝';
                 if (item.title === 'Resume') return '📄';
-                if (item.title === 'DOOM') return '/games/doom.svg';
-                if (item.title === 'Portal') return '/games/portal.webp';
-                if (item.title === 'Last Cat Standing') return '/games/cat.png';
-                if (item.title === 'Crysis') return '/games/crysis.png';
                 if (item.title === 'About Me') return '🍎';
                 if (item.title === 'Terminal') return '💻';
                 if (item.title === 'Games') return '🕹️';
@@ -484,24 +484,8 @@
         fetch('/index.json')
             .then(r => r.json())
             .then(data => {
-                // Add desktop apps to search index
-                const apps = [
-                    { title: 'About Me', type: 'app', openWindow: 'about', description: 'About Ankush' },
-                    { title: 'Resume', type: 'app', openWindow: 'resume', description: 'View resume' },
-                    { title: 'Projects', type: 'app', openWindow: 'projects', description: 'Project portfolio' },
-                    { title: 'Blogs', type: 'app', openWindow: 'blogs', description: 'Blog posts' },
-                    { title: 'Timeline', type: 'app', openWindow: 'timeline', description: 'Career timeline' },
-                    { title: 'Games', type: 'app', openWindow: 'games', description: 'Games folder' },
-                    { title: 'Terminal', type: 'app', openWindow: 'terminal', description: 'Terminal emulator' },
-                    { title: 'Contact', type: 'app', openWindow: 'contact', description: 'Contact information' },
-                    { title: 'Wins', type: 'app', openWindow: 'wins', description: 'Hackathon wins' },
-                    { title: 'Schedule Call', type: 'app', openWindow: 'book-a-call', description: 'Book a call' },
-                    { title: 'DOOM', type: 'app', openWindow: 'doom', description: 'Play DOOM' },
-                    { title: 'Portal', type: 'app', openWindow: 'portal', description: 'Aperture Science Handheld Portal Device' },
-                    { title: 'Last Cat Standing', type: 'app', openWindow: 'itch-game', description: 'Play Last Cat Standing' },
-                    { title: 'Crysis', type: 'app', openWindow: 'crysis', description: 'Can it run Crysis?' },
-                ];
-                globalSearchIndex = [...apps, ...data];
+                // Apps and content pages are now all in index.json
+                globalSearchIndex = data;
             })
             .catch(e => console.error('Failed to load search index', e));
     }
@@ -511,6 +495,7 @@
         if (t.includes('blog') || t.includes('post')) return '📝';
         if (t.includes('project')) return '📁';
         if (t.includes('timeline')) return '⏰';
+        if (t.includes('game')) return '🎮';
         if (t.includes('app')) return '🚀';
         return '📄';
     }
