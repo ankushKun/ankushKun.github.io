@@ -1,5 +1,27 @@
 {{- $results := slice -}}
 
+{{/* 1. Desktop Apps */}}
+{{- $apps := slice 
+    (dict "title" "About Me" "type" "app" "openWindow" "about" "description" "About Ankush")
+    (dict "title" "Resume" "type" "app" "openWindow" "resume" "description" "View resume")
+    (dict "title" "Projects" "type" "app" "openWindow" "projects" "description" "Project portfolio")
+    (dict "title" "Blogs" "type" "app" "openWindow" "blogs" "description" "Blog posts")
+    (dict "title" "Timeline" "type" "app" "openWindow" "timeline" "description" "Career timeline")
+    (dict "title" "Games" "type" "app" "openWindow" "games" "description" "Games folder")
+    (dict "title" "Terminal" "type" "app" "openWindow" "terminal" "description" "Terminal emulator")
+    (dict "title" "Contact" "type" "app" "openWindow" "contact" "description" "Contact information")
+    (dict "title" "Wins" "type" "app" "openWindow" "wins" "description" "Hackathon wins")
+    (dict "title" "Schedule Call" "type" "app" "openWindow" "book-a-call" "description" "Book a call")
+    (dict "title" "DOOM" "type" "game" "openWindow" "doom" "description" "Play DOOM" "icon" "/games/doom.svg")
+    (dict "title" "Portal" "type" "game" "openWindow" "portal" "description" "Aperture Science Handheld Portal Device" "icon" "/games/portal.webp")
+    (dict "title" "Last Cat Standing" "type" "game" "openWindow" "itch-game" "description" "Play Last Cat Standing" "icon" "/games/cat.png")
+    (dict "title" "Crysis" "type" "game" "openWindow" "crysis" "description" "Can it run Crysis?" "icon" "/games/crysis.png")
+    (dict "title" "Alien Hominid" "type" "game" "openWindow" "flash-alien-hominid" "description" "Flash game - Alien Hominid" "icon" "/games/alien-hominid.png")
+    (dict "title" "Fly Guy" "type" "game" "openWindow" "flash-flyguy" "description" "Flash game - Fly Guy" "icon" "/games/flyguy.png")
+    (dict "title" "Marvin Spectrum" "type" "game" "openWindow" "flash-marvin-spectrum" "description" "Flash game - Marvin Spectrum" "icon" "/games/marvin-spectrum.png")
+    (dict "title" "Wasted Sky" "type" "game" "openWindow" "flash-wasted-sky" "description" "Flash game - Wasted Sky" "icon" "/games/wasted-sky.png")
+-}}
+{{- $results = $apps -}}
 
 {{/* 2. Content Pages (Blogs, Projects) */}}
 {{- range .Site.RegularPages -}}
