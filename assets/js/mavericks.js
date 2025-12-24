@@ -401,6 +401,8 @@
             const query = input.value.toLowerCase().trim();
             const results = query ? globalSearchIndex.filter(item =>
                 item.title.toLowerCase().includes(query) ||
+                (item.type && item.type.toLowerCase().includes(query)) ||
+                (item.type && `${item.type}s`.toLowerCase().includes(query)) ||
                 (item.description && item.description.toLowerCase().includes(query)) ||
                 (item.content && item.content.toLowerCase().includes(query))
             ).slice(0, 8).map(item => ({
