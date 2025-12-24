@@ -1,0 +1,19 @@
+{{/* Recent Blogs Widget */}}
+{{ $blogs := where .Site.RegularPages "Section" "blogs" }}
+{{ $recentBlogs := first 3 ($blogs.ByDate.Reverse) }}
+
+<div class="desktop-widget recent-blogs-widget">
+    <div class="widget-header">
+        <span class="widget-icon">📝</span>
+        <span class="widget-title">Recent Posts</span>
+    </div>
+    <div class="widget-content">
+        {{ range $recentBlogs }}
+        <a href="{{ .Permalink }}" class="widget-blog-item"
+            onclick="event.preventDefault(); openContentWindow('post-{{ .File.UniqueID }}', '{{ .Title | safeJS }}', '{{ .Permalink }}');">
+            <div class="widget-blog-title">{{ .Title }}</div>
+            <div class="widget-blog-date">{{ .Date.Format "Jan 2" }}</div>
+        </a>
+        {{ end }}
+    </div>
+</div>
