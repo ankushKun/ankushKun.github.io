@@ -1074,6 +1074,16 @@
             win.style.top = '8px';
             win.style.width = `calc(100vw - 16px)`;
             win.style.height = `calc(100vh - var(--menubar-height) - 16px)`;
+        } else if (id === 'about') {
+            // Center the About Me window on screen
+            const finalWidth = Math.min(size.width, window.innerWidth - 100);
+            const finalHeight = Math.min(size.height, window.innerHeight - 100);
+            const centerX = (window.innerWidth - finalWidth) / 2;
+            const centerY = (window.innerHeight - finalHeight) / 2 - 22; // Adjust for menubar
+            win.style.left = `${centerX}px`;
+            win.style.top = `${Math.max(20, centerY)}px`;
+            win.style.width = `${finalWidth}px`;
+            win.style.height = `${finalHeight}px`;
         } else {
             // Desktop: Position - cascade windows
             const offsetX = (openWindows.size) * 30;

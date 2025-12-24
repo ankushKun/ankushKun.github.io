@@ -465,6 +465,75 @@ hr {
     padding: 20px;
 }
 
+/* Desktop Widget */
+.desktop-widget {
+    position: absolute;
+    left: 20px;
+    top: 20px;
+    width: 280px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.2);
+    overflow: hidden;
+}
+
+.widget-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px;
+    background: rgba(0, 0, 0, 0.03);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.widget-icon {
+    font-size: 16px;
+}
+
+.widget-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+}
+
+.widget-content {
+    padding: 8px;
+}
+
+.widget-blog-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background 0.15s ease;
+    cursor: pointer;
+}
+
+.widget-blog-item:hover {
+    background: rgba(0, 122, 255, 0.1);
+}
+
+.widget-blog-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: #333;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: 12px;
+}
+
+.widget-blog-date {
+    font-size: 11px;
+    color: #888;
+    flex-shrink: 0;
+}
+
 .desktop-icons {
     display: flex;
     flex-direction: column;
@@ -2059,6 +2128,22 @@ hr {
         padding-left: env(safe-area-inset-left);
         padding-right: env(safe-area-inset-right);
         padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* ===== Desktop Widget on Mobile ===== */
+    .desktop-widget {
+        position: relative;
+        left: auto;
+        top: auto;
+        width: calc(100% - 24px);
+        margin: 12px auto;
+        order: 2;
+    }
+
+    /* ===== Desktop Layout on Mobile ===== */
+    .desktop {
+        display: flex;
+        flex-direction: column;
     }
 
     /* ===== Desktop Icons ===== */
