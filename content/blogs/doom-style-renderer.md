@@ -17,6 +17,8 @@ author = 'Ankush'
   .demo-container {
     position: relative;
     display: inline-block;
+    width: 100%;
+    max-width: 760px;
   }
   .demo-overlay {
     position: absolute;
@@ -39,13 +41,17 @@ author = 'Ankush'
     display: none;
   }
   #demo {
+    width: 100%;
+    max-width: 760px;
+    height: auto;
+    aspect-ratio: 760 / 500;
     border-radius: 8px;
     cursor: pointer;
   }
 </style>
 
 <div class="demo-container">
-  <iframe id="demo" src="https://7jiiceni3iqjhaxe44sesz2qjd5q7m5l3kumbu2gzmoerv5ifi3a.arweave.tech/-lCBEajaIJOC5OckSWdQSPsPs6vaqMDTRsscSNeoKjY?" width="760" height="500"></iframe>
+  <iframe id="demo" src="https://7jiiceni3iqjhaxe44sesz2qjd5q7m5l3kumbu2gzmoerv5ifi3a.arweave.tech/-lCBEajaIJOC5OckSWdQSPsPs6vaqMDTRsscSNeoKjY?"></iframe>
   <div class="demo-overlay">Click to play</div>
 </div>
 <p style="font-size: 0.9em; color: #888; margin-top: 8px;">Move with WASD</p>
