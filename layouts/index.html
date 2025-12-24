@@ -153,5 +153,34 @@
     "id" "portal"
     "title" "Portal"
     ) }}
+
+    <!-- FLASH GAMES -->
+    <!-- Alien Hominid -->
+    {{ partial "apps/games/flash-player.html" (dict
+    "id" "flash-alien-hominid"
+    "title" "Alien Hominid"
+    "swf" "/ruffle/games/alien_hominid.swf"
+    ) }}
+
+    <!-- Fly Guy -->
+    {{ partial "apps/games/flash-player.html" (dict
+    "id" "flash-flyguy"
+    "title" "Fly Guy"
+    "swf" "/ruffle/games/flyguy.swf"
+    ) }}
+
+    <!-- Marvin Spectrum -->
+    {{ partial "apps/games/flash-player.html" (dict
+    "id" "flash-marvin-spectrum"
+    "title" "Marvin Spectrum"
+    "swf" "/ruffle/games/marvin_spectrum.swf"
+    ) }}
+
+    <!-- Wasted Sky -->
+    {{ partial "apps/games/flash-player.html" (dict
+    "id" "flash-wasted-sky"
+    "title" "Wasted Sky"
+    "swf" "/ruffle/games/wasted_sky.swf"
+    ) }}
 </div>
 {{ end }}

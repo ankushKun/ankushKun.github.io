@@ -1,0 +1,15 @@
+{{/* Flash Game Player - Uses self-hosted Ruffle */}}
+{{/*
+Usage:
+{{ partial "apps/games/flash-player.html" (dict
+"id" "alien-hominid"
+"title" "Alien Hominid"
+"swf" "/ruffle/games/alien_hominid.swf"
+) }}
+*/}}
+
+<div id="content-{{ .id }}">
+    <div class="flash-game-container" id="flash-container-{{ .id }}">
+        <div class="flash-game-player" id="flash-player-{{ .id }}" data-swf="{{ .swf }}"></div>
+    </div>
+</div>
