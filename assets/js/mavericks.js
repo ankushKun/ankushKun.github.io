@@ -945,6 +945,94 @@
         bringToFront(win);
     };
 
+    // Flash Game Initialization
+    let ruffleLoaded = false;
+    let ruffleLoadPromise = null;
+
+    function loadRuffle() {
+        if (ruffleLoaded) return Promise.resolve();
+        if (ruffleLoadPromise) return ruffleLoadPromise;
+
+        ruffleLoadPromise = new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = '/ruffle/ruffle.js';
+            script.onload = () => {
+                ruffleLoaded = true;
+                resolve();
+            };
+            script.onerror = reject;
+            document.body.appendChild(script);
+        });
+
+        return ruffleLoadPromise;
+    }
+
+    function initFlashGame(id, win) {
+        // Search within the window element to avoid duplicate ID issues
+        // (the original content div is hidden in DOM, so getElementById would find that instead)
+        const container = win.querySelector(`#flash-player-${id}`) || win.querySelector('.flash-game-player');
+        if (!container) {
+            console.error('Flash player container not found:', id);
+            return;
+        }
+
+        const swfUrl = container.dataset.swf;
+        if (!swfUrl) {
+            console.error('No SWF URL specified for Flash game:', id);
+            return;
+        }
+
+        // Show loading state
+        container.innerHTML = `
+            <div class="flash-loading">
+                <div class="spinner"></div>
+                <div style="color: #ccc; margin-top: 12px;">Loading Flash game...</div>
+            </div>
+        `;
+
+        loadRuffle().then(() => {
+            const ruffle = window.RufflePlayer.newest();
+            const player = ruffle.createPlayer();
+
+            // Style the player to fill the container
+            player.style.width = '100%';
+            player.style.height = '100%';
+
+            // Clear loading and add player
+            container.innerHTML = '';
+            container.appendChild(player);
+
+            // Load the SWF file
+            player.ruffle().load({
+                url: swfUrl,
+                autoplay: 'on',
+                letterbox: 'on',
+                quality: 'high',
+                splashScreen: true,
+                contextMenu: 'on',
+                warnOnUnsupportedContent: true
+            }).catch(err => {
+                console.error('Failed to load Flash game:', err);
+                container.innerHTML = `
+                    <div class="flash-error">
+                        <span class="flash-error-icon">⚠️</span>
+                        <div class="flash-error-text">Failed to load game</div>
+                        <div class="flash-error-detail">${err.message || 'Unknown error'}</div>
+                    </div>
+                `;
+            });
+        }).catch(err => {
+            console.error('Failed to load Ruffle:', err);
+            container.innerHTML = `
+                <div class="flash-error">
+                    <span class="flash-error-icon">⚠️</span>
+                    <div class="flash-error-text">Failed to load Flash player</div>
+                    <div class="flash-error-detail">${err.message || 'Could not load Ruffle'}</div>
+                </div>
+            `;
+        });
+    }
+
     // Window Management
     async function openWindow(id, title, size = { width: 1000, height: 700 }, permalink = null) {
         // Check if window already exists
@@ -1048,6 +1136,11 @@
             } else if (window.setupV86Terminal) {
                 window.setupV86Terminal(id);
             }
+        }
+
+        // Setup Flash game if this is a flash game window
+        if (id.startsWith('flash-')) {
+            initFlashGame(id, win);
         }
 
         bringToFront(win);
