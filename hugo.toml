@@ -10,7 +10,7 @@ enableRobotsTXT = false # We have custom robots.txt in static/
 
 # Output formats including JSON for search index
 [outputs]
-home = ["HTML", "JSON"]
+home = ["HTML", "JSON", "RSS"]
 
 # Suppress raw HTML warnings
 ignoreLogs = ['warning-goldmark-raw-html']
