@@ -152,3 +152,303 @@
 .v86-screen-container.input-captured {
     cursor: default;
 }
+
+/* ============================================================
+   Download Progress Loader
+   ============================================================ */
+
+.v86-loader-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #0c0c0c;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    font-family: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace;
+    color: #e0e0e0;
+    transition: opacity 0.3s ease;
+}
+
+.v86-loader-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.v86-loader-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* Center everything horizontally */
+    padding: 20px;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.v86-loader-title {
+    color: #4ec9b0;
+    margin-bottom: 20px;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.v86-loader-status {
+    font-size: 14px;
+    margin-bottom: 12px;
+    color: #cccccc;
+    text-align: center;
+    min-height: 1.2em;
+    /* Prevent jump when text changes */
+}
+
+.v86-loader-progress-line {
+    font-size: 14px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    /* Allow wrapping on very small screens */
+    width: 100%;
+}
+
+.v86-loader-bar-container {
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+
+.v86-loader-bar-bracket {
+    color: #808080;
+}
+
+.v86-loader-bar {
+    color: #dcdcaa;
+    letter-spacing: 0;
+    white-space: pre;
+    /* CRITICAL: preserve spaces for empty part of bar */
+}
+
+.v86-loader-percent {
+    color: #b5cea8;
+    min-width: 45px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.v86-loader-size {
+    color: #808080;
+    font-size: 12px;
+    margin-top: 8px;
+}
+
+.v86-loader-spinner {
+    display: inline-block;
+    animation: v86-spin 1s linear infinite;
+    margin-right: 8px;
+}
+
+@keyframes v86-spin {
+    0% {
+        content: "⠋";
+    }
+
+    10% {
+        content: "⠙";
+    }
+
+    20% {
+        content: "⠹";
+    }
+
+    30% {
+        content: "⠸";
+    }
+
+    40% {
+        content: "⠼";
+    }
+
+    50% {
+        content: "⠴";
+    }
+
+    60% {
+        content: "⠦";
+    }
+
+    70% {
+        content: "⠧";
+    }
+
+    80% {
+        content: "⠇";
+    }
+
+    90% {
+        content: "⠏";
+    }
+}
+
+/* ============================================================
+   State Management Dropdown
+   ============================================================ */
+
+/* Window with v86 needs position relative for dropdown */
+.window:has(.v86-terminal-container) .window-titlebar {
+    position: relative;
+}
+
+/* Dropdown button in title bar */
+.v86-dropdown-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #666;
+    font-size: 8px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 3px;
+    transition: all 0.15s ease;
+    line-height: 1;
+}
+
+.v86-dropdown-btn:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: #333;
+}
+
+.v86-dropdown-btn.open {
+    background: rgba(0, 0, 0, 0.15);
+    color: #333;
+    transform: translateY(-50%) rotate(180deg);
+}
+
+/* Toolbar dropdown menu - positioned below titlebar */
+.v86-toolbar {
+    position: absolute;
+    top: 22px;
+    right: 4px;
+    background: rgba(30, 30, 30, 0.98);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    padding: 8px;
+    z-index: 300;
+    opacity: 0;
+    transform: translateY(-4px) scale(0.95);
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    backdrop-filter: blur(12px);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    font-size: 11px;
+    min-width: 140px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.v86-toolbar.open {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+.v86-toolbar-row {
+    display: flex;
+    gap: 4px;
+}
+
+.v86-toolbar-btn {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    color: #aaa;
+    padding: 6px 8px;
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.v86-toolbar-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.v86-toolbar-btn:active {
+    transform: scale(0.96);
+}
+
+.v86-toolbar-btn.danger {
+    color: #e55;
+}
+
+.v86-toolbar-btn.danger:hover {
+    background: rgba(238, 85, 85, 0.2);
+    border-color: rgba(238, 85, 85, 0.3);
+    color: #f77;
+}
+
+.v86-toolbar-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 2px 0;
+}
+
+.v86-toolbar-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #888;
+    cursor: pointer;
+    padding: 4px 2px;
+    border-radius: 3px;
+    transition: color 0.15s ease;
+}
+
+.v86-toolbar-checkbox:hover {
+    color: #bbb;
+}
+
+.v86-toolbar-checkbox input[type="checkbox"] {
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    position: relative;
+    transition: all 0.15s ease;
+}
+
+.v86-toolbar-checkbox input[type="checkbox"]:checked {
+    background: rgba(74, 153, 153, 0.4);
+    border-color: rgba(74, 153, 153, 0.6);
+}
+
+.v86-toolbar-checkbox input[type="checkbox"]:checked::after {
+    content: "✓";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 10px;
+    color: #4a9;
+}
+
+.v86-toolbar-checkbox span {
+    user-select: none;
+}
