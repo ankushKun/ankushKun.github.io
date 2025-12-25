@@ -437,6 +437,7 @@
                 <input type="checkbox" id="v86-save-on-close" ${saveOnCloseEnabled ? 'checked' : ''}>
                 <span>Save on close</span>
             </label>
+            <label class="v86-toolbar-label">upload files by<br/>dropping them on<br/> the terminal window</label>
         `;
 
         // Toggle dropdown visibility
@@ -793,6 +794,9 @@
                     type: "ne2k",
                 },
 
+                // Enable 9p filesystem for create_file/read_file support
+                filesystem: {},
+
                 autostart: true,
             };
 
@@ -901,12 +905,90 @@
             // Start auto-save for state persistence
             startAutoSave(terminalId);
 
+            // Setup drag-and-drop file upload
+            setupFileDrop(contentContainer);
+
             v86Loaded = true;
             console.log('v86 setup complete!');
 
         } catch (error) {
             console.error('v86 loading error:', error);
         }
+    }
+
+    // ============================================================
+    // Drag and Drop File Upload
+    // ============================================================
+
+    function setupFileDrop(container) {
+        if (!container) return;
+
+        // Create drop overlay
+        const dropOverlay = document.createElement('div');
+        dropOverlay.className = 'v86-drop-overlay';
+        dropOverlay.innerHTML = `
+            <div class="v86-drop-content">
+                <div class="v86-drop-icon">📁</div>
+                <div class="v86-drop-text">Drop files to upload</div>
+                <div class="v86-drop-hint">Files will appear in /mnt/</div>
+            </div>
+        `;
+        container.appendChild(dropOverlay);
+
+        let dragCounter = 0;
+
+        container.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dragCounter++;
+            dropOverlay.classList.add('visible');
+        });
+
+        container.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dragCounter--;
+            if (dragCounter === 0) {
+                dropOverlay.classList.remove('visible');
+            }
+        });
+
+        container.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+
+        container.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dragCounter = 0;
+            dropOverlay.classList.remove('visible');
+
+            if (!v86Emulator || !v86Loaded) {
+                console.warn('Emulator not ready for file upload');
+                return;
+            }
+
+            const files = e.dataTransfer.files;
+            if (files.length === 0) return;
+
+            for (const file of files) {
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const uint8Array = new Uint8Array(arrayBuffer);
+
+                    // Upload to root directory in the emulator (files accessible from /)
+                    const path = `/${file.name}`;
+                    v86Emulator.create_file(path, uint8Array);
+
+                    console.log(`Uploaded file: ${file.name} (${file.size} bytes) to ${path}`);
+                    showSaveStatus(`uploaded ${file.name} ✓`, true);
+                } catch (err) {
+                    console.error(`Failed to upload ${file.name}:`, err);
+                    showSaveStatus(`upload failed: ${file.name}`, true);
+                }
+            }
+        });
     }
 
     // Toggle VGA input capture
