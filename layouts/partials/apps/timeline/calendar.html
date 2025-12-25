@@ -90,6 +90,8 @@ Set "standalone" to false for desktop window (events open in window)
                             {{ $type := .page.Params.type }}
                             {{ if and (not $type) (eq .page.Section "projects") }}
                             {{ $type = "project" }}
+                            {{ else if and (not $type) (eq .page.Section "blogs") }}
+                            {{ $type = "blog" }}
                             {{ end }}
 
                             {{ if $standalone }}

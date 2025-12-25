@@ -24,7 +24,8 @@ Each section maps to a specific content partial.
 {{ else if eq .Section "timeline" }}
 {{ $contentPartial = "apps/timeline/calendar.html" }}
 {{ $projectPages := where .Site.RegularPages "Section" "projects" }}
-{{ $allPages := .Pages | union $projectPages }}
+{{ $blogPages := where .Site.RegularPages "Section" "blogs" }}
+{{ $allPages := .Pages | union $projectPages | union $blogPages }}
 {{ $contentData = dict
 "id" "timeline-page"
 "title" "Timeline"

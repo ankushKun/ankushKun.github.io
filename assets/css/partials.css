@@ -595,47 +595,54 @@ a.event-item.event-link {
 }
 
 .event-type {
-    font-size: 10px;
-    padding: 4px 10px;
-    border-radius: 12px;
-    text-transform: uppercase;
-    font-weight: 600;
-    letter-spacing: 0.5px;
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: lowercase;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    background: var(--gray-150);
+    color: var(--text-tertiary);
 }
 
 .event-type.hackathon {
-    background: var(--type-hackathon);
-    color: var(--text-inverse);
+    background: rgba(139, 92, 246, 0.1);
+    color: #7c3aed;
 }
 
 .event-type.fellowship {
-    background: var(--type-fellowship);
-    color: var(--text-inverse);
+    background: rgba(236, 72, 153, 0.1);
+    color: #db2777;
 }
 
 .event-type.work {
-    background: var(--type-work);
-    color: var(--text-inverse);
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
 }
 
 .event-type.open-source {
-    background: var(--type-open-source);
-    color: var(--text-inverse);
+    background: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
 }
 
 .event-type.speaking {
-    background: var(--type-speaking);
-    color: var(--text-inverse);
+    background: rgba(249, 115, 22, 0.1);
+    color: #ea580c;
 }
 
 .event-type.achievement {
-    background: var(--type-achievement);
-    color: var(--text-primary);
+    background: rgba(234, 179, 8, 0.1);
+    color: #ca8a04;
 }
 
 .event-type.project {
-    background: var(--type-project);
-    color: var(--text-inverse);
+    background: rgba(56, 189, 248, 0.1);
+    color: #0284c7;
+}
+
+.event-type.blog {
+    background: rgba(168, 85, 247, 0.1);
+    color: #9333ea;
 }
 
 .timeline-content::-webkit-scrollbar {
