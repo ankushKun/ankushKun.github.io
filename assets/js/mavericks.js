@@ -601,7 +601,8 @@
                     'youtube.com', 'youtu.be', 'linkedin.com',
                     'instagram.com', 'facebook.com', 'medium.com',
                     't.me', 'discord.com', 'discord.gg', 'reddit.com',
-                    'pw.live', 'devfolio.co', 'npmjs.com', 'itch.io'
+                    'pw.live', 'devfolio.co', 'npmjs.com', 'itch.io',
+                    'gohugo.io', 'mozilla.org'
                 ];
 
                 // Get the domain for the window title
@@ -880,14 +881,96 @@
         const dropdown = document.getElementById('apple-dropdown');
         if (dropdown) dropdown.classList.remove('open');
 
+        // Get Git info from meta tags
+        const commitHash = document.querySelector('meta[name="git-commit-hash"]')?.content;
+        const commitShort = document.querySelector('meta[name="git-commit-short"]')?.content;
+        const commitDate = document.querySelector('meta[name="git-commit-date"]')?.content;
+        const commitAuthor = document.querySelector('meta[name="git-commit-author"]')?.content;
+
+        // Build commit link
+        let commitHtml = '';
+        if (commitHash && commitShort) {
+            commitHtml = `
+                <div class="about-row">
+                    <span class="about-label">Last Commit</span>
+                    <a href="https://github.com/ankushKun/ankushKun.github.io/commit/${commitHash}" target="_blank" rel="noopener" class="about-commit-link">
+                        <code>${commitShort}</code>
+                    </a>
+                </div>
+            `;
+            if (commitDate) {
+                commitHtml += `
+                    <div class="about-row">
+                        <span class="about-label">Updated</span>
+                        <span class="about-value">${commitDate}</span>
+                    </div>
+                `;
+            }
+        }
+
         const aboutContent = `
             <div class="about-this-mac">
-                <div class="about-icon">🍎</div>
-                <h1>ankush.one</h1>
-                <div class="about-specs">
-                    <p><strong>Developer:</strong> Ankush Singh</p>
-                    <p><strong>Built with:</strong> Hugo + JavaScript</p>
+                <div class="about-icon">
+                    <svg viewBox="0 0 120 120" width="64" height="64">
+                        <defs>
+                            <linearGradient id="aboutScreenGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style="stop-color:#4fc3f7"/>
+                                <stop offset="100%" style="stop-color:#0288d1"/>
+                            </linearGradient>
+                            <linearGradient id="aboutBodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style="stop-color:#f5f5f5"/>
+                                <stop offset="100%" style="stop-color:#e0e0e0"/>
+                            </linearGradient>
+                        </defs>
+                        <rect x="15" y="15" width="90" height="70" rx="8" fill="url(#aboutBodyGrad)" stroke="#bdbdbd" stroke-width="2"/>
+                        <rect x="22" y="22" width="76" height="50" rx="4" fill="url(#aboutScreenGrad)"/>
+                        <rect x="22" y="22" width="76" height="15" rx="4" fill="rgba(255,255,255,0.2)"/>
+                        <path d="M45 85 L75 85 L78 100 L42 100 Z" fill="#bdbdbd"/>
+                        <rect x="30" y="100" width="60" height="8" rx="3" fill="#9e9e9e"/>
+                        <text x="60" y="55" text-anchor="middle" font-size="24" fill="rgba(255,255,255,0.9)">:)</text>
+                    </svg>
                 </div>
+                <h1>ankush.one</h1>
+                <p class="about-tagline">A personal website built with ❤️</p>
+                
+                <div class="about-info">
+                    <div class="about-row">
+                        <span class="about-label">Developer</span>
+                        <span class="about-value">Ankush Singh</span>
+                    </div>
+                    <div class="about-row">
+                        <span class="about-label">Built with</span>
+                        <span class="about-value">
+                            <a href="https://gohugo.io" target="_blank" rel="noopener">Hugo</a> + 
+                            <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank" rel="noopener">JavaScript</a>
+                        </span>
+                    </div>
+                    <div class="about-row">
+                        <span class="about-label">Extras</span>
+                        <span class="about-value">
+                            <a href="https://copy.sh/v86/" target="_blank" rel="noopener">v86</a> + 
+                            <a href="https://ruffle.rs" target="_blank" rel="noopener">Ruffle</a>
+                        </span>
+                    </div>
+                    ${commitHtml}
+                </div>
+
+                <div class="about-links">
+                    <a href="https://github.com/ankushKun/ankushKun.github.io" target="_blank" rel="noopener" class="about-btn github">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                        </svg>
+                        View Source
+                    </a>
+                    <a href="/index.xml" target="_blank" rel="noopener" class="about-btn rss">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1Z"/>
+                        </svg>
+                        RSS Feed
+                    </a>
+                </div>
+                
+                <p class="about-footer">© ${new Date().getFullYear()} Ankush Singh</p>
             </div>
         `;
 
@@ -919,7 +1002,7 @@
         win.style.transform = 'translate(-50%, -50%)';
         win.style.width = '380px';
         win.style.height = 'auto';
-        win.style.minHeight = '280px';
+        win.style.minHeight = '360px';
 
         document.getElementById('windows-container').appendChild(win);
         openWindows.set('about-this-mac', win);

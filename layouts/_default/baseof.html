@@ -237,6 +237,24 @@
 
     <!-- Preload Wallpaper for Performance -->
     <link rel="preload" as="image" href="/wallpaper.webp">
+
+    <!-- Git Info for About This Site - prefers workflow env vars, falls back to file GitInfo -->
+    {{- $commitHash := "" -}}
+    {{- $commitShort := "" -}}
+    {{- if .Site.Params.gitcommit -}}
+    {{- $commitHash = .Site.Params.gitcommit -}}
+    {{- $commitShort = substr .Site.Params.gitcommit 0 7 -}}
+    {{- else if .GitInfo -}}
+    {{- $commitHash = .GitInfo.Hash -}}
+    {{- $commitShort = .GitInfo.AbbreviatedHash -}}
+    {{- end -}}
+    {{ if $commitHash }}
+    <meta name="git-commit-hash" content="{{ $commitHash }}">
+    <meta name="git-commit-short" content="{{ $commitShort }}">
+    {{ if .GitInfo }}
+    <meta name="git-commit-date" content="{{ .GitInfo.AuthorDate.Format " Jan 2, 2006" }}">
+    {{ end }}
+    {{ end }}
 </head>
 
 <body>

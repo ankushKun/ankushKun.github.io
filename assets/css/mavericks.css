@@ -400,57 +400,140 @@ hr {
 
 .about-this-mac {
     text-align: center;
-    padding: 20px;
+    padding: 24px 20px;
 }
 
 .about-this-mac .about-icon {
-    font-size: 64px;
     margin-bottom: 12px;
+}
+
+.about-this-mac .about-icon svg {
+    filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.15));
 }
 
 .about-this-mac h1 {
     font-size: 22px;
-    font-weight: 500;
+    font-weight: 600;
     margin-bottom: 4px;
+    color: #1C2024;
 }
 
-.about-this-mac .about-version {
+.about-this-mac .about-tagline {
     color: #666;
     font-size: 12px;
     margin-bottom: 20px;
 }
 
-.about-this-mac .about-specs {
+.about-this-mac .about-info {
     text-align: left;
     background: #F5F5F7;
-    padding: 16px;
+    padding: 12px 14px;
     border-radius: 8px;
     margin-bottom: 16px;
+    border: 1px solid #E5E5E7;
 }
 
-.about-this-mac .about-specs p {
-    margin: 6px 0;
+.about-this-mac .about-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid #E5E5E7;
+}
+
+.about-this-mac .about-row:last-child {
+    border-bottom: none;
+}
+
+.about-this-mac .about-label {
     font-size: 12px;
+    color: #666;
+    font-weight: 500;
+}
+
+.about-this-mac .about-value {
+    font-size: 12px;
+    color: #333;
+    font-weight: 500;
+}
+
+.about-this-mac .about-value a {
+    color: #0066CC;
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.about-this-mac .about-value a:hover {
+    color: #004499;
+    text-decoration: underline;
+}
+
+.about-this-mac .about-commit-link {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.about-this-mac .about-commit-link code {
+    background: #E3E5E8;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-family: 'Menlo', 'Monaco', monospace;
+    color: #333;
+    transition: background 0.15s ease;
+}
+
+.about-this-mac .about-commit-link:hover code {
+    background: #D0E5FF;
+    color: #0066CC;
 }
 
 .about-this-mac .about-links {
     display: flex;
     justify-content: center;
-    gap: 12px;
+    gap: 10px;
+    margin-bottom: 16px;
 }
 
-.about-this-mac .about-links a {
-    padding: 6px 12px;
-    background: var(--accent-blue);
-    color: white;
-    border-radius: 4px;
+.about-this-mac .about-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 6px;
     font-size: 12px;
+    font-weight: 500;
     text-decoration: none;
     transition: all 0.2s ease;
 }
 
-.about-this-mac .about-links a:hover {
-    background: #0056CC;
+.about-this-mac .about-btn.github {
+    background: #24292e;
+    color: white;
+}
+
+.about-this-mac .about-btn.github:hover {
+    background: #1a1e22;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+}
+
+.about-this-mac .about-btn.rss {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+
+.about-this-mac .about-btn.rss:hover {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+}
+
+.about-this-mac .about-footer {
+    font-size: 11px;
+    color: #888;
+    margin: 0;
 }
 
 /* ================================================
@@ -2656,12 +2739,22 @@ hr {
         padding: 16px;
     }
 
-    .about-this-mac .about-icon {
-        font-size: 48px;
+    .about-this-mac .about-icon svg {
+        width: 48px;
+        height: 48px;
     }
 
     .about-this-mac h1 {
-        font-size: 20px;
+        font-size: 18px;
+    }
+
+    .about-this-mac .about-links {
+        flex-direction: column;
+    }
+
+    .about-this-mac .about-btn {
+        width: 100%;
+        justify-content: center;
     }
 
     /* ===== Generic Content Improvements ===== */
