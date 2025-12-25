@@ -7,7 +7,7 @@ Usage:
 ) }}
 */}}
 
-<div id="content-{{ .id }}" data-permalink="{{ .permalink | default (printf " /%s/" .id) }}">
+<div id="content-{{ .id }}" {{ with .permalink }} data-permalink="{{ . }}" {{ end }}>
     <div class="v86-terminal-container">
         <!-- Serial Console (xterm.js) - shown when serial mode is active -->
         <div class="v86-serial-container" style="display: none;">
