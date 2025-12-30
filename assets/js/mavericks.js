@@ -1178,8 +1178,8 @@
             win.style.top = '8px';
             win.style.width = `calc(100vw - 16px)`;
             win.style.height = `calc(100vh - var(--menubar-height) - 16px)`;
-        } else if (id === 'about') {
-            // Center the About Me window on screen
+        } else if (id === 'about' || id === 'irc-chat') {
+            // Center the About Me and IRC Chat windows on screen
             const finalWidth = Math.min(size.width, window.innerWidth - 100);
             const finalHeight = Math.min(size.height, window.innerHeight - 100);
             const centerX = (window.innerWidth - finalWidth) / 2;
