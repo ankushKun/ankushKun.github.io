@@ -388,5 +388,3 @@ Feel free to extend this engine to add more features! &lt;3
 
 - [DOOM Wiki: Rendering Engine](https://doomwiki.org/wiki/Rendering_engine)
 - [Let's program DOOM by 3DSage](https://www.youtube.com/watch?v=huMO4VQEwPc)
-
-
