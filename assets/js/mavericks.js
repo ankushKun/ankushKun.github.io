@@ -1103,6 +1103,25 @@
         });
     }
 
+    // Initialize CommentKit widgets in a container
+    function initializeCommentKit(container) {
+        // Find all elements with data-commentkit attribute
+        const commentWidgets = container.querySelectorAll('[data-commentkit]');
+
+        if (commentWidgets.length === 0) return;
+
+        // CommentKit scans for [data-commentkit] elements when its script loads
+        // For dynamically loaded content, we inject a fresh script tag
+        const script = document.createElement('script');
+        script.src = 'https://commentkit.ankush.one/bundle.js';
+        script.async = true;
+
+        // Append to container so it executes in context
+        container.appendChild(script);
+
+        console.log(`Initialized CommentKit for ${commentWidgets.length} widget(s)`);
+    }
+
     // Window Management
     async function openWindow(id, title, size = { width: 1000, height: 700 }, permalink = null) {
         // Check if window already exists
@@ -1130,6 +1149,7 @@
         // 1. Try to get content from existing DOM element (e.g. About, Contact)
         const contentElement = document.getElementById(`content-${id}`);
         let content = '';
+        let shouldFetchJson = false;
 
         if (contentElement) {
             content = contentElement.innerHTML;
@@ -1140,6 +1160,7 @@
             // 2. If no DOM element but we have a permalink, we need to fetch it
             console.log(`Fetching content for ${id} from ${permalink}`);
             content = `<div class="window-loader"><div class="spinner"></div></div>`;
+            shouldFetchJson = true;
         } else {
             console.error(`Content not found for ${id}`);
             return;
@@ -1226,41 +1247,64 @@
         bringToFront(win);
 
         // If we need to fetch content, do it now
-        if (!contentElement && permalink) {
+        if (shouldFetchJson && permalink) {
             try {
-                const response = await fetch(permalink);
-                if (!response.ok) throw new Error('Network response was not ok');
-                const html = await response.text();
+                // Try to fetch JSON first (more efficient)
+                let jsonUrl = permalink.endsWith('/') ? permalink + 'index.json' : permalink.replace(/\/$/, '') + '/index.json';
+                const response = await fetch(jsonUrl);
 
-                // Parse HTML to extract the content
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-
-                // We assume the content is inside .window-content or .static-window .window-content
-                // Based on window-frame.html, it's inside .window-content
-                const fetchedContent = doc.querySelector('.window-content');
-
-                if (fetchedContent) {
+                if (response.ok) {
+                    const data = await response.json();
                     const winContent = win.querySelector('.window-content');
-                    if (winContent) {
-                        winContent.innerHTML = fetchedContent.innerHTML;
-                        // Re-setup finder items just in case the fetched content has links
+
+                    if (winContent && data.content) {
+                        winContent.innerHTML = data.content;
+
+                        // Re-setup finder items and embeds
                         setupFinderItems(win);
                         activateTwitterEmbeds(win);
+
+                        // Initialize CommentKit for blog posts
+                        initializeCommentKit(winContent);
                     }
                 } else {
-                    throw new Error('Could not find content in fetched page');
+                    throw new Error('JSON not found, falling back to HTML');
                 }
             } catch (err) {
-                console.error('Failed to fetch content:', err);
-                const winContent = win.querySelector('.window-content');
-                if (winContent) {
-                    winContent.innerHTML = `
-                        <div style="padding: 20px; text-align: center; color: #666;">
-                            <p>Failed to load content.</p>
-                            <a href="${permalink}" target="_blank" class="fallback-btn" style="margin-top: 10px;">Open in New Tab</a>
-                        </div>
-                    `;
+                console.warn('Failed to fetch JSON, trying HTML fallback:', err);
+
+                // Fallback to HTML parsing
+                try {
+                    const response = await fetch(permalink);
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    const html = await response.text();
+
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const fetchedContent = doc.querySelector('.window-content');
+
+                    if (fetchedContent) {
+                        const winContent = win.querySelector('.window-content');
+                        if (winContent) {
+                            winContent.innerHTML = fetchedContent.innerHTML;
+                            setupFinderItems(win);
+                            activateTwitterEmbeds(win);
+                            initializeCommentKit(winContent);
+                        }
+                    } else {
+                        throw new Error('Could not find content in fetched page');
+                    }
+                } catch (htmlErr) {
+                    console.error('Failed to fetch content:', htmlErr);
+                    const winContent = win.querySelector('.window-content');
+                    if (winContent) {
+                        winContent.innerHTML = `
+                            <div style="padding: 20px; text-align: center; color: #666;">
+                                <p>Failed to load content.</p>
+                                <a href="${permalink}" target="_blank" class="fallback-btn" style="margin-top: 10px;">Open in New Tab</a>
+                            </div>
+                        `;
+                    }
                 }
             }
         }
