@@ -1080,28 +1080,37 @@
             els.log.innerHTML = '';
 
             chat.map().on((data, key) => {
-                if (!data || seen.has(key)) return;
-                seen.add(key);
+                if (!data) return;
+
+                let m;
                 try {
-                    const m = typeof data === 'string' ? JSON.parse(data) : data;
-                    if (m && m.nick && m.text) {
-                        // Cache UUID from message
-                        if (m.uuid && m.nick) {
-                            uuidCache[m.nick] = m.uuid;
-                        }
+                    m = typeof data === 'string' ? JSON.parse(data) : data;
+                } catch (e) { return; }
 
-                        // Filter old join/leave messages (older than 5 minutes)
-                        const isSysMsg = m.type === 'system';
-                        const isJoinLeave = isSysMsg && (m.text.includes('entered the room') || m.text.includes('left the room'));
-                        const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+                if (!m || !m.nick || !m.text) return;
 
-                        if (isJoinLeave && m.time && m.time < fiveMinutesAgo) {
-                            return; // Skip old join/leave messages
-                        }
+                // Cache UUID from message
+                if (m.uuid && m.nick) {
+                    uuidCache[m.nick] = m.uuid;
+                }
 
-                        addMsg(m.nick, m.text, isSysMsg, m.action, m.time, m.uuid, m.type);
-                    }
-                } catch (e) { }
+                if (seen.has(key)) {
+                    // Update existing message
+                    updateMsg(key, m);
+                    return;
+                }
+                seen.add(key);
+
+                // Filter old join/leave messages (older than 5 minutes)
+                const isSysMsg = m.type === 'system';
+                const isJoinLeave = isSysMsg && (m.text.includes('entered the room') || m.text.includes('left the room'));
+                const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+
+                if (isJoinLeave && m.time && m.time < fiveMinutesAgo) {
+                    return; // Skip old join/leave messages
+                }
+
+                addMsg(m.nick, m.text, isSysMsg, m.action, m.time, m.uuid, m.type, key);
             });
 
             announce();
@@ -1350,15 +1359,121 @@
             }
         }
 
-        function addMsg(nick, text, isSystem, isAction, timestamp, userUuid, msgType) {
+        function parseMarkdown(text) {
+            let parts = [{ type: 'text', content: text }];
+
+            function splitParts(regex, type, tag) {
+                for (let i = 0; i < parts.length; i++) {
+                    if (parts[i].type === 'text') {
+                        const match = regex.exec(parts[i].content);
+                        if (match) {
+                            const before = parts[i].content.substring(0, match.index);
+                            const inner = match[1];
+                            const after = parts[i].content.substring(match.index + match[0].length);
+
+                            const newParts = [];
+                            if (before) newParts.push({ type: 'text', content: before });
+                            newParts.push({ type: type, content: inner, tag: tag });
+                            if (after) newParts.push({ type: 'text', content: after });
+
+                            parts.splice(i, 1, ...newParts);
+                            i--; // Re-process to handle multiple matches
+                        }
+                    }
+                }
+            }
+
+            // Order matters (processed sequentially)
+            splitParts(/```([\s\S]+?)```/, 'pre', 'pre');
+            splitParts(/`([^`]+)`/, 'code', 'code');
+            splitParts(/(?:^|\n)> ([^\n]+)/, 'quote', 'blockquote');
+            splitParts(/\*\*([^*]+)\*\*/, 'bold', 'strong');
+            splitParts(/__([^_]+)__/, 'bold', 'strong');
+            splitParts(/\*([^*]+)\*/, 'italic', 'em');
+            splitParts(/_([^_]+)_/, 'italic', 'em');
+            splitParts(/~~([^~]+)~~/, 'strike', 's');
+
+            return parts;
+        }
+
+        // Helper to render text with mentions and markdown
+        function renderMessageText(containerEl, text) {
+            // First, parse markdown structure (blocks, bold, code, etc.)
+            const mdParts = parseMarkdown(text);
+
+            mdParts.forEach(mdp => {
+                let targetEl = containerEl;
+                let content = mdp.content;
+
+                if (mdp.type === 'text') {
+                    // Plain text, directly in container
+                } else {
+                    // Wrapper element
+                    const el = document.createElement(mdp.tag);
+                    if (mdp.type === 'quote') el.className = 'irc-quote';
+
+                    targetEl = el;
+                    containerEl.appendChild(el);
+
+                    if (mdp.type === 'pre') {
+                        const code = document.createElement('code');
+                        code.textContent = content; // No mentions in code
+                        el.appendChild(code);
+                        return;
+                    } else if (mdp.type === 'code') {
+                        targetEl.textContent = content; // No mentions in inline code
+                        return;
+                    }
+                }
+
+                // Process mentions within the content (except for code/pre which returned above)
+                const mentionParts = parseAndColorMentions(content);
+                mentionParts.forEach(part => {
+                    if (part.type === 'text') {
+                        targetEl.appendChild(document.createTextNode(part.content));
+                    } else if (part.type === 'mention') {
+                        const mentionSpan = document.createElement('span');
+                        mentionSpan.className = 'irc-mention';
+                        mentionSpan.textContent = part.content;
+
+                        if (part.uuid) {
+                            mentionSpan.style.color = uuidToColor(part.uuid);
+                            mentionSpan.style.fontWeight = '600';
+                        }
+
+                        if (part.nick !== myNick) {
+                            mentionSpan.style.cursor = 'pointer';
+                            mentionSpan.onclick = (e) => {
+                                e.stopPropagation();
+                                insertMention(part.nick);
+                            };
+                        }
+
+                        targetEl.appendChild(mentionSpan);
+                    }
+                });
+            });
+        }
+
+        function addMsg(nick, text, isSystem, isAction, timestamp, userUuid, msgType, key) {
+            // Determine the full text to display immediately for deduplication using consistent logic
+            let fullText;
+            if (isSystem && nick) {
+                fullText = '@' + nick + ' ' + text;
+            } else if (isAction) {
+                fullText = '@' + nick + ' ' + text;
+            } else {
+                fullText = text;
+            }
+
             // Check if this is a GIF message
             const isGif = msgType === 'gif';
 
             // Collapse consecutive duplicate join/leave messages
             const isJoinLeave = isSystem && (text.includes('entered the room') || text.includes('left the room'));
 
-            if (isJoinLeave && nick) {
-                const msgKey = `${nick}:${text}`;
+            if (isJoinLeave) {
+                const msgKey = fullText;
 
                 // Check last message in the log to see if it's the same user + action
                 const lastChild = els.log.lastElementChild;
@@ -1367,12 +1482,12 @@
                     const lastText = lastChild.querySelector('.irc-msg-text')?.textContent;
 
                     // If last message is same user doing same action, replace it
-                    if (lastNick === 'system' && lastText === `${nick} ${text}`) {
+                    if (lastNick === 'system' && lastText === fullText) {
                         lastChild.remove();
                     }
                 }
 
-                lastSystemMsg[nick] = msgKey;
+                if (nick) lastSystemMsg[nick] = msgKey;
             }
 
             // Check if this message mentions the current user (and is not from self)
@@ -1381,6 +1496,7 @@
             const row = document.createElement('div');
             const isLeave = isSystem && text.includes('left the room');
             row.className = 'irc-msg' + (isLeave ? ' leave' : isSystem ? ' system' : '') + (isAction ? ' action' : '') + (mentionsMe ? ' mentioned' : '');
+            if (key) row.id = 'msg-' + key;
 
             // Format timestamp as relative time
             const timeEl = document.createElement('div');
@@ -1483,53 +1599,32 @@
                 processNSFWQueue();
             } else {
                 // Determine the full text to display
-                let fullText;
-                if (isSystem && nick) {
-                    fullText = '@' + nick + ' ' + text;
-                } else if (isAction) {
-                    fullText = nick + ' ' + text;
-                } else {
-                    fullText = text;
-                }
+                // fullText is now calculated at top of function
 
-                // Parse and colorize @mentions (for all messages including system messages)
-                const parts = parseAndColorMentions(fullText);
-
-                if (parts.length > 0) {
-                    // Build text with colored mentions
-                    parts.forEach(part => {
-                        if (part.type === 'text') {
-                            textEl.appendChild(document.createTextNode(part.content));
-                        } else if (part.type === 'mention') {
-                            const mentionSpan = document.createElement('span');
-                            mentionSpan.className = 'irc-mention';
-                            mentionSpan.textContent = part.content;
-
-                            if (part.uuid) {
-                                mentionSpan.style.color = uuidToColor(part.uuid);
-                                mentionSpan.style.fontWeight = '600';
-                            }
-
-                            // Make clickable to insert mention (if not mentioning self)
-                            if (part.nick !== myNick) {
-                                mentionSpan.style.cursor = 'pointer';
-                                mentionSpan.onclick = (e) => {
-                                    e.stopPropagation();
-                                    insertMention(part.nick);
-                                };
-                            }
-
-                            textEl.appendChild(mentionSpan);
-                        }
-                    });
-                } else {
-                    textEl.textContent = fullText;
-                }
+                // Render with markdown and mentions
+                renderMessageText(textEl, fullText);
             }
 
             row.appendChild(timeEl);
             row.appendChild(nickEl);
             row.appendChild(textEl);
+
+            // Add delete button for non-system messages (or all messages as requested)
+            // Allowing deletion of any message, but visually only easy to click on hover
+            if (!isSystem && key) {
+                const delBtn = document.createElement('button');
+                delBtn.className = 'irc-delete-btn';
+                delBtn.innerHTML = '&times;';
+                delBtn.title = 'Delete message';
+                delBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    if (confirm('Are you sure you want to delete this message?')) {
+                        deleteMessage(key, nick);
+                    }
+                };
+                row.appendChild(delBtn);
+            }
+
             els.log.appendChild(row);
 
             // Play notification sound if mentioned (only for new messages, not old ones on load)
@@ -1548,6 +1643,92 @@
 
         function scrollToBottom() {
             els.log.scrollTop = els.log.scrollHeight;
+        }
+
+        function updateMsg(key, m) {
+            const row = document.getElementById('msg-' + key);
+            if (!row) return;
+
+            // Check if type changed to system (deletion)
+            const isSystem = m.type === 'system';
+            const isLeave = isSystem && m.text.includes('left the room');
+            const isAction = m.action;
+
+            // Re-apply classes
+            row.className = 'irc-msg' + (isLeave ? ' leave' : isSystem ? ' system' : '') + (isAction ? ' action' : '');
+
+            // Re-build content, especially text
+            // Ideally we should reuse addMsg logic but it creates a new element.
+            // For simplicity, we'll just update the text part for deletions.
+
+            const textEl = row.querySelector('.irc-msg-text');
+            const nickEl = row.querySelector('.irc-msg-nick');
+
+            if (isSystem) {
+                // If it became a system message (deleted), update nick and style
+                if (nickEl) {
+                    nickEl.textContent = 'system';
+                    nickEl.style.color = ''; // Clear inline color so CSS applies
+                    nickEl.style.cursor = 'default';
+                    nickEl.onclick = null;
+                }
+                if (textEl) {
+                    // Reconstruct fullText logic to match addMsg
+                    // For join/leave, nick is the user. For deleted, nick is 'system'.
+                    let fullText = m.text;
+                    if (m.nick && m.nick !== 'system' && (m.text.includes('entered the room') || m.text.includes('left the room'))) {
+                        fullText = '@' + m.nick + ' ' + m.text;
+                    }
+
+                    // Clear previous content
+                    textEl.innerHTML = '';
+
+                    // Render with markdown and mentions
+                    renderMessageText(textEl, fullText);
+
+                    // Only apply specific styles for "deleted" messages (generic system messages)
+                    // Join/Leave messages should inherit from CSS classes
+                    if (m.text.includes('entered the room') || m.text.includes('left the room')) {
+                        textEl.style.color = '';
+                        textEl.style.fontStyle = '';
+                    } else {
+                        textEl.style.color = '#7f8c8d'; // Grey for deleted/system
+                        textEl.style.fontStyle = 'italic';
+                    }
+                }
+
+                // Remove delete button if it exists
+                const delBtn = row.querySelector('.irc-delete-btn');
+                if (delBtn) delBtn.remove();
+            }
+        }
+
+        function deleteMessage(key, originalNick) {
+            if (!chat || !myNick) return;
+
+            // "anyone can delete anyones message"
+            // "replaced by a system message that says @username deleted @usernames message"
+
+            const deleteText = `@${myNick} deleted @${originalNick}'s message`;
+
+            chat.get(key).put(JSON.stringify({
+                nick: 'system', // Change nick to system so it renders as system msg
+                uuid: null,
+                text: deleteText,
+                time: Date.now(), // Update time? Or keep original? Updating time moves it to bottom? 
+                // Gun updates usually don't reorder unless we sort by something else. 
+                // But we want to keep it in place.
+                // We are not changing the key, so it stays in place.
+                // If we change time, it might affect relative time display but that's fine.
+                // Let's keep original time if we could, but we don't have it easily here without querying.
+                // Actually, we don't need to send all fields if we just merge, but we are storing stringified JSON.
+                // So we must rewrite the whole object.
+                // We will lose the original time if we don't pass it.
+                // For now, let's just use current time, it's a "deletion event" timestamp.
+
+                action: false,
+                type: 'system'
+            }));
         }
 
         root.onclick = e => {

@@ -393,7 +393,9 @@
     }
 
     .irc-online-header {
-        width: 120px;
+        width: 140px;
+        box-sizing: border-box;
+        border-left: 1px solid #aebcd0;
         padding: 6px 10px;
         text-align: center;
         color: #666;
@@ -410,7 +412,7 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-        border-right: 1px solid #dce4ec;
+        /* border-right removed to avoid double border with user-col */
         overflow: hidden;
     }
 
@@ -421,7 +423,8 @@
     }
 
     .irc-users-col {
-        width: 130px;
+        width: 140px;
+        box-sizing: border-box;
         overflow-y: auto;
         background: #f8fbff;
         border-left: 1px solid #dce4ec;
@@ -487,22 +490,82 @@
         font-family: inherit;
     }
 
+    .irc-msg-text code {
+        background: rgba(0, 0, 0, 0.05);
+        padding: 2px 4px;
+        border-radius: 3px;
+        font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+        font-size: 0.9em;
+        color: #e83e8c;
+    }
+
+    .irc-msg-text pre {
+        background: #f8f9fa !important;
+        padding: 8px !important;
+        border-radius: 4px !important;
+        overflow-x: auto !important;
+        font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace !important;
+        font-size: 0.9em !important;
+        margin: 4px 0 !important;
+        border: 1px solid #e9ecef !important;
+        color: #333 !important;
+        display: block !important;
+    }
+
+    .irc-msg-text pre code {
+        background: none !important;
+        padding: 0 !important;
+        color: inherit !important;
+        font-size: 100% !important;
+        display: inline !important;
+        border: none !important;
+    }
+
+    .irc-msg-text strong {
+        font-weight: 700;
+        color: #222;
+    }
+
+    .irc-msg-text em {
+        font-style: italic;
+    }
+
+    .irc-msg-text s {
+        text-decoration: line-through;
+        opacity: 0.6;
+    }
+
+    .irc-quote {
+        display: block !important;
+        margin: 4px 0 !important;
+        padding-left: 10px !important;
+        border-left: 3px solid #dfe2e5 !important;
+        color: #666 !important;
+        background: transparent !important;
+        opacity: 1 !important;
+        font-style: normal !important;
+    }
+
     .irc-msg.system .irc-msg-nick {
-        color: #27ae60;
+        color: gray;
+        font-style: italic;
     }
 
     .irc-msg.system .irc-msg-text {
         color: #27ae60;
         font-weight: 500;
+        font-style: italic;
     }
 
     .irc-msg.leave .irc-msg-nick {
-        color: #e74c3c;
+        color: gray;
+        font-style: italic;
     }
 
     .irc-msg.leave .irc-msg-text {
         color: #e74c3c;
         font-weight: 500;
+        font-style: italic;
     }
 
     .irc-msg.action .irc-msg-text {
@@ -757,5 +820,27 @@
         font-size: 11px;
         opacity: 0.7;
         color: #888;
+    }
+
+    /* Delete Button */
+    .irc-delete-btn {
+        opacity: 0;
+        background: none;
+        border: none;
+        color: #ccc;
+        cursor: pointer;
+        font-size: 16px;
+        line-height: 1;
+        padding: 0 4px;
+        margin-left: 4px;
+        transition: opacity 0.2s, color 0.1s;
+    }
+
+    .irc-msg:hover .irc-delete-btn {
+        opacity: 1;
+    }
+
+    .irc-delete-btn:hover {
+        color: #e74c3c;
     }
 </style>
