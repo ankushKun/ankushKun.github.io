@@ -1288,9 +1288,18 @@
 
             // Check for help command
             if (text === '/help' || text === '/commands') {
-                const commandList = Object.keys(COMMANDS).sort().join(', ');
-                const textReplacements = Object.keys(TEXT_REPLACEMENTS).sort().join(', ');
-                addMsg('', `Action commands: /${commandList}. Text commands: /${textReplacements}. Usage: /command or /command username`, true);
+                const actionCmds = Object.keys(COMMANDS).sort().map(c => `/${c}`).join(', ');
+                const textReplacements = Object.keys(TEXT_REPLACEMENTS).sort().map(c => `/${c}`).join(', ');
+
+                const helpText = `### Available Commands
+**Actions:**
+\`${actionCmds}\`
+
+**Text Shortcuts:**
+\`${textReplacements}\`
+
+*(Usage: /command or /command username)*`;
+                addMsg('', helpText, true);
                 return;
             }
 
@@ -1386,6 +1395,9 @@
             // Order matters (processed sequentially)
             splitParts(/```([\s\S]+?)```/, 'pre', 'pre');
             splitParts(/`([^`]+)`/, 'code', 'code');
+            splitParts(/(?:^|\n)# ([^\n]+)/, 'header', 'h1');
+            splitParts(/(?:^|\n)## ([^\n]+)/, 'header', 'h2');
+            splitParts(/(?:^|\n)### ([^\n]+)/, 'header', 'h3');
             splitParts(/(?:^|\n)> ([^\n]+)/, 'quote', 'blockquote');
             splitParts(/\*\*([^*]+)\*\*/, 'bold', 'strong');
             splitParts(/__([^_]+)__/, 'bold', 'strong');
