@@ -35,6 +35,10 @@
     {{ partial "os/desktop/icon.html" (dict "window" "terminal" "title" "Terminal" "label" "Terminal" "svg"
     (partial "icons/desktop/terminal.html" .)) }}
 
+    <!-- IRC Chat Icon -->
+    {{ partial "os/desktop/icon.html" (dict "window" "irc-chat" "title" "IRC Chat" "label" "IRC Chat" "svg"
+    (partial "icons/desktop/irc-chat.html" .)) }}
+
 </div>
 
 <!-- ============================================== -->
@@ -148,6 +152,12 @@
     {{ partial "apps/terminal/window.html" (dict
     "id" "terminal"
     "title" "Terminal"
+    ) }}
+
+    <!-- IRC CHAT CONTENT -->
+    {{ partial "apps/irc/window.html" (dict
+    "id" "irc-chat"
+    "title" "IRC Chat - mIRC v6.35"
     ) }}
 
     <!-- PORTAL CONTENT -->

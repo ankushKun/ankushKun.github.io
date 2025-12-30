@@ -351,9 +351,11 @@
     <!-- v86 CSS, xterm.js and v86-terminal.js loaded lazily when terminal/portal window opens -->
     {{ $v86css := resources.Get "css/v86.css" | resources.Minify | resources.Fingerprint }}
     {{ $v86TerminalJs := resources.Get "js/v86-terminal.js" | resources.Minify | resources.Fingerprint }}
+    {{ $ircChatJs := resources.Get "js/irc-chat.js" | resources.Minify | resources.Fingerprint }}
     <script>
         window.V86_CSS_URL = "{{ $v86css.Permalink }}";
         window.V86_TERMINAL_URL = "{{ $v86TerminalJs.Permalink }}";
+        window.IRC_CHAT_URL = "{{ $ircChatJs.Permalink }}";
     </script>
 </body>
 

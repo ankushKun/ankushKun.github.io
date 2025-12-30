@@ -1244,6 +1244,23 @@
             initFlashGame(id, win);
         }
 
+        // Setup IRC chat if this is an IRC window
+        if (id === 'irc-chat') {
+            // Lazy load irc-chat.js if not loaded yet
+            if (!window.initIRCChat && window.IRC_CHAT_URL) {
+                const script = document.createElement('script');
+                script.src = window.IRC_CHAT_URL;
+                script.onload = () => {
+                    if (window.initIRCChat) {
+                        window.initIRCChat(win);
+                    }
+                };
+                document.head.appendChild(script);
+            } else if (window.initIRCChat) {
+                window.initIRCChat(win);
+            }
+        }
+
         bringToFront(win);
 
         // If we need to fetch content, do it now
@@ -1362,6 +1379,11 @@
         // Cleanup v86 emulator if this is the terminal or portal window
         if ((id === 'terminal' || id === 'portal') && window.destroyV86) {
             window.destroyV86();
+        }
+
+        // Cleanup IRC chat if this is the IRC window
+        if (id === 'irc-chat' && win.ircCleanup) {
+            win.ircCleanup();
         }
 
         win.classList.add('closing');
