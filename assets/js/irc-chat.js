@@ -36,6 +36,14 @@
         return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
     }
 
+    // Text replacement commands (emoticons)
+    const TEXT_REPLACEMENTS = {
+        'shrug': '¯\\_(ツ)_/¯',
+        'tableflip': '(╯°□°)╯︵ ┻━┻',
+        'unflip': '┬─┬ノ( º _ ºノ)',
+        'lenny': '( ͡° ͜ʖ ͡°)'
+    };
+
     // Fun action commands
     const COMMANDS = {
         'slap': {
@@ -241,6 +249,24 @@
             }
         }
 
+        // Insert text at cursor position in contenteditable
+        function insertTextAtCursor(text) {
+            const sel = window.getSelection();
+            if (sel.rangeCount === 0) return;
+
+            const range = sel.getRangeAt(0);
+            range.deleteContents();
+
+            const textNode = document.createTextNode(text);
+            range.insertNode(textNode);
+
+            // Move cursor after inserted text
+            range.setStartAfter(textNode);
+            range.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+
         // Update colors for @mentions in input
         function updateInputColors() {
             const text = getInputText();
@@ -370,6 +396,17 @@
         // Input handling - ensure we stop propagation so global shortcuts don't fire
         function handleInputKey(e) {
             e.stopPropagation(); // Critical for typing to work!
+
+            // Handle Tab key in message input
+            if (e.key === 'Tab' && e.target === els.msgInput) {
+                e.preventDefault();
+                insertTextAtCursor('\t');
+                // Update colors and cursor position after tab insertion
+                lastCursorPos = getCursorPosition();
+                updateInputColors();
+                return;
+            }
+
             if (e.key === 'Enter') {
                 if (e.target === els.nickInput) {
                     e.preventDefault();
@@ -378,11 +415,29 @@
                     e.preventDefault();
                     send();
                 }
+                // Shift+Enter allows newlines - no action needed
             }
         }
 
         els.nickInput.addEventListener('keydown', handleInputKey);
         els.msgInput.addEventListener('keydown', handleInputKey);
+
+        // Handle paste - only allow plain text, no images
+        els.msgInput.addEventListener('paste', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Get plain text from clipboard
+            const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+
+            if (text) {
+                // Insert text at cursor position
+                insertTextAtCursor(text);
+                // Update colors and cursor position after paste
+                lastCursorPos = getCursorPosition();
+                updateInputColors();
+            }
+        });
 
         // Update colors as user types in contenteditable
         els.msgInput.addEventListener('input', () => {
@@ -437,8 +492,9 @@
             lastCursorPos = 0;
             els.prompt.classList.add('hidden');
             els.inputNick.textContent = myNick + '>';
+            els.inputNick.style.color = uuidToColor(myUUID); // Apply user's color
             els.msgInput.setAttribute('contenteditable', 'true');
-            els.msgInput.setAttribute('data-placeholder', 'Write to #general');
+            els.msgInput.setAttribute('data-placeholder', 'Write to #general (Shift+Enter for newline)');
             els.msgInput.focus();
             els.logoutBtn.style.display = 'flex'; // Show logout button
             loadGun().then(connect).catch(() => addMsg('', 'Failed to load Gun.js', true));
@@ -475,8 +531,9 @@
             els.nickInput.value = '';
             els.msgInput.setAttribute('contenteditable', 'false');
             els.msgInput.textContent = '';
-            els.msgInput.setAttribute('data-placeholder', 'Type a message...');
+            els.msgInput.setAttribute('data-placeholder', 'Type a message (Shift+Enter for newline)...');
             els.inputNick.textContent = 'guest>';
+            els.inputNick.style.color = '#333'; // Reset to default color
             els.status.textContent = 'Connecting...';
             els.logoutBtn.style.display = 'none'; // Hide logout button
 
@@ -695,16 +752,27 @@
             // Check for help command
             if (text === '/help' || text === '/commands') {
                 const commandList = Object.keys(COMMANDS).sort().join(', ');
-                addMsg('', `Available commands: /${commandList}. Usage: /command or /command username`, true);
+                const textReplacements = Object.keys(TEXT_REPLACEMENTS).sort().join(', ');
+                addMsg('', `Action commands: /${commandList}. Text commands: /${textReplacements}. Usage: /command or /command username`, true);
                 return;
             }
 
-            // Check for fun commands
+            // Check for commands
             if (text.startsWith('/')) {
                 const parts = text.slice(1).split(' ');
                 const command = parts[0].toLowerCase();
                 const target = parts.slice(1).join(' ').trim();
 
+                // Check for text replacement commands
+                if (TEXT_REPLACEMENTS[command]) {
+                    // Send the emoticon text (with optional message after)
+                    const replacement = TEXT_REPLACEMENTS[command];
+                    const messageText = target ? replacement + ' ' + target : replacement;
+                    publishMessage(messageText);
+                    return;
+                }
+
+                // Check for action commands
                 if (COMMANDS[command]) {
                     const cmd = COMMANDS[command];
                     let actionText;
