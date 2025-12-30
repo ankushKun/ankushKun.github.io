@@ -304,9 +304,9 @@
 
         // Define thresholds for each category
         const thresholds = {
-            porn: 0.05,      // 4% - Real pornography
-            hentai: 0.05,    // 4% - Explicit anime/drawn pornography
-            sexy: 0.05       // 4% - Suggestive/revealing content
+            porn: 0.1,      // 10% - Real pornography
+            hentai: 0.1,    // 10% - Explicit anime/drawn pornography
+            sexy: 0.1       // 10% - Suggestive/revealing content
             // Drawing and Neutral are not checked (legitimate art & safe content)
         };
 
@@ -1036,6 +1036,7 @@
 
             // Clear localStorage
             localStorage.removeItem('irc_nick');
+            localStorage.removeItem('irc_tos_accepted');
 
             // Reset UI
             myNick = '';
@@ -1052,6 +1053,8 @@
             els.users.innerHTML = '';
             els.prompt.classList.remove('hidden');
             els.nickInput.value = '';
+            els.termsInput.checked = false;
+            els.nickBtn.disabled = true;
             els.msgInput.setAttribute('contenteditable', 'false');
             els.msgInput.textContent = '';
             els.msgInput.setAttribute('data-placeholder', 'Type a message (Shift+Enter for newline)...');
@@ -1431,6 +1434,7 @@
                 gifImg.className = 'irc-msg-gif';
                 gifImg.alt = 'GIF';
                 gifImg.loading = 'lazy';
+                gifImg.onload = scrollToBottom;
 
                 gifContainer.appendChild(gifImg);
                 textEl.appendChild(gifContainer);
@@ -1537,6 +1541,12 @@
             }
 
             while (els.log.children.length > MAX_MESSAGES) els.log.removeChild(els.log.firstChild);
+            scrollToBottom();
+            // Scroll again after a short delay to account for layout shifts
+            setTimeout(scrollToBottom, 100);
+        }
+
+        function scrollToBottom() {
             els.log.scrollTop = els.log.scrollHeight;
         }
 

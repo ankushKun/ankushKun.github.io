@@ -4,20 +4,58 @@
 <div id="content-{{ $id }}" class="window-content" data-irc-window="true">
     <div class="irc-window">
         <!-- Nickname Prompt -->
+        <!-- Nickname Prompt -->
         <div class="irc-nick-prompt" id="nick-prompt-{{ .id }}">
             <div class="irc-nick-dialog">
-                <p>Enter your nickname:</p>
-                <input type="text" id="nick-input-{{ .id }}" maxlength="10" placeholder="Nickname" autocomplete="off">
-
-                <div class="irc-terms">
-                    <label>
-                        <input type="checkbox" id="terms-input-{{ .id }}">
-                        <span>I acknowledge that this chat contains user-generated content (messages & GIFs) which may
-                            include profanity or NSFW material.</span>
-                    </label>
+                <div class="irc-login-header">
+                    <div class="irc-logo-container">
+                        <svg class="irc-app-logo" viewBox="0 0 24 24" width="60" height="60" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            style="color: #0078d7;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="2" y1="12" x2="22" y2="12"></line>
+                            <path
+                                d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
+                            </path>
+                        </svg>
+                        <div class="irc-brand-text">
+                            <span class="irc-brand-main">Internet Relay Chat</span>
+                            <span class="irc-brand-tagline">powered by gun.js</span>
+                        </div>
+                    </div>
                 </div>
 
-                <button id="nick-submit-{{ .id }}">Join</button>
+                <div class="irc-login-body">
+                    <h2 class="irc-welcome-title">Welcome!</h2>
+                    <p class="irc-welcome-sub">Please enter your nickname to continue.</p>
+
+                    <div class="irc-input-container">
+                        <label for="nick-input-{{ .id }}" class="irc-input-label">Nickname</label>
+                        <div class="irc-input-wrapper">
+                            <input type="text" id="nick-input-{{ .id }}" maxlength="10" autocomplete="off">
+                        </div>
+                    </div>
+
+                    <div class="irc-terms">
+                        <label>
+                            <input type="checkbox" id="terms-input-{{ .id }}">
+                            <span class="irc-terms-text">I acknowledge that this chat contains user-generated content
+                                (messages & GIFs) which may include profanity or NSFW material.</span>
+                        </label>
+                    </div>
+
+                    <div class="irc-login-actions">
+                        <button id="nick-submit-{{ .id }}" class="irc-submit-btn" title="Sign In">
+                            Sign In
+                        </button>
+                    </div>
+                </div>
+
+                <div class="irc-login-footer">
+                    <span>Server Status: Online</span>
+                    <span class="separator">|</span>
+                    <span>v1.0.0</span>
+                </div>
             </div>
         </div>
 
@@ -80,75 +118,234 @@
         position: relative;
     }
 
-    /* Nick Prompt */
+    /* Nick Prompt - Modern/Retro Hybrid */
     .irc-nick-prompt {
         position: absolute;
         inset: 0;
-        background: rgba(255, 255, 255, 0.95);
+        background: radial-gradient(circle at center, #deebf7 0%, #a6c0fe 100%);
         display: flex;
         align-items: center;
         justify-content: center;
         z-index: 10;
+        transition: opacity 0.3s ease;
     }
 
     .irc-nick-prompt.hidden {
-        display: none;
+        opacity: 0;
+        pointer-events: none;
     }
 
     .irc-nick-dialog {
-        text-align: center;
+        width: 480px;
+        background: transparent;
+        display: flex;
+        flex-direction: column;
+        text-align: left;
+        color: #333;
+        font-family: "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
     }
 
-    .irc-nick-dialog p {
-        margin: 0 0 8px;
-        font-weight: 500;
+    .irc-login-header {
+        margin-bottom: 30px;
+        display: flex;
+        justify-content: center;
     }
 
-    .irc-nick-dialog input {
-        padding: 6px 8px;
+    .irc-logo-container {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .irc-app-logo {
+        filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+    }
+
+    .irc-brand-text {
+        display: flex;
+        flex-direction: column;
+        line-height: 1;
+    }
+
+    .irc-brand-top {
         font-size: 14px;
-        border: 1px solid #bbb;
-        width: 140px;
-        margin-right: 6px;
+        color: #000;
+        font-weight: 400;
+        margin-bottom: -2px;
     }
 
-    .irc-nick-dialog button {
-        padding: 6px 14px;
+    .irc-brand-main {
+        font-size: 36px;
+        font-weight: 400;
+        color: #000;
+        letter-spacing: -1px;
+    }
+
+    .irc-brand-tagline {
+        font-size: 11px;
+        color: #7289da;
+        font-style: italic;
+        margin-top: 4px;
+        opacity: 0.8;
+    }
+
+    .irc-login-body {
+        padding: 0 40px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .irc-welcome-title {
+        font-size: 24px;
+        color: #0078d7;
+        font-weight: 400;
+        margin: 0 0 5px;
+    }
+
+    .irc-welcome-sub {
         font-size: 14px;
-        background: #5a9;
-        color: #fff;
+        color: #666;
+        margin: 0 0 25px;
+    }
+
+    .irc-input-container {
+        width: 100%;
+        margin-bottom: 15px;
+    }
+
+    .irc-input-label {
+        display: block;
+        font-size: 11px;
+        color: #333;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+        margin-left: 2px;
+    }
+
+    .irc-input-wrapper {
+        background: #fff;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        padding: 8px 10px;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+        transition: border-color 0.2s;
+    }
+
+    .irc-input-wrapper:focus-within {
+        border-color: #7289da;
+    }
+
+    .irc-nick-dialog input[type="text"] {
+        width: 100%;
         border: none;
-        cursor: pointer;
-    }
-
-    .irc-nick-dialog button:hover {
-        background: #4a8;
-    }
-
-    .irc-nick-dialog button:disabled {
-        background: #ccc;
-        cursor: not-allowed;
+        outline: none;
+        font-size: 14px;
+        color: #333;
+        background: transparent;
+        padding: 0;
+        margin: 0;
     }
 
     .irc-terms {
-        margin: 10px auto 14px;
-        max-width: 200px;
-        text-align: left;
-        font-size: 11px;
-        color: #666;
-        line-height: 1.3;
+        width: 100%;
+        margin-bottom: 20px;
     }
 
     .irc-terms label {
         display: flex;
         align-items: flex-start;
-        gap: 6px;
+        gap: 8px;
         cursor: pointer;
+        padding: 8px;
+        border-radius: 4px;
+        transition: background 0.1s;
+    }
+
+    .irc-terms label:hover {
+        background: rgba(255, 255, 255, 0.4);
     }
 
     .irc-terms input {
-        margin: 2px 0 0;
-        width: auto;
+        margin-top: 2px;
+    }
+
+    .irc-terms-text {
+        font-size: 11px;
+        color: #666;
+        line-height: 1.4;
+    }
+
+    .irc-login-actions {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        margin-top: 10px;
+    }
+
+    .irc-submit-btn {
+        padding: 6px 20px;
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: bold;
+        color: #fff;
+        text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.3);
+        background: linear-gradient(to bottom, #3d94f6 0%, #1e69de 100%);
+        border: 1px solid #1c5185;
+        border-radius: 3px;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.4),
+            0 2px 2px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        display: inline-block;
+        text-align: center;
+        text-decoration: none;
+        transition: border-color 0.2s;
+    }
+
+    .irc-submit-btn:hover {
+        background: linear-gradient(to bottom, #50a3ff 0%, #267bf0 100%);
+        border-color: #154270;
+    }
+
+    .irc-submit-btn:active {
+        background: linear-gradient(to bottom, #1e69de 0%, #3d94f6 100%);
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        transform: translateY(1px);
+    }
+
+    .irc-submit-btn:disabled {
+        background: #ccc;
+        border-color: #bbb;
+        box-shadow: none;
+        cursor: not-allowed;
+        color: #666;
+        text-shadow: none;
+    }
+
+    .irc-login-footer {
+        margin-top: 60px;
+        display: flex;
+        gap: 8px;
+        font-size: 11px;
+        color: #555;
+        padding-left: 40px;
+        /* Align mostly with body */
+    }
+
+    .irc-login-footer .separator {
+        color: #ccc;
+    }
+
+    .irc-login-footer span:not(.separator) {
+        cursor: pointer;
+    }
+
+    .irc-login-footer span:not(.separator):hover {
+        text-decoration: underline;
+        color: #0078d7;
     }
 
     /* Ensure inputs are typeable */
