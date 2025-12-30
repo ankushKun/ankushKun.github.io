@@ -484,7 +484,8 @@
             gifPicker: root.querySelector('.irc-gif-picker'),
             gifSearch: root.querySelector('.irc-gif-search'),
             gifClose: root.querySelector('.irc-gif-close'),
-            gifResults: root.querySelector('.irc-gif-results')
+            gifResults: root.querySelector('.irc-gif-results'),
+            termsInput: root.querySelector('.irc-nick-dialog input[type="checkbox"]')
         };
 
         let gun, chat, presence;
@@ -537,6 +538,11 @@
         els.logoutBtn.addEventListener('click', logout);
         els.gifBtn.addEventListener('click', toggleGifPicker);
         els.gifClose.addEventListener('click', closeGifPicker);
+
+        // Terms checkbox handler
+        els.termsInput.addEventListener('change', () => {
+            els.nickBtn.disabled = !els.termsInput.checked;
+        });
 
         // Play notification sound (Discord-like)
         function playNotificationSound() {
@@ -963,7 +969,17 @@
 
         // Load saved nick and auto-join if present
         const savedNick = localStorage.getItem('irc_nick');
-        if (savedNick) {
+        const termsAccepted = localStorage.getItem('irc_tos_accepted');
+
+        if (termsAccepted) {
+            els.termsInput.checked = true;
+            els.nickBtn.disabled = false;
+        } else {
+            els.termsInput.checked = false;
+            els.nickBtn.disabled = true;
+        }
+
+        if (savedNick && termsAccepted) {
             els.nickInput.value = savedNick;
             // Auto-join after a brief delay
             setTimeout(() => {
@@ -977,8 +993,14 @@
             const nick = els.nickInput.value.trim().slice(0, 10);
             if (!nick) return els.nickInput.focus();
 
-            // Save nick
+            if (!els.termsInput.checked) {
+                alert('You must accept the content warning to join.');
+                return;
+            }
+
+            // Save nick and terms acceptance
             localStorage.setItem('irc_nick', nick);
+            localStorage.setItem('irc_tos_accepted', 'true');
 
             // Get or generate UUID
             let uuid = localStorage.getItem('irc_uuid');

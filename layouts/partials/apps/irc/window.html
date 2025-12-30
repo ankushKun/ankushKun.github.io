@@ -8,6 +8,15 @@
             <div class="irc-nick-dialog">
                 <p>Enter your nickname:</p>
                 <input type="text" id="nick-input-{{ .id }}" maxlength="10" placeholder="Nickname" autocomplete="off">
+
+                <div class="irc-terms">
+                    <label>
+                        <input type="checkbox" id="terms-input-{{ .id }}">
+                        <span>I acknowledge that this chat contains user-generated content (messages & GIFs) which may
+                            include profanity or NSFW material.</span>
+                    </label>
+                </div>
+
                 <button id="nick-submit-{{ .id }}">Join</button>
             </div>
         </div>
@@ -114,6 +123,32 @@
 
     .irc-nick-dialog button:hover {
         background: #4a8;
+    }
+
+    .irc-nick-dialog button:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }
+
+    .irc-terms {
+        margin: 10px auto 14px;
+        max-width: 200px;
+        text-align: left;
+        font-size: 11px;
+        color: #666;
+        line-height: 1.3;
+    }
+
+    .irc-terms label {
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+        cursor: pointer;
+    }
+
+    .irc-terms input {
+        margin: 2px 0 0;
+        width: auto;
     }
 
     /* Ensure inputs are typeable */
