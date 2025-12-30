@@ -15,6 +15,13 @@
         <!-- Header -->
         <div class="irc-header">
             <div class="irc-channel">#general — <span class="irc-status">Connecting...</span></div>
+            <button class="irc-logout" title="Logout" style="display: none;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+            </button>
             <div class="irc-online-header">Online</div>
         </div>
 
@@ -31,7 +38,7 @@
         <!-- Input -->
         <div class="irc-footer">
             <div class="irc-input-nick">guest></div>
-            <input type="text" class="irc-msg-input" placeholder="Type a message..." disabled>
+            <div class="irc-msg-input" contenteditable="false" data-placeholder="Type a message..."></div>
         </div>
     </div>
 </div>
@@ -114,12 +121,28 @@
         flex: 1;
         padding: 6px 10px;
         font-weight: 500;
-        border-right: 1px solid #bbb;
     }
 
     .irc-status {
         font-weight: normal;
         color: #777;
+    }
+
+    .irc-logout {
+        background: none;
+        border: none;
+        border-right: 1px solid #bbb;
+        color: #999;
+        cursor: pointer;
+        padding: 4px 8px;
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        transition: color 0.2s;
+    }
+
+    .irc-logout:hover {
+        color: #e74c3c;
     }
 
     .irc-online-header {
@@ -186,6 +209,17 @@
         background: #f9f9f9;
     }
 
+    .irc-msg-time {
+        width: 100px;
+        flex-shrink: 0;
+        text-align: right;
+        padding-right: 8px;
+        font-size: 11px;
+        color: #999;
+        font-family: monospace;
+        white-space: nowrap;
+    }
+
     .irc-msg-nick {
         width: 100px;
         flex-shrink: 0;
@@ -194,7 +228,7 @@
         border-right: 1px dotted #ccc;
         margin-right: 8px;
         font-weight: 500;
-        color: #2980b9;
+        /* Color is set dynamically via JS based on UUID */
     }
 
     .irc-msg-text {
@@ -251,9 +285,36 @@
         padding: 6px;
         font-size: 14px;
         outline: none;
+        min-height: 20px;
+        max-height: 100px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
     }
 
-    .irc-msg-input:disabled {
+    .irc-msg-input[contenteditable="false"] {
         background: #f5f5f5;
+        cursor: not-allowed;
+    }
+
+    .irc-msg-input:empty:before {
+        content: attr(data-placeholder);
+        color: #999;
+        pointer-events: none;
+    }
+
+    /* Mentions */
+    .irc-mention {
+        font-weight: 600;
+    }
+
+    /* Highlighted message (when you're mentioned) */
+    .irc-msg.mentioned {
+        background: #fff3cd;
+        box-shadow: inset 3px 0 0 #ffc107;
+    }
+
+    .irc-msg.mentioned:hover {
+        background: #ffe9a6;
     }
 </style>
