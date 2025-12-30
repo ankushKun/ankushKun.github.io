@@ -1625,7 +1625,36 @@
                 row.appendChild(delBtn);
             }
 
-            els.log.appendChild(row);
+            // Insert in chronological order
+            const msgTime = timestamp || Date.now();
+            const existingRows = els.log.children;
+            let inserted = false;
+
+            for (let i = existingRows.length - 1; i >= 0; i--) {
+                const el = existingRows[i];
+                const timeEl = el.querySelector('.irc-msg-time');
+                const t = timeEl ? parseInt(timeEl.dataset.timestamp) : 0;
+
+                if (msgTime >= t) {
+                    // New message is newer/same as this one, insert after
+                    if (i === existingRows.length - 1) {
+                        els.log.appendChild(row);
+                    } else {
+                        els.log.insertBefore(row, existingRows[i + 1]);
+                    }
+                    inserted = true;
+                    break;
+                }
+            }
+
+            if (!inserted) {
+                // Older than everything, insert at top
+                if (existingRows.length > 0) {
+                    els.log.insertBefore(row, existingRows[0]);
+                } else {
+                    els.log.appendChild(row);
+                }
+            }
 
             // Play notification sound if mentioned (only for new messages, not old ones on load)
             const messageTime = timestamp || Date.now();
