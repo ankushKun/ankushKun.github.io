@@ -829,11 +829,14 @@
         border: none;
         color: #ccc;
         cursor: pointer;
-        font-size: 16px;
-        line-height: 1;
-        padding: 0 4px;
-        margin-left: 4px;
+        padding: 4px;
+        margin-left: auto;
+        /* Push to the right */
+        display: flex;
+        align-items: center;
+        justify-content: center;
         transition: opacity 0.2s, color 0.1s;
+        border-radius: 4px;
     }
 
     .irc-msg:hover .irc-delete-btn {
@@ -842,5 +845,6 @@
 
     .irc-delete-btn:hover {
         color: #e74c3c;
+        background: rgba(231, 76, 60, 0.1);
     }
 </style>
