@@ -6,8 +6,9 @@
 
     const GUN_RELAY = "https://arweave.tech/gun";
     const CHANNEL = "ankush-irc-general";
-    const MAX_MESSAGES = 50;
+    const MAX_MESSAGES = 69;
     const PRESENCE_TIMEOUT = 10000;
+    const TENOR_API_KEY = "AIzaSyCWXyv4rNfkoSA-mNYdQZh8KlX3lDCgakc"; // Tenor API key (public demo key)
 
     // Generate a UUID v4
     function generateUUID() {
@@ -128,6 +129,341 @@
         return gunLoadPromise;
     }
 
+    // NSFW.js loading
+    let nsfwModel = null;
+    let nsfwLoadPromise = null;
+    const nsfwCache = new Map(); // Cache NSFW check results by URL
+
+    // Load omggif for GIF frame extraction
+    let omggifLoaded = false;
+    let omggifLoadPromise = null;
+
+    async function loadOmggif() {
+        if (omggifLoaded) return Promise.resolve();
+        if (omggifLoadPromise) return omggifLoadPromise;
+
+        omggifLoadPromise = new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/omggif@1.0.10/omggif.min.js';
+            script.onload = () => {
+                omggifLoaded = true;
+                console.log('[NSFW] omggif loaded, available:', typeof window.GifReader);
+                resolve();
+            };
+            script.onerror = reject;
+            document.head.appendChild(script);
+        });
+
+        return omggifLoadPromise;
+    }
+
+    // Extract key frames from GIF (first, middle, last)
+    async function extractGifFrames(gifUrl) {
+        try {
+            await loadOmggif();
+
+            if (typeof window.GifReader === 'undefined') {
+                console.error('[NSFW] GifReader not available');
+                return [];
+            }
+
+            // Fetch the GIF data
+            const response = await fetch(gifUrl);
+            const arrayBuffer = await response.arrayBuffer();
+            const uint8Array = new Uint8Array(arrayBuffer);
+
+            // Parse GIF using omggif
+            const reader = new window.GifReader(uint8Array);
+            const numFrames = reader.numFrames();
+
+            if (numFrames === 0) {
+                return [];
+            }
+
+            // Sample frames at even intervals (max 10 frames to check)
+            const maxFramesToCheck = 10;
+            const interval = Math.max(1, Math.floor(numFrames / maxFramesToCheck));
+            const framesToCheck = Math.min(maxFramesToCheck, numFrames);
+
+            console.log(`[NSFW] GIF has ${numFrames} frames, checking ${framesToCheck} frames at interval ${interval}`);
+
+            // Create canvas to render frames
+            const canvas = document.createElement('canvas');
+            canvas.width = reader.width;
+            canvas.height = reader.height;
+            const ctx = canvas.getContext('2d');
+
+            const keyFrames = [];
+
+            // Generate indices at even intervals
+            const indices = [];
+            for (let i = 0; i < framesToCheck; i++) {
+                const idx = Math.min(i * interval, numFrames - 1);
+                if (!indices.includes(idx)) {
+                    indices.push(idx);
+                }
+            }
+
+            for (const idx of indices) {
+                // Decode frame
+                const frameInfo = reader.frameInfo(idx);
+                const pixels = new Uint8ClampedArray(reader.width * reader.height * 4);
+                reader.decodeAndBlitFrameRGBA(idx, pixels);
+
+                // Create ImageData and draw to canvas
+                const imageData = new ImageData(pixels, reader.width, reader.height);
+                ctx.putImageData(imageData, 0, 0);
+
+                // Convert canvas to image element
+                const img = new Image();
+                await new Promise((resolve, reject) => {
+                    img.onload = resolve;
+                    img.onerror = reject;
+                    img.src = canvas.toDataURL();
+                });
+
+                keyFrames.push({ img, frameNumber: idx + 1 });
+            }
+
+            return keyFrames;
+        } catch (e) {
+            console.error('[NSFW] Failed to extract GIF frames:', e);
+            return [];
+        }
+    }
+
+    async function loadNSFWModel() {
+        if (nsfwModel) return nsfwModel;
+        if (nsfwLoadPromise) return nsfwLoadPromise;
+
+        nsfwLoadPromise = (async () => {
+            try {
+                // Load TensorFlow.js
+                if (!window.tf) {
+                    await new Promise((resolve, reject) => {
+                        const tfScript = document.createElement('script');
+                        tfScript.src = 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js';
+                        tfScript.onload = resolve;
+                        tfScript.onerror = reject;
+                        document.head.appendChild(tfScript);
+                    });
+                }
+
+                // Load NSFW.js
+                if (!window.nsfwjs) {
+                    await new Promise((resolve, reject) => {
+                        const nsfwScript = document.createElement('script');
+                        nsfwScript.src = 'https://cdn.jsdelivr.net/npm/nsfwjs@latest/dist/nsfwjs.min.js';
+                        nsfwScript.onload = resolve;
+                        nsfwScript.onerror = reject;
+                        document.head.appendChild(nsfwScript);
+                    });
+                }
+
+                // Set TensorFlow backend to GPU (as recommended in minimal demo)
+                // https://github.com/tensorflow/tfjs/issues/1644
+                if (window.tf) {
+                    await window.tf.setBackend('webgl');
+                    await window.tf.ready();
+                    console.log('[NSFW] TensorFlow backend set to:', window.tf.getBackend());
+                }
+
+                // Load the self-hosted MobileNetV2Mid model as graph type
+                // Model files (model.json and shards) are served from /static/models/nsfwjs/
+                console.log('[NSFW] Loading model from /models/nsfwjs/ with type: graph');
+                nsfwModel = await window.nsfwjs.load('/models/nsfwjs/', { type: 'graph' });
+                console.log('[NSFW] Model loaded successfully!', nsfwModel);
+                return nsfwModel;
+            } catch (e) {
+                console.error('Failed to load NSFW model:', e);
+                nsfwLoadPromise = null;
+                throw e;
+            }
+        })();
+
+        return nsfwLoadPromise;
+    }
+
+    // Helper function to evaluate if predictions are NSFW
+    // Checks all 5 categories: Drawing, Hentai, Neutral, Porn, Sexy
+    function evaluatePredictions(predictions) {
+        // Extract all category scores
+        const drawing = predictions.find(p => p.className === 'Drawing');
+        const hentai = predictions.find(p => p.className === 'Hentai');
+        const neutral = predictions.find(p => p.className === 'Neutral');
+        const porn = predictions.find(p => p.className === 'Porn');
+        const sexy = predictions.find(p => p.className === 'Sexy');
+
+        const scores = {
+            drawing: drawing ? drawing.probability : 0,
+            hentai: hentai ? hentai.probability : 0,
+            neutral: neutral ? neutral.probability : 0,
+            porn: porn ? porn.probability : 0,
+            sexy: sexy ? sexy.probability : 0
+        };
+
+        // Define thresholds for each category
+        const thresholds = {
+            porn: 0.05,      // 4% - Real pornography
+            hentai: 0.05,    // 4% - Explicit anime/drawn pornography
+            sexy: 0.05       // 4% - Suggestive/revealing content
+            // Drawing and Neutral are not checked (legitimate art & safe content)
+        };
+
+        // Check each category against its threshold
+        const violations = [];
+
+        if (scores.porn > thresholds.porn) {
+            violations.push({ category: 'Porn', probability: scores.porn });
+        }
+        if (scores.hentai > thresholds.hentai) {
+            violations.push({ category: 'Hentai', probability: scores.hentai });
+        }
+        if (scores.sexy > thresholds.sexy) {
+            violations.push({ category: 'Sexy', probability: scores.sexy });
+        }
+        // Drawing category is not checked - allows legitimate art and illustrations
+
+        // Block if any category exceeds its threshold
+        const isNSFW = violations.length > 0;
+
+        // Get the highest violation for the reason
+        const primaryViolation = violations.length > 0
+            ? violations.reduce((max, v) => v.probability > max.probability ? v : max, violations[0])
+            : null;
+
+        return {
+            isNSFW,
+            predictions,
+            reason: primaryViolation ? primaryViolation.category : null,
+            scores,
+            violations,
+            thresholds
+        };
+    }
+
+    async function checkImageNSFW(imageUrl) {
+        // Check cache first
+        if (nsfwCache.has(imageUrl)) {
+            console.log('[NSFW] Using cached result for:', imageUrl);
+            return nsfwCache.get(imageUrl);
+        }
+
+        console.log('[NSFW] Checking image:', imageUrl);
+
+        try {
+            const model = await loadNSFWModel();
+
+            // Check if this is a GIF
+            const isGif = imageUrl.toLowerCase().match(/\.gif(\?|$)/);
+
+            if (isGif) {
+                console.log('[NSFW] Detected GIF, extracting key frames...');
+
+                // Try to extract and check key frames (first, middle, last)
+                const keyFrames = await extractGifFrames(imageUrl);
+
+                if (keyFrames.length > 0) {
+                    // Check each key frame - check from end to start (bottom to top)
+                    // GIF "money shots" or NSFW content often appears at the end
+                    keyFrames.reverse();
+
+                    for (const { img, frameNumber } of keyFrames) {
+                        console.log(`[NSFW] Classifying frame ${frameNumber}...`);
+                        const predictions = await model.classify(img);
+                        const evaluation = evaluatePredictions(predictions);
+
+                        console.log(`[NSFW] Frame ${frameNumber}:`, evaluation.isNSFW ? '🚫 BLOCKED' : '✅ SAFE', {
+                            drawing: `${(evaluation.scores.drawing * 100).toFixed(1)}%`,
+                            hentai: `${(evaluation.scores.hentai * 100).toFixed(1)}%`,
+                            neutral: `${(evaluation.scores.neutral * 100).toFixed(1)}%`,
+                            porn: `${(evaluation.scores.porn * 100).toFixed(1)}%`,
+                            sexy: `${(evaluation.scores.sexy * 100).toFixed(1)}%`,
+                            violations: evaluation.violations.length > 0 ? evaluation.violations : 'none'
+                        });
+
+                        // If any frame is NSFW, block the entire GIF
+                        if (evaluation.isNSFW) {
+                            console.log(`[NSFW] GIF BLOCKED due to frame ${frameNumber}`, {
+                                reason: evaluation.reason,
+                                violations: evaluation.violations
+                            });
+                            const result = {
+                                isNSFW: true,
+                                predictions: evaluation.predictions,
+                                reason: `${evaluation.reason} (frame ${frameNumber})`
+                            };
+                            nsfwCache.set(imageUrl, result);
+                            return result;
+                        }
+                    }
+
+                    // All frames passed
+                    console.log('[NSFW] All frames safe ✅');
+                    const result = { isNSFW: false, predictions: [], reason: null };
+                    nsfwCache.set(imageUrl, result);
+                    return result;
+                } else {
+                    console.log('[NSFW] Frame extraction failed, falling back to single-frame check');
+                    // Fall through to single image check
+                }
+            }
+
+            // Single image check (non-GIF or GIF frame extraction failed)
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+
+            const result = await new Promise((resolve, reject) => {
+                img.onload = async () => {
+                    try {
+                        console.log('[NSFW] Image loaded, classifying...');
+                        const predictions = await model.classify(img);
+                        const evaluation = evaluatePredictions(predictions);
+
+                        console.log('[NSFW] Predictions:', predictions);
+                        console.log('[NSFW] Decision:', evaluation.isNSFW ? '🚫 BLOCKED' : '✅ SAFE', {
+                            drawing: `${(evaluation.scores.drawing * 100).toFixed(1)}%`,
+                            hentai: `${(evaluation.scores.hentai * 100).toFixed(1)}%`,
+                            neutral: `${(evaluation.scores.neutral * 100).toFixed(1)}%`,
+                            porn: `${(evaluation.scores.porn * 100).toFixed(1)}%`,
+                            sexy: `${(evaluation.scores.sexy * 100).toFixed(1)}%`,
+                            reason: evaluation.reason,
+                            violations: evaluation.violations.length > 0 ? evaluation.violations : 'none'
+                        });
+
+                        resolve({
+                            isNSFW: evaluation.isNSFW,
+                            predictions: evaluation.predictions,
+                            reason: evaluation.reason
+                        });
+                    } catch (e) {
+                        console.error('[NSFW] Classification error:', e);
+                        reject(e);
+                    }
+                };
+
+                img.onerror = () => {
+                    console.warn('[NSFW] Image failed to load (CORS or network issue), allowing by default');
+                    // If image fails to load (CORS issues, etc.), allow it
+                    // Better to allow some potential NSFW than block all GIFs
+                    resolve({ isNSFW: false, predictions: [], reason: null });
+                };
+
+                img.src = imageUrl;
+            });
+
+            // Cache the result
+            nsfwCache.set(imageUrl, result);
+            return result;
+        } catch (e) {
+            console.error('[NSFW] Check failed:', e);
+            // If NSFW check fails, allow the image (fail open)
+            const result = { isNSFW: false, predictions: [], reason: null };
+            nsfwCache.set(imageUrl, result);
+            return result;
+        }
+    }
+
     function initIRC(win) {
         const root = win.querySelector('.irc-window');
         if (!root || root.dataset.init) return;
@@ -143,7 +479,12 @@
             inputNick: root.querySelector('.irc-input-nick'),
             msgInput: root.querySelector('.irc-msg-input'),
             logoutBtn: root.querySelector('.irc-logout'),
-            onlineHeader: root.querySelector('.irc-online-header')
+            onlineHeader: root.querySelector('.irc-online-header'),
+            gifBtn: root.querySelector('.irc-gif-btn'),
+            gifPicker: root.querySelector('.irc-gif-picker'),
+            gifSearch: root.querySelector('.irc-gif-search'),
+            gifClose: root.querySelector('.irc-gif-close'),
+            gifResults: root.querySelector('.irc-gif-results')
         };
 
         let gun, chat, presence;
@@ -158,10 +499,44 @@
         let lastSystemMsg = {}; // Track last system message per user to collapse duplicates
         let joinTime = 0; // Track when user joined to avoid notifying for old messages
         let lastCursorPos = 0; // Track last known cursor position
+        const nsfwQueue = []; // Queue for NSFW checks
+        let isProcessingQueue = false; // Flag for queue processing
+
+        async function processNSFWQueue() {
+            if (isProcessingQueue) return;
+            if (nsfwQueue.length === 0) return;
+
+            isProcessingQueue = true;
+
+            try {
+                // Sort queue by timestamp descending (newest first)
+                nsfwQueue.sort((a, b) => b.timestamp - a.timestamp);
+
+                // Process items one by one
+                while (nsfwQueue.length > 0) {
+                    const item = nsfwQueue.shift(); // Take the highest priority item
+                    const { url, onSuccess, onFailure } = item;
+
+                    try {
+                        const result = await checkImageNSFW(url);
+                        onSuccess(result);
+                    } catch (e) {
+                        onFailure(e);
+                    }
+
+                    // Small delay to allow UI updates and prevent freezing
+                    await new Promise(r => setTimeout(r, 50));
+                }
+            } finally {
+                isProcessingQueue = false;
+            }
+        }
 
         // Events
         els.nickBtn.addEventListener('click', join);
         els.logoutBtn.addEventListener('click', logout);
+        els.gifBtn.addEventListener('click', toggleGifPicker);
+        els.gifClose.addEventListener('click', closeGifPicker);
 
         // Play notification sound (Discord-like)
         function playNotificationSound() {
@@ -189,6 +564,130 @@
                 // Silent fail if audio not supported
             }
         }
+
+        // GIF Picker functions
+        let gifSearchTimeout = null;
+
+        function toggleGifPicker() {
+            if (!myNick) return; // Not logged in
+            const isHidden = els.gifPicker.classList.contains('hidden');
+            if (isHidden) {
+                els.gifPicker.classList.remove('hidden');
+                els.gifSearch.value = '';
+                els.gifSearch.value = '';
+                setTimeout(() => els.gifSearch.focus(), 50);
+                // Load trending GIFs
+                searchGifs('');
+                // Preload NSFW model in background
+                loadNSFWModel().catch(() => {
+                    // Silent fail - model will load when needed
+                });
+            } else {
+                closeGifPicker();
+            }
+        }
+
+        function closeGifPicker() {
+            els.gifPicker.classList.add('hidden');
+            els.gifResults.innerHTML = '';
+        }
+
+        async function searchGifs(query) {
+            try {
+                const endpoint = query
+                    ? `https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(query)}&key=${TENOR_API_KEY}&client_key=irc-chat&limit=20`
+                    : `https://tenor.googleapis.com/v2/featured?key=${TENOR_API_KEY}&client_key=irc-chat&limit=20`;
+
+                const response = await fetch(endpoint);
+                const data = await response.json();
+
+                els.gifResults.innerHTML = '';
+
+                if (data.results && data.results.length > 0) {
+                    data.results.forEach(gif => {
+                        const gifItem = document.createElement('div');
+                        gifItem.className = 'irc-gif-item';
+
+                        const img = document.createElement('img');
+                        img.src = gif.media_formats.tinygif.url;
+                        img.alt = gif.content_description || 'GIF';
+
+                        gifItem.appendChild(img);
+                        gifItem.onclick = () => sendGif(gif.media_formats.gif.url);
+
+                        els.gifResults.appendChild(gifItem);
+                    });
+                } else {
+                    els.gifResults.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #999;">No GIFs found</div>';
+                }
+            } catch (e) {
+                console.error('Failed to fetch GIFs:', e);
+                els.gifResults.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #e74c3c;">Failed to load GIFs</div>';
+            }
+        }
+
+        async function sendGif(gifUrl) {
+            if (!chat || !myNick) return;
+
+            // Show loading state
+            const loadingMsg = document.createElement('div');
+            loadingMsg.style.cssText = 'grid-column: 1/-1; text-align: center; padding: 20px; color: #5a9;';
+            loadingMsg.textContent = 'Checking GIF...';
+            els.gifResults.innerHTML = '';
+            els.gifResults.appendChild(loadingMsg);
+
+            try {
+                // Check if GIF is NSFW
+                const result = await checkImageNSFW(gifUrl);
+
+                if (result.isNSFW) {
+                    // Show error message
+                    els.gifResults.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #e74c3c;">
+                        <strong>GIF Blocked</strong><br>
+                        This GIF was flagged as potentially inappropriate (${result.reason}).<br>
+                        Please choose a different GIF.
+                    </div>`;
+
+                    // Reload search results after 2 seconds
+                    setTimeout(() => {
+                        const currentQuery = els.gifSearch.value.trim();
+                        searchGifs(currentQuery);
+                    }, 2000);
+                    return;
+                }
+
+                // GIF is safe, send it
+                publishMessage(gifUrl, 'gif');
+                closeGifPicker();
+            } catch (e) {
+                console.error('Error checking GIF:', e);
+                // If check fails, allow the GIF (fail open)
+                publishMessage(gifUrl, 'gif');
+                closeGifPicker();
+            }
+        }
+
+        // GIF search input handler
+        els.gifSearch.addEventListener('input', (e) => {
+            clearTimeout(gifSearchTimeout);
+            const query = e.target.value.trim();
+            gifSearchTimeout = setTimeout(() => {
+                searchGifs(query);
+            }, 500);
+        });
+
+        // GIF search keydown - prevent propagation and handle escape
+        els.gifSearch.addEventListener('keydown', (e) => {
+            e.stopPropagation();
+            if (e.key === 'Escape') {
+                closeGifPicker();
+            }
+        });
+
+        // Prevent GIF picker from closing when clicking inside
+        els.gifPicker.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
 
         // Get plain text from contenteditable
         function getInputText() {
@@ -460,6 +959,7 @@
         els.nickInput.addEventListener('mousedown', e => e.stopPropagation());
         els.msgInput.addEventListener('mousedown', e => e.stopPropagation());
         els.logoutBtn.addEventListener('mousedown', e => e.stopPropagation());
+        els.gifBtn.addEventListener('mousedown', e => e.stopPropagation());
 
         // Load saved nick and auto-join if present
         const savedNick = localStorage.getItem('irc_nick');
@@ -497,6 +997,7 @@
             els.msgInput.setAttribute('data-placeholder', 'Write to #general (Shift+Enter for newline)');
             els.msgInput.focus();
             els.logoutBtn.style.display = 'flex'; // Show logout button
+            els.gifBtn.disabled = false; // Enable GIF button
             loadGun().then(connect).catch(() => addMsg('', 'Failed to load Gun.js', true));
         }
 
@@ -536,6 +1037,8 @@
             els.inputNick.style.color = '#333'; // Reset to default color
             els.status.textContent = 'Connecting...';
             els.logoutBtn.style.display = 'none'; // Hide logout button
+            els.gifBtn.disabled = true; // Disable GIF button
+            closeGifPicker(); // Close GIF picker if open
 
             // Focus nickname input
             setTimeout(() => els.nickInput.focus(), 50);
@@ -571,7 +1074,7 @@
                             return; // Skip old join/leave messages
                         }
 
-                        addMsg(m.nick, m.text, isSysMsg, m.action, m.time, m.uuid);
+                        addMsg(m.nick, m.text, isSysMsg, m.action, m.time, m.uuid, m.type);
                     }
                 } catch (e) { }
             });
@@ -822,7 +1325,10 @@
             }
         }
 
-        function addMsg(nick, text, isSystem, isAction, timestamp, userUuid) {
+        function addMsg(nick, text, isSystem, isAction, timestamp, userUuid, msgType) {
+            // Check if this is a GIF message
+            const isGif = msgType === 'gif';
+
             // Collapse consecutive duplicate join/leave messages
             const isJoinLeave = isSystem && (text.includes('entered the room') || text.includes('left the room'));
 
@@ -893,48 +1399,106 @@
             const textEl = document.createElement('div');
             textEl.className = 'irc-msg-text';
 
-            // Determine the full text to display
-            let fullText;
-            if (isSystem && nick) {
-                fullText = '@' + nick + ' ' + text;
-            } else if (isAction) {
-                fullText = nick + ' ' + text;
-            } else {
-                fullText = text;
-            }
+            // Handle GIF messages
+            if (isGif) {
+                const gifContainer = document.createElement('div');
+                gifContainer.className = 'irc-gif-container';
 
-            // Parse and colorize @mentions (for all messages including system messages)
-            const parts = parseAndColorMentions(fullText);
+                const gifImg = document.createElement('img');
+                gifImg.src = text;
+                gifImg.className = 'irc-msg-gif';
+                gifImg.alt = 'GIF';
+                gifImg.loading = 'lazy';
 
-            if (parts.length > 0) {
-                // Build text with colored mentions
-                parts.forEach(part => {
-                    if (part.type === 'text') {
-                        textEl.appendChild(document.createTextNode(part.content));
-                    } else if (part.type === 'mention') {
-                        const mentionSpan = document.createElement('span');
-                        mentionSpan.className = 'irc-mention';
-                        mentionSpan.textContent = part.content;
+                gifContainer.appendChild(gifImg);
+                textEl.appendChild(gifContainer);
 
-                        if (part.uuid) {
-                            mentionSpan.style.color = uuidToColor(part.uuid);
-                            mentionSpan.style.fontWeight = '600';
-                        }
+                // Check if GIF is NSFW (second layer of protection)
+                // Check if GIF is NSFW (second layer of protection)
+                // Add to queue with timestamp for prioritization
+                nsfwQueue.push({
+                    url: text,
+                    timestamp: timestamp || Date.now(),
+                    onSuccess: (result) => {
+                        if (result.isNSFW) {
+                            // Blur the GIF
+                            gifContainer.classList.add('nsfw-blurred');
 
-                        // Make clickable to insert mention (if not mentioning self)
-                        if (part.nick !== myNick) {
-                            mentionSpan.style.cursor = 'pointer';
-                            mentionSpan.onclick = (e) => {
+                            // Add overlay
+                            const overlay = document.createElement('div');
+                            overlay.className = 'irc-gif-nsfw-overlay';
+                            overlay.innerHTML = `
+                                <strong>Blocked content</strong>
+                                <small>Click to reveal</small>
+                            `;
+
+                            // Click to reveal
+                            overlay.onclick = (e) => {
                                 e.stopPropagation();
-                                insertMention(part.nick);
+                                gifContainer.classList.remove('nsfw-blurred');
+                                overlay.remove();
+                                // After revealing, allow opening in new tab
+                                gifImg.onclick = () => window.open(text, '_blank');
                             };
-                        }
 
-                        textEl.appendChild(mentionSpan);
+                            gifContainer.appendChild(overlay);
+                        } else {
+                            // Safe GIF - allow opening in new tab
+                            gifImg.onclick = () => window.open(text, '_blank');
+                        }
+                    },
+                    onFailure: (e) => {
+                        // If check fails, allow the GIF
+                        gifImg.onclick = () => window.open(text, '_blank');
                     }
                 });
+
+                // Trigger queue processing
+                processNSFWQueue();
             } else {
-                textEl.textContent = fullText;
+                // Determine the full text to display
+                let fullText;
+                if (isSystem && nick) {
+                    fullText = '@' + nick + ' ' + text;
+                } else if (isAction) {
+                    fullText = nick + ' ' + text;
+                } else {
+                    fullText = text;
+                }
+
+                // Parse and colorize @mentions (for all messages including system messages)
+                const parts = parseAndColorMentions(fullText);
+
+                if (parts.length > 0) {
+                    // Build text with colored mentions
+                    parts.forEach(part => {
+                        if (part.type === 'text') {
+                            textEl.appendChild(document.createTextNode(part.content));
+                        } else if (part.type === 'mention') {
+                            const mentionSpan = document.createElement('span');
+                            mentionSpan.className = 'irc-mention';
+                            mentionSpan.textContent = part.content;
+
+                            if (part.uuid) {
+                                mentionSpan.style.color = uuidToColor(part.uuid);
+                                mentionSpan.style.fontWeight = '600';
+                            }
+
+                            // Make clickable to insert mention (if not mentioning self)
+                            if (part.nick !== myNick) {
+                                mentionSpan.style.cursor = 'pointer';
+                                mentionSpan.onclick = (e) => {
+                                    e.stopPropagation();
+                                    insertMention(part.nick);
+                                };
+                            }
+
+                            textEl.appendChild(mentionSpan);
+                        }
+                    });
+                } else {
+                    textEl.textContent = fullText;
+                }
             }
 
             row.appendChild(timeEl);
@@ -955,6 +1519,13 @@
         }
 
         root.onclick = e => {
+            // Close GIF picker if clicking outside of it
+            if (!els.gifPicker.classList.contains('hidden') &&
+                !els.gifPicker.contains(e.target) &&
+                e.target !== els.gifBtn) {
+                closeGifPicker();
+            }
+
             if (els.prompt.classList.contains('hidden') && e.target.tagName !== 'INPUT') {
                 els.msgInput.focus();
             }
