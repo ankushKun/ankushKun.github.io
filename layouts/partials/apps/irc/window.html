@@ -38,7 +38,8 @@
         <!-- Input -->
         <div class="irc-footer">
             <div class="irc-input-nick">guest></div>
-            <div class="irc-msg-input" contenteditable="false" data-placeholder="Type a message..."></div>
+            <div class="irc-msg-input" contenteditable="false"
+                data-placeholder="Type a message (Shift+Enter for newline)..."></div>
         </div>
     </div>
 </div>
@@ -225,7 +226,7 @@
         flex-shrink: 0;
         text-align: right;
         padding-right: 6px;
-        border-right: 1px dotted #ccc;
+        border-right: 1px dotted #bcbaba7d;
         margin-right: 8px;
         font-weight: 500;
         /* Color is set dynamically via JS based on UUID */
@@ -235,6 +236,8 @@
         flex: 1;
         word-break: break-word;
         padding-right: 6px;
+        white-space: pre-wrap;
+        font-family: inherit;
     }
 
     .irc-msg.system .irc-msg-nick {
@@ -271,8 +274,8 @@
         width: 100px;
         text-align: right;
         padding: 6px;
-        padding-right: 6px;
-        border-right: 1px dotted #ccc;
+        padding-right: 0px;
+        border-right: 0px dotted #ccc;
         margin-right: 8px;
         font-weight: 500;
         color: #333;
