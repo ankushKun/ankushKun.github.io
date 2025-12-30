@@ -48,6 +48,8 @@
             {{ range .Params.tags }}<a href="/tags/{{ . | urlize }}" class="post-tag">#{{ . }}</a>{{ end }}
         </div>
         {{ end }}
+
+        <script src="http://commentkit.ankush.one/bundle.js"></script>
     </header>
 
     <div class="post-content markdown-body">
@@ -69,5 +71,7 @@
             </a>
             {{ end }}
         </div>
+
+        <div style="margin-top: 20px;" data-commentkit="{{ .Permalink }}"></div>
     </footer>
 </article>
