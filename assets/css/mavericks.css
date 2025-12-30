@@ -178,6 +178,33 @@ hr {
     margin-bottom: 4px;
 }
 
+/* make all scrollbars 1px */
+* {
+    -ms-overflow-style: none;
+    scrollbar-width: thin;
+    /* Internet Explorer 10+ and Firefox */
+}
+
+::-webkit-scrollbar {
+    width: 6px !important;
+    height: 6px !important;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2) !important;
+    border-radius: 3px !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.3) !important;
+}
+
+/* For Mavericks/Finder theme - hide scrollbar in sidebars if preferred, or keep thin */
+
 /* ================================================
    Menu Bar
    ================================================ */
