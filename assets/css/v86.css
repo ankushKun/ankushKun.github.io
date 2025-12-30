@@ -517,3 +517,28 @@
     border-top: 1px solid rgba(255, 255, 255, 0.06);
     opacity: 0.8;
 }
+
+/* make all scrollbars thin */
+* {
+    -ms-overflow-style: none;
+    scrollbar-width: thin;
+    /* Internet Explorer 10+ and Firefox */
+}
+
+::-webkit-scrollbar {
+    width: 6px !important;
+    height: 6px !important;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2) !important;
+    border-radius: 3px !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.3) !important;
+}
