@@ -6,7 +6,7 @@
 
     const GUN_RELAY = "https://arweave.tech/gun";
     const CHANNEL = "ankush-irc-general";
-    const MAX_MESSAGES = 69;
+    const MAX_MESSAGES = 110;
     const PRESENCE_TIMEOUT = 10000;
     const TENOR_API_KEY = "AIzaSyCWXyv4rNfkoSA-mNYdQZh8KlX3lDCgakc"; // Tenor API key (public demo key)
 
