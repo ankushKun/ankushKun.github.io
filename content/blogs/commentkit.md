@@ -1,6 +1,5 @@
 +++
-# date = '2026-01-01'
-date = '2025-12-30'
+date = '2026-01-01'
 draft = false
 title = "CommentKit: A Modern Embeddable Comment System"
 description = "How I built CommentKit - an open-source, embeddable comment system powered by Cloudflare Workers, featuring magic link authentication, nested replies, and a simple two-line integration."
