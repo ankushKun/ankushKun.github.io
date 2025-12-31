@@ -492,6 +492,7 @@
         let myNick = '';
         let myUUID = '';
         let seen = new Set();
+        let allMessages = []; // Track all messages with {key, time} for cleanup
         let online = {}; // Maps nick -> {nick, uuid, status, lastSeen}
         let uuidCache = {}; // Maps nick -> uuid (persists even when offline)
         let presenceInt = null;
@@ -502,6 +503,29 @@
         let lastCursorPos = 0; // Track last known cursor position
         const nsfwQueue = []; // Queue for NSFW checks
         let isProcessingQueue = false; // Flag for queue processing
+
+        // Cleanup old messages from Gun.js to keep database size manageable
+        function cleanupOldMessages() {
+            if (!chat || allMessages.length <= MAX_MESSAGES) return;
+
+            // Sort messages by timestamp (oldest first)
+            allMessages.sort((a, b) => (a.time || 0) - (b.time || 0));
+
+            // Calculate how many to delete
+            const deleteCount = allMessages.length - MAX_MESSAGES;
+            const messagesToDelete = allMessages.slice(0, deleteCount);
+
+            console.log(`[IRC] Cleaning up ${deleteCount} old messages from Gun.js`);
+
+            // Delete old messages from Gun.js
+            messagesToDelete.forEach(msg => {
+                chat.get(msg.key).put(null);
+                seen.delete(msg.key);
+            });
+
+            // Update allMessages array
+            allMessages = allMessages.slice(deleteCount);
+        }
 
         async function processNSFWQueue() {
             if (isProcessingQueue) return;
@@ -1113,6 +1137,7 @@
             // Reset UI
             myNick = '';
             seen.clear();
+            allMessages = [];
             online = {};
             uuidCache = {};
             hasLeft = false;
@@ -1173,6 +1198,12 @@
                 }
                 seen.add(key);
 
+                // Track this message for cleanup
+                allMessages.push({
+                    key: key,
+                    time: m.time || Date.now()
+                });
+
                 // Filter old join/leave messages (older than 5 minutes)
                 const isSysMsg = m.type === 'system';
                 const isJoinLeave = isSysMsg && (m.text.includes('entered the room') || m.text.includes('left the room'));
@@ -1213,9 +1244,28 @@
                         delete online[key];
                         updateUsers();
 
-                        // Don't broadcast leave messages on behalf of others
-                        // The leaving client will handle their own leave message via
-                        // logout(), beforeunload, or ircCleanup handlers
+                        // Prevent duplicate leave broadcasts from multiple clients
+                        if (recentLeaves.has(leftNick)) return;
+                        recentLeaves.add(leftNick);
+
+                        // Broadcast leave message with delay (give the leaving client time to broadcast first)
+                        setTimeout(() => {
+                            if (chat && myNick && leftNick) {
+                                const leaveKey = Date.now() + '-leave-' + leftNick;
+                                chat.get(leaveKey).put(JSON.stringify({
+                                    nick: leftNick,
+                                    text: 'left the room',
+                                    time: Date.now(),
+                                    action: false,
+                                    type: 'system'
+                                }));
+                            }
+
+                            // Clear from recentLeaves after 2 seconds
+                            setTimeout(() => {
+                                recentLeaves.delete(leftNick);
+                            }, 2000);
+                        }, 800);
                     }
                     return;
                 }
@@ -1243,6 +1293,9 @@
             });
 
             setInterval(cleanStale, 10000);
+
+            // Cleanup old messages periodically (every 30 seconds)
+            setInterval(cleanupOldMessages, 30000);
 
             // Update relative timestamps every 10 seconds
             setInterval(() => {
@@ -1567,21 +1620,22 @@
                     return;
                 }
 
-                const msgKey = fullText;
-
                 // Check last message in the log to see if it's the same user + action
                 const lastChild = els.log.lastElementChild;
                 if (lastChild) {
-                    const lastNick = lastChild.querySelector('.irc-msg-nick')?.textContent;
-                    const lastText = lastChild.querySelector('.irc-msg-text')?.textContent;
+                    const lastMsg = lastChild.querySelector('.irc-msg-text');
+                    const lastNickEl = lastChild.querySelector('.irc-msg-nick .irc-nick-text');
 
-                    // If last message is same user doing same action, replace it
-                    if (lastNick === 'system' && lastText === fullText) {
-                        lastChild.remove();
+                    // Get the last message's nickname (trim spaces from padding)
+                    const lastNick = lastNickEl?.textContent?.trim();
+                    const currentNick = (isSystem ? 'system' : nick).trim();
+
+                    // If last message is same user doing same action, skip this duplicate
+                    if (lastNick === currentNick && lastMsg?.textContent?.trim() === fullText?.trim()) {
+                        console.log(`[IRC] Skipping duplicate ${text} for ${nick}`);
+                        return;
                     }
                 }
-
-                if (nick) lastSystemMsg[nick] = msgKey;
             }
 
             // Check if this message mentions the current user (and is not from self)
