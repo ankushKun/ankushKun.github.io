@@ -2,7 +2,7 @@
 # date = '2026-01-01'
 date = '2025-12-30'
 draft = false
-title = "Building CommentKit: A Modern Embeddable Comment System"
+title = "CommentKit: A Modern Embeddable Comment System"
 description = "How I built CommentKit - an open-source, embeddable comment system powered by Cloudflare Workers, featuring magic link authentication, nested replies, and a simple two-line integration."
 summary = "Discover how CommentKit provides a seamless commenting experience for any website with just two lines of code, powered by Cloudflare's edge infrastructure."
 tags = ["cloudflare", "workers", "commentkit", "open-source", "edge-runtime", "D1"]
