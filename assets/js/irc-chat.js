@@ -1213,28 +1213,9 @@
                         delete online[key];
                         updateUsers();
 
-                        // Prevent duplicate leave broadcasts from multiple clients
-                        if (recentLeaves.has(leftNick)) return;
-                        recentLeaves.add(leftNick);
-
-                        // Broadcast leave message with delay (give the leaving client time to broadcast first)
-                        setTimeout(() => {
-                            if (chat && myNick && leftNick) {
-                                const leaveKey = Date.now() + '-leave-' + leftNick;
-                                chat.get(leaveKey).put(JSON.stringify({
-                                    nick: leftNick,
-                                    text: 'left the room',
-                                    time: Date.now(),
-                                    action: false,
-                                    type: 'system'
-                                }));
-                            }
-
-                            // Clear from recentLeaves after 2 seconds
-                            setTimeout(() => {
-                                recentLeaves.delete(leftNick);
-                            }, 2000);
-                        }, 800);
+                        // Don't broadcast leave messages on behalf of others
+                        // The leaving client will handle their own leave message via
+                        // logout(), beforeunload, or ircCleanup handlers
                     }
                     return;
                 }
