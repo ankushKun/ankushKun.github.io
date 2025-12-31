@@ -544,6 +544,65 @@
             els.nickBtn.disabled = !els.termsInput.checked;
         });
 
+        // Replace spaces with underscores in nickname input
+        els.nickInput.addEventListener('input', (e) => {
+            const cursorPos = e.target.selectionStart;
+            const oldValue = e.target.value;
+            const newValue = oldValue.replace(/ /g, '_');
+
+            if (oldValue !== newValue) {
+                e.target.value = newValue;
+                // Restore cursor position
+                e.target.setSelectionRange(cursorPos, cursorPos);
+            }
+        });
+
+        // Mobile: Toggle user list when clicking "Online" header
+        els.onlineHeader.addEventListener('click', () => {
+            if (window.innerWidth <= 768) {
+                els.users.parentElement.classList.toggle('mobile-visible');
+            }
+        });
+
+        // Mobile: Close user list when clicking outside of it
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768) {
+                const usersCol = els.users.parentElement;
+                if (usersCol.classList.contains('mobile-visible') &&
+                    !usersCol.contains(e.target) &&
+                    !els.onlineHeader.contains(e.target)) {
+                    usersCol.classList.remove('mobile-visible');
+                }
+            }
+        });
+
+        // Mobile: Close GIF picker when clicking outside (only on mobile)
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768) {
+                if (!els.gifPicker.classList.contains('hidden') &&
+                    !els.gifPicker.contains(e.target) &&
+                    !els.gifBtn.contains(e.target)) {
+                    closeGifPicker();
+                }
+            }
+        });
+
+
+        // Update timestamps when switching between mobile and desktop
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                // Refresh all timestamps
+                els.log.querySelectorAll('.irc-msg-time').forEach(timeEl => {
+                    const timestamp = parseInt(timeEl.dataset.timestamp);
+                    if (timestamp) {
+                        timeEl.textContent = formatRelativeTime(timestamp);
+                    }
+                });
+            }, 250); // Debounce for 250ms
+        });
+
         // Play notification sound (Discord-like)
         function playNotificationSound() {
             try {
@@ -968,8 +1027,18 @@
         els.gifBtn.addEventListener('mousedown', e => e.stopPropagation());
 
         // Load saved nick and auto-join if present
-        const savedNick = localStorage.getItem('irc_nick');
+        let savedNick = localStorage.getItem('irc_nick');
         const termsAccepted = localStorage.getItem('irc_tos_accepted');
+
+        // Replace spaces with underscores in saved nickname
+        if (savedNick) {
+            const sanitizedNick = savedNick.replace(/ /g, '_');
+            if (sanitizedNick !== savedNick) {
+                // Update localStorage with sanitized version
+                localStorage.setItem('irc_nick', sanitizedNick);
+                savedNick = sanitizedNick;
+            }
+        }
 
         if (termsAccepted) {
             els.termsInput.checked = true;
@@ -990,7 +1059,10 @@
         }
 
         function join() {
-            const nick = els.nickInput.value.trim().slice(0, 10);
+            let nick = els.nickInput.value.trim().slice(0, 10);
+            // Replace spaces with underscores
+            nick = nick.replace(/ /g, '_');
+
             if (!nick) return els.nickInput.focus();
 
             if (!els.termsInput.checked) {
@@ -1341,30 +1413,43 @@
         }
 
         function formatRelativeTime(timestamp) {
-            const now = Date.now();
-            const msgTime = timestamp || now;
-            const diff = now - msgTime;
-            const seconds = Math.floor(diff / 1000);
-            const minutes = Math.floor(seconds / 60);
-            const hours = Math.floor(minutes / 60);
-            const days = Math.floor(hours / 24);
+            const date = new Date(timestamp || Date.now());
+            const now = new Date();
 
-            if (seconds < 60) {
-                return `[now]`;
-            } else if (minutes < 60) {
-                return minutes === 1 ? `[1min ago]` : `[${minutes} min ago]`;
-            } else if (hours < 24) {
-                return hours === 1 ? `[1hr ago]` : `[${hours} hrs ago]`;
-            } else if (days === 1) {
-                return `[yesterday]`;
-            } else if (days <= 5) {
-                return `[${days}days ago]`;
+            // Check if message is from today
+            const isToday = date.getDate() === now.getDate() &&
+                date.getMonth() === now.getMonth() &&
+                date.getFullYear() === now.getFullYear();
+
+            // Check if mobile (screen width <= 768px)
+            const isMobile = window.innerWidth <= 768;
+
+            if (isToday) {
+                // Show time for today's messages
+                const hours = date.getHours().toString().padStart(2, '0');
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+
+                if (isMobile) {
+                    // Mobile: [HH:MM] (7 chars)
+                    return `[${hours}:${minutes}]`;
+                } else {
+                    // Desktop: [HH:MM:SS] (11 chars)
+                    const seconds = date.getSeconds().toString().padStart(2, '0');
+                    return `[${hours}:${minutes}:${seconds}]`;
+                }
             } else {
-                // Show date for messages older than 5 days
-                const date = new Date(msgTime);
-                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                // Show date for messages from other days
                 const day = date.getDate().toString().padStart(2, '0');
-                return `[${month}/${day}]`;
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+
+                if (isMobile) {
+                    // Mobile: [DD/MM] (7 chars)
+                    return `[${day}/${month}]`;
+                } else {
+                    // Desktop: [DD/MM/YY] (11 chars)
+                    const year = date.getFullYear().toString().slice(-2);
+                    return `[${day}/${month}/${year}]`;
+                }
             }
         }
 
@@ -1402,7 +1487,7 @@
             splitParts(/\*\*([^*]+)\*\*/, 'bold', 'strong');
             splitParts(/__([^_]+)__/, 'bold', 'strong');
             splitParts(/\*([^*]+)\*/, 'italic', 'em');
-            splitParts(/_([^_]+)_/, 'italic', 'em');
+            splitParts(/(?<!@\w*)_([^_]+)_/, 'italic', 'em');
             splitParts(/~~([^~]+)~~/, 'strike', 's');
 
             return parts;
@@ -1410,6 +1495,13 @@
 
         // Helper to render text with mentions and markdown
         function renderMessageText(containerEl, text) {
+            // Add indentation for multiline messages
+            // Calculate padding: [HH:MM:SS] (11) + space (1) + | (1) + space (1) + username (10) = 24 chars (aligns with '>')
+            // const INDENT_PADDING = ' '.repeat(24);
+
+            // Replace newlines with newline + padding (except for code blocks which preserve formatting)
+            // const indentedText = text.replace(/\n/g, '\n' + INDENT_PADDING);
+
             // First, parse markdown structure (blocks, bold, code, etc.)
             const mdParts = parseMarkdown(text);
 
@@ -1429,7 +1521,7 @@
 
                     if (mdp.type === 'pre') {
                         const code = document.createElement('code');
-                        code.textContent = content; // No mentions in code
+                        code.textContent = content;
                         el.appendChild(code);
                         return;
                     } else if (mdp.type === 'code') {
@@ -1484,7 +1576,16 @@
             // Collapse consecutive duplicate join/leave messages
             const isJoinLeave = isSystem && (text.includes('entered the room') || text.includes('left the room'));
 
+            // Skip old join/leave messages (before user joined)
             if (isJoinLeave) {
+                const msgTime = timestamp || Date.now();
+                const isOldMessage = msgTime < joinTime;
+
+                if (isOldMessage) {
+                    // Don't display old join/leave messages
+                    return;
+                }
+
                 const msgKey = fullText;
 
                 // Check last message in the log to see if it's the same user + action
@@ -1519,7 +1620,27 @@
 
             const nickEl = document.createElement('div');
             nickEl.className = 'irc-msg-nick';
-            nickEl.textContent = isSystem ? 'system' : nick;
+            const displayNick = isSystem ? 'system' : nick;
+            // Ensure username is exactly 10 characters: truncate if longer, right-align if shorter
+            const truncatedNick = displayNick.substring(0, 10);
+            const paddedNick = truncatedNick.padStart(10, ' ');
+
+            // Create structure: pipe (not italic) + nickname + angle bracket (not italic)
+            const pipeSpan = document.createElement('span');
+            pipeSpan.className = 'irc-nick-pipe';
+            pipeSpan.textContent = '| ';
+
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'irc-nick-text';
+            nameSpan.textContent = paddedNick;
+
+            const angleSpan = document.createElement('span');
+            angleSpan.className = 'irc-nick-angle';
+            angleSpan.textContent = '> ';
+
+            nickEl.appendChild(pipeSpan);
+            nickEl.appendChild(nameSpan);
+            nickEl.appendChild(angleSpan);
 
             // Apply color to nickname based on UUID
             if (!isSystem && nick) {
@@ -1536,7 +1657,7 @@
                 }
 
                 if (uuid) {
-                    nickEl.style.color = uuidToColor(uuid);
+                    nameSpan.style.color = uuidToColor(uuid);
                 }
 
                 // Make clickable to insert mention (except for self and system)
@@ -1708,8 +1829,28 @@
             if (isSystem) {
                 // If it became a system message (deleted), update nick and style
                 if (nickEl) {
-                    nickEl.textContent = 'system';
-                    nickEl.style.color = ''; // Clear inline color so CSS applies
+                    const truncatedNick = 'system'.substring(0, 10);
+                    const paddedNick = truncatedNick.padStart(10, ' ');
+
+                    // Rebuild nickname structure
+                    nickEl.innerHTML = '';
+
+                    const pipeSpan = document.createElement('span');
+                    pipeSpan.className = 'irc-nick-pipe';
+                    pipeSpan.textContent = '| ';
+
+                    const nameSpan = document.createElement('span');
+                    nameSpan.className = 'irc-nick-text';
+                    nameSpan.textContent = paddedNick;
+
+                    const angleSpan = document.createElement('span');
+                    angleSpan.className = 'irc-nick-angle';
+                    angleSpan.textContent = '> ';
+
+                    nickEl.appendChild(pipeSpan);
+                    nickEl.appendChild(nameSpan);
+                    nickEl.appendChild(angleSpan);
+
                     nickEl.style.cursor = 'default';
                     nickEl.onclick = null;
                 }

@@ -451,9 +451,12 @@
 
     /* Chat Messages */
     .irc-msg {
+        padding: 0px;
+        line-height: 1.2;
+        font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', 'Droid Sans Mono', 'Source Code Pro', monospace;
+        word-wrap: break-word;
+        position: relative;
         display: flex;
-        padding: 1px 0;
-        line-height: 1.5;
     }
 
     .irc-msg:hover {
@@ -461,31 +464,33 @@
     }
 
     .irc-msg-time {
-        width: 100px;
-        flex-shrink: 0;
-        text-align: right;
-        padding-right: 8px;
-        font-size: 11px;
+        display: inline;
         color: #999;
-        font-family: monospace;
-        white-space: nowrap;
+        font-family: inherit;
     }
 
     .irc-msg-nick {
-        width: 100px;
-        flex-shrink: 0;
-        text-align: right;
-        padding-right: 6px;
-        border-right: 1px dotted #bcbaba7d;
-        margin-right: 8px;
+        display: inline;
         font-weight: 500;
+        font-family: inherit;
+        margin-right: 8px;
+        display: flex;
         /* Color is set dynamically via JS based on UUID */
     }
 
+    .irc-nick-pipe,
+    .irc-nick-angle {
+        padding-left: 2px;
+        font-style: normal !important;
+    }
+
+    .irc-nick-text {
+        white-space: pre;
+    }
+
     .irc-msg-text {
-        flex: 1;
+        display: inline;
         word-break: break-word;
-        padding-right: 6px;
         white-space: pre-wrap;
         font-family: inherit;
     }
@@ -494,7 +499,7 @@
         background: rgba(0, 0, 0, 0.05);
         padding: 2px 4px;
         border-radius: 3px;
-        font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+        font-family: inherit;
         font-size: 0.9em;
         color: #e83e8c;
     }
@@ -504,7 +509,7 @@
         padding: 8px !important;
         border-radius: 4px !important;
         overflow-x: auto !important;
-        font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace !important;
+        font-family: inherit !important;
         font-size: 0.9em !important;
         margin: 4px 0 !important;
         border: 1px solid #e9ecef !important;
@@ -797,15 +802,19 @@
 
     /* GIF messages */
     .irc-msg-gif {
-        max-width: 300px;
-        max-height: 200px;
+        max-height: 250px;
         border-radius: 4px;
         pointer-events: none;
+        padding: 0px !important;
+        margin: 0px !important;
     }
 
     .irc-gif-container {
         position: relative;
-        display: inline-block;
+        display: block;
+        padding: 0px !important;
+        margin: 0px !important;
+        /* Align with message text: 24 chars for timestamp + | + username */
     }
 
     .irc-gif-container.nsfw-blurred .irc-msg-gif {
@@ -850,6 +859,10 @@
 
     /* Delete Button */
     .irc-delete-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        right: 4px;
         opacity: 0;
         background: none;
         border: none;
@@ -871,6 +884,272 @@
 
     .irc-delete-btn:hover {
         color: #e74c3c;
-        background: rgba(231, 76, 60, 0.1);
+    }
+
+    /* ========== MOBILE RESPONSIVE STYLES ========== */
+    @media (max-width: 768px) {
+
+        /* Nick Prompt - Mobile Optimized */
+        .irc-nick-dialog {
+            width: 90%;
+            max-width: 400px;
+            padding: 0 10px;
+        }
+
+        .irc-logo-container {
+            flex-direction: column;
+            gap: 10px;
+            text-align: center;
+        }
+
+        .irc-app-logo {
+            width: 50px;
+            height: 50px;
+        }
+
+        .irc-brand-main {
+            font-size: 24px;
+        }
+
+        .irc-login-body {
+            padding: 0 20px;
+        }
+
+        .irc-welcome-title {
+            font-size: 20px;
+        }
+
+        .irc-welcome-sub {
+            font-size: 13px;
+        }
+
+        .irc-login-footer {
+            padding-left: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* Header - Make elements smaller */
+        .irc-header {
+            font-size: 12px;
+        }
+
+        .irc-channel {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        /* Hide the online users column on mobile by default */
+        .irc-users-col {
+            display: none;
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 60%;
+            max-width: 200px;
+            z-index: 50;
+            box-shadow: -2px 0 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .irc-users-col.mobile-visible {
+            display: block;
+        }
+
+        .irc-online-header {
+            width: auto;
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+        }
+
+        .irc-online-header::after {
+            content: '▼';
+            font-size: 8px;
+            margin-left: 4px;
+            opacity: 0.6;
+        }
+
+        .irc-online-header:active {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        /* Body - Take full width */
+        .irc-body {
+            position: relative;
+        }
+
+        .irc-chat-col {
+            width: 100%;
+        }
+
+        /* Messages - Adjust layout for smaller screens */
+        .irc-msg {
+            padding: 0;
+            font-size: 11px;
+            line-height: 1.3;
+        }
+
+        .irc-msg-time {
+            font-size: 10px;
+        }
+
+        .irc-msg-nick {
+            font-size: 11px;
+            margin-right: 4px;
+        }
+
+        .irc-msg-text {
+            font-size: 11px;
+        }
+
+        /* Reduce nickname padding on mobile to save space */
+        .irc-nick-angle {
+            padding-left: 1px;
+        }
+
+        /* Optimize GIF display for mobile */
+        .irc-gif-container {
+            margin-left: 0;
+        }
+
+        .irc-msg-gif {
+            max-height: 180px;
+        }
+
+        /* Footer - Adjust input area */
+        .irc-footer {
+            padding: 3px;
+        }
+
+        .irc-input-nick {
+            min-width: 50px;
+            max-width: 80px;
+            font-size: 12px;
+            padding: 4px;
+        }
+
+        .irc-msg-input {
+            font-size: 13px;
+            padding: 5px 6px;
+            min-height: 18px;
+            max-height: 80px;
+        }
+
+        .irc-gif-btn {
+            padding: 0 8px;
+            font-size: 9px;
+        }
+
+        /* GIF Picker - Full width on mobile */
+        .irc-gif-picker {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            max-height: 60vh;
+            border-radius: 8px 8px 0 0;
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .irc-gif-results {
+            grid-template-columns: repeat(2, 1fr);
+            max-height: 50vh;
+        }
+
+        .irc-gif-search {
+            font-size: 14px;
+        }
+
+        /* GIF messages - Smaller on mobile */
+        .irc-msg-gif {
+            max-width: 200px;
+            max-height: 150px;
+        }
+
+        /* Delete button - Always visible on mobile (touch devices) */
+        .irc-delete-btn {
+            opacity: 0.2;
+        }
+
+        .irc-msg:hover .irc-delete-btn,
+        .irc-delete-btn:active {
+            opacity: 1;
+        }
+    }
+
+    /* Extra small phones */
+    @media (max-width: 480px) {
+        .irc-nick-dialog {
+            width: 95%;
+            padding: 0 5px;
+        }
+
+        .irc-brand-main {
+            font-size: 20px;
+        }
+
+        .irc-login-body {
+            padding: 0 15px;
+        }
+
+        .irc-msg {
+            font-size: 10px;
+            line-height: 1.25;
+        }
+
+        .irc-msg-time {
+            font-size: 9px;
+        }
+
+        .irc-msg-nick {
+            font-size: 10px;
+        }
+
+        .irc-msg-text {
+            font-size: 10px;
+        }
+
+        .irc-input-nick {
+            min-width: 40px;
+            max-width: 70px;
+            font-size: 11px;
+        }
+
+        .irc-msg-input {
+            font-size: 12px;
+        }
+
+        .irc-gif-results {
+            grid-template-columns: 1fr;
+        }
+
+        .irc-msg-gif {
+            max-width: 180px;
+            max-height: 120px;
+        }
+    }
+
+    /* Landscape mobile */
+    @media (max-width: 768px) and (orientation: landscape) {
+        .irc-nick-dialog {
+            width: 70%;
+            max-width: 500px;
+        }
+
+        .irc-login-body {
+            padding: 0 30px;
+        }
+
+        .irc-gif-picker {
+            max-height: 70vh;
+        }
+
+        .irc-gif-results {
+            max-height: 60vh;
+        }
     }
 </style>
