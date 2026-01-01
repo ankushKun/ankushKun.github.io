@@ -239,12 +239,13 @@
     <!-- Preload Wallpaper for Performance -->
     <link rel="preload" as="image" href="/wallpaper.webp">
 
-    <!-- Git Info for About This Site - prefers workflow env vars, falls back to file GitInfo -->
+    <!-- Git Info for About This Site - prefers Cloudflare Pages env vars, falls back to file GitInfo -->
     {{- $commitHash := "" -}}
     {{- $commitShort := "" -}}
-    {{- if .Site.Params.gitcommit -}}
-    {{- $commitHash = .Site.Params.gitcommit -}}
-    {{- $commitShort = substr .Site.Params.gitcommit 0 7 -}}
+    {{- $cfCommit := getenv "CF_PAGES_COMMIT_SHA" -}}
+    {{- if $cfCommit -}}
+    {{- $commitHash = $cfCommit -}}
+    {{- $commitShort = substr $cfCommit 0 7 -}}
     {{- else if .GitInfo -}}
     {{- $commitHash = .GitInfo.Hash -}}
     {{- $commitShort = .GitInfo.AbbreviatedHash -}}

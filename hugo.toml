@@ -39,6 +39,11 @@ changefreq = 'weekly'
 filename = 'sitemap.xml'
 priority = 0.5
 
+# Security configuration - whitelist CF_PAGES environment variables
+[security]
+[security.funcs]
+getenv = ['^HUGO_', '^CI$', '^CF_PAGES_COMMIT_SHA$']
+
 # Navigation menu
 [menu]
 [[menu.main]]
