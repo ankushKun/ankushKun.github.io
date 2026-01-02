@@ -949,8 +949,9 @@
                     <div class="about-row">
                         <span class="about-label">Extras</span>
                         <span class="about-value">
-                            <a href="https://copy.sh/v86/" target="_blank" rel="noopener">v86</a> + 
-                            <a href="https://ruffle.rs" target="_blank" rel="noopener">Ruffle</a>
+                            <a href="https://copy.sh/v86/" target="_blank" rel="noopener">v86</a>, 
+                            <a href="https://ruffle.rs" target="_blank" rel="noopener">Ruffle</a>,
+                            <a href="https://thelongestyard.link" target="_blank" rel="noopener">thelongestyard</a>
                         </span>
                     </div>
                     ${commitHtml}
