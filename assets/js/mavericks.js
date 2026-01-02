@@ -389,6 +389,7 @@
                 if (item.title === 'Resume') return '📄';
                 if (item.title === 'About Me') return '🍎';
                 if (item.title === 'Terminal') return '💻';
+                if (item.title === 'IRC Chat') return '💬';
                 if (item.title === 'Games') return '🕹️';
                 return '🖥️';
             }
