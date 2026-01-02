@@ -140,14 +140,117 @@
     ) }}
 
     <!-- QUAKE 3 ARENA CONTENT -->
-    {{ partial "components/embed-external.html" (dict
-    "id" "quake3"
-    "icon" "🎮"
-    "title" "Quake 3 Arena"
-    "url" "https://thelongestyard.link/q3a-demo/"
-    "downloadLabel" (partial "icons/ui/external-link.html" .)
-    "external" true
-    ) }}
+    <div id="content-quake3">
+        <div class="quake3-layout" style="height: 100%; display: flex; flex-direction: column; background: #000;">
+            <div class="quake3-menu">
+                <div class="quake3-logo">
+                    <h1>QUAKE III ARENA</h1>
+                </div>
+                <div class="quake3-menu-items">
+                    <button class="quake3-menu-btn" onclick="startQuake3(this, 'singleplayer')">SINGLE PLAYER</button>
+                    <button class="quake3-menu-btn" onclick="startQuake3(this, 'multiplayer')">MULTIPLAYER</button>
+                </div>
+            </div>
+            <iframe class="quake3-iframe" style="display: none;" frameborder="0"></iframe>
+
+            <style>
+                .quake3-layout {
+                    width: 100%;
+                    height: 100%;
+                    overflow: hidden;
+                }
+
+                .quake3-menu {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 50px;
+                }
+
+                .quake3-logo h1 {
+                    font-family: 'Impact', 'Arial Black', sans-serif;
+                    font-size: 52px;
+                    font-weight: 900;
+                    letter-spacing: 6px;
+                    margin: 0;
+                    color: #ddd;
+                    text-align: center;
+                    text-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+                }
+
+                .quake3-menu-items {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 15px;
+                    align-items: center;
+                }
+
+                .quake3-menu-btn {
+                    background: transparent;
+                    border: none;
+                    color: #c00;
+                    font-family: 'Impact', 'Arial Black', sans-serif;
+                    font-size: 32px;
+                    font-weight: 700;
+                    padding: 10px 30px;
+                    cursor: pointer;
+                    letter-spacing: 3px;
+                    transition: all 0.1s;
+                    text-transform: uppercase;
+                }
+
+                .quake3-menu-btn:hover {
+                    color: #fff;
+                    text-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+                    transform: scale(1.05);
+                }
+
+                .quake3-iframe {
+                    flex: 1;
+                    width: 100%;
+                    height: 100%;
+                    border: none;
+                }
+
+                @media (max-width: 600px) {
+                    .quake3-logo h1 {
+                        font-size: 32px;
+                    }
+
+                    .quake3-menu-btn {
+                        font-size: 24px;
+                    }
+                }
+            </style>
+
+            <script>
+                function startQuake3(btn, mode) {
+                    // Find the main container relative to the clicked button
+                    const container = btn.closest('.quake3-layout');
+                    if (!container) return;
+
+                    const menu = container.querySelector('.quake3-menu');
+                    const iframe = container.querySelector('.quake3-iframe');
+
+                    let url;
+                    if (mode === 'singleplayer') {
+                        url = 'https://thelongestyard.link/q3a-demo/';
+                    } else if (mode === 'multiplayer') {
+                        url = 'https://thelongestyard.link/q3a-demo/?server=ankushone';
+                    }
+
+                    // Hide menu and show iframe
+                    if (menu) menu.style.display = 'none';
+                    if (iframe) {
+                        iframe.src = url;
+                        iframe.style.display = 'block';
+                    }
+                }
+            </script>
+        </div>
+    </div>
 
     <!-- ITCH.IO CONTENT -->
     {{ partial "components/embed-external.html" (dict
