@@ -1,0 +1,56 @@
+<svg viewBox="0 0 64 64" width="64" height="64" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <!-- Rich Deep Blue Base Gradient -->
+        <linearGradient id="chatBg" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#5ca0fd" />
+            <stop offset="50%" style="stop-color:#1e6ecf" />
+            <stop offset="100%" style="stop-color:#0d47a1" />
+        </linearGradient>
+
+        <!-- Glossy Highlight Gradient -->
+        <linearGradient id="chatGloss" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:rgba(255,255,255,0.8)" />
+            <stop offset="45%" style="stop-color:rgba(255,255,255,0.15)" />
+            <stop offset="50%" style="stop-color:rgba(255,255,255,0)" />
+            <stop offset="100%" style="stop-color:rgba(255,255,255,0)" />
+        </linearGradient>
+
+        <!-- Metallic Border Gradient -->
+        <linearGradient id="borderGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#aedaff" />
+            <stop offset="100%" style="stop-color:#00346b" />
+        </linearGradient>
+
+        <!-- Drop Shadow -->
+        <filter id="chatShadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="2" />
+            <feOffset dx="0" dy="3" />
+            <feComponentTransfer>
+                <feFuncA type="linear" slope="0.4" />
+            </feComponentTransfer>
+            <feMerge>
+                <feMergeNode />
+                <feMergeNode in="SourceGraphic" />
+            </feMerge>
+        </filter>
+    </defs>
+
+    <g filter="url(#chatShadow)">
+        <!-- Base Shape with Border -->
+        <rect x="8" y="8" width="48" height="48" rx="12" fill="url(#chatBg)" stroke="url(#borderGrad)"
+            stroke-width="1.5" />
+
+        <!-- Gloss Overlay (Top Half Reflection) -->
+        <path
+            d="M 20 9.5 L 44 9.5 A 10.5 10.5 0 0 1 54.5 20 V 23 C 54.5 29 9.5 29 9.5 23 V 20 A 10.5 10.5 0 0 1 20 9.5 Z"
+            fill="url(#chatGloss)" />
+
+        <!-- Globe Icon with inner shadow effect -->
+        <g transform="translate(14, 14) scale(1.5)" style="filter: drop-shadow(0px 1px 2px rgba(0,0,0,0.3));">
+            <circle cx="12" cy="12" r="10" stroke="#f0f0f0" stroke-width="2" fill="none" />
+            <line x1="2" y1="12" x2="22" y2="12" stroke="#f0f0f0" stroke-width="2" />
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
+                stroke="#f0f0f0" stroke-width="2" fill="none" />
+        </g>
+    </g>
+</svg>
