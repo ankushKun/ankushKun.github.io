@@ -5,7 +5,7 @@ title = "Building a DOOM-Style 3D Renderer from Scratch in JavaScript"
 description = "A deep dive into building a 3D renderer from scratch using JavaScript and HTML5 Canvas, inspired by the classic DOOM engine."
 summary = "Ever wondered how classic games like DOOM rendered their immersive 3D worlds? This post breaks down the math and logic behind a retro 3D engine."
 tags = ["graphics", "javascript", "doom", "2.5d", "3d", "game-development", "canvas", "rendering-engine"]
-og_image = "/blogs/doom-renderer-og.jpg"
+og_image = "/media/doom-renderer-og.jpg"
 author = 'Ankush'
 +++
 
