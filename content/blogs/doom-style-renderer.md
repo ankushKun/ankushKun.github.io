@@ -51,7 +51,7 @@ author = 'Ankush'
 </style>
 
 <div class="demo-container">
-  <iframe id="demo" src="https://7jiiceni3iqjhaxe44sesz2qjd5q7m5l3kumbu2gzmoerv5ifi3a.arweave.tech/-lCBEajaIJOC5OckSWdQSPsPs6vaqMDTRsscSNeoKjY?"></iframe>
+  <iframe id="demo" src="https://7jiiceni3iqjhaxe44sesz2qjd5q7m5l3kumbu2gzmoerv5ifi3a.arweave.net/-lCBEajaIJOC5OckSWdQSPsPs6vaqMDTRsscSNeoKjY?"></iframe>
   <div class="demo-overlay">Click to play</div>
 </div>
 <p style="font-size: 0.9em; color: #888; margin-top: 8px;">Move with WASD</p>
