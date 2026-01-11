@@ -216,6 +216,58 @@
     <meta name="twitter:image:alt"
         content="{{ if .IsHome }}Ankush Kun - Software Engineer & Community Builder{{ else }}{{ .Title }}{{ end }}">
 
+    <!-- Structured Data (JSON-LD) for SEO -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "{{ .Site.Title }}",
+        "url": "{{ .Site.BaseURL }}",
+        "description": "{{ .Site.Params.description }}",
+        "author": {
+            "@type": "Person",
+            "name": "{{ .Site.Params.author }}",
+            "url": "{{ .Site.BaseURL }}"
+        }
+    }
+    </script>
+    {{ if not .IsHome }}
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "{{ .Site.BaseURL }}"
+            }
+            {{- $defined := slice -}}
+            {{- $defined = $defined | append (dict "position" 1 "name" "Home" "item" .Site.BaseURL) -}}
+            {{- $position := 2 -}}
+            {{- range .Ancestors.Reverse -}}
+            {{- if and .Title (ne .Title $.Site.Title) -}}
+            ,{
+                "@type": "ListItem",
+                "position": {{ $position }},
+                "name": "{{ .Title }}",
+                "item": "{{ .Permalink }}"
+            }
+            {{- $position = add $position 1 -}}
+            {{- end -}}
+            {{- end -}}
+            ,{
+                "@type": "ListItem",
+                "position": {{ $position }},
+                "name": "{{ .Title }}",
+                "item": "{{ .Permalink }}"
+            }
+        ]
+    }
+    </script>
+    {{ end }}
+
     <!-- Mobile App & Theme Color -->
     <meta name="theme-color" content="#f0f0f0">
     <meta name="apple-mobile-web-app-capable" content="yes">
