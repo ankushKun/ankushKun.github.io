@@ -30,9 +30,27 @@
         lazyLoadImages();
         setupSearchIndex();
 
-        // Auto-open About Me window on page load
+        // Check for deep link or auto-open About Me
         setTimeout(() => {
-            openWindow('about', 'About Me');
+            const urlParams = new URLSearchParams(window.location.search);
+            const openApp = urlParams.get('open');
+
+            if (openApp) {
+                let appId = openApp;
+                let title = openApp.charAt(0).toUpperCase() + openApp.slice(1);
+
+                // Mapping
+                if (appId === 'irc') {
+                    appId = 'irc-chat';
+                    title = 'IRC Chat';
+                } else if (appId === 'games') {
+                    title = 'Games';
+                }
+
+                openWindow(appId, title);
+            } else {
+                openWindow('about', 'About Me');
+            }
         }, 300);
 
         // Show hire notification 2 seconds after first user interaction (so sound can play)
@@ -575,6 +593,39 @@
             if (link.classList.contains('open-external') || link.classList.contains('titlebar-link')) return;
 
             const href = link.getAttribute('href');
+
+            // Handle Deep Linking (?open=app)
+            if (href && href.includes('?open=')) {
+                try {
+                    const tempUrl = new URL(href, window.location.origin);
+                    const openApp = tempUrl.searchParams.get('open');
+
+                    if (openApp) {
+                        // Only intercept if we are on the home page
+                        if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+                            e.preventDefault();
+                            e.stopPropagation();
+
+                            let appId = openApp;
+                            let title = openApp.charAt(0).toUpperCase() + openApp.slice(1);
+
+                            // Mapping optimizations
+                            if (appId === 'irc') {
+                                appId = 'irc-chat';
+                                title = 'IRC Chat';
+                            } else if (appId === 'games') {
+                                title = 'Games';
+                            }
+
+                            openWindow(appId, title);
+                        }
+                        // If not on home page, let the link navigate (it points to /?open=...)
+                        return;
+                    }
+                } catch (e) {
+                    console.error('Deep Link Error:', e);
+                }
+            }
 
             // Skip internal links, mailto, tel, and javascript
             if (!href ||
