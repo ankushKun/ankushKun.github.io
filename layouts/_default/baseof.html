@@ -411,6 +411,11 @@
         window.V86_TERMINAL_URL = "{{ $v86TerminalJs.Permalink }}";
         window.IRC_CHAT_URL = "{{ $ircChatJs.Permalink }}";
     </script>
+
+    <!-- Gun.js Multiplayer Cursors -->
+    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+    {{ $cursors := resources.Get "js/cursors.js" | resources.Minify | resources.Fingerprint }}
+    <script src="{{ $cursors.Permalink }}"></script>
 </body>
 
 </html>
