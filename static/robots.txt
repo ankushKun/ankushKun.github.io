@@ -1,10 +1,55 @@
 # https://www.robotstxt.org/robotstxt.html
+
+# Allow all crawlers (search engines)
 User-agent: *
+Allow: /
+Disallow: /doom/
+Disallow: /ruffle/
+Disallow: /v86/
+Disallow: /xterm/
+
+# AI Crawlers - Explicitly allow
+User-agent: GPTBot
+Allow: /
+Disallow: /doom/
+Disallow: /ruffle/
+Disallow: /v86/
+Disallow: /xterm/
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Anthropic-AI
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Cohere-AI
+Allow: /
+
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: YouBot
+Allow: /
+
+User-agent: Applebot-Extended
 Allow: /
 
 # Sitemap location
 Sitemap: https://ankush.one/sitemap.xml
 
-# LLM context
+# LLM context files
 # https://llmstxt.org
 LLMs: https://ankush.one/llms.txt
+LLMs-Full: https://ankush.one/llms-full.txt

@@ -2,9 +2,9 @@
 
 > Software engineer building AI agents, DeFi protocols, and developer tools.
 
-## About
+Ankush Singh is a software engineer and builder. He works on autonomous AI trading agents, decentralized finance protocols on Solana and Monad, developer tooling for the Arweave/AO ecosystem, and open-source projects. His portfolio and blog are at https://ankush.one.
 
-Ankush Singh is a software engineer and builder. He works on autonomous AI trading agents, decentralized finance protocols on Solana and Monad, developer tooling, and open-source projects. His portfolio and blog are at https://ankush.one.
+For comprehensive information including all projects, blog posts, hackathon wins, skills, and contact details, see the full version at https://ankush.one/llms-full.txt
 
 ## Links
 
@@ -17,22 +17,28 @@ Ankush Singh is a software engineer and builder. He works on autonomous AI tradi
 
 ## Featured Projects
 
-- PumpMyClaw: Autonomous AI trading agents on Solana and Monad with self-reinforcing token economies. https://ankush.one/projects/2026.pumpmyclaw/
-- PokePerps: Decentralized perpetual futures exchange for trading Pokemon card prices on Solana. https://ankush.one/projects/2026.pokeperps/
-- CommentKit: A tiny drop-in comment system for static sites. https://ankush.one/projects/2026.commentkit/
-- Pokemon Scanner: Client-side Pokemon card scanner using YOLO11, MobileCLIP, and WebAssembly. https://ankush.one/projects/2026.pokemon-scanner/
-- BetterIDEa: Web IDE for the AO/Arweave ecosystem. https://ankush.one/projects/2023.betteridea/
-- APM: The package manager for the AO computation network. https://ankush.one/projects/2024.apm/
-- DumDumDeploy: One-click deployment tool for Arweave. https://ankush.one/projects/2024.dumdumdeploy/
+- [PumpMyClaw](https://ankush.one/projects/2026.pumpmyclaw/): Autonomous AI trading agents on Solana and Monad with self-reinforcing token economies.
+- [PokePerps](https://ankush.one/projects/2026.pokeperps/): Decentralized perpetual futures exchange for trading Pokemon card prices on Solana.
+- [CommentKit](https://ankush.one/projects/2026.commentkit/): A tiny drop-in comment system for static sites. Paste 2 lines of code and you get threads, likes, and moderation.
+- [MyPokemonScanner](https://ankush.one/projects/2026.pokemon-scanner/): Client-side Pokemon card scanner using YOLO11, MobileCLIP, and WebAssembly.
+- [BetterIDEa](https://ankush.one/projects/2023.betteridea/): Web IDE for the AO/Arweave ecosystem. Acquired by Forward Research.
+- [APM](https://ankush.one/projects/2024.apm/): The package manager for the AO computation network.
+- [DumDumDeploy](https://ankush.one/projects/2024.dumdumdeploy/): One-click deployment tool for Arweave, evolved into ArLink.
 
 ## Blog Posts
 
-- Web 4.0 — When AI Becomes the Customer: https://ankush.one/blogs/web4/
-- How I built a Pokemon TCG scanner that runs 100% in your browser: https://ankush.one/blogs/pokemon-scanner/
-- Building a DOOM-Style 3D Renderer from Scratch in JavaScript: https://ankush.one/blogs/doom-style-renderer/
-- Publish to NPM from GitHub Actions using OIDC: https://ankush.one/blogs/npm-oidc-publishing/
-- A Noob's Guide to Web APIs: https://ankush.one/blogs/web-apis-guide/
+- [How I built a Pokemon TCG scanner that runs 100% in your browser](https://ankush.one/blogs/pokemon-scanner/): Client-side ML inference with YOLO11, MobileCLIP, and WebAssembly.
+- [Building a DOOM-Style 3D Renderer from Scratch in JavaScript](https://ankush.one/blogs/doom-style-renderer/): Deep dive into raycasting, texture mapping, and 3D rendering with HTML5 Canvas.
+- [Publish to NPM from GitHub Actions using OIDC](https://ankush.one/blogs/npm-oidc-publishing/): Automate npm publishing with OpenID Connect — no API keys required.
+- [A Noob's Guide to Web APIs](https://ankush.one/blogs/web-apis-guide/): Beginner tutorial on REST APIs with Node.js and Express.
+- [Automating Mandelbrot Fractal generation with SYCL](https://ankush.one/blogs/mendelbrot-intel-oneapi/): Parallel computing with Intel oneAPI and SYCL programming.
 
 ## Topics
 
-AI agents, autonomous trading, Solana, Monad, DeFi, perpetual futures, Web3, Arweave, AO, developer tools, open-source, React, TypeScript, Rust, Cloudflare Workers, MCP, blockchain
+AI agents, autonomous trading, Solana, Monad, DeFi, perpetual futures, Web3, Arweave, AO, developer tools, open-source, React, TypeScript, Rust, Cloudflare Workers, MCP, blockchain, WebAssembly, machine learning, game development
+
+## Optional
+
+- [Full LLM context](https://ankush.one/llms-full.txt): Complete information including all 37 projects, hackathon wins, skills, and detailed descriptions.
+- [Sitemap](https://ankush.one/sitemap.xml): Full list of all pages on the site.
+- [RSS Feed](https://ankush.one/index.xml): Latest blog posts, projects, and timeline updates.

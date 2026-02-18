@@ -1,0 +1,113 @@
+# Ankush Singh — ankush.one
+
+> Software engineer building AI agents, DeFi protocols, and developer tools. 12+ hackathon wins. Open-source contributor.
+
+Ankush Singh (also known as ankushKun) is a software engineer and builder based in India. He works on autonomous AI trading agents, decentralized finance protocols on Solana and Monad, developer tooling for the Arweave/AO ecosystem, and open-source projects. His portfolio and blog are at https://ankush.one.
+
+His site is designed as an interactive macOS Mavericks desktop simulation, featuring a Spotlight search, draggable windows, multiplayer cursors, and embedded games.
+
+## Links
+
+- Website: https://ankush.one
+- Blog: https://ankush.one/blogs/
+- Projects: https://ankush.one/projects/
+- Timeline: https://ankush.one/timeline/
+- Wins: https://ankush.one/wins/
+- Contact: https://ankush.one/contact/
+- GitHub: https://github.com/ankushKun
+- Twitter: https://x.com/ankushKun_
+- LinkedIn: https://linkedin.com/in/ankushkun
+- Telegram: https://t.me/ankushKun
+- YouTube: https://youtube.com/@ankushkun
+- Medium: https://ankushkun.medium.com
+- Email: ankush4singh@gmail.com
+- Schedule a call: https://cal.com/ankushkun/call
+- Resume: https://ankush.one/resume.pdf
+
+## Skills & Technologies
+
+- Languages: TypeScript, JavaScript, Rust, Lua, Python, C#, Swift
+- Frontend: React, Next.js, HTML5 Canvas, WebAssembly, CSS
+- Backend: Node.js, Express, Cloudflare Workers, Docker
+- Blockchain: Solana, Arweave, AO Computation Network, Monad, MegaETH, ICP, DeSo
+- AI/ML: YOLO11, MobileCLIP, ONNX, TensorFlow.js, OpenAI CLIP, WebAssembly ML inference
+- DevOps: GitHub Actions, OIDC publishing, CI/CD
+- Game Dev: Unity, JavaScript game engines, 3D rendering, Flash (Ruffle)
+
+## Featured Projects (2026)
+
+- [PumpMyClaw](https://ankush.one/projects/2026.pumpmyclaw/): Autonomous AI trading agents on Solana and Monad with self-reinforcing token economies. Tags: solana, monad, AI, trading, DeFi, cloudflare-workers, docker, websocket.
+- [PokePerps](https://ankush.one/projects/2026.pokeperps/): Decentralized perpetual futures exchange for trading Pokemon card prices on Solana. Tags: solana, rust, DeFi, perpetuals, MCP, AI-agents, react.
+- [CommentKit](https://ankush.one/projects/2026.commentkit/): A tiny drop-in comment system for static sites. Paste 2 lines of code and get threads, likes, and moderation. Runs on Cloudflare Workers + D1. Tags: cloudflare, workers, open-source, edge-runtime, D1.
+- [MyPokemonScanner](https://ankush.one/projects/2026.pokemon-scanner/): Lightning fast, fully client-side Pokemon card scanner using YOLO11, MobileCLIP, and WebAssembly.
+- [WebAnimate](https://ankush.one/projects/2026.webanimate/): Chrome extension for creating and recording web animations with a timeline-based editor.
+
+## Projects (2025)
+
+- [pixels.earth](https://ankush.one/projects/2025.pixels-earth/): Decentralized, infinite pixel canvas where you draw on Earth and earn from unlocked lands. Built on Solana MagicBlock.
+- [create-magicblock](https://ankush.one/projects/2025.create-magicblock/): CLI scaffolding tool to create fully working MagicBlock apps on Solana in seconds.
+- [MegaPlace](https://ankush.one/projects/2025.megaplace/): Global, on-chain canvas where every pixel is a transaction on MegaETH.
+- [x402bay](https://ankush.one/projects/2025.x402bay/): Decentralized digital marketplace powered by the x402 protocol on Arweave.
+- [Last Cat Standing](https://ankush.one/projects/2025.last-cat-standing/): Survival role-playing game where you play as the last cat on an island.
+- [WAuth](https://ankush.one/projects/2025.wauth/): Social login system for Arweave webapps that abstracts wallet management.
+- [Subspace](https://ankush.one/projects/2025.subspace/): Censorship-resistant, permanent communication platform with Discord-like UX, built on AO.
+- [aoxpress](https://ankush.one/projects/2025.aoxpress/): Express.js-like framework for building process handlers on the AO network.
+- [Visual AO](https://ankush.one/projects/2025.visual-ao/): Visual, flow-based programming tool for building and understanding AO processes.
+- [Call Me Maybe](https://ankush.one/projects/2025.callmemaybe/): Viral video dating app built for Valentine's Day. 50k+ engagements.
+
+## Projects (2024)
+
+- [DumDumDeploy / ArLink](https://ankush.one/projects/2024.dumdumdeploy/): Vercel-like permaweb deployment platform that evolved into ArLink, Arweave's flagship app deployment tool.
+- [APM — AO Package Manager](https://ankush.one/projects/2024.apm/): The package manager for the AO computation network. Install, publish, and share reusable AO packages.
+- [Power Editor](https://ankush.one/projects/2024.power-editor/): Feature-rich iOS image editor built in 48 hours.
+- [Clickoor Camera](https://ankush.one/projects/2024.clickoor/): Point-and-shoot camera powered by Arweave with infinite, permanent storage.
+
+## Projects (2023 & Earlier)
+
+- [BetterIDEa](https://ankush.one/projects/2023.betteridea/): Developer tooling suite for the Arweave/AO ecosystem. Born from a hackathon, acquired by Forward Research.
+- [LuaX](https://ankush.one/projects/2023.luax/): A React-like library for Lua.
+- [ICPixel](https://ankush.one/projects/2023.icpixel/): Fully on-chain pixel art studio built on the Internet Computer (ICP).
+- [GitAR](https://ankush.one/projects/2023.gitar/): Decentralized bounty platform for the Arweave ecosystem.
+- [Weeblet Store](https://ankush.one/projects/2023.weebletstore/): Niche e-commerce platform for anime merchandise in India.
+- [GitRaven](https://ankush.one/projects/2023.gitraven/): Blockchain-agnostic platform for decentralized code bounties.
+- [Class Compass](https://ankush.one/projects/2023.class-compass/): Mobile app helping university students find empty classrooms.
+- [MacPuppet](https://ankush.one/projects/2023.macpuppet/): VTuber software for Mac using ARKit face tracking.
+- [Lucky Knight](https://ankush.one/projects/2023.lucky-knight/): GMTK Game Jam 2023 Entry — play as 'Luck' and influence the hero's fate.
+- [Desonity](https://ankush.one/projects/2022.desonity/): Comprehensive Unity SDK for the DeSo Blockchain.
+- [Cordify](https://ankush.one/projects/2021.cordify/): Bridge between Web2 social platforms and the DeSo blockchain.
+- [Animedoro Timer](https://ankush.one/projects/2021.animedoro/): Pomodoro timer for anime lovers.
+- [Cheap Saber](https://ankush.one/projects/2020.cheap-saber/): VR Beat Saber clone for Android using AR markers for motion tracking.
+- [Human Following Robot](https://ankush.one/projects/2020.human-following/): OpenCV-powered Arduino car that tracks and follows humans in real-time.
+- [TrashBot](https://ankush.one/projects/2019.tinkerfest/): Autonomous trash-segregating robot car using LEGO, Arduino & Android.
+- [Arduino CubeSat](https://ankush.one/projects/2018.cubesat/): 3D-printed miniature satellite prototype with working telemetry.
+
+## Blog Posts
+
+- [How I built a Pokemon TCG scanner that runs 100% in your browser](https://ankush.one/blogs/pokemon-scanner/): Building a lightning-fast, offline-capable Pokemon card scanner using YOLO11, MobileCLIP, and WebAssembly. Covers client-side ML inference, embedding generation, and reverse image search. (2026)
+- [Building a DOOM-Style 3D Renderer from Scratch in JavaScript](https://ankush.one/blogs/doom-style-renderer/): Deep dive into building a 3D renderer using JavaScript and HTML5 Canvas, inspired by the classic DOOM engine. Covers raycasting, texture mapping, and rendering pipelines. (2025)
+- [Publish to NPM from GitHub Actions using OIDC](https://ankush.one/blogs/npm-oidc-publishing/): Step-by-step guide to automate npm package publishing through GitHub Actions using OpenID Connect. No API keys or access tokens required. (2025)
+- [A Noob's Guide to Web APIs](https://ankush.one/blogs/web-apis-guide/): Beginner-friendly tutorial on what APIs are, how they work, and building your own with Node.js and Express. Covers REST principles, HTTP methods, and GET/POST endpoints. (2025)
+- [Automating Mandelbrot Fractal generation with SYCL Programming](https://ankush.one/blogs/mendelbrot-intel-oneapi/): Generating Mandelbrot fractals using Intel oneAPI and SYCL programming, with automation scripts for DevCloud. From a hackathon-winning project at IIT Roorkee. (2023)
+
+## Hackathon Wins (12)
+
+- 2024: Third Prize + Pools — ETHIndia '24
+- 2024: Third Prize — Weavers Dev Bounty III
+- 2023: Grand Prize — Arweave India Cohort #1 Hackerhouse
+- 2023: Second — Crewsphere ICP College Level Hackathon
+- 2023: Second — Hack-O-Octo 1.0
+- 2023: First — CDAC's GCON Vegathon
+- 2023: First — IIT Roorkee Intel OneAPI Workshop & Hackathon
+- 2023: Track Prize — SheBuilds Hackathon
+- 2022: Second — Hash It Out 1.0
+- 2022: Track Prize — Neighbourhood Hacks 2.0
+- 2022: Track Prize — Support-a-thon
+- 2022: Track Prize — We Make Devs / Stream Hackathon
+
+## Hackathon Participations (10)
+
+LFGHO '24, NASA CanSat '24 (cleared PDR round), EthOnline 2023, SIH Tekathon 2.0, Hack NSUT '23, AWS Community Day Quizzes, Hack The Mountains 3.0, IC Hack '22, Tinkerfest Junior Robotics 2019, MIT Appinventor Hackathon 2019.
+
+## Topics
+
+AI agents, autonomous trading, Solana, Monad, DeFi, perpetual futures, Web3, Arweave, AO computation network, developer tools, open-source, React, TypeScript, Rust, Lua, Cloudflare Workers, MCP, blockchain, WebAssembly, machine learning, game development, 3D rendering, CI/CD, npm, GitHub Actions, Unity, ARKit, computer vision, OpenCV

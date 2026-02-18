@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
     {{ if .IsHome }}
     <!-- macOS Boot Screen Loader - Inline to prevent FOUC -->
@@ -182,28 +182,38 @@
     {{ end }}
 
     <!-- SEO Meta Tags -->
-    <title>{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }} | {{ .Site.Title }}{{ end }}</title>
-    <meta name="description"
-        content="{{ with .Description }}{{ . }}{{ else }}{{ with .Summary }}{{ . }}{{ else }}Ankush Singh - Software Engineer & Community Builder{{ end }}{{ end }}">
+    <title>{{ if .IsHome }}{{ .Site.Title }} - Software Engineer | AI Agents, DeFi & Developer Tools{{ else }}{{ .Title }} | {{ .Site.Title }}{{ end }}</title>
+    {{- $metaDesc := "Ankush Singh — Software engineer building AI agents, DeFi protocols on Solana, and developer tools. Portfolio, blog, and open-source projects." -}}
+    {{- with .Description -}}{{- $metaDesc = . -}}{{- else -}}{{- with .Summary -}}{{- $metaDesc = . -}}{{- end -}}{{- end -}}
+    <meta name="description" content="{{ $metaDesc }}">
     <meta name="author" content="{{ with .Params.author }}{{ . }}{{ else }}Ankush Singh{{ end }}">
     <meta name="keywords"
-        content="{{ if .Params.tags }}{{ delimit .Params.tags ", " }}, {{ end }}Ankush Singh, Software Engineer, Developer Tools, Arweave, AO, Web3, Blockchain">
+        content="{{ if .Params.tags }}{{ delimit .Params.tags ", " }}, {{ end }}Ankush Singh, Software Engineer, AI Agents, DeFi, Solana, Developer Tools, Arweave, AO, Web3, Blockchain, Open Source, React, TypeScript, Rust">
     <link rel="canonical" href="{{ .Permalink }}">
+    <meta name="robots" content="{{ if .Params.noindex }}noindex, nofollow{{ else }}index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1{{ end }}">
+
+    <!-- AI/LLM Discovery -->
+    <link rel="alternate" type="text/markdown" href="{{ .Site.BaseURL }}llms.txt" title="LLM Context">
+    <link rel="alternate" type="text/markdown" href="{{ .Site.BaseURL }}llms-full.txt" title="LLM Full Context">
 
     <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="{{ if .IsPage }}article{{ else }}website{{ end }}">
+    <meta property="og:type" content="{{ if .IsPage }}article{{ else }}{{ if .IsHome }}profile{{ else }}website{{ end }}{{ end }}">
     <meta property="og:url" content="{{ .Permalink }}">
-    <meta property="og:title" content="{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }}{{ end }}">
-    <meta property="og:description"
-        content="{{ with .Description }}{{ . }}{{ else }}{{ with .Summary }}{{ . }}{{ else }}Ankush Singh - Software Engineer & Community Builder{{ end }}{{ end }}">
+    <meta property="og:title" content="{{ if .IsHome }}Ankush Singh — Software Engineer{{ else }}{{ .Title }}{{ end }}">
+    <meta property="og:description" content="{{ $metaDesc }}">
     <meta property="og:image"
         content="{{ with .Params.og_image }}{{ . | absURL }}{{ else }}{{ .Site.BaseURL }}og-image.jpg{{ end }}">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:alt"
-        content="{{ if .IsHome }}Ankush Kun - Software Engineer & Community Builder{{ else }}{{ .Title }}{{ end }}">
+        content="{{ if .IsHome }}Ankush Singh — Software Engineer building AI agents, DeFi protocols, and developer tools{{ else }}{{ .Title }} — {{ .Site.Title }}{{ end }}">
     <meta property="og:site_name" content="{{ .Site.Title }}">
     <meta property="og:locale" content="en_US">
+    {{ if .IsHome }}
+    <meta property="profile:first_name" content="Ankush">
+    <meta property="profile:last_name" content="Singh">
+    <meta property="profile:username" content="ankushKun">
+    {{ end }}
     {{ if .IsPage }}
     <meta property="article:published_time" content="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}">
     {{ with .GitInfo }}<meta property="article:modified_time" content="{{ .AuthorDate.Format "2006-01-02T15:04:05Z07:00" }}">{{ end }}
@@ -217,15 +227,14 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@ankushKun_">
     <meta name="twitter:creator" content="@ankushKun_">
-    <meta name="twitter:title" content="{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }}{{ end }}">
-    <meta name="twitter:description"
-        content="{{ with .Description }}{{ . }}{{ else }}{{ with .Summary }}{{ . }}{{ else }}Ankush Singh - Software Engineer & Community Builder{{ end }}{{ end }}">
+    <meta name="twitter:title" content="{{ if .IsHome }}Ankush Singh — Software Engineer{{ else }}{{ .Title }}{{ end }}">
+    <meta name="twitter:description" content="{{ $metaDesc }}">
     <meta name="twitter:image"
         content="{{ with .Params.og_image }}{{ . | absURL }}{{ else }}{{ .Site.BaseURL }}og-image.jpg{{ end }}">
     <meta name="twitter:image:alt"
-        content="{{ if .IsHome }}Ankush Kun - Software Engineer & Community Builder{{ else }}{{ .Title }}{{ end }}">
+        content="{{ if .IsHome }}Ankush Singh — Software Engineer building AI agents, DeFi protocols, and developer tools{{ else }}{{ .Title }} — {{ .Site.Title }}{{ end }}">
 
-    <!-- Structured Data (JSON-LD) for SEO -->
+    <!-- Structured Data (JSON-LD) for SEO & SGO -->
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
@@ -233,13 +242,62 @@
         "name": "{{ .Site.Title }}",
         "url": "{{ .Site.BaseURL }}",
         "description": "{{ .Site.Params.description }}",
+        "inLanguage": "en-US",
         "author": {
             "@type": "Person",
             "name": "{{ .Site.Params.author }}",
             "url": "{{ .Site.BaseURL }}"
+        },
+        "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": "{{ .Site.BaseURL }}?q={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
         }
     }
     </script>
+    {{ if .IsHome }}
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "ProfilePage",
+        "mainEntity": {
+            "@type": "Person",
+            "@id": "{{ .Site.BaseURL }}#person",
+            "name": "Ankush Singh",
+            "alternateName": "ankushKun",
+            "description": "Software engineer building AI agents, DeFi protocols on Solana and Monad, and developer tools. Open-source contributor with 12+ hackathon wins.",
+            "url": "{{ .Site.BaseURL }}",
+            "image": {
+                "@type": "ImageObject",
+                "url": "{{ .Site.BaseURL }}pfp.png",
+                "width": 512,
+                "height": 512
+            },
+            "jobTitle": "Software Engineer",
+            "knowsAbout": [
+                "AI Agents", "Autonomous Trading", "DeFi", "Solana", "Monad",
+                "Arweave", "AO Computation Network", "React", "TypeScript",
+                "Rust", "Lua", "Cloudflare Workers", "WebAssembly",
+                "Blockchain Development", "Developer Tools", "Open Source"
+            ],
+            "sameAs": [
+                "https://x.com/ankushKun_",
+                "https://github.com/ankushKun",
+                "https://linkedin.com/in/ankushkun",
+                "https://t.me/ankushKun",
+                "https://instagram.com/ankushKun_",
+                "https://youtube.com/@ankushkun",
+                "https://ankushkun.medium.com"
+            ]
+        },
+        "dateCreated": "2023-01-01",
+        "dateModified": "{{ now.Format "2006-01-02" }}"
+    }
+    </script>
+    {{ end }}
     {{ if and .IsPage (or (eq .Section "blogs") (eq .Section "projects")) }}
     <script type="application/ld+json">
     {
@@ -252,6 +310,7 @@
         {{ with .GitInfo }}"dateModified": "{{ .AuthorDate.Format "2006-01-02T15:04:05Z07:00" }}",{{ end }}
         "author": {
             "@type": "Person",
+            "@id": "{{ .Site.BaseURL }}#person",
             "name": "{{ with .Params.author }}{{ . }}{{ else }}Ankush Singh{{ end }}",
             "url": "https://ankush.one",
             "sameAs": [
@@ -262,6 +321,7 @@
         },
         "publisher": {
             "@type": "Person",
+            "@id": "{{ .Site.BaseURL }}#person",
             "name": "Ankush Singh",
             "url": "https://ankush.one"
         },
@@ -270,8 +330,33 @@
             "@type": "WebPage",
             "@id": "{{ .Permalink }}"
         },
+        "isPartOf": {
+            "@type": "WebSite",
+            "name": "{{ .Site.Title }}",
+            "url": "{{ .Site.BaseURL }}"
+        },
         "wordCount": {{ .WordCount }}{{ if .Params.tags }},
         "keywords": "{{ delimit .Params.tags ", " }}"{{ end }}
+    }
+    </script>
+    {{ end }}
+    {{ if and (.IsSection) (eq .Section "blogs") }}
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "name": "{{ .Title }}",
+        "description": "{{ with .Description }}{{ . }}{{ else }}Technical blog posts by Ankush Singh{{ end }}",
+        "url": "{{ .Permalink }}",
+        "isPartOf": {
+            "@type": "WebSite",
+            "name": "{{ .Site.Title }}",
+            "url": "{{ .Site.BaseURL }}"
+        },
+        "about": {
+            "@type": "Person",
+            "@id": "{{ .Site.BaseURL }}#person"
+        }
     }
     </script>
     {{ end }}
@@ -287,11 +372,9 @@
                 "name": "Home",
                 "item": "{{ .Site.BaseURL }}"
             }
-            {{- $defined := slice -}}
-            {{- $defined = $defined | append (dict "position" 1 "name" "Home" "item" .Site.BaseURL) -}}
             {{- $position := 2 -}}
             {{- range .Ancestors.Reverse -}}
-            {{- if and .Title (ne .Title $.Site.Title) -}}
+            {{- if and .Title (not .IsHome) -}}
             ,{
                 "@type": "ListItem",
                 "position": {{ $position }},
