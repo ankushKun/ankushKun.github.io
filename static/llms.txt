@@ -1,0 +1,38 @@
+# Ankush Singh — ankush.one
+
+> Software engineer building AI agents, DeFi protocols, and developer tools.
+
+## About
+
+Ankush Singh is a software engineer and builder. He works on autonomous AI trading agents, decentralized finance protocols on Solana and Monad, developer tooling, and open-source projects. His portfolio and blog are at https://ankush.one.
+
+## Links
+
+- Website: https://ankush.one
+- Blog: https://ankush.one/blogs/
+- Projects: https://ankush.one/projects/
+- GitHub: https://github.com/ankushKun
+- Twitter: https://x.com/ankushKun_
+- LinkedIn: https://linkedin.com/in/ankushkun
+
+## Featured Projects
+
+- PumpMyClaw: Autonomous AI trading agents on Solana and Monad with self-reinforcing token economies. https://ankush.one/projects/2026.pumpmyclaw/
+- PokePerps: Decentralized perpetual futures exchange for trading Pokemon card prices on Solana. https://ankush.one/projects/2026.pokeperps/
+- CommentKit: A tiny drop-in comment system for static sites. https://ankush.one/projects/2026.commentkit/
+- Pokemon Scanner: Client-side Pokemon card scanner using YOLO11, MobileCLIP, and WebAssembly. https://ankush.one/projects/2026.pokemon-scanner/
+- BetterIDEa: Web IDE for the AO/Arweave ecosystem. https://ankush.one/projects/2023.betteridea/
+- APM: The package manager for the AO computation network. https://ankush.one/projects/2024.apm/
+- DumDumDeploy: One-click deployment tool for Arweave. https://ankush.one/projects/2024.dumdumdeploy/
+
+## Blog Posts
+
+- Web 4.0 — When AI Becomes the Customer: https://ankush.one/blogs/web4/
+- How I built a Pokemon TCG scanner that runs 100% in your browser: https://ankush.one/blogs/pokemon-scanner/
+- Building a DOOM-Style 3D Renderer from Scratch in JavaScript: https://ankush.one/blogs/doom-style-renderer/
+- Publish to NPM from GitHub Actions using OIDC: https://ankush.one/blogs/npm-oidc-publishing/
+- A Noob's Guide to Web APIs: https://ankush.one/blogs/web-apis-guide/
+
+## Topics
+
+AI agents, autonomous trading, Solana, Monad, DeFi, perpetual futures, Web3, Arweave, AO, developer tools, open-source, React, TypeScript, Rust, Cloudflare Workers, MCP, blockchain
