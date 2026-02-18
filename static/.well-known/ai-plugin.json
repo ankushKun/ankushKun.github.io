@@ -1,0 +1,25 @@
+{
+  "schema_version": "v1",
+  "name": "Ankush Singh Portfolio",
+  "description": "Personal portfolio and blog of Ankush Singh — software engineer building AI agents, DeFi protocols, and developer tools.",
+  "url": "https://ankush.one",
+  "author": {
+    "name": "Ankush Singh",
+    "url": "https://ankush.one",
+    "email": "ankush4singh@gmail.com"
+  },
+  "llms_txt": "https://ankush.one/llms.txt",
+  "llms_full_txt": "https://ankush.one/llms-full.txt",
+  "sitemap": "https://ankush.one/sitemap.xml",
+  "robots_txt": "https://ankush.one/robots.txt",
+  "rss": "https://ankush.one/index.xml",
+  "topics": [
+    "AI agents",
+    "DeFi",
+    "Solana",
+    "developer tools",
+    "open-source",
+    "blockchain",
+    "web development"
+  ]
+}

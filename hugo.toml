@@ -18,12 +18,15 @@ home = ["HTML", "JSON", "RSS"]
 # Suppress raw HTML warnings
 ignoreLogs = ['warning-goldmark-raw-html']
 
-# Site params for SEO
+# Site params for SEO & SGO
 [params]
-description = "Ankush Singh - Software Engineer & Community Builder"
+description = "Ankush Singh — Software engineer building AI agents, DeFi protocols on Solana, and developer tools. Portfolio, blog, and open-source projects."
 author = "Ankush Singh"
 twitter = "@ankushKun_"
 github = "ankushKun"
+linkedin = "ankushkun"
+siteUrl = "https://ankush.one"
+locale = "en_US"
 
 # Syntax highlighting & markdown rendering
 [markup]
@@ -38,6 +41,10 @@ unsafe = true
 changefreq = 'weekly'
 filename = 'sitemap.xml'
 priority = 0.5
+
+# Permalinks - clean URLs
+[permalinks]
+# Keep existing structure
 
 # Security configuration - whitelist CF_PAGES environment variables
 [security]
