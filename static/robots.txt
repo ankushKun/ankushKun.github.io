@@ -4,3 +4,7 @@ Allow: /
 
 # Sitemap location
 Sitemap: https://ankush.one/sitemap.xml
+
+# LLM context
+# https://llmstxt.org
+LLMs: https://ankush.one/llms.txt
