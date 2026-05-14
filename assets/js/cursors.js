@@ -5,8 +5,8 @@
     console.log("Initializing Multiplayer Cursors with Gun.js");
 
     // Initialize Gun
-    // Using arweave.tech as the relay server
-    const gun = Gun(['https://arweave.tech/gun']);
+    // Using the site Gun relay server
+    const gun = Gun(['https://gun-peer-server.ankushkun.workers.dev/gun']);
 
     // Generate or retrieve persistent ID for this user
     let myId = localStorage.getItem('multiplayer-cursor-id');
