@@ -1,0 +1,296 @@
+apps:
+  - id: about
+    label: About Me
+    title: About Me
+    type: app
+    description: About Ankush
+    desktop: true
+    searchable: true
+    defaultSize:
+      width: 1000
+      height: 700
+    icon:
+      type: image
+      src: /pfp.png
+      fit: cover
+
+  - id: resume
+    label: Resume
+    title: Resume
+    type: app
+    description: View resume
+    desktop: true
+    searchable: true
+    contentPermalink: /resume.pdf
+    defaultSize:
+      width: 1000
+      height: 700
+    icon:
+      type: image
+      src: /icons/resume.png
+
+  - id: projects
+    label: Projects
+    title: Projects
+    type: app
+    description: Project portfolio
+    desktop: true
+    searchable: true
+    contentPermalink: /projects/
+    defaultSize:
+      width: 1000
+      height: 700
+    icon:
+      type: partial
+      partial: icons/desktop/folder.html
+
+  - id: blogs
+    label: Blogs
+    title: Blogs
+    type: app
+    description: Blog posts
+    desktop: true
+    searchable: true
+    contentPermalink: /blogs/
+    defaultSize:
+      width: 1000
+      height: 700
+    icon:
+      type: partial
+      partial: icons/desktop/document.html
+
+  - id: timeline
+    label: Timeline
+    title: Timeline
+    type: app
+    description: Career timeline
+    desktop: true
+    searchable: true
+    contentPermalink: /timeline/
+    defaultSize:
+      width: 1000
+      height: 700
+    icon:
+      type: partial
+      partial: icons/desktop/calendar.html
+
+  - id: games
+    label: Games
+    title: Games
+    type: app
+    description: Games folder
+    desktop: true
+    searchable: true
+    defaultSize:
+      width: 1000
+      height: 700
+    icon:
+      type: image
+      src: /icons/gamecube.png
+
+  - id: terminal
+    label: Terminal
+    title: Terminal
+    type: app
+    description: Terminal emulator
+    desktop: true
+    searchable: true
+    defaultSize:
+      width: 900
+      height: 620
+    icon:
+      type: image
+      src: /icons/terminal.svg
+
+  - id: irc-chat
+    label: IRC Chat
+    title: IRC Chat
+    type: app
+    description: IRC chat client - mIRC v6.35
+    desktop: true
+    searchable: true
+    defaultSize:
+      width: 900
+      height: 620
+    icon:
+      type: image
+      src: /icons/messages.png
+
+  - id: contact
+    label: Contacts
+    title: Contacts
+    type: app
+    description: Contact information
+    desktop: false
+    searchable: true
+    contentPermalink: /contact/
+    defaultSize:
+      width: 900
+      height: 650
+    icon:
+      type: partial
+      partial: icons/desktop/phone.html
+
+  - id: wins
+    label: Wins
+    title: Wins
+    type: app
+    description: Hackathon wins
+    desktop: false
+    searchable: true
+    contentPermalink: /wins/
+    defaultSize:
+      width: 900
+      height: 650
+    icon:
+      type: partial
+      partial: icons/desktop/trophy.html
+
+  - id: book-a-call
+    label: Schedule Call
+    title: Schedule Call
+    type: app
+    description: Book a call
+    desktop: false
+    searchable: true
+    defaultSize:
+      width: 1000
+      height: 700
+    icon:
+      type: partial
+      partial: icons/desktop/calendar.html
+
+  - id: portal
+    label: Portal
+    title: Portal
+    type: game
+    description: Portal game - Aperture Science
+    desktop: false
+    searchable: true
+    group: games
+    defaultSize:
+      width: 900
+      height: 650
+    icon:
+      type: image
+      src: /games/portal.webp
+
+  - id: quake3
+    label: Quake 3 Arena
+    title: Quake 3 Arena
+    type: game
+    description: Classic FPS multiplayer arena shooter
+    desktop: false
+    searchable: true
+    group: games
+    defaultSize:
+      width: 900
+      height: 650
+    icon:
+      type: image
+      src: /games/quake3.png
+
+  - id: itch-game
+    label: Last Cat Standing
+    title: Last Cat Standing
+    type: game
+    description: Play Last Cat Standing game
+    desktop: false
+    searchable: true
+    group: games
+    defaultSize:
+      width: 900
+      height: 650
+    icon:
+      type: image
+      src: /games/cat.png
+
+  - id: doom
+    label: DOOM
+    title: DOOM
+    type: game
+    description: Play DOOM game
+    desktop: false
+    searchable: true
+    group: games
+    defaultSize:
+      width: 900
+      height: 650
+    icon:
+      type: image
+      src: /games/doom.svg
+
+  - id: crysis
+    label: Crysis
+    title: Crysis
+    type: game
+    description: Crysis game - Can it run?
+    desktop: false
+    searchable: true
+    group: games
+    defaultSize:
+      width: 900
+      height: 650
+    icon:
+      type: image
+      src: /games/crysis.png
+
+  - id: flash-alien-hominid
+    label: Alien Hominid
+    title: Alien Hominid
+    type: game
+    description: Flash game - Alien Hominid
+    desktop: false
+    searchable: true
+    group: games
+    defaultSize:
+      width: 900
+      height: 650
+    icon:
+      type: image
+      src: /games/alien-hominid.png
+
+  - id: flash-flyguy
+    label: Fly Guy
+    title: Fly Guy
+    type: game
+    description: Flash game - Fly Guy
+    desktop: false
+    searchable: true
+    group: games
+    defaultSize:
+      width: 900
+      height: 650
+    icon:
+      type: image
+      src: /games/flyguy.png
+
+  - id: flash-marvin-spectrum
+    label: Marvin Spectrum
+    title: Marvin Spectrum
+    type: game
+    description: Flash game - Marvin Spectrum
+    desktop: false
+    searchable: true
+    group: games
+    defaultSize:
+      width: 900
+      height: 650
+    icon:
+      type: image
+      src: /games/marvin-spectrum.png
+
+  - id: flash-wasted-sky
+    label: Wasted Sky
+    title: Wasted Sky
+    type: game
+    description: Flash game - Wasted Sky
+    desktop: false
+    searchable: true
+    group: games
+    defaultSize:
+      width: 900
+      height: 650
+    icon:
+      type: image
+      src: /games/wasted-sky.png

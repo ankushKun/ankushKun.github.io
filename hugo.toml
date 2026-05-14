@@ -11,12 +11,12 @@ enableGitInfo = true
 # Enable sitemap and robots.txt
 enableRobotsTXT = false # We have custom robots.txt in static/
 
+# Suppress raw HTML warnings
+ignoreLogs = ['warning-goldmark-raw-html']
+
 # Output formats including JSON for search index
 [outputs]
 home = ["HTML", "JSON", "RSS"]
-
-# Suppress raw HTML warnings
-ignoreLogs = ['warning-goldmark-raw-html']
 
 # Site params for SEO & SGO
 [params]

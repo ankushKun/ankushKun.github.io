@@ -1,44 +1,47 @@
 {{- $results := slice -}}
 
-{{/* 1. Desktop Apps */}}
-{{- $apps := slice 
-    (dict "title" "About Me" "type" "app" "openWindow" "about" "description" "About Ankush")
-    (dict "title" "Resume" "type" "app" "openWindow" "resume" "description" "View resume")
-    (dict "title" "Projects" "type" "app" "openWindow" "projects" "description" "Project portfolio")
-    (dict "title" "Blogs" "type" "app" "openWindow" "blogs" "description" "Blog posts")
-    (dict "title" "Timeline" "type" "app" "openWindow" "timeline" "description" "Career timeline")
-    (dict "title" "Games" "type" "app" "openWindow" "games" "description" "Games folder")
-    (dict "title" "Terminal" "type" "app" "openWindow" "terminal" "description" "Terminal emulator")
-    (dict "title" "IRC Chat" "type" "app" "openWindow" "irc-chat" "description" "IRC chat client - mIRC v6.35" "icon" "/icons/irc-chat.svg")
-    (dict "title" "Contact" "type" "app" "openWindow" "contact" "description" "Contact information")
-    (dict "title" "Wins" "type" "app" "openWindow" "wins" "description" "Hackathon wins")
-    (dict "title" "Schedule Call" "type" "app" "openWindow" "book-a-call" "description" "Book a call")
-    (dict "title" "DOOM" "type" "game" "openWindow" "doom" "description" "Play DOOM game" "icon" "/games/doom.svg")
-    (dict "title" "Portal" "type" "game" "openWindow" "portal" "description" "Portal game - Aperture Science" "icon" "/games/portal.webp")
-    (dict "title" "Quake 3 Arena" "type" "game" "openWindow" "quake3" "description" "Classic FPS multiplayer arena shooter" "icon" "/games/quake3.png")
-    (dict "title" "Last Cat Standing" "type" "game" "openWindow" "itch-game" "description" "Play Last Cat Standing game" "icon" "/games/cat.png")
-    (dict "title" "Crysis" "type" "game" "openWindow" "crysis" "description" "Crysis game - Can it run?" "icon" "/games/crysis.png")
-    (dict "title" "Alien Hominid" "type" "game" "openWindow" "flash-alien-hominid" "description" "Flash game - Alien Hominid" "icon" "/games/alien-hominid.png")
-    (dict "title" "Fly Guy" "type" "game" "openWindow" "flash-flyguy" "description" "Flash game - Fly Guy" "icon" "/games/flyguy.png")
-    (dict "title" "Marvin Spectrum" "type" "game" "openWindow" "flash-marvin-spectrum" "description" "Flash game - Marvin Spectrum" "icon" "/games/marvin-spectrum.png")
-    (dict "title" "Wasted Sky" "type" "game" "openWindow" "flash-wasted-sky" "description" "Flash game - Wasted Sky" "icon" "/games/wasted-sky.png")
--}}
-{{- $results = $apps -}}
+{{/* 1. Registered apps */}}
+{{- range where .Site.Data.apps.apps "searchable" true -}}
+    {{- $item := dict
+        "title" .title
+        "type" .type
+        "openWindow" .id
+        "description" .description
+        "iconHtml" (partial "os/app-icon.html" (dict "app" . "context" "spotlight"))
+        "iconHtmlChrome" (partial "os/app-icon.html" (dict "app" . "context" "chrome"))
+    -}}
+    {{- with .contentPermalink -}}{{- $item = merge $item (dict "permalink" .) -}}{{- end -}}
+    {{- with .defaultSize -}}{{- $item = merge $item (dict "width" .width "height" .height) -}}{{- end -}}
+    {{- $results = $results | append $item -}}
+{{- end -}}
 
-{{/* 2. Content Pages (Blogs, Projects) */}}
+{{/* 2. Content pages */}}
 {{- range .Site.RegularPages -}}
     {{- $title := .Title -}}
     {{- $type := .Section -}}
     {{- if eq $type "" }}{{ $type = "page" }}{{ end -}}
     {{- $content := .Plain | truncate 300 -}}
-    
-    {{/* Exclude sections that are handled by apps if needed, but keeping them allows content search */}}
+    {{- $prefix := $type -}}
+    {{- if eq .Section "blogs" }}{{ $prefix = "post" }}{{ end -}}
+    {{- if eq .Section "projects" }}{{ $prefix = "project" }}{{ end -}}
+    {{- if eq .Section "timeline" }}{{ $prefix = "timeline" }}{{ end -}}
+    {{- $uniqueId := .RelPermalink | urlize -}}
+    {{- with .File }}{{ $uniqueId = .UniqueID }}{{ end -}}
+    {{- $icon := dict "type" "partial" "partial" "icons/desktop/document.html" -}}
+    {{- if eq .Section "projects" }}{{ $icon = dict "type" "partial" "partial" "icons/desktop/folder.html" }}{{ end -}}
+    {{- if eq .Section "timeline" }}{{ $icon = dict "type" "partial" "partial" "icons/desktop/calendar.html" }}{{ end -}}
+
     {{- if not (or (eq $title "Wins") (eq $title "Contact") (eq $title "Schedule Call")) -}}
-        {{- $item := dict 
-            "title" $title 
-            "type" $type 
-            "permalink" .RelPermalink 
+        {{- $item := dict
+            "title" $title
+            "type" $type
+            "openWindow" (printf "%s-%s" $prefix $uniqueId)
+            "permalink" .RelPermalink
             "content" $content
+            "width" 900
+            "height" 650
+            "iconHtml" (partial "os/app-icon.html" (dict "icon" $icon "context" "spotlight"))
+            "iconHtmlChrome" (partial "os/app-icon.html" (dict "icon" $icon "context" "chrome"))
         -}}
         {{- $results = $results | append $item -}}
     {{- end -}}

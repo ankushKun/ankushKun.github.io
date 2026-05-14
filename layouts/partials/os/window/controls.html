@@ -2,10 +2,32 @@
 {{/* Usage: {{ partial "traffic-lights.html" (dict "closeLink" "/" "showLink" true "permalink" .Permalink) }} */}}
 <div class="traffic-lights">
     {{ if .closeLink }}
-    <a href="{{ .closeLink }}" class="traffic-light close" title="Close to Desktop"><span></span></a>
+    <a href="{{ .closeLink }}" class="traffic-light close" title="Close to Desktop" aria-label="Close to Desktop"><span
+            class="traffic-light-face"><span class="traffic-light-symbol" aria-hidden="true"><svg width="8"
+                height="8" viewBox="0 0 10 10" focusable="false">
+                <path d="M2.5 2.5 L7.5 7.5 M7.5 2.5 L2.5 7.5" fill="none" stroke="currentColor" stroke-width="1.2"
+                    stroke-linecap="round" />
+            </svg></span></span></a>
     {{ else }}
-    <div class="traffic-light close"><span></span></div>
+    <div class="traffic-light close" role="button" tabindex="0" aria-label="Close window"><span
+            class="traffic-light-face"><span class="traffic-light-symbol" aria-hidden="true"><svg width="8"
+                height="8" viewBox="0 0 10 10" focusable="false">
+                <path d="M2.5 2.5 L7.5 7.5 M7.5 2.5 L2.5 7.5" fill="none" stroke="currentColor" stroke-width="1.2"
+                    stroke-linecap="round" />
+            </svg></span></span></div>
     {{ end }}
-    <div class="traffic-light minimize"><span></span></div>
-    <div class="traffic-light maximize"><span></span></div>
+    <div class="traffic-light minimize" role="button" tabindex="0" aria-label="Minimize window"><span
+            class="traffic-light-face"><span class="traffic-light-symbol" aria-hidden="true"><svg width="8"
+                height="8" viewBox="0 0 10 10" focusable="false">
+                <line x1="2.5" y1="5" x2="7.5" y2="5" stroke="currentColor" stroke-width="1.2"
+                    stroke-linecap="round" />
+            </svg></span></span></div>
+    <div class="traffic-light maximize" role="button" tabindex="0" aria-label="Zoom window"><span
+            class="traffic-light-face"><span class="traffic-light-symbol" aria-hidden="true"><svg width="8"
+                height="8" viewBox="0 0 10 10" focusable="false">
+                <line x1="5" y1="2.5" x2="5" y2="7.5" stroke="currentColor" stroke-width="1.2"
+                    stroke-linecap="round" />
+                <line x1="2.5" y1="5" x2="7.5" y2="5" stroke="currentColor" stroke-width="1.2"
+                    stroke-linecap="round" />
+            </svg></span></span></div>
 </div>

@@ -8,14 +8,17 @@ Usage:
 */}}
 
 <div id="content-{{ .id }}">
+    {{- $games := where site.Data.apps.apps "group" "games" -}}
     <div class="games-window" id="games-container-{{ .id }}">
         <div class="games-toolbar">
             <div class="games-title">
-                <span class="games-icon">🎮</span>
+                {{ with (index (where site.Data.apps.apps "id" "games") 0) }}
+                {{ partial "os/app-icon.html" (dict "app" . "context" "chrome" "class" "games-title-icon") }}
+                {{ end }}
                 <span>{{ .title }}</span>
             </div>
             <div class="games-controls">
-                <span class="games-count">9 items</span>
+                <span class="games-count">{{ len $games }} items</span>
             </div>
         </div>
 
@@ -27,82 +30,15 @@ Usage:
             </div>
 
             <div class="games-icon-grid">
-                <!-- Portal Game -->
-                <div class="game-icon-item" onclick="window.openContentWindow('portal', 'Portal', null);">
-                    <div class="game-icon-image">
-                        <img src="/games/portal.webp" alt="Portal" />
-                    </div>
-                    <div class="game-icon-label">Portal</div>
-                </div>
-
-                <!-- Quake 3 Arena -->
-                <div class="game-icon-item" onclick="window.openContentWindow('quake3', 'Quake 3 Arena', null);">
-                    <div class="game-icon-image">
-                        <img src="/games/quake3.png" alt="Quake 3 Arena" />
-                    </div>
-                    <div class="game-icon-label">Quake 3 Arena</div>
-                </div>
-
-                <!-- Last Cat Standing -->
-                <div class="game-icon-item" onclick="window.openContentWindow('itch-game', 'Last Cat Standing', null);">
-                    <div class="game-icon-image">
-                        <img src="/games/cat.png" alt="Last Cat Standing" />
-                    </div>
-                    <div class="game-icon-label">Last Cat Standing</div>
-                </div>
-
-                <!-- DOOM Game -->
-                <div class="game-icon-item" onclick="window.openContentWindow('doom', 'DOOM', null);">
-                    <div class="game-icon-image">
-                        {{ partial "icons/desktop/doom.html" . }}
-                    </div>
-                    <div class="game-icon-label">DOOM</div>
-                </div>
-
-                <!-- Crysis Game -->
-                <div class="game-icon-item"
-                    onclick="window.playErrorSound(); window.showNotification({ title: 'Crysis', message: 'But can it run Crysis? No. No it cannot.', icon: '⚠️', duration: 3000, sound: false })">
-                    <div class="game-icon-image">
-                        <img src="/games/crysis.png" alt="Crysis" />
-                    </div>
-                    <div class="game-icon-label">Crysis</div>
-                </div>
-
-                <!-- Flash Games Section -->
-                <!-- Alien Hominid -->
-                <div class="game-icon-item"
-                    onclick="window.openContentWindow('flash-alien-hominid', 'Alien Hominid', null);">
-                    <div class="game-icon-image">
-                        <img src="/games/alien-hominid.png" alt="Alien Hominid" />
-                    </div>
-                    <div class="game-icon-label">Alien Hominid</div>
-                </div>
-
-                <!-- Fly Guy -->
-                <div class="game-icon-item" onclick="window.openContentWindow('flash-flyguy', 'Fly Guy', null);">
-                    <div class="game-icon-image">
-                        <img src="/games/flyguy.png" alt="Fly Guy" />
-                    </div>
-                    <div class="game-icon-label">Fly Guy</div>
-                </div>
-
-                <!-- Marvin Spectrum -->
-                <div class="game-icon-item"
-                    onclick="window.openContentWindow('flash-marvin-spectrum', 'Marvin Spectrum', null);">
-                    <div class="game-icon-image">
-                        <img src="/games/marvin-spectrum.png" alt="Marvin Spectrum" />
-                    </div>
-                    <div class="game-icon-label">Marvin Spectrum</div>
-                </div>
-
-                <!-- Wasted Sky -->
-                <div class="game-icon-item" onclick="window.openContentWindow('flash-wasted-sky', 'Wasted Sky', null);">
-                    <div class="game-icon-image">
-                        <img src="/games/wasted-sky.png" alt="Wasted Sky" />
-                    </div>
-                    <div class="game-icon-label">Wasted Sky</div>
-                </div>
-
+                {{ range $games }}
+                <button class="game-icon-item" type="button"
+                    onclick="window.openContentWindow('{{ .id }}', '{{ .title | safeJS }}', null);">
+                    <span class="game-icon-image">
+                        {{ partial "os/app-icon.html" (dict "app" . "context" "grid") }}
+                    </span>
+                    <span class="game-icon-label">{{ .label }}</span>
+                </button>
+                {{ end }}
             </div>
         </div>
     </div>

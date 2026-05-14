@@ -1,0 +1,57 @@
+{{/* Timeline Calendar Desktop Icon - 64x64 SVG - Old macOS skeuomorphic tear-off style */}}
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" aria-hidden="true">
+    <defs>
+        <linearGradient id="tlCalHeader" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#e85c52" />
+            <stop offset="45%" style="stop-color:#c41e12" />
+            <stop offset="100%" style="stop-color:#8b1208" />
+        </linearGradient>
+        <linearGradient id="tlCalPaper" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#fdfcf8" />
+            <stop offset="100%" style="stop-color:#e8e6df" />
+        </linearGradient>
+        <linearGradient id="tlCalGlass" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:rgba(255,255,255,0.55)" />
+            <stop offset="35%" style="stop-color:rgba(255,255,255,0.08)" />
+            <stop offset="100%" style="stop-color:rgba(255,255,255,0)" />
+        </linearGradient>
+        <filter id="tlCalDropShadow" x="-25%" y="-25%" width="150%" height="150%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="2" />
+            <feOffset dx="0" dy="2" result="offsetblur" />
+            <feComponentTransfer>
+                <feFuncA type="linear" slope="0.38" />
+            </feComponentTransfer>
+            <feMerge>
+                <feMergeNode />
+                <feMergeNode in="SourceGraphic" />
+            </feMerge>
+        </filter>
+    </defs>
+
+    <g filter="url(#tlCalDropShadow)">
+        <!-- Card: red header (rounded top) -->
+        <path d="M12 10 L52 10 Q56 10 56 14 L56 25 L8 25 L8 14 Q8 10 12 10 Z" fill="url(#tlCalHeader)" stroke="#6a0a06" stroke-width="0.35" />
+        <!-- Paper body -->
+        <path d="M8 25 L56 25 L56 54 Q56 58 52 58 L12 58 Q8 58 8 54 Z" fill="url(#tlCalPaper)" stroke="#9a9890" stroke-width="0.5" />
+        <!-- Perforation hint -->
+        <line x1="10" y1="25" x2="54" y2="25" stroke="#b8b6ae" stroke-width="0.75" stroke-dasharray="1.2 2" />
+
+        <!-- Inner edge on header bottom -->
+        <line x1="9" y1="25.5" x2="55" y2="25.5" stroke="rgba(0,0,0,0.12)" stroke-width="0.5" />
+
+        <!-- Month (dynamic via JS; Hugo fills build-time default) -->
+        <text id="timeline-desktop-cal-month" x="32" y="20.5" text-anchor="middle" fill="#fff"
+            font-family="Lucida Grande, Geneva, Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10"
+            font-weight="700" letter-spacing="0.08em" style="text-rendering: geometricPrecision">{{ upper (now.Format "Jan") }}</text>
+        <!-- Day numeral -->
+        <text id="timeline-desktop-cal-day" x="32" y="49" text-anchor="middle" fill="#2c2c2c"
+            font-family="Lucida Grande, Geneva, Helvetica Neue, Helvetica, Arial, sans-serif" font-size="24"
+            font-weight="600" style="text-rendering: geometricPrecision">{{ now.Format "2" }}</text>
+
+        <!-- Subtle inner shadow on paper (bottom) -->
+        <path d="M8 25 L56 25 L56 54 Q56 58 52 58 L12 58 Q8 58 8 54 Z" fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="3" />
+
+        <!-- Gloss highlight -->
+        <path d="M12 11 Q32 13 52 11 Q54 12 54 14 L54 23 L10 23 L10 14 Q10 12 12 11 Z" fill="url(#tlCalGlass)" />
+    </g>
+</svg>
