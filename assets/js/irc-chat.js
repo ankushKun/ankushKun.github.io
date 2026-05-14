@@ -4,7 +4,7 @@
 (function () {
     'use strict';
 
-    const GUN_RELAY = "https://arweave.tech/gun";
+    const GUN_RELAY = "https://gun-peer-server.ankushkun.workers.dev/gun";
     const CHANNEL = "ankush-irc-general";
     const MAX_MESSAGES = 110;
     const PRESENCE_TIMEOUT = 10000;
