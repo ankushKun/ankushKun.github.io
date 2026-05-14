@@ -1,0 +1,25 @@
+{{/* Shared app icon renderer.
+Usage: {{ partial "os/app-icon.html" (dict "app" $app "context" "desktop") }}
+Contexts map to fixed visual sizes in CSS: desktop 64px, grid 48px, spotlight/notification 32px, chrome 18px.
+*/}}
+{{- $app := .app -}}
+{{- $icon := .icon -}}
+{{- if and (not $icon) $app -}}{{- $icon = $app.icon -}}{{- end -}}
+{{- $context := default "desktop" .context -}}
+{{- $fit := "contain" -}}
+{{- with $icon -}}{{- with .fit -}}{{- $fit = . -}}{{- end -}}{{- end -}}
+{{- $iconType := "fallback" -}}
+{{- with $icon -}}{{- $iconType = .type -}}{{- end -}}
+{{- $classes := slice "app-icon" (printf "app-icon-%s" $context) (printf "app-icon-type-%s" $iconType) (printf "app-icon-fit-%s" $fit) -}}
+{{- with .class -}}{{- $classes = $classes | append . -}}{{- end -}}
+{{- $loading := "eager" -}}
+{{- if eq $context "desktop" -}}{{- $loading = "lazy" -}}{{- end -}}
+<span class="{{ delimit $classes " " }}" aria-hidden="true">
+    {{- if and $icon (eq $icon.type "image") -}}
+    <img src="{{ $icon.src }}" alt="" draggable="false" loading="{{ $loading }}">
+    {{- else if and $icon (eq $icon.type "partial") -}}
+    <span class="app-icon-art">{{ partial $icon.partial $app }}</span>
+    {{- else -}}
+    <span class="app-icon-art">{{ partial "icons/desktop/document.html" $app }}</span>
+    {{- end -}}
+</span>

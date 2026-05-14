@@ -379,11 +379,35 @@ hr {
 }
 
 .dropdown-item.window-item {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
+}
+
+.window-item-check {
+    width: 10px;
+    flex-shrink: 0;
+}
+
+.window-item-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.window-item-state {
+    margin-left: auto;
+    flex-shrink: 0;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.58);
+}
+
+.dropdown-item.minimized-window .window-item-title {
+    color: rgba(255, 255, 255, 0.72);
 }
 
 .menubar-right {
@@ -744,10 +768,6 @@ hr {
     background: rgba(255, 255, 255, 0.15);
 }
 
-.desktop-icon.selected {
-    background: rgba(0, 122, 255, 0.4);
-}
-
 .desktop-icon:active {
     background: rgba(0, 122, 255, 0.6);
 }
@@ -761,6 +781,120 @@ hr {
     margin-bottom: 4px;
 }
 
+.app-icon {
+    --app-icon-size: 64px;
+    width: var(--app-icon-size);
+    height: var(--app-icon-size);
+    display: inline-grid;
+    place-items: center;
+    position: relative;
+    flex-shrink: 0;
+    isolation: isolate;
+}
+
+.app-icon::before {
+    display: none;
+}
+
+.app-icon img,
+.app-icon-art,
+.app-icon-art svg {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.app-icon img {
+    width: 82%;
+    height: 82%;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.22));
+}
+
+.app-icon-fit-cover img {
+    width: 84%;
+    height: 84%;
+    object-fit: cover;
+    border-radius: 18%;
+}
+
+.app-icon-art,
+.app-icon-art svg {
+    width: 100%;
+    height: 100%;
+}
+
+.desktop-icon[data-window="projects"] .app-icon-art {
+    transform: scale(0.9) translateY(1px);
+    transform-origin: center;
+}
+
+.desktop-icon[data-window="timeline"] .app-icon-art {
+    transform: scale(0.88);
+    transform-origin: center;
+}
+
+.app-icon-type-partial::before {
+    opacity: 0.12;
+}
+
+.app-icon-grid {
+    --app-icon-size: 48px;
+}
+
+.app-icon-spotlight,
+.app-icon-notification {
+    --app-icon-size: 32px;
+}
+
+.app-icon-chrome {
+    --app-icon-size: 18px;
+}
+
+.spotlight-generic-icon {
+    width: 22px;
+    height: 26px;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #ffffff, #dfe7ef);
+    border: 1px solid rgba(0, 0, 0, 0.16);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.24);
+    position: relative;
+}
+
+.spotlight-generic-icon::after {
+    content: "";
+    position: absolute;
+    left: 5px;
+    right: 5px;
+    top: 9px;
+    height: 2px;
+    background: #7ca8d6;
+    box-shadow: 0 5px 0 #a9b6c3, 0 10px 0 #a9b6c3;
+}
+
+.spotlight-generic-icon.folder {
+    width: 26px;
+    height: 20px;
+    margin-top: 5px;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #78b7ff, #2375d1);
+}
+
+.spotlight-generic-icon.folder::before {
+    content: "";
+    position: absolute;
+    top: -5px;
+    left: 2px;
+    width: 11px;
+    height: 6px;
+    border-radius: 3px 3px 0 0;
+    background: #5aa0ee;
+}
+
+.spotlight-generic-icon.folder::after {
+    display: none;
+}
+
 .icon-image img,
 .icon-image svg {
     width: 100%;
@@ -768,14 +902,31 @@ hr {
     object-fit: contain;
 }
 
-/* Lazy-loaded image transitions */
-.lazy-image {
+.icon-image .app-icon img {
+    width: 82%;
+    height: 82%;
+}
+
+.icon-image .app-icon {
+    width: 100%;
+    height: 100%;
+}
+
+.icon-image .app-icon-fit-cover img {
+    width: 84%;
+    height: 84%;
+    object-fit: cover;
+}
+
+/* Lazy-loaded image transitions (only while swapping placeholder for data-src) */
+.lazy-image[data-src]:not(.loaded) {
     filter: blur(5px);
     transition: filter 0.3s ease-out;
 }
 
-.lazy-image.loaded {
-    filter: blur(0);
+.lazy-image.loaded,
+.lazy-image:not([data-src]) {
+    filter: none;
 }
 
 .icon-label {
@@ -827,14 +978,13 @@ hr {
 }
 
 /* Traffic lights turn gray when inactive */
-.window.inactive .traffic-light {
+.window.inactive .traffic-light .traffic-light-face {
     background: #CDCDCD !important;
     border-color: #B0B0B0 !important;
 }
 
-/* Remove background from the symbol span */
-.window.inactive .traffic-light span {
-    background: transparent !important;
+.window.inactive .traffic-light-symbol {
+    color: rgba(0, 0, 0, 0.35);
 }
 
 .titlebar-link {
@@ -886,64 +1036,82 @@ hr {
 }
 
 .traffic-light {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
+    padding: 6px;
+    margin: -6px;
+    background: transparent;
+    border: none;
+    flex-shrink: 0;
     cursor: pointer;
     position: relative;
     text-decoration: none;
-}
-
-.traffic-light.close {
-    background: var(--traffic-red);
-    border: 1px solid #E14640;
-}
-
-.traffic-light.minimize {
-    background: var(--traffic-yellow);
-    border: 1px solid #DEA123;
-}
-
-.traffic-light.maximize {
-    background: var(--traffic-green);
-    border: 1px solid #1AAB29;
-}
-
-.traffic-light span {
-    display: none;
-    font-size: 10px;
-    font-weight: bold;
-    line-height: 1;
     color: rgba(0, 0, 0, 0.5);
+    line-height: 0;
 }
 
-.window-titlebar:hover .traffic-light span {
+.traffic-light-face {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    box-sizing: border-box;
+}
+
+.traffic-light.close .traffic-light-face {
+    background: var(--traffic-red);
+    border: 1px solid var(--traffic-red-border);
+}
+
+.traffic-light.minimize .traffic-light-face {
+    background: var(--traffic-yellow);
+    border: 1px solid var(--traffic-yellow-border);
+}
+
+.traffic-light.maximize .traffic-light-face {
+    background: var(--traffic-green);
+    border: 1px solid var(--traffic-green-border);
+}
+
+.traffic-light-symbol {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+}
+
+/* Symmetric viewBox + half-pixel nudge counters stroke/baseline bias in tiny circles */
+.traffic-light-symbol svg {
     display: block;
+    transform: translate(0.5px, 0.5px);
+    shape-rendering: geometricPrecision;
 }
 
-.traffic-light.close span::after {
-    content: "×";
-}
-
-.traffic-light.minimize span::after {
-    content: "−";
-}
-
-.traffic-light.maximize span::after {
-    content: "+";
+.window-titlebar:hover .traffic-light .traffic-light-symbol {
+    opacity: 1;
 }
 
 .window-title {
     flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     text-align: center;
     font-size: 13px;
     font-weight: 500;
     color: #4A4A4A;
     margin-right: 46px;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.window-title-text {
     overflow: hidden;
     text-overflow: ellipsis;
 }
@@ -2305,9 +2473,22 @@ hr {
         position: relative;
         left: auto;
         top: auto;
-        width: calc(100% - 24px);
+        width: calc(100% - 56px);
+        max-width: 320px;
         margin: 12px auto;
         order: 2;
+    }
+
+    .desktop-widget .widget-header {
+        padding: 10px 14px;
+    }
+
+    .desktop-widget .widget-content {
+        padding: 6px;
+    }
+
+    .desktop-widget .widget-blog-item {
+        padding: 8px 10px;
     }
 
     /* ===== Desktop Layout on Mobile ===== */
@@ -2322,6 +2503,7 @@ hr {
         flex-wrap: wrap;
         align-content: flex-start;
         justify-content: center;
+        direction: ltr;
         gap: 12px;
         padding: 12px;
         height: auto;
@@ -2331,13 +2513,13 @@ hr {
     }
 
     .desktop-icon {
-        width: 70px;
+        width: 76px;
         padding: 6px;
     }
 
     .icon-image {
-        width: 48px;
-        height: 48px;
+        width: 54px;
+        height: 54px;
     }
 
     .icon-label {
@@ -2433,15 +2615,13 @@ hr {
         gap: 8px;
     }
 
-    .traffic-light {
+    .traffic-light-face {
         width: 14px;
         height: 14px;
-        /* Always show symbols on mobile for clarity */
     }
 
-    .traffic-light span {
-        display: block !important;
-        font-size: 11px;
+    .traffic-light-symbol {
+        opacity: 1 !important;
     }
 
     /* Disable window dragging and resizing on mobile */
@@ -2502,7 +2682,10 @@ hr {
     .connect-item {
         height: auto;
         text-align: center;
-        /* padding: 4px; */
+        min-width: 36px;
+        min-height: 36px;
+        justify-content: center;
+        padding: 8px;
         font-size: 12px;
     }
 
@@ -2513,7 +2696,7 @@ hr {
         margin: 0px;
     }
 
-    .connect-item a {
+    .connect-item .connect-item-label {
         display: none !important;
     }
 
@@ -2838,14 +3021,13 @@ hr {
     @media (hover: none) {
 
         .desktop-icon:hover,
-        .finder-row:hover,
-        .traffic-light:hover span {
+        .finder-row:hover {
             background: transparent;
         }
 
         /* Always show traffic light symbols */
-        .traffic-light span {
-            display: block !important;
+        .traffic-light .traffic-light-symbol {
+            opacity: 1 !important;
         }
     }
 }
@@ -2853,17 +3035,17 @@ hr {
 /* Small Mobile Devices */
 @media (max-width: 480px) {
     .desktop-icon {
-        width: 60px;
+        width: 72px;
     }
 
     .icon-image {
-        width: 42px;
-        height: 42px;
+        width: 50px;
+        height: 50px;
     }
 
     .icon-label {
-        font-size: 9px;
-        max-width: 60px;
+        font-size: 10px;
+        max-width: 72px;
     }
 
     #active-app-name {
@@ -2969,6 +3151,7 @@ a.finder-row {
     margin-bottom: 0px;
     border-radius: 4px;
     text-decoration: none;
+    color: #262626;
     cursor: pointer;
     transition: none;
     /* Finder items are snappy */
@@ -2998,7 +3181,7 @@ a.finder-row {
     opacity: 1;
 }
 
-.connect-item a {
+.connect-item-label {
     /* The link text itself */
     flex: 1;
     color: #333;
@@ -3007,29 +3190,8 @@ a.finder-row {
     text-decoration: none;
     font-weight: 400;
     letter-spacing: -0.2px;
-    pointer-events: none;
-    text-align: center;
+    text-align: left;
     /* Make the whole row clickable via main element if possible, or just style the a to fill */
-}
-
-/* Since HTML has <a> inside div, we need to make sure clicks work or style <a> to fill */
-/* Re-targeting structure: .connect-item is the div, inside is img and a */
-.connect-item a {
-    pointer-events: auto;
-    /* Let clicks pass to a */
-    display: flex;
-    align-items: center;
-    text-align: center;
-    height: 100%;
-    width: 100%;
-}
-
-/* Actually, the HTML is: div.connect-item > img + a */
-/* So I should style the div as the container and let a be the text */
-
-.connect-item a {
-    color: #262626;
-    text-align: center;
 }
 
 /* ================================================
@@ -3124,6 +3286,10 @@ a.finder-row {
     justify-content: center;
 }
 
+.notification-icon .app-icon {
+    --app-icon-size: 32px;
+}
+
 .notification-icon-img {
     width: 36px;
     height: 36px;
@@ -3159,31 +3325,43 @@ a.finder-row {
 
 .notification-close {
     flex-shrink: 0;
-    width: 14px;
-    height: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.06);
+    align-self: flex-start;
+    padding: 10px;
+    margin: -10px;
     border: none;
-    border-radius: 100%;
-    color: #86868b;
-    font-size: 16px;
-    font-weight: 400;
+    background: transparent;
     cursor: pointer;
-    transition: all 0.15s ease;
-    padding: 0;
-    padding-bottom: 2px;
-    line-height: 1;
-    margin-top: 2px;
+    color: #86868b;
+    line-height: 0;
+}
+
+.notification-close-face {
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.06);
+    transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.notification-close-icon {
+    display: block;
 }
 
 .notification-close:hover {
-    background: rgba(0, 0, 0, 0.1);
     color: #1d1d1f;
 }
 
-.notification-close:active {
+.notification-close:hover .notification-close-face {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.notification-close:active .notification-close-face {
     background: rgba(0, 0, 0, 0.15);
     transform: scale(0.95);
 }

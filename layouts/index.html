@@ -4,41 +4,9 @@
 
 <!-- Desktop Icons -->
 <div class="desktop-icons">
-    <!-- About Icon -->
-    {{ partial "os/desktop/icon.html" (dict "window" "about" "title" "About Me" "label" "About Me" "image" "/pfp.png"
-    "placeholder"
-    "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQABLAEsAAD/4QD0RXhpZgAATU0AKgAAAAgABgEaAAUAAAABAAAAVgEbAAUAAAABAAAAXgEoAAMAAAABAAIAAAEyAAIAAAAUAAAAZgE7AAIAAAAHAAAAeodpAAQAAAABAAAAggAAAAAAAAEsAAAAAQAAASwAAAABMjAyNToxMjowNCAxMjo0OToyMwBBbmt1c2gAAAAFkAMAAgAAABQAAADEkAQAAgAAABQAAADYoAEAAwAAAAEAAQAAoAIABAAAAAEAAAAQoAMABAAAAAEAAAAQAAAAADIwMjU6MTI6MDQgMTI6NDQ6NDYAMjAyNToxMjowNCAxMjo0NDo0NgD/7QBSUGhvdG9zaG9wIDMuMAA4QklNBAQAAAAAABocAVoAAxslRxwCAAACAAIcAlAABkFua3VzaDhCSU0EJQAAAAAAEPKMig2ZcH6Bwu5pNpbTSYP/wAARCAAQABADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9sAQwACAgICAgIDAgIDBQMDAwUGBQUFBQYIBgYGBgYICggICAgICAoKCgoKCgoKDAwMDAwMDg4ODg4PDw8PDw8PDw8P/9sAQwECAgIEBAQHBAQHEAsJCxAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ/90ABAAB/9oADAMBAAIRAxEAPwD70/b5+Lnxr+H+jeEvCfwRkew1TxNPOZr2O2a5lSO3kt0WKJFDNudpwzEKcIje9Sf8E/8A4pfG3x74T8V+G/jfNLqGqeFL9LeK9uYVhuZVcyK6SKgAOxo/lLfOVYFhjaT9YfFjxPYeHfDGoSSFRfQ2N1d2275Tut4yxCvg7CRkZIIxkEEZBzvg7caSNBWeyht7W58QO+r3EMMhlZZroKxLSHHmHbtG7A6YxgZqby5rdDq9mvY89utj/9k=")
-    }}
-
-    <!-- Resume Icon -->
-    {{ partial "os/desktop/icon.html" (dict "window" "resume" "title" "📄 Resume" "label" "Resume" "svg"
-    (partial "icons/desktop/resume.html" .)) }}
-
-    <!-- Projects Icon -->
-    {{ partial "os/desktop/icon.html" (dict "window" "projects" "title" "Projects" "label" "Projects" "svg" (partial
-    "icons/desktop/folder.html" .)) }}
-
-    <!-- Blogs Icon -->
-    {{ partial "os/desktop/icon.html" (dict "window" "blogs" "title" "Blogs" "label" "Blogs" "svg" (partial
-    "icons/desktop/document.html" .)) }}
-
-    <!-- Timeline Icon -->
-    {{ partial "os/desktop/icon.html" (dict "window" "timeline" "title" "Timeline" "label" "Timeline" "svg" (partial
-    "icons/desktop/clock.html" .)) }}
-
-
-    <!-- Games Folder Icon -->
-    {{ partial "os/desktop/icon.html" (dict "window" "games" "title" "Games" "label" "Games" "svg"
-    (partial "icons/desktop/games.html" .)) }}
-
-    <!-- Terminal Icon -->
-    {{ partial "os/desktop/icon.html" (dict "window" "terminal" "title" "Terminal" "label" "Terminal" "svg"
-    (partial "icons/desktop/terminal.html" .)) }}
-
-    <!-- IRC Chat Icon -->
-    {{ partial "os/desktop/icon.html" (dict "window" "irc-chat" "title" "IRC Chat" "label" "IRC Chat" "svg"
-    (partial "icons/desktop/irc-chat.html" .)) }}
-
+    {{ range where .Site.Data.apps.apps "desktop" true }}
+    {{ partial "os/desktop/icon.html" (dict "app" .) }}
+    {{ end }}
 </div>
 
 <!-- ============================================== -->

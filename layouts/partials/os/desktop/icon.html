@@ -16,10 +16,29 @@ OR for SVG:
 "svg" "<svg>...</svg>"
 ) }}
 */}}
-<button class="desktop-icon" data-window="{{ .window }}" data-title="{{ .title }}" aria-label="{{ .label }}"
+{{- $app := .app -}}
+{{- $window := .window -}}
+{{- $title := .title -}}
+{{- $label := .label -}}
+{{- $permalink := .permalink -}}
+{{- $width := .width -}}
+{{- $height := .height -}}
+{{- if $app -}}
+{{- $window = $app.id -}}
+{{- $title = $app.title -}}
+{{- $label = $app.label -}}
+{{- $permalink = $app.contentPermalink -}}
+{{- with $app.defaultSize -}}
+{{- $width = .width -}}
+{{- $height = .height -}}
+{{- end -}}
+{{- end -}}
+<button class="desktop-icon" data-window="{{ $window }}" data-title="{{ $title }}"{{ with $permalink }} data-permalink="{{ . }}"{{ end }}{{ with $width }} data-width="{{ . }}"{{ end }}{{ with $height }} data-height="{{ . }}"{{ end }} aria-label="{{ $label }}"
     tabindex="0">
     <div class="icon-image">
-        {{ if .image }}
+        {{ if $app }}
+        {{ partial "os/app-icon.html" (dict "app" $app "context" "desktop") }}
+        {{ else if .image }}
         <img src="{{ if .placeholder }}{{ .placeholder }}{{ else }}{{ .image }}{{ end }}" 
              {{ if .placeholder }}data-src="{{ .image }}"{{ end }}
              alt="" width="64" height="64" aria-hidden="true" class="lazy-image">
@@ -27,5 +46,5 @@ OR for SVG:
         {{ .svg | safeHTML }}
         {{ end }}
     </div>
-    <span class="icon-label">{{ .label }}</span>
+    <span class="icon-label">{{ $label }}</span>
 </button>

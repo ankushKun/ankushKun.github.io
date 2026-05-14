@@ -200,35 +200,91 @@ a.project-card {
 
 @media (max-width: 640px) {
     .projects-toolbar {
-        flex-direction: column;
-        gap: 12px;
-        align-items: flex-start;
+        flex-direction: row;
+        gap: 8px;
+        align-items: center;
+        padding: 9px 12px;
     }
 
     .projects-controls {
-        width: 100%;
+        width: auto;
+        margin-left: auto;
+    }
+
+    .projects-title {
+        font-size: 14px;
+    }
+
+    .projects-icon {
+        font-size: 16px;
+    }
+
+    .projects-count {
+        font-size: 11px;
+    }
+
+    .projects-content {
+        padding: 10px;
+    }
+
+    .projects-year-section {
+        margin-bottom: 16px;
+    }
+
+    .projects-year-header {
+        top: -10px;
+        font-size: 18px;
+        padding: 8px 0;
+        margin-bottom: 8px;
+        border-bottom-width: 1px;
     }
 
     .projects-grid {
         grid-template-columns: 1fr;
+        gap: 8px;
     }
 
+    .project-card.finder-row,
     .project-card {
-        flex-direction: column;
+        flex-direction: row;
         align-items: center;
-        text-align: center;
+        text-align: left;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        min-height: 76px;
+    }
+
+    .project-card-icon {
+        min-width: 44px;
+        gap: 4px;
+    }
+
+    .project-card-icon svg {
+        width: 34px;
+        height: 34px;
+    }
+
+    .project-card-date {
+        font-size: 9px;
+        padding: 1px 5px;
     }
 
     .project-card-content {
-        align-items: center;
+        align-items: flex-start;
+        gap: 3px;
     }
 
     .project-card-title {
-        white-space: normal;
+        white-space: nowrap;
+        width: 100%;
+        font-size: 14px;
     }
 
-    .projects-year-header {
-        font-size: 20px;
+    .project-card-summary {
+        font-size: 12px;
+        line-height: 1.35;
+        -webkit-line-clamp: 2;
     }
 }
 
@@ -1102,6 +1158,10 @@ a.event-item.event-link {
     cursor: pointer;
     transition: all 0.15s ease;
     max-width: 100px;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    color: inherit;
 }
 
 .game-icon-item:hover {
@@ -1132,6 +1192,21 @@ a.event-item.event-link {
     height: 64px;
     object-fit: contain;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.game-icon-image .app-icon {
+    --app-icon-size: 48px;
+}
+
+.game-icon-image .app-icon img {
+    width: 82%;
+    height: 82%;
+}
+
+.game-icon-image .app-icon-fit-cover img {
+    width: 84%;
+    height: 84%;
+    object-fit: cover;
 }
 
 .game-icon-label {

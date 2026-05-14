@@ -14,6 +14,7 @@
     const openWindows = new Map();
     const windowHistory = [];
     let globalSearchIndex = [];
+    const appMetadata = new Map();
 
     // Initialize
     document.addEventListener('DOMContentLoaded', init);
@@ -21,6 +22,8 @@
     function init() {
         setupClock();
         setupDesktopIcons();
+        updateTimelineDesktopIconDate();
+        scheduleTimelineDesktopIconMidnightRefresh();
         setupDesktopClick();
         setupAppleMenuClose();
         setupDropdownItemClose();
@@ -338,17 +341,53 @@
                     background: rgba(0, 122, 255, 0.9);
                 }
                 .spotlight-result-icon {
-                    font-size: 22px;
-                    width: 28px;
-                    text-align: center;
+                    width: 32px;
+                    height: 32px;
+                    display: grid;
+                    place-items: center;
                     flex-shrink: 0;
                 }
-                .spotlight-result-icon-img {
-                    width: 28px;
-                    height: 28px;
-                    object-fit: contain;
-                    flex-shrink: 0;
-                    border-radius: 4px;
+                .spotlight-result-icon .app-icon {
+                    --app-icon-size: 32px;
+                }
+                .spotlight-generic-icon {
+                    width: 22px;
+                    height: 26px;
+                    border-radius: 3px;
+                    background: linear-gradient(180deg, #ffffff, #dfe7ef);
+                    border: 1px solid rgba(0, 0, 0, 0.16);
+                    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.24);
+                    position: relative;
+                }
+                .spotlight-generic-icon::after {
+                    content: "";
+                    position: absolute;
+                    left: 5px;
+                    right: 5px;
+                    top: 9px;
+                    height: 2px;
+                    background: #7ca8d6;
+                    box-shadow: 0 5px 0 #a9b6c3, 0 10px 0 #a9b6c3;
+                }
+                .spotlight-generic-icon.folder {
+                    width: 26px;
+                    height: 20px;
+                    margin-top: 5px;
+                    border-radius: 3px;
+                    background: linear-gradient(180deg, #78b7ff, #2375d1);
+                }
+                .spotlight-generic-icon.folder::before {
+                    content: "";
+                    position: absolute;
+                    top: -5px;
+                    left: 2px;
+                    width: 11px;
+                    height: 6px;
+                    border-radius: 3px 3px 0 0;
+                    background: #5aa0ee;
+                }
+                .spotlight-generic-icon.folder::after {
+                    display: none;
                 }
                 .spotlight-result-content {
                     flex: 1;
@@ -391,27 +430,14 @@
         const input = document.getElementById('spotlight-input');
         input.focus();
 
-        // Create icon mapping helper
-        const getIcon = (item) => {
-            // Use icon from search index if available
-            if (item.icon) return item.icon;
-
-            // App-specific icons
-            if (item.type === 'app') {
-                if (item.title === 'Wins') return '🥇';
-                if (item.title === 'Contact') return '📇';
-                if (item.title === 'Schedule Call') return '📅';
-                if (item.title === 'Timeline') return '⏳';
-                if (item.title === 'Projects') return '🚀';
-                if (item.title === 'Blogs') return '📝';
-                if (item.title === 'Resume') return '📄';
-                if (item.title === 'About Me') return '🍎';
-                if (item.title === 'Terminal') return '💻';
-                if (item.title === 'IRC Chat') return '💬';
-                if (item.title === 'Games') return '🕹️';
-                return '🖥️';
+        const getIconHtml = (item) => {
+            if (item.iconHtml) return item.iconHtml;
+            if (item.icon && (item.icon.startsWith('/') || item.icon.startsWith('http'))) {
+                return `<span class="app-icon app-icon-spotlight app-icon-type-image app-icon-fit-contain"><img src="${escapeHtml(item.icon)}" alt="" draggable="false"></span>`;
             }
-            return getIconForType(item.type);
+
+            const kind = getIconForType(item.type);
+            return `<span class="app-icon app-icon-spotlight app-icon-type-fallback app-icon-fit-contain"><span class="spotlight-generic-icon ${kind}"></span></span>`;
         };
 
         // Handle search
@@ -426,7 +452,7 @@
                 (item.content && item.content.toLowerCase().includes(query))
             ).slice(0, 8).map(item => ({
                 ...item,
-                icon: getIcon(item),
+                iconHtml: getIconHtml(item),
                 windowId: item.openWindow || ('content-' + item.permalink.replace(/[^a-z0-9]/gi, '-'))
             })) : [];
 
@@ -466,16 +492,12 @@
                 return;
             }
             container.innerHTML = results.map(item => {
-                const iconHtml = (item.icon.startsWith('/') || item.icon.startsWith('http'))
-                    ? `<img src="${item.icon}" class="spotlight-result-icon-img" alt="">`
-                    : `<span class="spotlight-result-icon">${item.icon}</span>`;
-
                 return `
-                <div class="spotlight-result" data-window="${item.windowId}" data-title="${item.title}" data-permalink="${item.permalink || ''}">
-                    ${iconHtml}
+                <div class="spotlight-result" role="button" tabindex="0" data-window="${escapeHtml(item.windowId)}" data-title="${escapeHtml(item.title)}" data-permalink="${escapeHtml(item.permalink || '')}" data-width="${item.width || 900}" data-height="${item.height || 650}">
+                    <span class="spotlight-result-icon">${item.iconHtml}</span>
                     <div class="spotlight-result-content">
-                        <div class="spotlight-result-title">${item.title}</div>
-                        <div class="spotlight-result-type">${item.type}</div>
+                        <div class="spotlight-result-title">${escapeHtml(item.title)}</div>
+                        <div class="spotlight-result-type">${escapeHtml(item.type || 'item')}</div>
                     </div>
                 </div>
             `}).join('');
@@ -486,8 +508,10 @@
                     const windowId = el.dataset.window;
                     const title = el.dataset.title;
                     const permalink = el.dataset.permalink;
+                    const width = parseInt(el.dataset.width, 10) || 900;
+                    const height = parseInt(el.dataset.height, 10) || 650;
                     spotlight.remove();
-                    openWindow(windowId, title, { width: 900, height: 650 }, permalink || null);
+                    openWindow(windowId, title, { width, height }, permalink || null);
                 });
             });
         }
@@ -507,18 +531,58 @@
             .then(data => {
                 // Apps and content pages are now all in index.json
                 globalSearchIndex = data;
+                appMetadata.clear();
+                data.forEach(item => {
+                    if (item.openWindow) appMetadata.set(item.openWindow, item);
+                });
             })
             .catch(e => console.error('Failed to load search index', e));
     }
 
+    function getWindowIconHtml(id) {
+        const meta = appMetadata.get(id);
+        if (!meta) return '';
+        return meta.iconHtmlChrome || meta.iconHtml || '';
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        }[char]));
+    }
+
     function getIconForType(type) {
         const t = (type || '').toLowerCase();
-        if (t.includes('blog') || t.includes('post')) return '📝';
-        if (t.includes('project')) return '📁';
-        if (t.includes('timeline')) return '⏰';
-        if (t.includes('game')) return '🎮';
-        if (t.includes('app')) return '🚀';
-        return '📄';
+        if (t.includes('project') || t.includes('game') || t.includes('app')) return 'folder';
+        return 'document';
+    }
+
+    /** Sync Timeline desktop calendar icon month/day to the visitor's local date (static Hugo build uses build-time defaults). */
+    function updateTimelineDesktopIconDate() {
+        const svg = document.querySelector('.desktop-icon[data-window="timeline"] svg');
+        if (!svg) return;
+        const monthEl = svg.querySelector('#timeline-desktop-cal-month');
+        const dayEl = svg.querySelector('#timeline-desktop-cal-day');
+        if (!monthEl || !dayEl) return;
+        const d = new Date();
+        monthEl.textContent = d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
+        dayEl.textContent = String(d.getDate());
+    }
+
+    function scheduleTimelineDesktopIconMidnightRefresh() {
+        const now = new Date();
+        const next = new Date(now);
+        next.setDate(next.getDate() + 1);
+        next.setHours(0, 0, 0, 0);
+        const ms = next.getTime() - now.getTime();
+        setTimeout(function tick() {
+            updateTimelineDesktopIconDate();
+            setInterval(updateTimelineDesktopIconDate, 86400000);
+        }, ms);
     }
 
     // Clock
@@ -560,9 +624,19 @@
                 const windowId = icon.dataset.window;
                 const title = icon.dataset.title;
                 if (windowId && title) {
-                    openWindow(windowId, title);
+                    const width = parseInt(icon.dataset.width, 10) || 1000;
+                    const height = parseInt(icon.dataset.height, 10) || 700;
+                    const permalink = icon.dataset.permalink || null;
+                    openWindow(windowId, title, { width, height }, permalink);
                 }
                 // Else it might have an onclick handler (like Schedule Call)
+            });
+
+            icon.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    icon.click();
+                }
             });
         });
     }
@@ -677,6 +751,16 @@
         });
     }
 
+    /** Traffic lights markup (shared by dynamically created windows). */
+    function getTrafficLightsMarkup() {
+        return `
+                <div class="traffic-lights">
+                    <div class="traffic-light close" role="button" tabindex="0" aria-label="Close window"><span class="traffic-light-face"><span class="traffic-light-symbol" aria-hidden="true"><svg width="8" height="8" viewBox="0 0 10 10" focusable="false"><path d="M2.5 2.5 L7.5 7.5 M7.5 2.5 L2.5 7.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></span></span></div>
+                    <div class="traffic-light minimize" role="button" tabindex="0" aria-label="Minimize window"><span class="traffic-light-face"><span class="traffic-light-symbol" aria-hidden="true"><svg width="8" height="8" viewBox="0 0 10 10" focusable="false"><line x1="2.5" y1="5" x2="7.5" y2="5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></span></span></div>
+                    <div class="traffic-light maximize" role="button" tabindex="0" aria-label="Zoom window"><span class="traffic-light-face"><span class="traffic-light-symbol" aria-hidden="true"><svg width="8" height="8" viewBox="0 0 10 10" focusable="false"><line x1="5" y1="2.5" x2="5" y2="7.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><line x1="2.5" y1="5" x2="7.5" y2="5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></span></span></div>
+                </div>`;
+    }
+
     // Open external URL in iframe window
     function openExternalWindow(url, title) {
 
@@ -687,12 +771,8 @@
         win.dataset.windowId = windowId;
         win.innerHTML = `
             <div class="window-titlebar">
-                <div class="traffic-lights">
-                    <div class="traffic-light close"><span></span></div>
-                    <div class="traffic-light minimize"><span></span></div>
-                    <div class="traffic-light maximize"><span></span></div>
-                </div>
-                <div class="window-title">🌐 ${title}</div>
+                ${getTrafficLightsMarkup()}
+                <div class="window-title"><span class="window-title-text">${escapeHtml(title)}</span></div>
             </div>
             <div class="window-toolbar">
                 <div class="url-bar">
@@ -852,10 +932,13 @@
 
         let html = '';
         openWindows.forEach((win, id) => {
-            const title = win.querySelector('.window-title')?.textContent || id;
+            const title = win.querySelector('.window-title-text')?.textContent || win.querySelector('.window-title')?.textContent || id;
             const isActive = win === activeWindow;
-            html += `<div class="dropdown-item window-item ${isActive ? 'active-window' : ''}" data-window-id="${id}">
-                ${isActive ? '✓ ' : '  '}${title}
+            const isMinimized = win.classList.contains('minimized') || win.style.display === 'none';
+            html += `<div class="dropdown-item window-item ${isActive ? 'active-window' : ''} ${isMinimized ? 'minimized-window' : ''}" data-window-id="${escapeHtml(id)}">
+                <span class="window-item-check">${isActive ? '✓' : ''}</span>
+                <span class="window-item-title">${escapeHtml(title)}</span>
+                ${isMinimized ? '<span class="window-item-state">Minimized</span>' : ''}
             </div>`;
         });
         list.innerHTML = html;
@@ -867,10 +950,7 @@
                 const windowId = item.dataset.windowId;
                 const win = openWindows.get(windowId);
                 if (win) {
-                    // If minimized, restore it
-                    if (win.style.display === 'none') {
-                        win.style.display = '';
-                    }
+                    restoreWindow(win);
                     bringToFront(win);
                 }
                 document.getElementById('finder-dropdown').classList.remove('open');
@@ -920,6 +1000,7 @@
             const col = i % cols;
             const row = Math.floor(i / cols);
 
+            restoreWindow(win);
             win.style.left = `${col * winWidth}px`;
             win.style.top = `${row * winHeight}px`;
             win.style.width = `${winWidth}px`;
@@ -1038,12 +1119,8 @@
         win.dataset.windowId = 'about-this-mac';
         win.innerHTML = `
             <div class="window-titlebar">
-                <div class="traffic-lights">
-                    <div class="traffic-light close"><span></span></div>
-                    <div class="traffic-light minimize"><span></span></div>
-                    <div class="traffic-light maximize"><span></span></div>
-                </div>
-                <div class="window-title">About This Site</div>
+                ${getTrafficLightsMarkup()}
+                <div class="window-title"><span class="window-title-text">About This Site</span></div>
             </div>
             <div class="window-content">
                 ${aboutContent}
@@ -1180,6 +1257,7 @@
         // Check if window already exists
         if (openWindows.has(id)) {
             const existingWindow = openWindows.get(id);
+            restoreWindow(existingWindow);
             bringToFront(existingWindow);
             return;
         }
@@ -1191,7 +1269,7 @@
                 window.showNotification({
                     title: 'Crysis',
                     message: 'But can it run Crysis? No. No it cannot.',
-                    icon: '⚠️',
+                    icon: '/games/crysis.png',
                     duration: 3000,
                     sound: false
                 });
@@ -1408,15 +1486,12 @@
         const linkHtml = permalink
             ? `<a href="${permalink}" target="_blank" class="titlebar-link" title="Open in new tab">↗</a>`
             : '';
+        const iconHtml = getWindowIconHtml(id);
 
         win.innerHTML = `
             <div class="window-titlebar">
-                <div class="traffic-lights">
-                    <div class="traffic-light close"><span></span></div>
-                    <div class="traffic-light minimize"><span></span></div>
-                    <div class="traffic-light maximize"><span></span></div>
-                </div>
-                <div class="window-title">${title}</div>
+                ${getTrafficLightsMarkup()}
+                <div class="window-title">${iconHtml}<span class="window-title-text">${escapeHtml(title)}</span></div>
                 ${linkHtml}
             </div>
             <div class="window-content">
@@ -1454,8 +1529,8 @@
                 activeWindow = null;
 
                 // Try to activate previous window
-                if (windowHistory.length > 0) {
-                    const prevWin = windowHistory[windowHistory.length - 1];
+                const prevWin = [...windowHistory].reverse().find(item => item.style.display !== 'none');
+                if (prevWin) {
                     bringToFront(prevWin);
                 } else {
                     // Reset to Finder if no windows
@@ -1468,7 +1543,15 @@
         }, 150);
     }
 
+    function restoreWindow(win) {
+        win.style.display = '';
+        win.style.transform = '';
+        win.style.opacity = '';
+        win.classList.remove('minimized');
+    }
+
     function bringToFront(win) {
+        restoreWindow(win);
         windowZIndex++;
         win.style.zIndex = windowZIndex;
 
@@ -1480,7 +1563,7 @@
         activeWindow = win;
 
         // Update menubar title
-        const title = win.querySelector('.window-title').textContent;
+        const title = win.querySelector('.window-title-text')?.textContent || win.querySelector('.window-title').textContent;
         const activeAppName = document.getElementById('active-app-name');
         if (activeAppName) {
             activeAppName.textContent = title;
@@ -1521,9 +1604,7 @@
             const clientX = e.clientX || (e.touches && e.touches[0].clientX);
             const clientY = e.clientY || (e.touches && e.touches[0].clientY);
 
-            if (e.target.classList.contains('traffic-light') ||
-                e.target.parentElement.classList.contains('traffic-light') ||
-                e.target.classList.contains('titlebar-link')) {
+            if (e.target.closest('.traffic-light') || e.target.closest('.titlebar-link')) {
                 return;
             }
 
@@ -1566,7 +1647,12 @@
             let newTop = startTop + dy;
 
             // Keep window on screen
-            newTop = Math.max(0, newTop);
+            const visibleGrip = Math.min(80, win.offsetWidth);
+            const maxLeft = window.innerWidth - visibleGrip;
+            const minLeft = -(win.offsetWidth - visibleGrip);
+            const maxTop = window.innerHeight - parseInt(getComputedStyle(document.documentElement).getPropertyValue('--menubar-height'), 10) - 40;
+            newLeft = Math.min(maxLeft, Math.max(minLeft, newLeft));
+            newTop = Math.min(maxTop, Math.max(0, newTop));
 
             win.style.left = `${newLeft}px`;
             win.style.top = `${newTop}px`;
@@ -1625,8 +1711,12 @@
             const dx = clientX - startX;
             const dy = clientY - startY;
 
-            const newWidth = Math.max(400, startWidth + dx);
-            const newHeight = Math.max(300, startHeight + dy);
+            const rect = win.getBoundingClientRect();
+            const menubarHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--menubar-height'), 10) || 24;
+            const maxWidth = Math.max(400, window.innerWidth - rect.left);
+            const maxHeight = Math.max(300, window.innerHeight - menubarHeight - win.offsetTop);
+            const newWidth = Math.min(maxWidth, Math.max(400, startWidth + dx));
+            const newHeight = Math.min(maxHeight, Math.max(300, startHeight + dy));
 
             win.style.width = `${newWidth}px`;
             win.style.height = `${newHeight}px`;
@@ -1647,16 +1737,38 @@
         const minimizeBtn = win.querySelector('.traffic-light.minimize');
         const maximizeBtn = win.querySelector('.traffic-light.maximize');
 
+        [closeBtn, minimizeBtn, maximizeBtn].forEach(btn => {
+            if (!btn) return;
+            btn.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    btn.click();
+                }
+            });
+        });
+
         closeBtn.addEventListener('click', () => closeWindow(win, id));
 
         minimizeBtn.addEventListener('click', () => {
             // Simple minimize effect
             win.style.transform = 'scale(0.1)';
             win.style.opacity = '0';
+            win.classList.add('minimized');
             setTimeout(() => {
                 win.style.display = 'none';
                 win.style.transform = '';
                 win.style.opacity = '';
+                if (activeWindow === win) {
+                    activeWindow = null;
+                    const previous = [...windowHistory].reverse().find(item => item !== win && item.style.display !== 'none');
+                    if (previous) {
+                        bringToFront(previous);
+                    } else {
+                        deactivateAllWindows();
+                        const activeAppName = document.getElementById('active-app-name');
+                        if (activeAppName) activeAppName.textContent = 'Finder';
+                    }
+                }
             }, 200);
         });
 
@@ -1692,25 +1804,26 @@
     function setupFinderItems(win) {
         const items = win.querySelectorAll('.finder-item, .finder-row, .blog-row');
         items.forEach(item => {
-            items.forEach(item => {
-                item.addEventListener('click', (e) => {
-                    // If it's a focusable item, allow click
-                    const windowId = item.dataset.window;
-                    const title = item.dataset.title;
-                    const permalink = item.dataset.permalink;
+            if (item.dataset.boundFinderItem === 'true') return;
+            item.dataset.boundFinderItem = 'true';
 
-                    if (windowId && title) {
-                        openWindow(windowId, title, { width: 900, height: 650 }, permalink);
-                    }
-                });
+            item.addEventListener('click', (e) => {
+                // If it's a focusable item, allow click
+                const windowId = item.dataset.window;
+                const title = item.dataset.title;
+                const permalink = item.dataset.permalink;
 
-                // Allow Enter key to trigger click for accessibility
-                item.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        item.click();
-                    }
-                });
+                if (windowId && title) {
+                    openWindow(windowId, title, { width: 900, height: 650 }, permalink);
+                }
+            });
+
+            // Allow Enter key to trigger click for accessibility
+            item.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    item.click();
+                }
             });
         });
 
@@ -1849,21 +1962,29 @@
 
         // Determine icon content
         let iconHtml = '';
-        if (options.icon) {
+        if (options.iconHtml) {
+            iconHtml = options.iconHtml;
+        } else if (options.icon) {
             if (options.icon.startsWith('http') || options.icon.startsWith('/')) {
-                iconHtml = `<img src="${options.icon}" draggable="false" alt="" class="notification-icon-img">`;
+                iconHtml = `<span class="app-icon app-icon-notification app-icon-type-image app-icon-fit-contain"><img src="${escapeHtml(options.icon)}" draggable="false" alt=""></span>`;
             } else {
-                iconHtml = `<span class="notification-icon-emoji">${options.icon}</span>`;
+                iconHtml = `<span class="app-icon app-icon-notification app-icon-type-fallback app-icon-fit-contain"><span class="spotlight-generic-icon"></span></span>`;
             }
         }
 
         notification.innerHTML = `
             <div class="notification-icon">${iconHtml}</div>
             <div class="notification-content">
-                <div class="notification-title">${options.title || ''}</div>
-                <div class="notification-message">${options.message || ''}</div>
+                <div class="notification-title">${escapeHtml(options.title || '')}</div>
+                <div class="notification-message">${escapeHtml(options.message || '')}</div>
             </div>
-            <button class="notification-close" aria-label="Close notification">×</button>
+            <button type="button" class="notification-close" aria-label="Close notification">
+                <span class="notification-close-face" aria-hidden="true">
+                    <svg class="notification-close-icon" width="14" height="14" viewBox="0 0 14 14" focusable="false">
+                        <path d="M3.5 3.5 L10.5 10.5 M10.5 3.5 L3.5 10.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                </span>
+            </button>
         `;
 
         // Close button handler
@@ -1877,7 +1998,7 @@
         if (options.onClick) {
             notification.classList.add('clickable');
             notification.addEventListener('click', (e) => {
-                if (!e.target.classList.contains('notification-close')) {
+                if (!e.target.closest('.notification-close')) {
                     options.onClick(e);
                     dismissNotification(notification);
                 }
@@ -1939,7 +2060,7 @@
 
         const onStart = (e) => {
             // Don't interfere with close button
-            if (e.target.classList.contains('notification-close')) return;
+            if (e.target.closest('.notification-close')) return;
 
             isDragging = true;
             startX = e.clientX || (e.touches && e.touches[0].clientX);
@@ -2104,9 +2225,9 @@
 
         // Show notification
         showNotification({
-            title: "🎮 Cheat Code Activated!",
+            title: "Cheat Code Activated",
             message: "+30 lives, all weapons unlocked, big head mode enabled!",
-            icon: "👾",
+            icon: "/icons/gamecube.png",
             duration: 5000,
             sound: false // We already played a sound
         });
