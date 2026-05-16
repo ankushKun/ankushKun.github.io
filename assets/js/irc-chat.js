@@ -8,7 +8,8 @@
     const CHANNEL = "ankush-irc-general";
     const MAX_MESSAGES = 110;
     const PRESENCE_TIMEOUT = 10000;
-    const TENOR_API_KEY = "AIzaSyCWXyv4rNfkoSA-mNYdQZh8KlX3lDCgakc"; // Tenor API key (public demo key)
+    const KLIPY_API_KEY = "zIUfW4jTZIuTIhNTSM66eooPq7WjjcKRnLyLoLd3ikyo15Q4kX2nfwMd0n0CmP96";
+    const KLIPY_API_BASE = "https://api.klipy.com/v2";
 
     // Generate a UUID v4
     function generateUUID() {
@@ -663,7 +664,6 @@
             if (isHidden) {
                 els.gifPicker.classList.remove('hidden');
                 els.gifSearch.value = '';
-                els.gifSearch.value = '';
                 setTimeout(() => els.gifSearch.focus(), 50);
                 // Load trending GIFs
                 searchGifs('');
@@ -684,8 +684,8 @@
         async function searchGifs(query) {
             try {
                 const endpoint = query
-                    ? `https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(query)}&key=${TENOR_API_KEY}&client_key=irc-chat&limit=20`
-                    : `https://tenor.googleapis.com/v2/featured?key=${TENOR_API_KEY}&client_key=irc-chat&limit=20`;
+                    ? `${KLIPY_API_BASE}/search?q=${encodeURIComponent(query)}&key=${KLIPY_API_KEY}&client_key=irc-chat&limit=20`
+                    : `${KLIPY_API_BASE}/featured?key=${KLIPY_API_KEY}&client_key=irc-chat&limit=20`;
 
                 const response = await fetch(endpoint);
                 const data = await response.json();
@@ -694,18 +694,27 @@
 
                 if (data.results && data.results.length > 0) {
                     data.results.forEach(gif => {
+                        const previewUrl = getGifFormatUrl(gif, 'tinygif') || getGifFormatUrl(gif, 'nanogif') || gif.url;
+                        const gifUrl = getGifFormatUrl(gif, 'gif') || getGifFormatUrl(gif, 'mediumgif') || gif.url;
+
+                        if (!previewUrl || !gifUrl) return;
+
                         const gifItem = document.createElement('div');
                         gifItem.className = 'irc-gif-item';
 
                         const img = document.createElement('img');
-                        img.src = gif.media_formats.tinygif.url;
-                        img.alt = gif.content_description || 'GIF';
+                        img.src = previewUrl;
+                        img.alt = gif.content_description || gif.title || 'GIF';
 
                         gifItem.appendChild(img);
-                        gifItem.onclick = () => sendGif(gif.media_formats.gif.url);
+                        gifItem.onclick = () => sendGif(gifUrl);
 
                         els.gifResults.appendChild(gifItem);
                     });
+
+                    if (!els.gifResults.children.length) {
+                        els.gifResults.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #999;">No GIFs found</div>';
+                    }
                 } else {
                     els.gifResults.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #999;">No GIFs found</div>';
                 }
@@ -713,6 +722,10 @@
                 console.error('Failed to fetch GIFs:', e);
                 els.gifResults.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #e74c3c;">Failed to load GIFs</div>';
             }
+        }
+
+        function getGifFormatUrl(gif, format) {
+            return gif && gif.media_formats && gif.media_formats[format] && gif.media_formats[format].url;
         }
 
         async function sendGif(gifUrl) {
