@@ -146,7 +146,7 @@ body {
 body {
     /* Wallpaper handled by ::before pseudo-element */
     /* Fallback color matches wallpaper to prevent white flash */
-    background-color: #2d3a4f;
+    background-color: #150a24;
     position: relative;
 }
 
@@ -167,7 +167,7 @@ body::before {
 
 /* High-res wallpaper loaded class */
 body.wallpaper-loaded::before {
-    background-image: url('/wallpaper.webp');
+    background-image: url('/wallpapers/wallpaper.webp');
 }
 
 hr {
@@ -611,6 +611,158 @@ hr {
     border-radius: 12px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.2);
     overflow: hidden;
+}
+
+/* Live communal sticky note */
+.desktop-sticky-note {
+    position: absolute;
+    z-index: 50;
+    width: 220px;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg, #FFFBE6 0%, #FFF9C4 55%, #FEF08A 100%);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 2px;
+    box-shadow: 2px 4px 12px rgba(0, 0, 0, 0.18), 0 1px 3px rgba(0, 0, 0, 0.12);
+    font-family: var(--font-system);
+    transform: rotate(-0.8deg);
+    transform-origin: top left;
+    overflow: hidden;
+}
+
+.desktop-sticky-note[hidden],
+.desktop-sticky-note.is-collapsed {
+    display: none !important;
+}
+
+.desktop-sticky-note.is-dragging {
+    transform: rotate(0deg);
+    transition: none;
+}
+
+.desktop-sticky-note.is-minimizing,
+.desktop-sticky-note.is-restoring {
+    pointer-events: none;
+    will-change: transform, opacity;
+}
+
+.desktop-sticky-note.is-sync-moving {
+    transition: left 0.12s linear, top 0.12s linear;
+}
+
+.sticky-titlebar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 24px;
+    min-height: 24px;
+    padding: 0 8px 0 6px;
+    background: #F5EDB8;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    cursor: grab;
+    user-select: none;
+}
+
+.sticky-titlebar:active {
+    cursor: grabbing;
+}
+
+.sticky-close {
+    flex-shrink: 0;
+    width: 11px;
+    height: 11px;
+    padding: 0;
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    border-radius: 50%;
+    background: #EDE4A8;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.sticky-close:hover {
+    background: #E5D998;
+    border-color: rgba(0, 0, 0, 0.12);
+}
+
+.sticky-close:focus-visible {
+    outline: 1px solid rgba(0, 0, 0, 0.25);
+    outline-offset: 1px;
+}
+
+.sticky-title {
+    flex: 1;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(0, 0, 0, 0.45);
+    text-align: center;
+    margin-right: 17px;
+    pointer-events: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sticky-body {
+    flex: none;
+    width: 100%;
+    height: 154px;
+    max-height: 154px;
+    padding: 8px 10px 4px;
+    border: none;
+    resize: none;
+    overflow: hidden;
+    background: transparent;
+    background-image: repeating-linear-gradient(
+        transparent,
+        transparent 21px,
+        rgba(0, 0, 0, 0.05) 21px,
+        rgba(0, 0, 0, 0.05) 22px
+    );
+    background-position: 0 8px;
+    font-family: var(--font-system);
+    font-size: 13px;
+    line-height: 22px;
+    color: #2c2c2c;
+    outline: none;
+}
+
+.sticky-body:focus {
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.sticky-body::placeholder {
+    color: rgba(0, 0, 0, 0.28);
+}
+
+.sticky-body[readonly] {
+    cursor: default;
+}
+
+.sticky-footer {
+    padding: 2px 8px 6px;
+    min-height: 16px;
+}
+
+.sticky-status {
+    font-size: 9px;
+    color: rgba(0, 0, 0, 0.35);
+}
+
+.menubar-sticky-icon {
+    padding: 1px 6px;
+}
+
+.menubar-sticky-icon[hidden] {
+    display: none !important;
+}
+
+.menubar-sticky-icon.is-available {
+    display: flex !important;
+}
+
+.menubar-sticky-icon svg {
+    display: block;
 }
 
 .widget-header {
@@ -2477,6 +2629,25 @@ hr {
         max-width: 320px;
         margin: 12px auto;
         order: 2;
+    }
+
+    .desktop-sticky-note {
+        position: relative;
+        left: auto !important;
+        top: auto !important;
+        width: calc(100% - 56px);
+        max-width: 320px;
+        margin: 12px auto;
+        order: 1;
+        transform: none;
+    }
+
+    .sticky-titlebar {
+        cursor: default;
+    }
+
+    .sticky-close {
+        display: none;
     }
 
     .desktop-widget .widget-header {

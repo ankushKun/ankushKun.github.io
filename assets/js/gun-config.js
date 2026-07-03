@@ -24,6 +24,7 @@
         apps: {
             ircMessages: (channel = 'general') =>
                 gunRoot().get('apps').get('irc').get(channel).get('messages'),
+            sticky: () => gunRoot().get('apps').get('sticky').get('shared'),
         },
     };
 
