@@ -4,24 +4,17 @@
 
     console.log("Initializing Multiplayer Cursors with Gun.js");
 
-    // Initialize Gun
-    // Using the site Gun relay server
-    const gun = Gun(['https://gun-peer-server.ankushkun.workers.dev/gun']);
+    const remoteCursors = window.SiteGun.paths.live.cursors();
 
-    // Generate or retrieve persistent ID for this user
     let myId = localStorage.getItem('multiplayer-cursor-id');
     if (!myId) {
         myId = Math.random().toString(36).substr(2, 9);
         localStorage.setItem('multiplayer-cursor-id', myId);
     }
 
-    // Scope our app data locally to avoid collisions on public relays
-    // "ankushkun-github-io-cursors" could be a good namespace
-    const remoteCursors = gun.get('ankushkun-github-io-v1').get('cursors');
-
     const container = document.body;
     const cursorElements = {};
-    const TIMEOUT_MS = 3000; // Remove cursor if no update for 10s
+    const TIMEOUT_MS = 3000; // Remove cursor if no update for 3s
 
     // Create online count display
     const onlineCountEl = document.createElement('div');

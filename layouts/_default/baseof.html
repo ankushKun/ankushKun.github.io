@@ -541,6 +541,8 @@
 
     <!-- Gun.js Multiplayer Cursors -->
     <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+    {{ $gunConfig := resources.Get "js/gun-config.js" | resources.Minify | resources.Fingerprint }}
+    <script src="{{ $gunConfig.Permalink }}"></script>
     {{ $cursors := resources.Get "js/cursors.js" | resources.Minify | resources.Fingerprint }}
     <script src="{{ $cursors.Permalink }}"></script>
 </body>
