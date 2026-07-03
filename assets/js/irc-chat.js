@@ -4,8 +4,7 @@
 (function () {
     'use strict';
 
-    const GUN_RELAY = "https://gun-peer-server.ankushkun.workers.dev/gun";
-    const CHANNEL = "ankush-irc-general";
+    const IRC_CHANNEL = 'general';
     const MAX_MESSAGES = 110;
     const PRESENCE_TIMEOUT = 10000;
     const KLIPY_API_KEY = "zIUfW4jTZIuTIhNTSM66eooPq7WjjcKRnLyLoLd3ikyo15Q4kX2nfwMd0n0CmP96";
@@ -114,20 +113,48 @@
         }
     };
 
-    let gunLoaded = false;
     let gunLoadPromise = null;
 
     function loadGun() {
-        if (gunLoaded) return Promise.resolve();
+        if (typeof Gun !== 'undefined' && window.SiteGun) return Promise.resolve();
         if (gunLoadPromise) return gunLoadPromise;
         gunLoadPromise = new Promise((resolve, reject) => {
-            const s = document.createElement('script');
-            s.src = 'https://cdn.jsdelivr.net/npm/gun/gun.min.js';
-            s.onload = () => { gunLoaded = true; resolve(); };
-            s.onerror = reject;
-            document.head.appendChild(s);
+            let attempts = 0;
+            (function wait() {
+                if (typeof Gun !== 'undefined' && window.SiteGun) return resolve();
+                if (++attempts > 100) return reject(new Error('Gun.js unavailable'));
+                setTimeout(wait, 50);
+            })();
         });
         return gunLoadPromise;
+    }
+
+    function parseGunData(data) {
+        if (!data) return null;
+        if (typeof data === 'string') {
+            try { return JSON.parse(data); } catch (e) { return null; }
+        }
+        return data;
+    }
+
+    function scanPresence(presenceRef, timeoutMs) {
+        return new Promise((resolve) => {
+            const found = {};
+            presenceRef.map().once((data, uuid) => {
+                const p = parseGunData(data);
+                if (p) found[uuid] = p;
+            });
+            setTimeout(() => resolve(found), timeoutMs || 800);
+        });
+    }
+
+    function nickTakenByOther(snapshot, nick, myUuid) {
+        const now = Date.now();
+        return Object.entries(snapshot).some(([uuid, p]) =>
+            uuid !== myUuid &&
+            p.nick === nick &&
+            now - (p.lastSeen || 0) <= PRESENCE_TIMEOUT
+        );
     }
 
     // NSFW.js loading
@@ -489,16 +516,15 @@
             termsInput: root.querySelector('.irc-nick-dialog input[type="checkbox"]')
         };
 
-        let gun, chat, presence;
+        let chat, presence;
         let myNick = '';
         let myUUID = '';
         let seen = new Set();
         let allMessages = []; // Track all messages with {key, time} for cleanup
-        let online = {}; // Maps nick -> {nick, uuid, status, lastSeen}
+        let online = {}; // Maps uuid -> {nick, uuid, status, lastSeen}
         let uuidCache = {}; // Maps nick -> uuid (persists even when offline)
         let presenceInt = null;
         let hasLeft = false;
-        let recentLeaves = new Set(); // Track recent leave broadcasts to prevent duplicates
         let lastSystemMsg = {}; // Track last system message per user to collapse duplicates
         let joinTime = 0; // Track when user joined to avoid notifying for old messages
         let lastCursorPos = 0; // Track last known cursor position
@@ -946,9 +972,10 @@
         // Get UUID for a username
         function getUuidForNick(nick) {
             if (nick === myNick) return myUUID;
-            if (online[nick] && online[nick].uuid) return online[nick].uuid;
-            // Check cache for offline users
             if (uuidCache[nick]) return uuidCache[nick];
+            for (const p of Object.values(online)) {
+                if (p.nick === nick && p.uuid) return p.uuid;
+            }
             return null;
         }
 
@@ -1139,7 +1166,7 @@
             if (chat && presence && !hasLeft) {
                 hasLeft = true;
                 publishMessage('left the room', 'system');
-                presence.get(myNick).put(null);
+                presence.get(myUUID).put(null);
                 if (presenceInt) clearInterval(presenceInt);
             }
 
@@ -1154,7 +1181,6 @@
             online = {};
             uuidCache = {};
             hasLeft = false;
-            recentLeaves.clear();
             lastSystemMsg = {};
             joinTime = 0;
             lastCursorPos = 0;
@@ -1179,138 +1205,95 @@
             setTimeout(() => els.nickInput.focus(), 50);
         }
 
-        function connect() {
-            gun = Gun({ peers: [GUN_RELAY] });
-            chat = gun.get(CHANNEL + '-messages');
-            presence = gun.get(CHANNEL + '-presence');
+        async function connect() {
+            chat = window.SiteGun.paths.apps.ircMessages(IRC_CHANNEL);
+            presence = window.SiteGun.paths.live.ircPresence(IRC_CHANNEL);
 
-            // Mark join time to avoid notifying for old messages
             joinTime = Date.now();
-
             els.log.innerHTML = '';
+
+            const snapshot = await scanPresence(presence);
+            if (nickTakenByOther(snapshot, myNick, myUUID)) {
+                els.status.textContent = 'Nickname already in use';
+                alert('Nickname already in use. Pick another.');
+                logout();
+                return;
+            }
 
             chat.map().on((data, key) => {
                 if (!data) return;
 
-                let m;
-                try {
-                    m = typeof data === 'string' ? JSON.parse(data) : data;
-                } catch (e) { return; }
-
+                const m = parseGunData(data);
                 if (!m || !m.nick || !m.text) return;
 
-                // Cache UUID from message
                 if (m.uuid && m.nick) {
                     uuidCache[m.nick] = m.uuid;
                 }
 
                 if (seen.has(key)) {
-                    // Update existing message
                     updateMsg(key, m);
                     return;
                 }
                 seen.add(key);
 
-                // Track this message for cleanup
                 allMessages.push({
                     key: key,
                     time: m.time || Date.now()
                 });
 
-                // Filter old join/leave messages (older than 5 minutes)
                 const isSysMsg = m.type === 'system';
                 const isJoinLeave = isSysMsg && (m.text.includes('entered the room') || m.text.includes('left the room'));
                 const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
 
                 if (isJoinLeave && m.time && m.time < fiveMinutesAgo) {
-                    return; // Skip old join/leave messages
+                    return;
                 }
 
                 addMsg(m.nick, m.text, isSysMsg, m.action, m.time, m.uuid, m.type, key);
             });
 
             announce();
-            // Faster heartbeat (5s) for responsiveness
             if (presenceInt) clearInterval(presenceInt);
             presenceInt = setInterval(announce, 5000);
 
-            // Broadcast join message after a brief delay (let presence sync first)
             setTimeout(() => {
                 publishMessage('entered the room', 'system');
             }, 500);
 
-            // Remove presence on unload
             window.addEventListener('beforeunload', () => {
                 if (myNick && presence && !hasLeft) {
                     hasLeft = true;
                     publishMessage('left the room', 'system');
-                    presence.get(myNick).put(null);
+                    presence.get(myUUID).put(null);
                     if (presenceInt) clearInterval(presenceInt);
                 }
             });
 
-            presence.map().on((data, key) => {
-                // If data is null/undefined, user logic: user is gone
+            presence.map().on((data, uuid) => {
                 if (!data) {
-                    if (online[key]) {
-                        const leftNick = online[key].nick;
-                        delete online[key];
+                    if (online[uuid]) {
+                        delete online[uuid];
                         updateUsers();
-
-                        // Prevent duplicate leave broadcasts from multiple clients
-                        if (recentLeaves.has(leftNick)) return;
-                        recentLeaves.add(leftNick);
-
-                        // Broadcast leave message with delay (give the leaving client time to broadcast first)
-                        setTimeout(() => {
-                            if (chat && myNick && leftNick) {
-                                const leaveKey = Date.now() + '-leave-' + leftNick;
-                                chat.get(leaveKey).put(JSON.stringify({
-                                    nick: leftNick,
-                                    text: 'left the room',
-                                    time: Date.now(),
-                                    action: false,
-                                    type: 'system'
-                                }));
-                            }
-
-                            // Clear from recentLeaves after 2 seconds
-                            setTimeout(() => {
-                                recentLeaves.delete(leftNick);
-                            }, 2000);
-                        }, 800);
                     }
                     return;
                 }
 
-                try {
-                    const p = typeof data === 'string' ? JSON.parse(data) : data;
-                    if (p && p.nick && p.lastSeen) {
-                        // Ignore stale data (older than timeout)
-                        if (Date.now() - p.lastSeen > PRESENCE_TIMEOUT) return;
+                const p = parseGunData(data);
+                if (p && p.nick && p.lastSeen) {
+                    if (Date.now() - p.lastSeen > PRESENCE_TIMEOUT) return;
 
-                        // Cache UUID for this user
-                        if (p.uuid) {
-                            uuidCache[p.nick] = p.uuid;
-                        }
-
-                        // Check for join event (if not in online list and not self)
-                        if (!online[key] && key !== myNick) {
-                            // Let updateUsers handle the message or do it here?
-                            // Doing it in updateUsers is safer to batch updates
-                        }
-                        online[key] = p;
-                        updateUsers();
+                    if (p.uuid) {
+                        uuidCache[p.nick] = p.uuid;
                     }
-                } catch (e) { }
+
+                    online[uuid] = p;
+                    updateUsers();
+                }
             });
 
             setInterval(cleanStale, 10000);
-
-            // Cleanup old messages periodically (every 30 seconds)
             setInterval(cleanupOldMessages, 30000);
 
-            // Update relative timestamps every 10 seconds
             setInterval(() => {
                 els.log.querySelectorAll('.irc-msg-time').forEach(timeEl => {
                     const timestamp = parseInt(timeEl.dataset.timestamp);
@@ -1325,8 +1308,7 @@
 
         function announce() {
             if (!myNick || !presence) return;
-            // Use nick as key for stable identity
-            presence.get(myNick).put({
+            presence.get(myUUID).put({
                 nick: myNick,
                 uuid: myUUID,
                 status: 'online',
@@ -1338,13 +1320,10 @@
             const now = Date.now();
             let changed = false;
 
-            // Clean up stale users
-            Object.keys(online).forEach(nick => {
-                if (now - online[nick].lastSeen > PRESENCE_TIMEOUT) {
-                    // Remove from shared relay state (Garbage Collection)
-                    if (presence) presence.get(nick).put(null);
-
-                    delete online[nick];
+            Object.keys(online).forEach(uuid => {
+                if (now - online[uuid].lastSeen > PRESENCE_TIMEOUT) {
+                    if (presence) presence.get(uuid).put(null);
+                    delete online[uuid];
                     changed = true;
                 }
             });
@@ -1355,24 +1334,22 @@
         function updateUsers() {
             els.users.innerHTML = '';
 
-            // Get sorted list of nicks (keys are nicks now)
-            const nicks = Object.keys(online).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+            const users = Object.values(online).sort((a, b) =>
+                a.nick.toLowerCase().localeCompare(b.nick.toLowerCase())
+            );
 
-            // Update online count in header
-            els.onlineHeader.textContent = `Online [${nicks.length}]`;
+            els.onlineHeader.textContent = `Online [${users.length}]`;
 
-            nicks.forEach(n => {
+            users.forEach(userData => {
+                const n = userData.nick;
                 const d = document.createElement('div');
                 d.className = 'irc-user' + (n === myNick ? ' me' : '');
                 d.textContent = n;
 
-                // Apply color based on UUID
-                const userData = online[n];
-                if (userData && userData.uuid) {
+                if (userData.uuid) {
                     d.style.color = uuidToColor(userData.uuid);
                 }
 
-                // Make clickable to insert mention (except for self)
                 if (n !== myNick) {
                     d.style.cursor = 'pointer';
                     d.onclick = (e) => {
@@ -1390,14 +1367,14 @@
             if (!chat) return;
             const isAction = forceAction;
             const key = Date.now() + '-' + Math.random().toString(36).substr(2, 6);
-            chat.get(key).put(JSON.stringify({
+            chat.get(key).put({
                 nick: myNick,
                 uuid: myUUID,
                 text: text,
                 time: Date.now(),
                 action: isAction,
                 type: type
-            }));
+            });
         }
 
         function send() {
@@ -1697,11 +1674,9 @@
                 if (nick === myNick) {
                     uuid = myUUID;
                 } else if (userUuid) {
-                    // Use UUID from the message (preserves color for offline users)
                     uuid = userUuid;
-                } else if (online[nick] && online[nick].uuid) {
-                    // Fallback to online user's UUID
-                    uuid = online[nick].uuid;
+                } else {
+                    uuid = getUuidForNick(nick);
                 }
 
                 if (uuid) {
@@ -1941,24 +1916,14 @@
 
             const deleteText = `@${myNick} deleted @${originalNick}'s message`;
 
-            chat.get(key).put(JSON.stringify({
-                nick: 'system', // Change nick to system so it renders as system msg
+            chat.get(key).put({
+                nick: 'system',
                 uuid: null,
                 text: deleteText,
-                time: Date.now(), // Update time? Or keep original? Updating time moves it to bottom? 
-                // Gun updates usually don't reorder unless we sort by something else. 
-                // But we want to keep it in place.
-                // We are not changing the key, so it stays in place.
-                // If we change time, it might affect relative time display but that's fine.
-                // Let's keep original time if we could, but we don't have it easily here without querying.
-                // Actually, we don't need to send all fields if we just merge, but we are storing stringified JSON.
-                // So we must rewrite the whole object.
-                // We will lose the original time if we don't pass it.
-                // For now, let's just use current time, it's a "deletion event" timestamp.
-
+                time: Date.now(),
                 action: false,
                 type: 'system'
-            }));
+            });
         }
 
         root.onclick = e => {
@@ -1979,7 +1944,7 @@
             if (myNick && presence && chat && !hasLeft) {
                 hasLeft = true;
                 publishMessage('left the room', 'system');
-                presence.get(myNick).put(null);
+                presence.get(myUUID).put(null);
                 if (presenceInt) clearInterval(presenceInt);
             }
         };
