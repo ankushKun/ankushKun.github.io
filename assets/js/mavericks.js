@@ -7,6 +7,7 @@
 
     // Configuration
     const ENABLE_DEEP_LINKING = false; // Set to true to enable URL state updates
+    const ENABLE_HIRE_NOTIFICATION = false; // Set to true to show hire popup after first interaction
 
     // State
     let windowZIndex = 100;
@@ -56,32 +57,34 @@
             }
         }, 300);
 
-        // Show hire notification 2 seconds after first user interaction (so sound can play)
-        let hasShownHireNotification = false;
-        const showHireNotification = () => {
-            if (hasShownHireNotification) return;
-            hasShownHireNotification = true;
+        if (ENABLE_HIRE_NOTIFICATION) {
+            // Show hire notification 2 seconds after first user interaction (so sound can play)
+            let hasShownHireNotification = false;
+            const showHireNotification = () => {
+                if (hasShownHireNotification) return;
+                hasShownHireNotification = true;
 
-            // Remove listeners
-            document.removeEventListener('click', showHireNotification);
-            document.removeEventListener('keydown', showHireNotification);
-            document.removeEventListener('touchstart', showHireNotification);
+                // Remove listeners
+                document.removeEventListener('click', showHireNotification);
+                document.removeEventListener('keydown', showHireNotification);
+                document.removeEventListener('touchstart', showHireNotification);
 
-            setTimeout(() => {
-                showNotification({
-                    title: "I am Available for Hire!",
-                    message: "Looking for an engineer or know someone who is? Click here to see resume.",
-                    icon: "/pfp.png",
-                    onClick: () => {
-                        openWindow('resume', 'Resume');
-                    }
-                });
-            }, 2000);
-        };
+                setTimeout(() => {
+                    showNotification({
+                        title: "I am Available for Hire!",
+                        message: "Looking for an engineer or know someone who is? Click here to see resume.",
+                        icon: "/pfp.png",
+                        onClick: () => {
+                            openWindow('resume', 'Resume');
+                        }
+                    });
+                }, 2000);
+            };
 
-        document.addEventListener('click', showHireNotification);
-        document.addEventListener('keydown', showHireNotification);
-        document.addEventListener('touchstart', showHireNotification);
+            document.addEventListener('click', showHireNotification);
+            document.addEventListener('keydown', showHireNotification);
+            document.addEventListener('touchstart', showHireNotification);
+        }
     }
 
     // Preload high-resolution wallpaper
@@ -91,7 +94,7 @@
             // High-res image loaded, add class to trigger CSS transition
             document.body.classList.add('wallpaper-loaded');
         };
-        highResImage.src = '/wallpaper.webp';
+        highResImage.src = '/wallpapers/wallpaper.webp';
     }
 
     // Lazy load images with data-src attribute

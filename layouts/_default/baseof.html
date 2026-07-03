@@ -416,7 +416,7 @@
     {{ partial "components/analytics.html" . }}
 
     <!-- Preload Wallpaper for Performance -->
-    <link rel="preload" as="image" href="/wallpaper.webp">
+    <link rel="preload" as="image" href="/wallpapers/wallpaper.webp">
 
     <!-- Git Info for About This Site - prefers Cloudflare Pages env vars, falls back to file GitInfo -->
     {{- $commitHash := "" -}}
@@ -503,6 +503,15 @@
             </div>
         </div>
         <div class="menubar-right">
+            <div class="menubar-icon menubar-sticky-icon" id="menubar-sticky-toggle" role="button" tabindex="0"
+                aria-label="Show Sticky Note" title="Sticky Note" hidden>
+                <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M2 1h10l2 2v11a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z" fill="#FFF9C4" stroke="rgba(255,255,255,0.6)" stroke-width="0.5"/>
+                    <path d="M12 1v2h2" fill="none" stroke="rgba(0,0,0,0.15)" stroke-width="0.5"/>
+                    <line x1="3" y1="6" x2="11" y2="6" stroke="rgba(0,0,0,0.2)" stroke-width="0.6"/>
+                    <line x1="3" y1="8.5" x2="9" y2="8.5" stroke="rgba(0,0,0,0.2)" stroke-width="0.6"/>
+                </svg>
+            </div>
             <div class="menubar-icon" role="button" tabindex="0" aria-label="Spotlight Search"
                 onclick="toggleSpotlightFromMenu()"
                 onkeydown="if(event.key === 'Enter' || event.key === ' ') { toggleSpotlightFromMenu(); event.preventDefault(); }"
@@ -543,6 +552,8 @@
     <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
     {{ $gunConfig := resources.Get "js/gun-config.js" | resources.Minify | resources.Fingerprint }}
     <script src="{{ $gunConfig.Permalink }}"></script>
+    {{ $stickyNote := resources.Get "js/sticky-note.js" | resources.Minify | resources.Fingerprint }}
+    <script src="{{ $stickyNote.Permalink }}"></script>
     {{ $cursors := resources.Get "js/cursors.js" | resources.Minify | resources.Fingerprint }}
     <script src="{{ $cursors.Permalink }}"></script>
 </body>
