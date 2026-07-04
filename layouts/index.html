@@ -7,7 +7,7 @@
 
 <!-- Desktop Icons -->
 <div class="desktop-icons">
-    {{ range where .Site.Data.apps.apps "desktop" true }}
+    {{ range where hugo.Data.apps.apps "desktop" true }}
     {{ partial "os/desktop/icon.html" (dict "app" .) }}
     {{ end }}
 </div>

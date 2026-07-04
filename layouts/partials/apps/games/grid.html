@@ -8,11 +8,11 @@ Usage:
 */}}
 
 <div id="content-{{ .id }}">
-    {{- $games := where site.Data.apps.apps "group" "games" -}}
+    {{- $games := where hugo.Data.apps.apps "group" "games" -}}
     <div class="games-window" id="games-container-{{ .id }}">
         <div class="games-toolbar">
             <div class="games-title">
-                {{ with (index (where site.Data.apps.apps "id" "games") 0) }}
+                {{ with (index (where hugo.Data.apps.apps "id" "games") 0) }}
                 {{ partial "os/app-icon.html" (dict "app" . "context" "chrome" "class" "games-title-icon") }}
                 {{ end }}
                 <span>{{ .title }}</span>

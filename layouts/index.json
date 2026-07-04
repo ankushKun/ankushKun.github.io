@@ -1,7 +1,7 @@
 {{- $results := slice -}}
 
 {{/* 1. Registered apps */}}
-{{- range where .Site.Data.apps.apps "searchable" true -}}
+{{- range where hugo.Data.apps.apps "searchable" true -}}
     {{- $item := dict
         "title" .title
         "type" .type

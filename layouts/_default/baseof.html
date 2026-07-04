@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ .Site.LanguageCode }}">
+<html lang="{{ .Site.Language.Locale }}">
 
 <head>
     <meta charset="UTF-8">
@@ -245,7 +245,7 @@
         "inLanguage": "en-US",
         "author": {
             "@type": "Person",
-            "name": "{{ .Site.Params.author }}",
+            "name": "{{ .Site.Params.author.name }}",
             "url": "{{ .Site.BaseURL }}"
         },
         "potentialAction": {
