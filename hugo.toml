@@ -1,5 +1,5 @@
 baseURL = 'https://ankush.one/'
-languageCode = 'en-us'
+locale = 'en-us'
 title = "Ankush Kun"
 
 # Enable emoji support
@@ -21,12 +21,15 @@ home = ["HTML", "JSON", "RSS"]
 # Site params for SEO & SGO
 [params]
 description = "Ankush Singh — Software engineer building AI agents, DeFi protocols on Solana, and developer tools. Portfolio, blog, and open-source projects."
-author = "Ankush Singh"
 twitter = "@ankushKun_"
 github = "ankushKun"
 linkedin = "ankushkun"
 siteUrl = "https://ankush.one"
 locale = "en_US"
+
+[params.author]
+name = "Ankush Singh"
+email = "ankush4singh@gmail.com"
 
 # Syntax highlighting & markdown rendering
 [markup]
