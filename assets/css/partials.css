@@ -2330,6 +2330,21 @@ a.event-item.event-link {
     transform: rotateY(180deg);
 }
 
+/* Gutter shading, so a leaf in flight matches a page at rest.
+   Which edge it falls on depends on two things: whether the hinge is the
+   leaf's left edge (forward) or right edge (backward), and the fact that the
+   back face is rotateY(180deg) about its own centre - so its LOCAL right edge
+   is the one that ends up against the spine. */
+.gb-flip.is-forward .gb-flip-front,
+.gb-flip:not(.is-forward) .gb-flip-back {
+    box-shadow: inset 14px 0 20px -14px rgba(90, 60, 30, 0.5);
+}
+
+.gb-flip.is-forward .gb-flip-back,
+.gb-flip:not(.is-forward) .gb-flip-front {
+    box-shadow: inset -14px 0 20px -14px rgba(90, 60, 30, 0.5);
+}
+
 /* Shading rides on each face: dark toward the hinge, brightest across the
    middle of the sheet, peaking as the leaf stands up. */
 .gb-flip-face::after {
