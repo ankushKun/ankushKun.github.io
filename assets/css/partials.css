@@ -2205,6 +2205,12 @@ a.event-item.event-link {
       split into strips, and overflow/clip-path both force transform-style
       back to flat, so each strip would need a separate clipping child.
    3. LIFT. translateZ raises the leaf off the spread as it passes vertical.
+      It MUST come first in the transform list. Transform functions apply
+      right-to-left, so a trailing translateZ is applied in the leaf's own
+      frame and the following rotateY turns it into horizontal motion - the
+      hinge slid up to 16px off the spine mid-turn, which read as the page
+      pivoting from the wrong place. Written first, it is applied in the
+      parent's frame and the hinge stays pinned to the gutter.
    4. LIGHT. Each face darkens toward its hinge, peaking mid-turn, and the
       page being uncovered brightens out of the leaf's shadow.
 
@@ -2252,55 +2258,55 @@ a.event-item.event-link {
 
 @keyframes gbTurnForward {
     0% {
-        transform: rotateY(0deg) scaleX(1) translateZ(0);
+        transform: translateZ(0) rotateY(0deg) scaleX(1);
         animation-timing-function: cubic-bezier(0.32, 0, 0.62, 0.24);
     }
     22% {
-        transform: rotateY(-26deg) scaleX(0.985) translateZ(6px);
+        transform: translateZ(6px) rotateY(-26deg) scaleX(0.985);
         animation-timing-function: cubic-bezier(0.4, 0, 0.5, 1);
     }
     52% {
         /* Past vertical, most curled, furthest off the page */
-        transform: rotateY(-96deg) scaleX(0.9) translateZ(16px);
+        transform: translateZ(16px) rotateY(-96deg) scaleX(0.9);
         animation-timing-function: cubic-bezier(0.3, 0.5, 0.4, 1);
     }
     78% {
-        transform: rotateY(-149deg) scaleX(0.94) translateZ(8px);
+        transform: translateZ(8px) rotateY(-149deg) scaleX(0.94);
         animation-timing-function: cubic-bezier(0.3, 0.6, 0.4, 1);
     }
     92% {
         /* Slight overshoot, then settle - paper lands with a little bounce */
-        transform: rotateY(-181.5deg) scaleX(0.995) translateZ(1px);
+        transform: translateZ(1px) rotateY(-181.5deg) scaleX(0.995);
         animation-timing-function: ease-out;
     }
     100% {
-        transform: rotateY(-179.6deg) scaleX(1) translateZ(0);
+        transform: translateZ(0) rotateY(-179.6deg) scaleX(1);
     }
 }
 
 @keyframes gbTurnBack {
     0% {
-        transform: rotateY(0deg) scaleX(1) translateZ(0);
+        transform: translateZ(0) rotateY(0deg) scaleX(1);
         animation-timing-function: cubic-bezier(0.32, 0, 0.62, 0.24);
     }
     22% {
-        transform: rotateY(26deg) scaleX(0.985) translateZ(6px);
+        transform: translateZ(6px) rotateY(26deg) scaleX(0.985);
         animation-timing-function: cubic-bezier(0.4, 0, 0.5, 1);
     }
     52% {
-        transform: rotateY(96deg) scaleX(0.9) translateZ(16px);
+        transform: translateZ(16px) rotateY(96deg) scaleX(0.9);
         animation-timing-function: cubic-bezier(0.3, 0.5, 0.4, 1);
     }
     78% {
-        transform: rotateY(149deg) scaleX(0.94) translateZ(8px);
+        transform: translateZ(8px) rotateY(149deg) scaleX(0.94);
         animation-timing-function: cubic-bezier(0.3, 0.6, 0.4, 1);
     }
     92% {
-        transform: rotateY(181.5deg) scaleX(0.995) translateZ(1px);
+        transform: translateZ(1px) rotateY(181.5deg) scaleX(0.995);
         animation-timing-function: ease-out;
     }
     100% {
-        transform: rotateY(179.6deg) scaleX(1) translateZ(0);
+        transform: translateZ(0) rotateY(179.6deg) scaleX(1);
     }
 }
 
