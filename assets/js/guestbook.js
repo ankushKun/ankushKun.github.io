@@ -276,8 +276,21 @@
             return Math.max(1, Math.floor(usable / (line * LINES_PER_ENTRY)));
         }
 
-        function pageCount() {
+        /** Pages that actually hold signatures. */
+        function filledPages() {
             return Math.max(1, Math.ceil(ordered.length / perPage()));
+        }
+
+        /**
+         * Total pages, rounded up to whole spreads with one blank spread kept
+         * at the end. A real book always has a next page to turn to, and
+         * without the spare there is nothing to flip when the book is new -
+         * the controls sat disabled and the turn animation never ran.
+         */
+        function pageCount() {
+            const per = pagesPerView();
+            const spreads = Math.ceil(filledPages() / per);
+            return (spreads + 1) * per;
         }
 
         /**
@@ -301,12 +314,14 @@
             const slice = ordered.slice(pageIndex * per, pageIndex * per + per);
 
             if (!slice.length) {
-                const blank = document.createElement('div');
-                blank.className = 'gb-page-blank';
-                blank.textContent = ordered.length
-                    ? ''
-                    : 'The book is empty. Be the first to sign it.';
-                el.appendChild(blank);
+                // Pages past the last signature stay genuinely blank - only
+                // an empty book gets an invitation.
+                if (!ordered.length) {
+                    const blank = document.createElement('div');
+                    blank.className = 'gb-page-blank';
+                    blank.textContent = 'The book is empty. Be the first to sign it.';
+                    el.appendChild(blank);
+                }
             } else {
                 slice.forEach(([id, data]) => el.appendChild(buildEntry(id, data)));
             }
@@ -376,13 +391,22 @@
             paintPage(els.pageL, spread * 2);
             paintPage(els.pageR, spread * 2 + 1);
 
+            // Force a reflow so the browser records the leaf's starting
+            // rotation. Without it, unhiding and rotating land in the same
+            // style pass and the transition is skipped entirely.
+            void els.flip.offsetWidth;
+
             requestAnimationFrame(() => {
-                requestAnimationFrame(() => els.flip.classList.add('is-turning'));
+                requestAnimationFrame(() => {
+                    els.flip.classList.add('is-turning');
+                    els.book.classList.add('is-turning');
+                });
             });
 
             const done = setTimeout(() => {
                 els.flip.hidden = true;
                 els.flip.classList.remove('is-turning', 'is-forward');
+                els.book.classList.remove('is-turning');
                 flipping = false;
                 paintSpread();
             }, FLIP_MS);
