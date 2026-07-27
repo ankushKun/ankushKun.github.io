@@ -3573,9 +3573,6 @@ a.finder-row {
     position: absolute;
     top: 0;
     left: 0;
-    display: flex;
-    align-items: flex-start;
-    gap: 2px;
     will-change: transform;
     /* Peers publish ~14 updates/sec; this smooths the gaps between them. */
     transition: transform 90ms linear, opacity 150ms ease;
@@ -3589,27 +3586,7 @@ a.finder-row {
 
 .remote-cursor-icon {
     display: block;
-    flex: none;
     filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35));
-}
-
-.remote-cursor-label {
-    margin-top: 12px;
-    padding: 1px 5px;
-    border-radius: 3px;
-    background: rgba(30, 30, 30, 0.82);
-    color: #fff;
-    font-family: var(--font-system, -apple-system, BlinkMacSystemFont, sans-serif);
-    font-size: 10px;
-    line-height: 1.5;
-    white-space: nowrap;
-    max-width: 120px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.remote-cursor-label[hidden] {
-    display: none;
 }
 
 /* Peer is pointing at something this viewer does not have open. */
