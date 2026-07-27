@@ -1,28 +1,103 @@
-{{/* Paint icon - MacPaint-flavoured palette and brush */}}
-<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+{{/* Paint Desktop Icon - 64x64 SVG - Ultra Skeuomorphic Style
+     A wooden artist's palette with wet paint and a brush laid across it.
+     A real object with a real thumb hole, matching the free-floating style of
+     the other desktop icons rather than a flat app tile. */}}
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" aria-hidden="true">
     <defs>
-        <linearGradient id="pt-paper" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#ffffff" />
-            <stop offset="100%" stop-color="#e6e9ed" />
+        <linearGradient id="ptWood" x1="12%" y1="0%" x2="80%" y2="100%">
+            <stop offset="0%" style="stop-color:#f0d3a8" />
+            <stop offset="45%" style="stop-color:#dcb37f" />
+            <stop offset="100%" style="stop-color:#b8874f" />
         </linearGradient>
-        <linearGradient id="pt-handle" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#c98b52" />
-            <stop offset="100%" stop-color="#8f5c2c" />
+        <linearGradient id="ptHandle" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#e0a86a" />
+            <stop offset="40%" style="stop-color:#c07f3f" />
+            <stop offset="100%" style="stop-color:#83531f" />
         </linearGradient>
+        <linearGradient id="ptFerrule" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#f2f4f6" />
+            <stop offset="40%" style="stop-color:#b9c0c8" />
+            <stop offset="100%" style="stop-color:#7d858e" />
+        </linearGradient>
+        <linearGradient id="ptBristle" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#9b62e4" />
+            <stop offset="100%" style="stop-color:#5f2fa8" />
+        </linearGradient>
+        <linearGradient id="ptGloss" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:rgba(255,255,255,0.62)" />
+            <stop offset="50%" style="stop-color:rgba(255,255,255,0.07)" />
+            <stop offset="100%" style="stop-color:rgba(255,255,255,0)" />
+        </linearGradient>
+        {{/* stop-opacity rather than rgba() in stop-color: some SVG rasterisers
+             ignore the alpha in rgba stops and paint the blob solid white. */}}
+        <radialGradient id="ptBlobGloss" cx="34%" cy="28%" r="62%">
+            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.5" />
+            <stop offset="55%" stop-color="#ffffff" stop-opacity="0" />
+        </radialGradient>
+
+        <filter id="ptDropShadow" x="-25%" y="-25%" width="150%" height="160%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="1.7" />
+            <feOffset dx="0" dy="2" />
+            <feComponentTransfer>
+                <feFuncA type="linear" slope="0.36" />
+            </feComponentTransfer>
+            <feMerge>
+                <feMergeNode />
+                <feMergeNode in="SourceGraphic" />
+            </feMerge>
+        </filter>
     </defs>
 
-    <rect x="7" y="7" width="50" height="50" rx="6" fill="url(#pt-paper)" stroke="#b7bec6" stroke-width="1.5" />
+    <g filter="url(#ptDropShadow)">
+        {{/* evenodd + inner subpath cuts a genuine thumb hole so the desktop
+             shows through, the way a real palette reads */}}
+        <path fill-rule="evenodd" fill="url(#ptWood)" stroke="#8e6231" stroke-width="0.5"
+              d="M31 11
+                 C46 11 57 19.5 57 30
+                 C57 38.5 50 44.5 42.5 45
+                 C38.5 45.3 36.5 43.6 34 44.4
+                 C31 45.4 30.6 49 26.5 51
+                 C19 54.6 8 48 6.6 37.5
+                 C5.2 26.8 15 11 31 11 Z
+                 M40.5 33.5
+                 C36.6 33.5 33.6 35.8 33.6 38.4
+                 C33.6 41 36.6 43 40.5 43
+                 C44.4 43 47.4 41 47.4 38.4
+                 C47.4 35.8 44.4 33.5 40.5 33.5 Z" />
 
-    <!-- paint splotches -->
-    <circle cx="21" cy="21" r="6" fill="#e0524a" />
-    <circle cx="34" cy="18" r="5" fill="#4a90e2" />
-    <circle cx="45" cy="24" r="5.5" fill="#f0c419" />
-    <circle cx="20" cy="34" r="5" fill="#5ac85a" />
+        <!-- Inner rim shading around the thumb hole -->
+        <ellipse cx="40.5" cy="38.4" rx="6.9" ry="4.9" fill="none"
+                 stroke="rgba(0,0,0,0.18)" stroke-width="1.2" />
 
-    <!-- brush -->
-    <g transform="rotate(38 40 42)">
-        <rect x="37" y="26" width="6" height="20" rx="2" fill="url(#pt-handle)" />
-        <rect x="36.2" y="45" width="7.6" height="5" rx="1.2" fill="#b8bdc4" />
-        <path d="M36.6 50h6.8l-1.4 7.5a2.1 2.1 0 0 1-4 0z" fill="#8e44ad" />
+        <!-- Wet paint -->
+        <g>
+            <circle cx="18" cy="23" r="4.6" fill="#d8453c" />
+            <circle cx="18" cy="23" r="4.6" fill="url(#ptBlobGloss)" />
+            <circle cx="30" cy="19.5" r="4.2" fill="#3d7fd6" />
+            <circle cx="30" cy="19.5" r="4.2" fill="url(#ptBlobGloss)" />
+            <circle cx="42" cy="22.5" r="4.4" fill="#f0c419" />
+            <circle cx="42" cy="22.5" r="4.4" fill="url(#ptBlobGloss)" />
+            <circle cx="15" cy="35" r="4.3" fill="#4bb757" />
+            <circle cx="15" cy="35" r="4.3" fill="url(#ptBlobGloss)" />
+        </g>
+
+        <!-- Brush laid across the palette -->
+        <g transform="rotate(38 40 34)">
+            <!-- handle -->
+            <path d="M37.6 6 L42.4 6 L41.7 30 L38.3 30 Z" fill="url(#ptHandle)" />
+            <path d="M38.4 6.6 L39.6 6.6 L39.1 29.4 L38.6 29.4 Z" fill="rgba(255,255,255,0.28)" />
+            <!-- ferrule -->
+            <rect x="38.1" y="30" width="3.8" height="7" fill="url(#ptFerrule)" />
+            <rect x="38.1" y="31.4" width="3.8" height="0.9" fill="rgba(0,0,0,0.18)" />
+            <rect x="38.1" y="34.4" width="3.8" height="0.9" fill="rgba(0,0,0,0.18)" />
+            <!-- bristles, loaded with purple -->
+            <path d="M38.1 37 L41.9 37 L41.1 45.4 Q40 47.4 38.9 45.4 Z" fill="url(#ptBristle)" />
+            <path d="M39.6 37.6 L40.4 37.6 L40.1 44.6 Q39.9 45.4 39.7 44.6 Z"
+                  fill="rgba(255,255,255,0.22)" />
+        </g>
+
+        <!-- Gloss across the top of the palette -->
+        <path d="M31 11 C46 11 57 19.5 57 30 C57 24 44 15.5 31 15.5 C18 15.5 9 23 7.2 32
+                 C5.6 22.8 15.6 11 31 11 Z" fill="url(#ptGloss)" />
     </g>
 </svg>

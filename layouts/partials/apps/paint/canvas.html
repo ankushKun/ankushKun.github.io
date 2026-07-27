@@ -32,19 +32,25 @@
                     aria-label="Fat"><span style="width:17px;height:17px"></span></button>
             </div>
 
+            <span class="paint-sep" aria-hidden="true"></span>
+
             <div class="paint-palette" role="radiogroup" aria-label="Colour"></div>
 
             <div class="paint-toolbar-end">
-                <span class="paint-status">Connecting…</span>
                 <button type="button" class="paint-clear" data-tip="Erase the whole canvas">Clear</button>
             </div>
         </div>
 
         <div class="paint-stage">
-            <canvas class="paint-canvas" width="960" height="600"></canvas>
-            <div class="paint-loading">Loading canvas…</div>
+            <div class="paint-mat">
+                <canvas class="paint-canvas" width="960" height="600"></canvas>
+                <div class="paint-loading">Loading canvas…</div>
+            </div>
         </div>
 
-        <p class="paint-note">Everyone here draws on the same canvas. Be nice to each other's work.</p>
+        <div class="paint-statusbar">
+            <span class="paint-hint">Everyone here draws on the same canvas — be kind to each other's work.</span>
+            <span class="paint-status">Connecting…</span>
+        </div>
     </div>
 </div>
