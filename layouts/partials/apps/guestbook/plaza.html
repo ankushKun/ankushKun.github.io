@@ -1,52 +1,101 @@
-{{/* Guestbook - a StreetPass-style plaza of everyone who has passed through */}}
+{{/* Guestbook - a bound visitors' book you leaf through and sign */}}
 {{- $id := .id -}}
 <div id="content-{{ $id }}" class="window-content" data-guestbook-window="true">
-    <div class="gb-window">
+    <div class="gb-desk">
 
-        <header class="gb-header">
-            <div class="gb-header-text">
-                <h2 class="gb-title">Guestbook</h2>
-                <p class="gb-sub"><span class="gb-count">…</span> · <span class="gb-status">Connecting…</span></p>
+        <div class="gb-toolbar">
+            <div class="gb-toolbar-title">
+                <span class="gb-count">…</span>
+                <span class="gb-status" aria-live="polite">Opening the book…</span>
             </div>
-            <button type="button" class="gb-sign-btn">Sign the guestbook</button>
-        </header>
+            <button type="button" class="gb-sign-btn">Sign the book</button>
+        </div>
 
-        {{/* Sign-in form. Hidden until "Sign the guestbook" is pressed, and
-        reused for editing an existing entry. */}}
-        <form class="gb-form" hidden>
-            <div class="gb-form-row gb-avatar-row">
-                <span class="gb-field-label">Pick a face</span>
-                <div class="gb-avatar-picker" role="radiogroup" aria-label="Pick a face"></div>
+        <div class="gb-book-area">
+            <div class="gb-book" aria-live="polite">
+                <div class="gb-spine" aria-hidden="true"></div>
+
+                <section class="gb-page gb-page-left" aria-label="Left page"></section>
+                <section class="gb-page gb-page-right" aria-label="Right page"></section>
+
+                {{/* Sits above both pages during a turn; front/back faces are
+                filled from the outgoing and incoming spreads. */}}
+                <div class="gb-flip" hidden aria-hidden="true">
+                    <div class="gb-flip-face gb-flip-front"></div>
+                    <div class="gb-flip-face gb-flip-back"></div>
+                </div>
+
+                <div class="gb-ribbon" aria-hidden="true"></div>
             </div>
+        </div>
 
-            <div class="gb-form-grid">
-                <label class="gb-field">
-                    <span class="gb-field-label">Name</span>
-                    <input type="text" class="gb-input gb-name" maxlength="20" autocomplete="off"
-                        placeholder="what should we call you?">
-                </label>
-                <label class="gb-field">
-                    <span class="gb-field-label">Where from <span class="gb-optional">optional</span></span>
-                    <input type="text" class="gb-input gb-from" maxlength="24" autocomplete="off"
-                        placeholder="Dehradun, IN">
-                </label>
-            </div>
+        <div class="gb-controls">
+            <button type="button" class="gb-nav gb-prev" aria-label="Previous page" data-tip="Previous (←)">‹</button>
+            <span class="gb-pageno">– –</span>
+            <button type="button" class="gb-nav gb-next" aria-label="Next page" data-tip="Next (→)">›</button>
+        </div>
 
-            <label class="gb-field">
-                <span class="gb-field-label">A bit about you <span class="gb-counter">0/100</span></span>
-                <textarea class="gb-input gb-blurb" maxlength="100" rows="2"
-                    placeholder="building things, mostly at night"></textarea>
-            </label>
+        {{/* Signing card */}}
+        <div class="gb-sheet" hidden>
+            <form class="gb-card">
+                <header class="gb-card-head">
+                    <h2>Sign the guestbook</h2>
+                    <button type="button" class="gb-card-close" aria-label="Close">×</button>
+                </header>
 
-            <div class="gb-form-actions">
-                <button type="button" class="gb-btn gb-cancel">Cancel</button>
-                <button type="submit" class="gb-btn primary gb-save">Add me</button>
-            </div>
-            <p class="gb-form-note">Your entry is public and anyone can read it. Keep it kind.</p>
-        </form>
+                <div class="gb-preview">
+                    <div class="gb-preview-ink" aria-hidden="true"></div>
+                    <div class="gb-preview-rule" aria-hidden="true"></div>
+                    <button type="button" class="gb-vary" data-tip="Try a different hand">try another hand</button>
+                </div>
 
-        <div class="gb-plaza" role="list">
-            <div class="gb-empty">No one has signed yet. Be the first.</div>
+                <div class="gb-fields">
+                    <label class="gb-field gb-field-wide">
+                        <span class="gb-label">Your name</span>
+                        <input type="text" class="gb-input gb-f-name" maxlength="24" autocomplete="name"
+                            placeholder="how you'd sign it" required>
+                    </label>
+
+                    <label class="gb-field">
+                        <span class="gb-label">Where from <i>optional</i></span>
+                        <input type="text" class="gb-input gb-f-from" maxlength="24" autocomplete="off"
+                            placeholder="Dehradun, IN">
+                    </label>
+
+                    <label class="gb-field gb-field-wide">
+                        <span class="gb-label">A line about you <i class="gb-counter">0/100</i></span>
+                        <input type="text" class="gb-input gb-f-blurb" maxlength="100" autocomplete="off"
+                            placeholder="building things, mostly at night">
+                    </label>
+                </div>
+
+                <fieldset class="gb-contact">
+                    <legend>Leave a way to reach you <i>all optional</i></legend>
+                    <div class="gb-contact-row">
+                        <span class="gb-contact-icon" aria-hidden="true">@</span>
+                        <input type="email" class="gb-input gb-f-email" maxlength="60" autocomplete="email"
+                            placeholder="you@example.com" aria-label="Email">
+                    </div>
+                    <div class="gb-contact-row">
+                        <span class="gb-contact-icon" aria-hidden="true">𝕏</span>
+                        <input type="text" class="gb-input gb-f-x" maxlength="20" autocomplete="off"
+                            placeholder="handle" aria-label="X handle">
+                    </div>
+                    <div class="gb-contact-row">
+                        <span class="gb-contact-icon" aria-hidden="true">◉</span>
+                        <input type="text" class="gb-input gb-f-ig" maxlength="34" autocomplete="off"
+                            placeholder="handle" aria-label="Instagram handle">
+                    </div>
+                </fieldset>
+
+                <p class="gb-error" role="alert" hidden></p>
+
+                <footer class="gb-card-actions">
+                    <span class="gb-card-note">Public. Anyone can read it.</span>
+                    <button type="button" class="gb-btn gb-cancel">Cancel</button>
+                    <button type="submit" class="gb-btn primary gb-save">Sign it</button>
+                </footer>
+            </form>
         </div>
     </div>
 </div>

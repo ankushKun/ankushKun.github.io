@@ -1381,33 +1381,43 @@
 
     const LAZY_APPS = {
         'irc-chat': { urlKey: 'IRC_CHAT_URL', init: 'initIRCChat', cleanup: 'ircCleanup' },
-        'guestbook': { urlKey: 'GUESTBOOK_URL', init: 'initGuestbook', cleanup: 'guestbookCleanup' },
+        'guestbook': {
+            urlKey: 'GUESTBOOK_URL', init: 'initGuestbook', cleanup: 'guestbookCleanup',
+            // The signature engine must be present before the book paints
+            deps: ['SIGNATURE_URL']
+        },
         'paint': { urlKey: 'PAINT_URL', init: 'initPaint', cleanup: 'paintCleanup' }
     };
 
-    const lazyAppLoads = new Map(); // urlKey -> Promise
+    const lazyScriptLoads = new Map(); // urlKey -> Promise
 
-    function loadLazyApp(app) {
-        if (window[app.init]) return Promise.resolve();
+    function loadScriptOnce(urlKey) {
+        if (lazyScriptLoads.has(urlKey)) return lazyScriptLoads.get(urlKey);
 
-        if (lazyAppLoads.has(app.urlKey)) return lazyAppLoads.get(app.urlKey);
-
-        const src = window[app.urlKey];
-        if (!src) return Promise.reject(new Error('Missing URL for ' + app.init));
+        const src = window[urlKey];
+        if (!src) return Promise.reject(new Error('Missing URL for ' + urlKey));
 
         const p = new Promise((resolve, reject) => {
             const script = document.createElement('script');
             script.src = src;
             script.onload = resolve;
             script.onerror = () => {
-                lazyAppLoads.delete(app.urlKey);
+                lazyScriptLoads.delete(urlKey);
                 reject(new Error('Failed to load ' + src));
             };
             document.head.appendChild(script);
         });
 
-        lazyAppLoads.set(app.urlKey, p);
+        lazyScriptLoads.set(urlKey, p);
         return p;
+    }
+
+    function loadLazyApp(app) {
+        const deps = (app.deps || []).map(loadScriptOnce);
+        return Promise.all(deps).then(() => {
+            if (window[app.init]) return;
+            return loadScriptOnce(app.urlKey);
+        });
     }
 
     function initLazyApp(app, win) {
