@@ -198,41 +198,43 @@
 
             const sig = document.createElement('div');
             sig.className = 'gb-entry-sig';
+            // The signature carries the name visually, so it is not printed
+            // again - but it is drawn as paths, so the name has to reach
+            // assistive tech some other way.
+            sig.setAttribute('role', 'img');
+            sig.setAttribute('aria-label', data.name);
             renderSignatureInto(sig, data.name, id, data.variant);
             row.appendChild(sig);
 
-            // Right column, top: who they are, where from, when.
+            // Right column: two lines that sit on the same two rules the
+            // signature spans, so both columns share the page's rhythm.
             const aside = document.createElement('div');
             aside.className = 'gb-entry-aside';
 
-            const nameLine = document.createElement('div');
-            nameLine.className = 'gb-entry-nameline';
-
-            const name = document.createElement('span');
-            name.className = 'gb-entry-name';
-            name.textContent = data.name;
-            nameLine.appendChild(name);
-
+            const lineOne = document.createElement('div');
+            lineOne.className = 'gb-entry-asideline';
             if (id === myId) {
-                const you = document.createElement('span');
-                you.className = 'gb-entry-you';
-                you.textContent = 'you';
-                nameLine.appendChild(you);
+                const badge = document.createElement('span');
+                badge.className = 'gb-entry-you';
+                badge.textContent = 'you';
+                lineOne.appendChild(badge);
             }
-            aside.appendChild(nameLine);
-
             if (data.from) {
-                const from = document.createElement('div');
+                const from = document.createElement('span');
                 from.className = 'gb-entry-from';
                 from.textContent = 'from ' + data.from;
-                aside.appendChild(from);
+                lineOne.appendChild(from);
             }
+            aside.appendChild(lineOne);
 
+            const lineTwo = document.createElement('div');
+            lineTwo.className = 'gb-entry-asideline';
             const when = document.createElement('time');
             when.className = 'gb-entry-date';
             when.title = relativeTime(data.ts);
             when.textContent = 'on ' + dateStamp(data.ts);
-            aside.appendChild(when);
+            lineTwo.appendChild(when);
+            aside.appendChild(lineTwo);
 
             row.appendChild(aside);
 
