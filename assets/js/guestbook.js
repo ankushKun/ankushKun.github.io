@@ -273,7 +273,10 @@
                 paintPage(els.pageL, first);
                 paintPage(els.pageR, first + 1);
                 const last = Math.min(first + 2, pageCount());
-                els.pageno.textContent = `${first + 1}–${last} of ${pageCount()}`;
+                // Avoid "1–1 of 1" when the spread only has one real page
+                els.pageno.textContent = last > first + 1
+                    ? `${first + 1}–${last} of ${pageCount()}`
+                    : `${first + 1} of ${pageCount()}`;
             }
 
             els.prev.disabled = spread === 0;
