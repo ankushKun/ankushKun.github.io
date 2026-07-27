@@ -2136,31 +2136,31 @@ a.event-item.event-link {
     display: block;
 }
 
-/* The note gets a whole ruled line to itself, full width */
+/* The note gets the two remaining ruled lines, full width, and wraps across
+   both. line-height is exactly one rule spacing, so two lines fill the two
+   bands precisely - no overflow into the next entry and no clipped descender
+   on the second line. When the note is short the second band simply stays
+   empty and reads as the gap between entries. */
 .gb-entry-blurb {
     grid-column: 1 / -1;
-    grid-row: 2;
+    grid-row: 2 / span 2;
+    height: calc(var(--gb-line) * 2);
     margin: 0;
-    display: flex;
-    align-items: flex-end;
-    min-width: 0;
-    padding-bottom: 6px;
-    font-size: 11.5px;
-    line-height: 1.35;
-    color: #5a4a33;
-    white-space: nowrap;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
+    min-width: 0;
+    font-size: 11.5px;
+    line-height: var(--gb-line);
+    color: #5a4a33;
+    overflow-wrap: anywhere;
 }
 
-/* Blank ruled line after every entry: keeps the grid and gives the page air.
-   The folio is the page's last child, so a :last-child exception would never
-   match anyway, and the paging maths assumes a uniform 4 lines per entry. */
-.gb-entry::after {
-    content: "";
-    grid-column: 1 / -1;
-    grid-row: 3;
-}
+/* No separator pseudo-element any more: the note's second line doubles as the
+   gap between entries when it is unused, which keeps an entry at four ruled
+   lines while still allowing a two-line note. */
 
 /* "Your" entry is marked by the badge alone. A tinted panel behind the
    signature only reached as far as the signature's own box, which read as a
