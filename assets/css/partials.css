@@ -1919,8 +1919,8 @@ a.event-item.event-link {
     padding: 7px;
     /* Perspective belongs on the turning leaf's own parent. On .gb-book-area
        it was a grandparent, so the rotation projected flat. */
-    perspective: 1900px;
-    perspective-origin: 50% 45%;
+    perspective: 1700px;
+    perspective-origin: 50% 50%;
     transform-style: preserve-3d;
     border-radius: 4px;
     /* Board edge visible around the paper */

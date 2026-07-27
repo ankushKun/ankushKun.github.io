@@ -332,6 +332,30 @@
             el.appendChild(folio);
         }
 
+        /**
+         * Counter and nav state only. Split out from paintSpread so the end of
+         * a turn can update the chrome WITHOUT rebuilding the pages: by then
+         * both already hold the right content, and re-rendering them tore down
+         * and re-created every signature SVG, which flashed on the last frame.
+         */
+        function updateChrome() {
+            const per = pagesPerView();
+            const first = spread * per;
+
+            if (per === 1) {
+                els.pageno.textContent = `${first + 1} of ${pageCount()}`;
+            } else {
+                const last = Math.min(first + 2, pageCount());
+                // Avoid "1-1 of 1" when the spread only has one real page
+                els.pageno.textContent = last > first + 1
+                    ? `${first + 1}–${last} of ${pageCount()}`
+                    : `${first + 1} of ${pageCount()}`;
+            }
+
+            els.prev.disabled = spread === 0;
+            els.next.disabled = spread >= spreadCount() - 1;
+        }
+
         function paintSpread() {
             const per = pagesPerView();
             const first = spread * per;
@@ -340,19 +364,12 @@
                 // Single leaf lives in the right page slot; the left is hidden
                 paintPage(els.pageR, first);
                 els.pageL.innerHTML = '';
-                els.pageno.textContent = `${first + 1} of ${pageCount()}`;
             } else {
                 paintPage(els.pageL, first);
                 paintPage(els.pageR, first + 1);
-                const last = Math.min(first + 2, pageCount());
-                // Avoid "1–1 of 1" when the spread only has one real page
-                els.pageno.textContent = last > first + 1
-                    ? `${first + 1}–${last} of ${pageCount()}`
-                    : `${first + 1} of ${pageCount()}`;
             }
 
-            els.prev.disabled = spread === 0;
-            els.next.disabled = spread >= spreadCount() - 1;
+            updateChrome();
         }
 
         /**
@@ -407,12 +424,29 @@
                 els.book.classList.add('is-turning');
             });
 
+            // Swap the resting page once the leaf is past vertical and its back
+            // face is covering it. Doing this here rather than at the end means
+            // the leaf's small settle overshoot - which briefly tips its edge up
+            // off the page - exposes the NEW page underneath, not the old one.
+            const swap = setTimeout(() => {
+                timers.delete(swap);
+                if (forward) {
+                    paintPage(els.pageL, target * 2);
+                } else {
+                    paintPage(els.pageR, target * 2 + 1);
+                }
+            }, Math.round(FLIP_MS * 0.58));
+            timers.add(swap);
+
             const done = setTimeout(() => {
+                timers.delete(done);
                 els.flip.hidden = true;
                 els.flip.classList.remove('is-turning', 'is-forward');
                 els.book.classList.remove('is-turning', 'is-turning-forward');
                 flipping = false;
-                paintSpread();
+                // Both pages already hold the destination content; only the
+                // counter and nav state need updating.
+                updateChrome();
             }, FLIP_MS);
             timers.add(done);
         }
