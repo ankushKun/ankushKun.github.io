@@ -116,6 +116,34 @@ apps:
       type: image
       src: /icons/messages.png
 
+  - id: guestbook
+    label: Guestbook
+    title: Guestbook
+    type: app
+    description: Sign the guestbook and see everyone who has passed through
+    desktop: true
+    searchable: true
+    defaultSize:
+      width: 880
+      height: 620
+    icon:
+      type: partial
+      partial: icons/desktop/guestbook.html
+
+  - id: paint
+    label: Paint
+    title: Paint
+    type: app
+    description: Shared canvas - draw together in real time
+    desktop: true
+    searchable: true
+    defaultSize:
+      width: 900
+      height: 660
+    icon:
+      type: partial
+      partial: icons/desktop/paint.html
+
   - id: contact
     label: Contacts
     title: Contacts

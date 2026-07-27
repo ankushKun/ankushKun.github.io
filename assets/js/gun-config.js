@@ -84,6 +84,11 @@
             ircMessages: (channel = 'general') =>
                 gunRoot().get('apps').get('irc').get(channel).get('messages'),
             sticky: () => gunRoot().get('apps').get('sticky').get('shared'),
+            guestbook: () => gunRoot().get('apps').get('guestbook').get('entries'),
+            paintStrokes: (board = 'main') =>
+                gunRoot().get('apps').get('paint').get(board).get('strokes'),
+            paintMeta: (board = 'main') =>
+                gunRoot().get('apps').get('paint').get(board).get('meta'),
         },
     };
 

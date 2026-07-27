@@ -36,7 +36,6 @@
         lazyLoadImages();
         setupSearchIndex();
         setupStartupChime();
-        setupMenubarStatus();
 
         // Check for deep link or auto-open About Me
         setTimeout(() => {
@@ -634,99 +633,6 @@
             updateTimelineDesktopIconDate();
             setInterval(updateTimelineDesktopIconDate, 86400000);
         }, ms);
-    }
-
-    // ================================================
-    // Menubar status items - real device state, not decoration
-    // Both APIs are optional and unevenly supported (Firefox and Safari expose
-    // neither), so each item stays hidden unless it has something true to say.
-    // ================================================
-
-    function setupMenubarStatus() {
-        setupBatteryStatus();
-        setupNetworkStatus();
-    }
-
-    function batteryIcon(level, charging) {
-        const fill = Math.max(0, Math.min(1, level));
-        const w = Math.round(fill * 14);
-        const colour = charging ? '#5ac85a' : (fill <= 0.2 ? '#e0524a' : '#fff');
-        return `
-            <svg width="22" height="11" viewBox="0 0 25 12" aria-hidden="true">
-                <rect x="0.5" y="0.5" width="21" height="11" rx="2.5"
-                      fill="none" stroke="rgba(255,255,255,0.75)"/>
-                <rect x="22.5" y="4" width="2" height="4" rx="1" fill="rgba(255,255,255,0.75)"/>
-                <rect x="2" y="2" width="${w}" height="8" rx="1" fill="${colour}"/>
-                ${charging ? '<path d="M12 1.5 L8.6 6.4 H11 L10 10.5 L13.6 5.4 H11.2 Z" fill="#1d1d1f" opacity="0.85"/>' : ''}
-            </svg>`;
-    }
-
-    function setupBatteryStatus() {
-        const el = document.getElementById('menubar-battery');
-        if (!el || !navigator.getBattery) return;
-
-        navigator.getBattery().then((battery) => {
-            const render = () => {
-                const pct = Math.round(battery.level * 100);
-                el.hidden = false;
-                el.innerHTML = `<span class="menubar-status-label">${pct}%</span>` +
-                    batteryIcon(battery.level, battery.charging);
-                el.dataset.tip = battery.charging
-                    ? `Battery ${pct}% — charging`
-                    : `Battery ${pct}%`;
-            };
-
-            render();
-            battery.addEventListener('levelchange', render);
-            battery.addEventListener('chargingchange', render);
-        }).catch(() => { /* permission denied or unavailable */ });
-    }
-
-    function setupNetworkStatus() {
-        const el = document.getElementById('menubar-network');
-        if (!el) return;
-
-        const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-
-        const render = () => {
-            const online = navigator.onLine;
-
-            // effectiveType is a coarse 2g/3g/4g bucket - map it to wifi bars.
-            let bars = 3;
-            if (!online) {
-                bars = 0;
-            } else if (conn && conn.effectiveType) {
-                bars = { 'slow-2g': 1, '2g': 1, '3g': 2, '4g': 3 }[conn.effectiveType] ?? 3;
-            }
-
-            const arc = (r, active) =>
-                `<path d="M${9 - r} ${11 - r * 0.35} A${r} ${r} 0 0 1 ${9 + r} ${11 - r * 0.35}"
-                       fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"
-                       opacity="${active ? 0.95 : 0.28}"/>`;
-
-            el.hidden = false;
-            el.innerHTML = `
-                <svg width="16" height="12" viewBox="0 0 18 13" aria-hidden="true">
-                    ${arc(8, bars >= 3)}
-                    ${arc(5.2, bars >= 2)}
-                    ${arc(2.4, bars >= 1)}
-                    <circle cx="9" cy="11" r="1.1" fill="#fff" opacity="${online ? 0.95 : 0.28}"/>
-                </svg>`;
-
-            const label = !online
-                ? 'Offline'
-                : conn && conn.effectiveType
-                    ? `Online — ${conn.effectiveType.toUpperCase()}`
-                    : 'Online';
-            el.dataset.tip = label;
-            el.setAttribute('aria-label', label);
-            el.classList.toggle('is-offline', !online);
-        };
-
-        render();
-        window.addEventListener('online', render);
-        window.addEventListener('offline', render);
-        if (conn && conn.addEventListener) conn.addEventListener('change', render);
     }
 
     // Clock
@@ -1466,6 +1372,56 @@
         });
     }
 
+    // ================================================
+    // Lazy-loaded apps
+    // Each of these ships as its own bundle and is only fetched the first time
+    // its window is opened, so the desktop stays light for visitors who never
+    // touch chat, the guestbook or paint.
+    // ================================================
+
+    const LAZY_APPS = {
+        'irc-chat': { urlKey: 'IRC_CHAT_URL', init: 'initIRCChat', cleanup: 'ircCleanup' },
+        'guestbook': { urlKey: 'GUESTBOOK_URL', init: 'initGuestbook', cleanup: 'guestbookCleanup' },
+        'paint': { urlKey: 'PAINT_URL', init: 'initPaint', cleanup: 'paintCleanup' }
+    };
+
+    const lazyAppLoads = new Map(); // urlKey -> Promise
+
+    function loadLazyApp(app) {
+        if (window[app.init]) return Promise.resolve();
+
+        if (lazyAppLoads.has(app.urlKey)) return lazyAppLoads.get(app.urlKey);
+
+        const src = window[app.urlKey];
+        if (!src) return Promise.reject(new Error('Missing URL for ' + app.init));
+
+        const p = new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = src;
+            script.onload = resolve;
+            script.onerror = () => {
+                lazyAppLoads.delete(app.urlKey);
+                reject(new Error('Failed to load ' + src));
+            };
+            document.head.appendChild(script);
+        });
+
+        lazyAppLoads.set(app.urlKey, p);
+        return p;
+    }
+
+    function initLazyApp(app, win) {
+        loadLazyApp(app).then(() => {
+            if (typeof window[app.init] === 'function') window[app.init](win);
+        }).catch((err) => {
+            console.error(err);
+            const content = win.querySelector('.window-content');
+            if (content) {
+                content.innerHTML = '<div style="padding:24px;text-align:center;color:#888;">This app failed to load. Check your connection and try again.</div>';
+            }
+        });
+    }
+
     // Window Management
     async function openWindow(id, title, size = { width: 1000, height: 700 }, permalink = null) {
         // Check if window already exists
@@ -1591,21 +1547,11 @@
             initFlashGame(id, win);
         }
 
-        // Setup IRC chat if this is an IRC window
-        if (id === 'irc-chat') {
-            // Lazy load irc-chat.js if not loaded yet
-            if (!window.initIRCChat && window.IRC_CHAT_URL) {
-                const script = document.createElement('script');
-                script.src = window.IRC_CHAT_URL;
-                script.onload = () => {
-                    if (window.initIRCChat) {
-                        window.initIRCChat(win);
-                    }
-                };
-                document.head.appendChild(script);
-            } else if (window.initIRCChat) {
-                window.initIRCChat(win);
-            }
+        // Lazy-loaded apps: fetch the bundle on first open, then initialise
+        // against this window. Each bundle is only ever requested once.
+        const lazyApp = LAZY_APPS[id];
+        if (lazyApp) {
+            initLazyApp(lazyApp, win);
         }
 
         bringToFront(win);
@@ -1728,9 +1674,10 @@
             window.destroyV86(id);
         }
 
-        // Cleanup IRC chat if this is the IRC window
-        if (id === 'irc-chat' && win.ircCleanup) {
-            win.ircCleanup();
+        // Release any lazy-loaded app's timers and Gun subscriptions
+        const lazyApp = LAZY_APPS[id];
+        if (lazyApp && typeof win[lazyApp.cleanup] === 'function') {
+            win[lazyApp.cleanup]();
         }
 
         removeFromTray(id);
