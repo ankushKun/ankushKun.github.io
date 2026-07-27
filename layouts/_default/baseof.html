@@ -436,7 +436,6 @@
     <meta name="git-commit-date" content="{{ .GitInfo.AuthorDate.Format " Jan 2, 2006" }}">
     {{ end }}
     {{ end }}
-    <script src="https://commentkit.ankush.one/bundle.js"></script>
 </head>
 
 <body>
@@ -527,7 +526,7 @@
     </div>
 
     <!-- Desktop -->
-    <div class="desktop" id="desktop">
+    <div class="desktop" id="desktop" data-cursor-anchor="desktop">
         {{ block "main" . }}{{ end }}
     </div>
 
@@ -549,7 +548,11 @@
     </script>
 
     <!-- Gun.js Multiplayer Cursors -->
-    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+    {{/* Pinned + SRI: an unpinned tag meant any upstream release could take every
+    realtime feature (cursors, sticky note, IRC) down at once. */}}
+    <script src="https://cdn.jsdelivr.net/npm/gun@0.2020.1241/gun.js"
+        integrity="sha384-kbwmlcfKNZA6XzoIlQUaH+9lLpNh5TWrzzDmSlCpY48SEs49CCDQs50Q6x2xAl4v"
+        crossorigin="anonymous"></script>
     {{ $gunConfig := resources.Get "js/gun-config.js" | resources.Minify | resources.Fingerprint }}
     <script src="{{ $gunConfig.Permalink }}"></script>
     {{ $stickyNote := resources.Get "js/sticky-note.js" | resources.Minify | resources.Fingerprint }}

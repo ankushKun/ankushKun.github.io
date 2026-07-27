@@ -38,6 +38,7 @@
     let lastEditTickTimer = null;
     let statusMode = 'lastEdit';
     let initialized = false;
+    let isOffline = false;
 
     body.style.height = (MAX_LINES * LINE_HEIGHT) + 'px';
 
@@ -89,6 +90,7 @@
 
     function showLastEdit(force) {
         if (isNoteCollapsed()) return;
+        if (isOffline) return;
         if (!force && isEditing) return;
         clearStatusTimers();
         statusMode = 'lastEdit';
@@ -100,6 +102,7 @@
 
     function showSynced() {
         if (isNoteCollapsed()) return;
+        if (isOffline) return;
         clearStatusTimers();
         statusMode = 'synced';
         setStatus('Synced');
@@ -107,9 +110,28 @@
     }
 
     function showEditing() {
+        // Keep "Offline" visible - "Editing…" would imply the edit is syncing.
+        if (isOffline) return;
         clearStatusTimers();
         statusMode = 'editing';
         setStatus('Editing…');
+    }
+
+    // Report the real relay state. Previously "Offline" only appeared if the
+    // SiteGun script itself failed to load, never when the relay was down.
+    function watchConnection() {
+        if (!window.SiteGun.getConnection) return;
+        window.SiteGun.getConnection().onChange((connected) => {
+            isOffline = !connected;
+            if (isNoteCollapsed()) return;
+            if (!connected) {
+                clearStatusTimers();
+                statusMode = 'offline';
+                setStatus('Offline');
+            } else if (statusMode === 'offline') {
+                showLastEdit(true);
+            }
+        });
     }
 
     function showMenubarIcon() {
@@ -531,11 +553,15 @@
 
     function connectGun() {
         ref = window.SiteGun.paths.apps.sticky();
+        watchConnection();
 
         ref.once((data) => {
             if (!data || typeof data.x !== 'number') {
+                // Gun also calls back with undefined when the relay is slow or
+                // unreachable. Writing DEFAULTS here would push text:'' to the
+                // SHARED node and blank the note for everyone, so seed local
+                // state only - the first real edit publishes.
                 localState = { ...DEFAULTS };
-                putState(localState);
             } else {
                 localState = {
                     x: typeof data.x === 'number' ? data.x : DEFAULTS.x,

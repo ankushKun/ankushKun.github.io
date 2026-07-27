@@ -5,7 +5,7 @@
     <div class="irc-window">
         <!-- Nickname Prompt -->
         <!-- Nickname Prompt -->
-        <div class="irc-nick-prompt" id="nick-prompt-{{ .id }}">
+        <div class="irc-nick-prompt">
             <div class="irc-nick-dialog">
                 <div class="irc-login-header">
                     <div class="irc-logo-container">
@@ -29,23 +29,26 @@
                     <h2 class="irc-welcome-title">Welcome!</h2>
                     <p class="irc-welcome-sub">Please enter your nickname to continue.</p>
 
-                    <div class="irc-input-container">
-                        <label for="nick-input-{{ .id }}" class="irc-input-label">Nickname</label>
+                    {{/* This markup is cloned out of the hidden #window-contents template
+                    into each live window, so `id` + `for` would resolve to the invisible
+                    copy. Labels wrap their inputs instead - implicit association needs no id. */}}
+                    <label class="irc-input-container">
+                        <span class="irc-input-label">Nickname</span>
                         <div class="irc-input-wrapper">
-                            <input type="text" id="nick-input-{{ .id }}" maxlength="10" autocomplete="off">
+                            <input type="text" maxlength="10" autocomplete="off">
                         </div>
-                    </div>
+                    </label>
 
                     <div class="irc-terms">
                         <label>
-                            <input type="checkbox" id="terms-input-{{ .id }}">
+                            <input type="checkbox">
                             <span class="irc-terms-text">I acknowledge that this chat contains user-generated content
                                 (messages & GIFs) which may include profanity or NSFW material.</span>
                         </label>
                     </div>
 
                     <div class="irc-login-actions">
-                        <button id="nick-submit-{{ .id }}" class="irc-submit-btn" title="Sign In">
+                        <button class="irc-submit-btn" title="Sign In">
                             Sign In
                         </button>
                     </div>
@@ -210,6 +213,7 @@
     }
 
     .irc-input-container {
+        display: block;
         width: 100%;
         margin-bottom: 15px;
     }
@@ -373,6 +377,11 @@
     .irc-status {
         font-weight: normal;
         color: #777;
+    }
+
+    .irc-status.is-offline {
+        color: #c0392b;
+        font-weight: 600;
     }
 
     .irc-logout {

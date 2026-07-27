@@ -772,6 +772,7 @@
         const win = document.createElement('div');
         win.className = 'window external-window';
         win.dataset.windowId = windowId;
+        win.dataset.cursorAnchor = 'win:' + windowId;
         win.innerHTML = `
             <div class="window-titlebar">
                 ${getTrafficLightsMarkup()}
@@ -1236,25 +1237,6 @@
         });
     }
 
-    // Initialize CommentKit widgets in a container
-    function initializeCommentKit(container) {
-        // Find all elements with data-commentkit attribute
-        const commentWidgets = container.querySelectorAll('[data-commentkit]');
-
-        if (commentWidgets.length === 0) return;
-
-        // CommentKit scans for [data-commentkit] elements when its script loads
-        // For dynamically loaded content, we inject a fresh script tag
-        const script = document.createElement('script');
-        script.src = 'https://commentkit.ankush.one/bundle.js';
-        script.async = true;
-
-        // Append to container so it executes in context
-        container.appendChild(script);
-
-        console.log(`Initialized CommentKit for ${commentWidgets.length} widget(s)`);
-    }
-
     // Window Management
     async function openWindow(id, title, size = { width: 1000, height: 700 }, permalink = null) {
         // Check if window already exists
@@ -1414,9 +1396,6 @@
                         // Re-setup finder items and embeds
                         setupFinderItems(win);
                         activateTwitterEmbeds(win);
-
-                        // Initialize CommentKit for blog posts
-                        initializeCommentKit(winContent);
                     }
                 } else {
                     throw new Error('JSON not found, falling back to HTML');
@@ -1440,7 +1419,6 @@
                             winContent.innerHTML = fetchedContent.innerHTML;
                             setupFinderItems(win);
                             activateTwitterEmbeds(win);
-                            initializeCommentKit(winContent);
                         }
                     } else {
                         throw new Error('Could not find content in fetched page');
@@ -1465,6 +1443,9 @@
         const win = document.createElement('div');
         win.className = 'window';
         win.dataset.windowId = id;
+        // Multiplayer cursor anchor. Set at runtime, never in the hidden
+        // #window-contents template, so anchor lookups can't match an invisible copy.
+        win.dataset.cursorAnchor = 'win:' + id;
 
         // Calculate URL path for deep linking
         let urlPath = '/';
@@ -1507,9 +1488,10 @@
     }
 
     function closeWindow(win, id) {
-        // Cleanup v86 emulator if this is the terminal or portal window
+        // Cleanup v86 emulator for THIS window only - Terminal and Portal each
+        // own a separate emulator instance.
         if ((id === 'terminal' || id === 'portal') && window.destroyV86) {
-            window.destroyV86();
+            window.destroyV86(id);
         }
 
         // Cleanup IRC chat if this is the IRC window
@@ -1809,6 +1791,14 @@
         items.forEach(item => {
             if (item.dataset.boundFinderItem === 'true') return;
             item.dataset.boundFinderItem = 'true';
+
+            // Anchor for multiplayer cursors. Applied only to live windows, so a
+            // peer pointing at a list row lands on the same row for everyone -
+            // and it survives each viewer scrolling the list independently.
+            const anchorKey = item.dataset.permalink || item.dataset.window;
+            if (anchorKey && !item.dataset.cursorAnchor) {
+                item.dataset.cursorAnchor = 'item:' + anchorKey;
+            }
 
             item.addEventListener('click', (e) => {
                 // If it's a focusable item, allow click
