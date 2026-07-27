@@ -423,6 +423,46 @@
         flex-direction: column;
         /* border-right removed to avoid double border with user-col */
         overflow: hidden;
+        /* Anchor for the jump-to-latest pill */
+        position: relative;
+    }
+
+    .irc-unread-pill {
+        position: absolute;
+        left: 50%;
+        bottom: 10px;
+        transform: translateX(-50%);
+        z-index: 5;
+        padding: 4px 12px;
+        font-family: inherit;
+        font-size: 11px;
+        color: #fff;
+        background: #2f6fd0;
+        border: none;
+        border-radius: 11px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        cursor: pointer;
+        animation: ircPillIn 0.18s ease;
+    }
+
+    .irc-unread-pill[hidden] {
+        display: none;
+    }
+
+    .irc-unread-pill:hover {
+        background: #3a7ee0;
+    }
+
+    @keyframes ircPillIn {
+        from {
+            opacity: 0;
+            transform: translateX(-50%) translateY(6px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
     }
 
     .irc-log {

@@ -26,6 +26,11 @@
             pointer-events: none;
         }
 
+        /* Repeat visitor - never paint the boot screen at all */
+        html.skip-boot #macos-boot-loader {
+            display: none;
+        }
+
         /* Apple Logo - Centered */
         .boot-apple-logo {
             width: 100px;
@@ -143,6 +148,16 @@
         (function () {
             window.__bootLoaderReady = false;
 
+            // The boot screen is charming once and friction every visit after.
+            // Returning visitors skip straight to the desktop.
+            var seenBoot = false;
+            try { seenBoot = localStorage.getItem('booted') === '1'; } catch (e) { }
+            if (seenBoot) {
+                document.documentElement.classList.add('skip-boot');
+            } else {
+                try { localStorage.setItem('booted', '1'); } catch (e) { }
+            }
+
             function hideLoader() {
                 if (window.__bootLoaderReady) return;
                 window.__bootLoaderReady = true;
@@ -172,8 +187,9 @@
                 setTimeout(hideLoader, 100);
             });
 
-            // Safety timeout - never show loader for more than 8 seconds
-            setTimeout(hideLoader, 8000);
+            // Safety timeout. First visit gets the full boot sequence but is
+            // capped well below the old 8s; repeat visits never see it.
+            setTimeout(hideLoader, seenBoot ? 0 : 2500);
 
             // Expose global function for manual trigger
             window.completeBootLoader = hideLoader;
@@ -486,6 +502,9 @@
                     <div class="dropdown-item" role="menuitem" tabindex="0" onclick="tileWindows(); closeDropdowns()">
                         Tile Windows</div>
                     <div class="dropdown-divider" aria-hidden="true"></div>
+                    <div class="dropdown-item" role="menuitem" tabindex="0"
+                        onclick="openShortcuts(); closeDropdowns()">Keyboard Shortcuts</div>
+                    <div class="dropdown-divider" aria-hidden="true"></div>
                     <div class="dropdown-item" role="menuitem" tabindex="0" onclick="location.reload()">Refresh</div>
                 </div>
             </div>
@@ -502,8 +521,11 @@
             </div>
         </div>
         <div class="menubar-right">
+            {{/* Minimized windows land here instead of vanishing - without a dock,
+            the Finder dropdown was the only way to get a window back. */}}
+            <div class="menubar-minimized" id="menubar-minimized" role="group" aria-label="Minimized windows"></div>
             <div class="menubar-icon menubar-sticky-icon" id="menubar-sticky-toggle" role="button" tabindex="0"
-                aria-label="Show Sticky Note" title="Sticky Note" hidden>
+                aria-label="Show Sticky Note" data-tip="Sticky Note" hidden>
                 <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
                     <path d="M2 1h10l2 2v11a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z" fill="#FFF9C4" stroke="rgba(255,255,255,0.6)" stroke-width="0.5"/>
                     <path d="M12 1v2h2" fill="none" stroke="rgba(0,0,0,0.15)" stroke-width="0.5"/>
@@ -514,7 +536,7 @@
             <div class="menubar-icon" role="button" tabindex="0" aria-label="Spotlight Search"
                 onclick="toggleSpotlightFromMenu()"
                 onkeydown="if(event.key === 'Enter' || event.key === ' ') { toggleSpotlightFromMenu(); event.preventDefault(); }"
-                title="Search (⌘+Space)">
+                data-tip="Search (⌘Space)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"
                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <circle cx="11" cy="11" r="8"></circle>

@@ -215,18 +215,44 @@
         setPixelPosition(left, top);
     }
 
-    function enforceLineLimit() {
+    /**
+     * Trim to the visible line budget.
+     *
+     * This still has to truncate (remote updates and pastes can both overflow),
+     * but when it fires because someone is typing we now say so - previously
+     * the note just silently swallowed keystrokes at the cap with no feedback
+     * at all, which reads as the input being broken.
+     */
+    function enforceLineLimit(announce) {
         const maxScroll = MAX_LINES * LINE_HEIGHT;
         let val = body.value;
         body.style.height = 'auto';
         body.style.height = (MAX_LINES * LINE_HEIGHT) + 'px';
 
+        let trimmed = false;
         while (val.length > 0 && body.scrollHeight > maxScroll) {
             val = val.slice(0, -1);
             body.value = val;
+            trimmed = true;
         }
 
+        if (trimmed && announce) flashLimit();
         return val;
+    }
+
+    let limitTimer = null;
+
+    function flashLimit() {
+        note.classList.add('at-limit');
+        clearTimeout(limitTimer);
+        limitTimer = setTimeout(() => note.classList.remove('at-limit'), 600);
+
+        if (statusEl && !isOffline) {
+            clearStatusTimers();
+            statusMode = 'limit';
+            setStatus(`${MAX_LINES} line limit`);
+            statusTimer = setTimeout(() => showLastEdit(true), 1600);
+        }
     }
 
     function flushToDom() {
@@ -437,7 +463,7 @@
 
         body.addEventListener('input', () => {
             if (!canEdit()) return;
-            enforceLineLimit();
+            enforceLineLimit(true);
             showEditing();
             scheduleTextPut();
         });
@@ -453,7 +479,7 @@
             const end = body.selectionEnd;
             body.value = body.value.slice(0, start) + paste + body.value.slice(end);
             body.selectionStart = body.selectionEnd = start + paste.length;
-            enforceLineLimit();
+            enforceLineLimit(true);
             scheduleTextPut();
         });
     }

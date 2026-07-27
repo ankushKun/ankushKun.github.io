@@ -6,7 +6,9 @@
     'use strict';
 
     // Configuration
-    const ENABLE_DEEP_LINKING = false; // Set to true to enable URL state updates
+    // URL reflects the focused window, so a window can be linked and bookmarked
+    // and the browser Back button steps back through them.
+    const ENABLE_DEEP_LINKING = true;
     const ENABLE_HIRE_NOTIFICATION = false; // Set to true to show hire popup after first interaction
 
     // State
@@ -171,11 +173,13 @@
                 }
             }
 
-            // Cmd/Ctrl + H: Hide all windows (show desktop)
+            // Cmd/Ctrl + H: Hide all windows (show desktop).
+            // Minimizes into the tray rather than hiding outright, otherwise
+            // every open window becomes unreachable.
             if (modKey && e.key === 'h') {
                 e.preventDefault();
-                openWindows.forEach((win) => {
-                    win.style.display = 'none';
+                openWindows.forEach((win, id) => {
+                    if (win.style.display !== 'none') minimizeWindow(win, id);
                 });
                 deactivateAllWindows();
                 activeWindow = null;
@@ -195,7 +199,7 @@
                 toggleSpotlight();
             }
 
-            // Escape: Close Spotlight, deselect everything
+            // Escape: Close Spotlight, then any open dropdown
             if (e.key === 'Escape') {
                 // Close Spotlight if open
                 const spotlight = document.getElementById('spotlight-overlay');
@@ -204,7 +208,6 @@
                     return;
                 }
 
-                document.querySelectorAll('.desktop-icon').forEach(i => i.classList.remove('selected'));
                 // Close any open dropdowns
                 const appleDropdown = document.getElementById('apple-dropdown');
                 const finderDropdown = document.getElementById('finder-dropdown');
@@ -419,11 +422,19 @@
                     font-size: 13px;
                 }
                 .spotlight-hint {
-                    padding: 10px 18px;
-                    color: rgba(255, 255, 255, 0.3);
+                    padding: 8px 18px;
+                    color: rgba(255, 255, 255, 0.32);
                     font-size: 11px;
                     text-align: center;
                     border-top: 1px solid rgba(255, 255, 255, 0.06);
+                }
+                .spotlight-section {
+                    padding: 8px 18px 4px;
+                    color: rgba(255, 255, 255, 0.38);
+                    font-size: 10px;
+                    font-weight: 600;
+                    letter-spacing: 0.6px;
+                    text-transform: uppercase;
                 }
             `;
             document.head.appendChild(styles);
@@ -432,6 +443,13 @@
         // Focus input
         const input = document.getElementById('spotlight-input');
         input.focus();
+
+        // Persistent hint footer (the .spotlight-hint rule existed but nothing
+        // ever rendered it)
+        const hint = document.createElement('div');
+        hint.className = 'spotlight-hint';
+        hint.textContent = '↑↓ to navigate · ↵ to open · esc to close';
+        spotlight.querySelector('.spotlight-container').appendChild(hint);
 
         const getIconHtml = (item) => {
             if (item.iconHtml) return item.iconHtml;
@@ -443,26 +461,46 @@
             return `<span class="app-icon app-icon-spotlight app-icon-type-fallback app-icon-fit-contain"><span class="spotlight-generic-icon ${kind}"></span></span>`;
         };
 
+        const decorate = (item) => ({
+            ...item,
+            iconHtml: getIconHtml(item),
+            windowId: item.openWindow || ('content-' + item.permalink.replace(/[^a-z0-9]/gi, '-'))
+        });
+
+        /**
+         * Opening Spotlight to a blank panel forces you to already know what
+         * you want. Seed it with the apps plus the newest writing so it works
+         * as a browsing surface too.
+         */
+        function defaultSuggestions() {
+            const apps = globalSearchIndex.filter(i => i.openWindow && i.type === 'app').slice(0, 4);
+            const rest = globalSearchIndex
+                .filter(i => !i.openWindow && (i.type === 'blogs' || i.type === 'projects'))
+                .slice(0, 4);
+            return apps.concat(rest).slice(0, 8).map(decorate);
+        }
+
         // Handle search
         let selectedIndex = -1;
-        input.addEventListener('input', () => {
-            const query = input.value.toLowerCase().trim();
-            const results = query ? globalSearchIndex.filter(item =>
-                item.title.toLowerCase().includes(query) ||
-                (item.type && item.type.toLowerCase().includes(query)) ||
-                (item.type && `${item.type}s`.toLowerCase().includes(query)) ||
-                (item.description && item.description.toLowerCase().includes(query)) ||
-                (item.content && item.content.toLowerCase().includes(query))
-            ).slice(0, 8).map(item => ({
-                ...item,
-                iconHtml: getIconHtml(item),
-                windowId: item.openWindow || ('content-' + item.permalink.replace(/[^a-z0-9]/gi, '-'))
-            })) : [];
 
-            renderResults(results);
+        function runSearch() {
+            const query = input.value.toLowerCase().trim();
+            const results = query
+                ? globalSearchIndex.filter(item =>
+                    item.title.toLowerCase().includes(query) ||
+                    (item.type && item.type.toLowerCase().includes(query)) ||
+                    (item.type && `${item.type}s`.toLowerCase().includes(query)) ||
+                    (item.description && item.description.toLowerCase().includes(query)) ||
+                    (item.content && item.content.toLowerCase().includes(query))
+                ).slice(0, 8).map(decorate)
+                : defaultSuggestions();
+
+            renderResults(results, !query);
             selectedIndex = results.length > 0 ? 0 : -1;
             updateSelection();
-        });
+        }
+
+        input.addEventListener('input', runSearch);
 
         // Keyboard navigation
         input.addEventListener('keydown', (e) => {
@@ -488,13 +526,18 @@
             });
         }
 
-        function renderResults(results) {
+        function renderResults(results, isDefault) {
             const container = document.getElementById('spotlight-results');
-            if (results.length === 0 && input.value.trim()) {
-                container.innerHTML = '<div class="spotlight-no-results">No results found</div>';
+            if (results.length === 0) {
+                container.innerHTML = input.value.trim()
+                    ? '<div class="spotlight-no-results">No results found</div>'
+                    : '';
                 return;
             }
-            container.innerHTML = results.map(item => {
+            const heading = isDefault
+                ? '<div class="spotlight-section">Suggestions</div>'
+                : '';
+            container.innerHTML = heading + results.map(item => {
                 return `
                 <div class="spotlight-result" role="button" tabindex="0" data-window="${escapeHtml(item.windowId)}" data-title="${escapeHtml(item.title)}" data-permalink="${escapeHtml(item.permalink || '')}" data-width="${item.width || 900}" data-height="${item.height || 650}">
                     <span class="spotlight-result-icon">${item.iconHtml}</span>
@@ -525,6 +568,9 @@
                 spotlight.remove();
             }
         });
+
+        // Show suggestions immediately rather than an empty panel
+        runSearch();
     }
 
     // Load search index for Spotlight
@@ -650,12 +696,11 @@
 
         desktop.addEventListener('click', (e) => {
             if (e.target === desktop || e.target.classList.contains('desktop-icons')) {
-                document.querySelectorAll('.desktop-icon').forEach(i => i.classList.remove('selected'));
                 deactivateAllWindows();
                 // Reset menubar to Finder
                 const activeAppName = document.getElementById('active-app-name');
                 if (activeAppName) activeAppName.textContent = 'Finder';
-                if (ENABLE_DEEP_LINKING) history.replaceState(null, 'Home', '/');
+                resetUrlToDesktop();
             }
         });
     }
@@ -721,35 +766,40 @@
                     if (new URL(href).origin === window.location.origin) return;
                 } catch (e) { }
 
+                // Most of the web sends X-Frame-Options/frame-ancestors, and we
+                // cannot detect that from script (a cross-origin probe always
+                // throws). A block-list was effectively "list the whole web",
+                // and anything missed became a permanently blank window.
+                // So: new tab by default, embed only what we know embeds.
+                const EMBEDDABLE_HOSTS = [
+                    'cal.com',
+                    'thelongestyard.link',
+                    'ankush.one'
+                ];
+
+                // Take over the click first, so we never both window.open() and
+                // let the browser navigate the current page.
                 e.preventDefault();
                 e.stopPropagation();
 
-                // Known domains that block iframes
-                const BLOCKED_DOMAINS = [
-                    'github.com', 'twitter.com', 'x.com',
-                    'youtube.com', 'youtu.be', 'linkedin.com',
-                    'instagram.com', 'facebook.com', 'medium.com',
-                    't.me', 'discord.com', 'discord.gg', 'reddit.com',
-                    'pw.live', 'devfolio.co', 'npmjs.com', 'itch.io',
-                    'gohugo.io', 'mozilla.org', 'resend.com'
-                ];
-
-                // Get the domain for the window title
-                let title;
+                let host;
                 try {
-                    const url = new URL(href);
-                    title = url.hostname.replace('www.', '');
-
-                    // Check if domain is blocked
-                    if (BLOCKED_DOMAINS.some(domain => title.includes(domain))) {
-                        window.open(href, '_blank');
-                        return;
-                    }
+                    host = new URL(href).hostname.replace(/^www\./, '');
                 } catch {
-                    title = 'External Link';
+                    window.open(href, '_blank', 'noopener');
+                    return;
                 }
 
-                openExternalWindow(href, title);
+                const embeddable = EMBEDDABLE_HOSTS.some(
+                    (allowed) => host === allowed || host.endsWith('.' + allowed)
+                );
+
+                if (!embeddable) {
+                    window.open(href, '_blank', 'noopener');
+                    return;
+                }
+
+                openExternalWindow(href, host);
             }
         });
     }
@@ -773,6 +823,9 @@
         win.className = 'window external-window';
         win.dataset.windowId = windowId;
         win.dataset.cursorAnchor = 'win:' + windowId;
+        // escapeHtml on every interpolation - a bare quote in a URL would
+        // otherwise break out of the attribute and mangle the window.
+        const safeUrl = escapeHtml(url);
         win.innerHTML = `
             <div class="window-titlebar">
                 ${getTrafficLightsMarkup()}
@@ -781,20 +834,20 @@
             <div class="window-toolbar">
                 <div class="url-bar">
                     <span class="url-icon">🔒</span>
-                    <span class="url-text">${url}</span>
+                    <span class="url-text">${safeUrl}</span>
                 </div>
-                <a href="${url}" target="_blank" class="open-external" title="Open in new tab">↗</a>
+                <a href="${safeUrl}" target="_blank" rel="noopener" class="open-external" data-tip="Open in new tab">↗</a>
             </div>
             <div class="window-iframe-container">
                 <div class="window-loader">
                     <div class="spinner"></div>
                 </div>
-                <iframe src="${url}" frameborder="0"></iframe>
+                <iframe src="${safeUrl}" frameborder="0"></iframe>
                 <div class="iframe-blocked-fallback" style="display: none;">
                     <div class="fallback-icon">🚫</div>
                     <h3>This site cannot be displayed in a window</h3>
                     <p>The website blocked embedding for security reasons.</p>
-                    <a href="${url}" target="_blank" class="fallback-btn open-external">Open in New Tab ↗</a>
+                    <a href="${safeUrl}" target="_blank" rel="noopener" class="fallback-btn open-external">Open in New Tab ↗</a>
                 </div>
             </div>
             <div class="window-resize"></div>
@@ -811,39 +864,29 @@
         document.getElementById('windows-container').appendChild(win);
         openWindows.set(windowId, win);
 
-        // Detect iframe load failure
         const iframe = win.querySelector('iframe');
         const fallback = win.querySelector('.iframe-blocked-fallback');
         const loader = win.querySelector('.window-loader');
 
-        iframe.onload = () => {
+        let settled = false;
+        const settle = (blocked) => {
+            if (settled) return;
+            settled = true;
             loader.style.display = 'none';
+            if (blocked) {
+                iframe.style.display = 'none';
+                fallback.style.display = 'flex';
+            }
         };
 
-        iframe.addEventListener('error', () => {
-            iframe.style.display = 'none';
-            loader.style.display = 'none';
-            fallback.style.display = 'flex';
-        });
+        iframe.addEventListener('load', () => settle(false));
+        iframe.addEventListener('error', () => settle(true));
 
-        // Also set a timeout to check if iframe loaded
-        setTimeout(() => {
-            try {
-                // Try to access iframe content - will throw if blocked
-                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-                if (!iframeDoc || iframeDoc.body.innerHTML === '') {
-                    iframe.style.display = 'none';
-                    loader.style.display = 'none';
-                    fallback.style.display = 'flex';
-                } else {
-                    loader.style.display = 'none';
-                }
-            } catch (e) {
-                // Cross-origin error means it's loading (good) or blocked
-                // We can't reliably detect, so leave it, but hide loader
-                loader.style.display = 'none';
-            }
-        }, 3000);
+        // Only hosts we already know embed cleanly reach this code path, so a
+        // timeout here means "slow", not "blocked" - just retire the spinner.
+        // (The old cross-origin contentDocument probe always threw, which made
+        // the fallback UI unreachable.)
+        setTimeout(() => settle(false), 8000);
 
 
 
@@ -975,6 +1018,7 @@
         if (dropdown) dropdown.classList.remove('open');
 
         openWindows.forEach((win, id) => {
+            removeFromTray(id);
             win.classList.add('closing');
             setTimeout(() => {
                 win.remove();
@@ -1149,6 +1193,88 @@
         bringToFront(win);
     };
 
+    // Keyboard shortcuts reference. Every shortcut below already worked; none
+    // of them were discoverable anywhere in the UI.
+    window.openShortcuts = function () {
+        if (openWindows.has('shortcuts')) {
+            const existing = openWindows.get('shortcuts');
+            restoreWindow(existing);
+            bringToFront(existing);
+            return;
+        }
+
+        const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+        const mod = isMac ? '⌘' : 'Ctrl';
+
+        const groups = [
+            {
+                name: 'Windows',
+                items: [
+                    [mod + ' W', 'Close the active window'],
+                    [mod + ' M', 'Minimize to the menubar'],
+                    [mod + ' H', 'Minimize everything'],
+                    [mod + ' `', 'Cycle between windows'],
+                    ['Double-click titlebar', 'Zoom the window']
+                ]
+            },
+            {
+                name: 'Navigation',
+                items: [
+                    [mod + ' Space', 'Open search'],
+                    ['↑ ↓', 'Move through results'],
+                    ['↵', 'Open the selected result'],
+                    ['Esc', 'Close search or dismiss a dialog']
+                ]
+            }
+        ];
+
+        const body = `
+            <div class="shortcuts-pane">
+                ${groups.map(g => `
+                    <section class="shortcuts-group">
+                        <h3>${escapeHtml(g.name)}</h3>
+                        <dl>
+                            ${g.items.map(([keys, desc]) => `
+                                <div class="shortcuts-row">
+                                    <dt><kbd>${escapeHtml(keys)}</kbd></dt>
+                                    <dd>${escapeHtml(desc)}</dd>
+                                </div>
+                            `).join('')}
+                        </dl>
+                    </section>
+                `).join('')}
+            </div>
+        `;
+
+        const win = document.createElement('div');
+        win.className = 'window shortcuts-window';
+        win.dataset.windowId = 'shortcuts';
+        win.dataset.cursorAnchor = 'win:shortcuts';
+        win.innerHTML = `
+            <div class="window-titlebar">
+                ${getTrafficLightsMarkup()}
+                <div class="window-title"><span class="window-title-text">Keyboard Shortcuts</span></div>
+            </div>
+            <div class="window-content">${body}</div>
+        `;
+
+        const width = 380;
+        win.style.width = width + 'px';
+        win.style.height = 'auto';
+        win.style.left = Math.max(20, (window.innerWidth - width) / 2) + 'px';
+        win.style.top = '90px';
+
+        document.getElementById('windows-container').appendChild(win);
+        openWindows.set('shortcuts', win);
+
+        win.classList.add('opening');
+        setTimeout(() => win.classList.remove('opening'), 200);
+
+        setupWindowDrag(win);
+        setupWindowControls(win, 'shortcuts');
+        bringToFront(win);
+    };
+
     // Flash Game Initialization
     let ruffleLoaded = false;
     let ruffleLoadPromise = null;
@@ -1305,9 +1431,11 @@
             win.style.width = `${finalWidth}px`;
             win.style.height = `${finalHeight}px`;
         } else {
-            // Desktop: Position - cascade windows
-            const offsetX = (openWindows.size) * 30;
-            const offsetY = (openWindows.size) * 30;
+            // Desktop: cascade, wrapping every 6 windows. The offset used to
+            // grow without bound, so the 8th window opened mostly off-screen.
+            const step = openWindows.size % 6;
+            const offsetX = step * 30;
+            const offsetY = step * 30;
 
             // Clamp size to screen
             const maxWidth = window.innerWidth - 100;
@@ -1378,6 +1506,9 @@
         }
 
         bringToFront(win);
+        // Newly opened window gets its own history entry; refocusing an
+        // existing one (handled in bringToFront) only replaces.
+        syncUrlToWindow(win, true);
 
         // If we need to fetch content, do it now
         if (shouldFetchJson && permalink) {
@@ -1499,6 +1630,7 @@
             win.ircCleanup();
         }
 
+        removeFromTray(id);
         win.classList.add('closing');
         setTimeout(() => {
             win.remove();
@@ -1522,17 +1654,126 @@
                     const activeAppName = document.getElementById('active-app-name');
                     if (activeAppName) activeAppName.textContent = 'Finder';
                     // Reset URL to desktop
-                    if (ENABLE_DEEP_LINKING) history.replaceState(null, 'Home', '/');
+                    resetUrlToDesktop();
                 }
             }
         }, 150);
     }
 
+    // ================================================
+    // Minimize / restore via the menubar tray
+    // There is no dock, so a minimized window used to be reachable only through
+    // the Finder dropdown - nothing on screen said it still existed.
+    // ================================================
+
+    function getMinimizedTray() {
+        return document.getElementById('menubar-minimized');
+    }
+
+    function windowTitleOf(win) {
+        return win.querySelector('.window-title-text')?.textContent
+            || win.querySelector('.window-title')?.textContent
+            || 'Window';
+    }
+
+    function addToTray(win, id) {
+        const tray = getMinimizedTray();
+        if (!tray || tray.querySelector(`[data-tray-for="${CSS.escape(id)}"]`)) return null;
+
+        const title = windowTitleOf(win).trim();
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'menubar-min-chip';
+        chip.dataset.trayFor = id;
+        chip.setAttribute('aria-label', `Restore ${title}`);
+        chip.dataset.tip = `Restore ${title}`;
+
+        const icon = getWindowIconHtml(id);
+        chip.innerHTML =
+            `<span class="menubar-min-icon">${icon || ''}</span>` +
+            `<span class="menubar-min-label"></span>`;
+        chip.querySelector('.menubar-min-label').textContent = title;
+
+        chip.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const target = openWindows.get(id);
+            if (target) {
+                restoreWindow(target);
+                bringToFront(target);
+            }
+        });
+
+        tray.appendChild(chip);
+        return chip;
+    }
+
+    function removeFromTray(id) {
+        const tray = getMinimizedTray();
+        if (!tray) return;
+        const chip = tray.querySelector(`[data-tray-for="${CSS.escape(id)}"]`);
+        if (chip) chip.remove();
+    }
+
+    /** Genie-ish fly toward the tray chip, mirroring the sticky note's animation. */
+    function minimizeWindow(win, id) {
+        if (win.classList.contains('minimized')) return;
+
+        const chip = addToTray(win, id);
+        const winRect = win.getBoundingClientRect();
+        const targetRect = chip ? chip.getBoundingClientRect() : null;
+
+        win.classList.add('minimized');
+
+        if (targetRect && !prefersReducedMotion()) {
+            const dx = (targetRect.left + targetRect.width / 2) - (winRect.left + winRect.width / 2);
+            const dy = (targetRect.top + targetRect.height / 2) - (winRect.top + winRect.height / 2);
+            win.style.transformOrigin = 'center center';
+            win.style.transition = 'transform 260ms cubic-bezier(0.4, 0, 1, 1), opacity 260ms ease-in';
+            win.style.transform = `translate(${dx}px, ${dy}px) scale(0.06)`;
+            win.style.opacity = '0';
+        } else {
+            win.style.opacity = '0';
+        }
+
+        setTimeout(() => {
+            win.style.display = 'none';
+            win.style.transition = '';
+            win.style.transform = '';
+            win.style.opacity = '';
+            win.style.transformOrigin = '';
+
+            if (activeWindow === win) {
+                activeWindow = null;
+                const previous = [...windowHistory].reverse().find(item => item !== win && item.style.display !== 'none');
+                if (previous) {
+                    bringToFront(previous);
+                } else {
+                    deactivateAllWindows();
+                    const activeAppName = document.getElementById('active-app-name');
+                    if (activeAppName) activeAppName.textContent = 'Finder';
+                }
+            }
+        }, prefersReducedMotion() ? 0 : 260);
+    }
+
+    function prefersReducedMotion() {
+        return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    }
+
     function restoreWindow(win) {
+        const wasMinimized = win.classList.contains('minimized');
         win.style.display = '';
         win.style.transform = '';
         win.style.opacity = '';
         win.classList.remove('minimized');
+
+        if (wasMinimized) {
+            removeFromTray(win.dataset.windowId);
+            if (!prefersReducedMotion()) {
+                win.classList.add('restoring');
+                setTimeout(() => win.classList.remove('restoring'), 220);
+            }
+        }
     }
 
     function bringToFront(win) {
@@ -1561,12 +1802,101 @@
         }
         windowHistory.push(win);
 
-        // Update Browser URL (Deep Linking)
-        const path = win.dataset.path;
-        if (path && path !== '/') {
-            if (ENABLE_DEEP_LINKING) history.replaceState(null, title, path);
+        syncUrlToWindow(win);
+    }
+
+    // ================================================
+    // Deep linking
+    // A history entry means "this window is focused". Opening a window pushes;
+    // merely refocusing an already-open one replaces, so alt-tabbing between
+    // two windows does not bury the Back button under dozens of entries.
+    // ================================================
+
+    let suppressHistory = false;
+
+    function windowUrl(win) {
+        const path = win && win.dataset.path;
+        if (!path || path === '/') return null;
+        return path;
+    }
+
+    function syncUrlToWindow(win, forcePush) {
+        if (!ENABLE_DEEP_LINKING || suppressHistory) return;
+
+        const path = windowUrl(win);
+        const target = path || '/';
+        if (target === location.pathname + location.search) return;
+
+        const id = win ? win.dataset.windowId : null;
+        const state = id ? { windowId: id } : null;
+
+        if (forcePush) {
+            history.pushState(state, '', target);
+        } else {
+            history.replaceState(state, '', target);
         }
     }
+
+    function resetUrlToDesktop() {
+        if (!ENABLE_DEEP_LINKING || suppressHistory) return;
+        if (location.pathname === '/' && !location.search) return;
+        history.replaceState(null, '', '/');
+    }
+
+    /**
+     * Back/forward: bring the window for the target URL to the front, opening it
+     * if it was closed. An unrecognised entry means "the desktop".
+     */
+    window.addEventListener('popstate', (e) => {
+        if (!ENABLE_DEEP_LINKING) return;
+
+        const targetId = e.state && e.state.windowId;
+
+        // openWindow is async, so suppressHistory has to be released when the
+        // work finishes - a try/finally would clear it before openWindow got
+        // as far as pushing, adding a bogus entry and breaking Forward.
+        suppressHistory = true;
+        const release = () => { suppressHistory = false; };
+
+        if (targetId && openWindows.has(targetId)) {
+            const win = openWindows.get(targetId);
+            restoreWindow(win);
+            bringToFront(win);
+            release();
+            return;
+        }
+
+        // The window was closed since that entry was created - reopen it from
+        // the search index if we can identify it.
+        const meta = targetId ? appMetadata.get(targetId) : null;
+        if (targetId && meta) {
+            Promise.resolve(
+                openWindow(targetId, meta.title, {
+                    width: meta.width || 1000,
+                    height: meta.height || 700
+                }, meta.permalink || null)
+            ).then(release, release);
+            return;
+        }
+
+        const byPath = [...openWindows.values()].find(w => w.dataset.path === location.pathname);
+        if (byPath) {
+            restoreWindow(byPath);
+            bringToFront(byPath);
+            release();
+            return;
+        }
+
+        // Nothing matches: show the desktop.
+        openWindows.forEach((win, id) => {
+            if (win.style.display !== 'none') minimizeWindow(win, id);
+        });
+        deactivateAllWindows();
+        activeWindow = null;
+        const activeAppName = document.getElementById('active-app-name');
+        if (activeAppName) activeAppName.textContent = 'Finder';
+        release();
+    });
 
     function deactivateAllWindows() {
         document.querySelectorAll('.window').forEach(w => {
@@ -1638,6 +1968,20 @@
             const maxTop = window.innerHeight - parseInt(getComputedStyle(document.documentElement).getPropertyValue('--menubar-height'), 10) - 40;
             newLeft = Math.min(maxLeft, Math.max(minLeft, newLeft));
             newTop = Math.min(maxTop, Math.max(0, newTop));
+
+            // Snap to screen edges and to the horizontal centre when close,
+            // unless Alt is held to place freely.
+            if (!e.altKey) {
+                const SNAP = 12;
+                const rightEdge = window.innerWidth - win.offsetWidth;
+                const centreLeft = Math.round((window.innerWidth - win.offsetWidth) / 2);
+
+                if (Math.abs(newLeft) <= SNAP) newLeft = 0;
+                else if (Math.abs(newLeft - rightEdge) <= SNAP) newLeft = rightEdge;
+                else if (Math.abs(newLeft - centreLeft) <= SNAP) newLeft = centreLeft;
+
+                if (Math.abs(newTop) <= SNAP) newTop = 0;
+            }
 
             win.style.left = `${newLeft}px`;
             win.style.top = `${newTop}px`;
@@ -1734,55 +2078,45 @@
 
         closeBtn.addEventListener('click', () => closeWindow(win, id));
 
-        minimizeBtn.addEventListener('click', () => {
-            // Simple minimize effect
-            win.style.transform = 'scale(0.1)';
-            win.style.opacity = '0';
-            win.classList.add('minimized');
-            setTimeout(() => {
-                win.style.display = 'none';
-                win.style.transform = '';
-                win.style.opacity = '';
-                if (activeWindow === win) {
-                    activeWindow = null;
-                    const previous = [...windowHistory].reverse().find(item => item !== win && item.style.display !== 'none');
-                    if (previous) {
-                        bringToFront(previous);
-                    } else {
-                        deactivateAllWindows();
-                        const activeAppName = document.getElementById('active-app-name');
-                        if (activeAppName) activeAppName.textContent = 'Finder';
-                    }
-                }
-            }, 200);
-        });
+        minimizeBtn.addEventListener('click', () => minimizeWindow(win, id));
 
-        maximizeBtn.addEventListener('click', () => {
-            if (win.dataset.maximized === 'true') {
-                // Restore
-                win.style.left = win.dataset.restoreLeft;
-                win.style.top = win.dataset.restoreTop;
-                win.style.width = win.dataset.restoreWidth;
-                win.style.height = win.dataset.restoreHeight;
-                win.dataset.maximized = 'false';
-            } else {
-                // Maximize
-                win.dataset.restoreLeft = win.style.left;
-                win.dataset.restoreTop = win.style.top;
-                win.dataset.restoreWidth = win.style.width;
-                win.dataset.restoreHeight = win.style.height;
+        maximizeBtn.addEventListener('click', () => toggleZoom(win));
 
-                win.style.left = '0';
-                win.style.top = '0';
-                win.style.width = '100%';
-                win.style.height = '100%';
-                win.style.transform = '';
-                win.dataset.maximized = 'true';
-            }
-        });
+        // Double-click the titlebar to zoom, as on a real Mac
+        const titlebar = win.querySelector('.window-titlebar');
+        if (titlebar) {
+            titlebar.addEventListener('dblclick', (e) => {
+                if (e.target.closest('.traffic-light') || e.target.closest('.titlebar-link')) return;
+                toggleZoom(win);
+            });
+        }
 
         // Click on window brings to front
         win.addEventListener('mousedown', () => bringToFront(win));
+    }
+
+    function toggleZoom(win) {
+        if (win.dataset.maximized === 'true') {
+            // Restore
+            win.style.left = win.dataset.restoreLeft;
+            win.style.top = win.dataset.restoreTop;
+            win.style.width = win.dataset.restoreWidth;
+            win.style.height = win.dataset.restoreHeight;
+            win.dataset.maximized = 'false';
+        } else {
+            // Maximize
+            win.dataset.restoreLeft = win.style.left;
+            win.dataset.restoreTop = win.style.top;
+            win.dataset.restoreWidth = win.style.width;
+            win.dataset.restoreHeight = win.style.height;
+
+            win.style.left = '0';
+            win.style.top = '0';
+            win.style.width = '100%';
+            win.style.height = '100%';
+            win.style.transform = '';
+            win.dataset.maximized = 'true';
+        }
     }
 
     // Finder Items - SINGLE CLICK to open
@@ -1883,6 +2217,137 @@
 
     let notificationContainer = null;
     let audioContext = null;
+
+    // ================================================
+    // Modal Sheets - replaces native alert()/confirm()
+    // A Chrome-branded dialog on top of a fake desktop breaks the illusion
+    // harder than anything else on the page.
+    // ================================================
+
+    /**
+     * @param {Object} opts
+     * @param {string} opts.title
+     * @param {string} [opts.message]
+     * @param {string} [opts.confirmLabel]  defaults to "OK"
+     * @param {string} [opts.cancelLabel]   omit for a single-button alert
+     * @param {boolean} [opts.danger]       style the confirm button as destructive
+     * @returns {Promise<boolean>} true when confirmed, false when cancelled
+     */
+    function showSheet(opts) {
+        return new Promise((resolve) => {
+            const overlay = document.createElement('div');
+            overlay.className = 'sheet-overlay';
+            overlay.setAttribute('role', 'dialog');
+            overlay.setAttribute('aria-modal', 'true');
+
+            const hasCancel = typeof opts.cancelLabel === 'string';
+
+            overlay.innerHTML = `
+                <div class="sheet">
+                    <div class="sheet-body">
+                        <div class="sheet-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="13"></line>
+                                <line x1="12" y1="16.5" x2="12" y2="16.5"></line>
+                            </svg>
+                        </div>
+                        <div class="sheet-text">
+                            <h2 class="sheet-title"></h2>
+                            <p class="sheet-message"></p>
+                        </div>
+                    </div>
+                    <div class="sheet-actions">
+                        ${hasCancel ? '<button type="button" class="sheet-btn" data-act="cancel"></button>' : ''}
+                        <button type="button" class="sheet-btn primary${opts.danger ? ' danger' : ''}" data-act="confirm"></button>
+                    </div>
+                </div>
+            `;
+
+            // textContent, never innerHTML - messages can carry user-supplied nicknames
+            overlay.querySelector('.sheet-title').textContent = opts.title || '';
+            const messageEl = overlay.querySelector('.sheet-message');
+            messageEl.textContent = opts.message || '';
+            messageEl.hidden = !opts.message;
+
+            const confirmBtn = overlay.querySelector('[data-act="confirm"]');
+            confirmBtn.textContent = opts.confirmLabel || 'OK';
+            const cancelBtn = overlay.querySelector('[data-act="cancel"]');
+            if (cancelBtn) cancelBtn.textContent = opts.cancelLabel;
+
+            // Restore focus to whatever opened the sheet
+            const previouslyFocused = document.activeElement;
+
+            function close(result) {
+                document.removeEventListener('keydown', onKey, true);
+                overlay.classList.remove('visible');
+                setTimeout(() => {
+                    overlay.remove();
+                    if (previouslyFocused && previouslyFocused.focus) {
+                        try { previouslyFocused.focus(); } catch (e) { /* ignore */ }
+                    }
+                }, 150);
+                resolve(result);
+            }
+
+            function onKey(e) {
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    close(false);
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    close(true);
+                } else if (e.key === 'Tab') {
+                    // Trap focus inside the sheet
+                    const focusables = overlay.querySelectorAll('.sheet-btn');
+                    if (!focusables.length) return;
+                    const first = focusables[0];
+                    const last = focusables[focusables.length - 1];
+                    if (e.shiftKey && document.activeElement === first) {
+                        e.preventDefault();
+                        last.focus();
+                    } else if (!e.shiftKey && document.activeElement === last) {
+                        e.preventDefault();
+                        first.focus();
+                    }
+                }
+            }
+
+            confirmBtn.addEventListener('click', () => close(true));
+            if (cancelBtn) cancelBtn.addEventListener('click', () => close(false));
+            overlay.addEventListener('mousedown', (e) => {
+                // Click the dimmed backdrop to dismiss
+                if (e.target === overlay) close(false);
+            });
+            document.addEventListener('keydown', onKey, true);
+
+            document.body.appendChild(overlay);
+            requestAnimationFrame(() => {
+                overlay.classList.add('visible');
+                confirmBtn.focus();
+            });
+        });
+    }
+
+    function showAlert(title, message) {
+        return showSheet({ title: title, message: message, confirmLabel: 'OK' });
+    }
+
+    function showConfirm(title, message, opts) {
+        return showSheet({
+            title: title,
+            message: message,
+            confirmLabel: (opts && opts.confirmLabel) || 'OK',
+            cancelLabel: (opts && opts.cancelLabel) || 'Cancel',
+            danger: !!(opts && opts.danger)
+        });
+    }
+
+    window.showSheet = showSheet;
+    window.showAlert = showAlert;
+    window.showConfirm = showConfirm;
 
     function ensureNotificationContainer() {
         if (!notificationContainer) {
