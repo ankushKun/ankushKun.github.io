@@ -4018,39 +4018,6 @@ a.finder-row {
 }
 
 /* ==========================================================================
-   Menubar status items (battery / network)
-   ========================================================================== */
-
-.menubar-status-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    padding: 0 3px;
-    color: rgba(255, 255, 255, 0.92);
-    line-height: 1;
-}
-
-.menubar-status-item[hidden] {
-    display: none;
-}
-
-.menubar-status-label {
-    font-size: 11px;
-    letter-spacing: -0.2px;
-}
-
-.menubar-status-item.is-offline {
-    color: rgba(255, 255, 255, 0.5);
-}
-
-@media (max-width: 640px) {
-    /* Percentage text is the first thing to go on a narrow menubar */
-    .menubar-status-label {
-        display: none;
-    }
-}
-
-/* ==========================================================================
    Cursor reactions - press 1-8 to burst an emoji for everyone in the room
    ========================================================================== */
 

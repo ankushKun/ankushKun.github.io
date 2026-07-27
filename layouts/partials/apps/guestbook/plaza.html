@@ -1,0 +1,52 @@
+{{/* Guestbook - a StreetPass-style plaza of everyone who has passed through */}}
+{{- $id := .id -}}
+<div id="content-{{ $id }}" class="window-content" data-guestbook-window="true">
+    <div class="gb-window">
+
+        <header class="gb-header">
+            <div class="gb-header-text">
+                <h2 class="gb-title">Guestbook</h2>
+                <p class="gb-sub"><span class="gb-count">…</span> · <span class="gb-status">Connecting…</span></p>
+            </div>
+            <button type="button" class="gb-sign-btn">Sign the guestbook</button>
+        </header>
+
+        {{/* Sign-in form. Hidden until "Sign the guestbook" is pressed, and
+        reused for editing an existing entry. */}}
+        <form class="gb-form" hidden>
+            <div class="gb-form-row gb-avatar-row">
+                <span class="gb-field-label">Pick a face</span>
+                <div class="gb-avatar-picker" role="radiogroup" aria-label="Pick a face"></div>
+            </div>
+
+            <div class="gb-form-grid">
+                <label class="gb-field">
+                    <span class="gb-field-label">Name</span>
+                    <input type="text" class="gb-input gb-name" maxlength="20" autocomplete="off"
+                        placeholder="what should we call you?">
+                </label>
+                <label class="gb-field">
+                    <span class="gb-field-label">Where from <span class="gb-optional">optional</span></span>
+                    <input type="text" class="gb-input gb-from" maxlength="24" autocomplete="off"
+                        placeholder="Dehradun, IN">
+                </label>
+            </div>
+
+            <label class="gb-field">
+                <span class="gb-field-label">A bit about you <span class="gb-counter">0/100</span></span>
+                <textarea class="gb-input gb-blurb" maxlength="100" rows="2"
+                    placeholder="building things, mostly at night"></textarea>
+            </label>
+
+            <div class="gb-form-actions">
+                <button type="button" class="gb-btn gb-cancel">Cancel</button>
+                <button type="submit" class="gb-btn primary gb-save">Add me</button>
+            </div>
+            <p class="gb-form-note">Your entry is public and anyone can read it. Keep it kind.</p>
+        </form>
+
+        <div class="gb-plaza" role="list">
+            <div class="gb-empty">No one has signed yet. Be the first.</div>
+        </div>
+    </div>
+</div>
