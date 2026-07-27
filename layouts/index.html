@@ -7,7 +7,7 @@
 
 <!-- Desktop Icons -->
 <div class="desktop-icons">
-    {{ range where hugo.Data.apps.apps "desktop" true }}
+    {{ range where $.Site.Data.apps.apps "desktop" true }}
     {{ partial "os/desktop/icon.html" (dict "app" .) }}
     {{ end }}
 </div>
@@ -59,14 +59,16 @@
 
     <!-- WINS CONTENT - Awards Style -->
     {{ partial "apps/wins/list.html" (dict
-    "id" "wins"
-    "title" "Wins"
+        "id" "wins"
+        "title" "Wins"
+        "data" $.Site.Data.wins
     ) }}
 
     <!-- CONTACT CONTENT - Address Book Style -->
     {{ partial "apps/contact/book.html" (dict
-    "id" "contact"
-    "title" "Contacts"
+        "id" "contact"
+        "title" "Contacts"
+        "data" $.Site.Data.contact
     ) }}
 
     <!-- SCHEDULE CALL CONTENT -->
@@ -89,8 +91,9 @@
 
     <!-- GAMES FOLDER CONTENT - Finder Icon View -->
     {{ partial "apps/games/grid.html" (dict
-    "id" "games"
-    "title" "Games"
+        "id" "games"
+        "title" "Games"
+        "data" $.Site.Data.apps
     ) }}
 
     <!-- ITCH GAME EMBED CONTENT -->

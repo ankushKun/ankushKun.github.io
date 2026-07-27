@@ -7,7 +7,7 @@ Usage:
 ) }}
 */}}
 
-{{ $data := hugo.Data.wins }}
+{{ $data := .data }}
 
 <div id="content-{{ .id }}" data-permalink="/wins/" style="height: 100%;">
     <div class="wins-window" id="wins-container-{{ .id }}">
