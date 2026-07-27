@@ -2005,7 +2005,7 @@ a.event-item.event-link {
    truncated to "A." and the date to "on 28 Jul 20…". */
 .gb-entry {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 150px;
+    grid-template-columns: minmax(0, 1fr) auto;
     grid-template-rows: calc(var(--gb-line) * 2) var(--gb-line) var(--gb-line);
     column-gap: 18px;
 }
@@ -2034,19 +2034,24 @@ a.event-item.event-link {
     color: #1c2a4a;
 }
 
-/* Aside: two lines that land on the same two rules the signature spans, so
+/* Aside: two lines landing on the same two rules the signature spans, so
    both columns share the page's rhythm instead of the right side floating.
-   Text wraps rather than ellipsising - "from K…" tells the reader nothing. */
+
+   The track is `auto` with a pixel max-width, not a percentage: a percentage
+   max-width resolves against a grid area that is itself still being sized,
+   and browsers collapse it to almost nothing. `auto` plus nowrap content
+   sizes the column to exactly what it needs and leaves the rest of the width
+   to the signature. */
 .gb-entry-aside {
     grid-column: 2;
     grid-row: 1;
     display: grid;
     grid-template-rows: var(--gb-line) var(--gb-line);
+    justify-items: end;
+    max-width: 230px;
     min-width: 0;
-    text-align: right;
-    font-size: 11px;
+    font-size: 10.5px;
     color: #7d6a4d;
-    overflow-wrap: anywhere;
 }
 
 .gb-entry-asideline {
@@ -2054,14 +2059,40 @@ a.event-item.event-link {
     align-items: flex-end;
     justify-content: flex-end;
     gap: 6px;
+    max-width: 100%;
     min-width: 0;
-    /* Same inset as every other row, so the text rests on its rule */
+    /* Same inset as every other row, so content rests on its rule */
     padding-bottom: 6px;
     line-height: 1.3;
 }
 
+/* Place and date share one ruled line and stay on it */
+.gb-entry-origin {
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.gb-entry-from,
+.gb-entry-date {
+    font-style: italic;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gb-entry-dot {
+    flex: none;
+    opacity: 0.6;
+}
+
+.gb-entry-date {
+    flex: none;
+    color: #8b7658;
+}
+
 .gb-entry-you {
     flex: none;
+    margin-right: 2px;
     padding: 0 6px;
     font-size: 8.5px;
     font-weight: 700;
@@ -2073,41 +2104,8 @@ a.event-item.event-link {
     border-radius: 7px;
 }
 
-.gb-entry-from,
-.gb-entry-date {
-    font-style: italic;
-    min-width: 0;
-}
-
-.gb-entry-date {
-    color: #8b7658;
-}
-
-/* Note: left column of row 2, sitting on the third rule */
-.gb-entry-blurb {
-    grid-column: 1;
-    grid-row: 2;
-    margin: 0;
-    display: flex;
-    align-items: flex-end;
-    min-width: 0;
-    /* Same bottom inset as the icon row so the two sit on one line */
-    padding-bottom: 6px;
-    font-size: 11.5px;
-    line-height: 1.35;
-    color: #5a4a33;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* Contact icons: bottom of the right column */
+/* Contact icons sit on the line below the origin */
 .gb-entry-links {
-    grid-column: 2;
-    grid-row: 2;
-    align-self: end;
-    justify-self: end;
-    display: flex;
     align-items: center;
     gap: 5px;
     padding-bottom: 6px;
@@ -2136,6 +2134,23 @@ a.event-item.event-link {
 
 .gb-entry-link svg {
     display: block;
+}
+
+/* The note gets a whole ruled line to itself, full width */
+.gb-entry-blurb {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    margin: 0;
+    display: flex;
+    align-items: flex-end;
+    min-width: 0;
+    padding-bottom: 6px;
+    font-size: 11.5px;
+    line-height: 1.35;
+    color: #5a4a33;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Blank ruled line after every entry: keeps the grid and gives the page air.
@@ -2559,7 +2574,7 @@ a.event-item.event-link {
 @media (max-width: 720px) {
     /* Single leaf is wider, but keep the aside from crowding the signature */
     .gb-entry {
-        grid-template-columns: minmax(0, 1fr) 132px;
+        grid-template-columns: minmax(0, 1fr) auto;
         column-gap: 12px;
     }
 

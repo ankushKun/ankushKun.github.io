@@ -211,46 +211,52 @@
             const aside = document.createElement('div');
             aside.className = 'gb-entry-aside';
 
+            // First band: where from and when, together on one ruled line.
             const lineOne = document.createElement('div');
-            lineOne.className = 'gb-entry-asideline';
-            if (id === myId) {
-                const badge = document.createElement('span');
-                badge.className = 'gb-entry-you';
-                badge.textContent = 'you';
-                lineOne.appendChild(badge);
-            }
+            lineOne.className = 'gb-entry-asideline gb-entry-origin';
+
             if (data.from) {
                 const from = document.createElement('span');
                 from.className = 'gb-entry-from';
                 from.textContent = 'from ' + data.from;
                 lineOne.appendChild(from);
-            }
-            aside.appendChild(lineOne);
 
-            const lineTwo = document.createElement('div');
-            lineTwo.className = 'gb-entry-asideline';
+                const dot = document.createElement('span');
+                dot.className = 'gb-entry-dot';
+                dot.setAttribute('aria-hidden', 'true');
+                dot.textContent = '·';
+                lineOne.appendChild(dot);
+            }
+
             const when = document.createElement('time');
             when.className = 'gb-entry-date';
             when.title = relativeTime(data.ts);
-            when.textContent = 'on ' + dateStamp(data.ts);
-            lineTwo.appendChild(when);
+            when.textContent = dateStamp(data.ts);
+            lineOne.appendChild(when);
+            aside.appendChild(lineOne);
+
+            // Second band: the "you" badge and contact icons.
+            const lineTwo = document.createElement('div');
+            lineTwo.className = 'gb-entry-asideline gb-entry-links';
+
+            if (id === myId) {
+                const badge = document.createElement('span');
+                badge.className = 'gb-entry-you';
+                badge.textContent = 'you';
+                lineTwo.appendChild(badge);
+            }
+            contactLinks(data).forEach((a) => lineTwo.appendChild(a));
             aside.appendChild(lineTwo);
 
             row.appendChild(aside);
 
-            // Left column, bottom: the note. Always present so the grid keeps
-            // its shape even when someone left no message.
+            // Third band: the note, spanning the full width of the entry.
+            // Always present so the grid keeps its shape when someone left
+            // no message.
             const blurb = document.createElement('p');
             blurb.className = 'gb-entry-blurb';
             blurb.textContent = data.blurb || '';
             row.appendChild(blurb);
-
-            // Right column, bottom: contact icons.
-            const links = contactLinks(data);
-            const wrap = document.createElement('div');
-            wrap.className = 'gb-entry-links';
-            links.forEach((a) => wrap.appendChild(a));
-            row.appendChild(wrap);
 
             return row;
         }
