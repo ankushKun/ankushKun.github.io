@@ -38,6 +38,7 @@
 
     const cursorsRef = window.SiteGun.paths.live.cursors(ROOM);
     const presenceRef = window.SiteGun.paths.live.presence(ROOM);
+    const reactionsRef = window.SiteGun.paths.live.reactions(ROOM);
 
     let myId = localStorage.getItem('multiplayer-cursor-id');
     if (!myId) {
@@ -130,7 +131,110 @@
 
         lastSent = now;
         lastPayload = signature;
+        lastAnchor = anchor;
+        lastClient = { x: e.clientX, y: e.clientY };
         cursorsRef.get(myId).put(payload);
+    }
+
+    // ------------------------------------------------------------------
+    // Reactions
+    // Press a key, burst an emoji at your cursor for everybody in the room.
+    // Rides the same anchor scheme as cursors, so a reaction dropped on a
+    // project card lands on that card for every viewer.
+    // ------------------------------------------------------------------
+
+    const REACTION_KEYS = {
+        '1': '❤️', '2': '🔥', '3': '😂', '4': '🎉', '5': '👀',
+        '6': '🤯', '7': '👍', '8': '💀'
+    };
+    const REACTION_COOLDOWN_MS = 350;
+    const REACTION_LIFETIME_MS = 2200;
+
+    let lastReactionAt = 0;
+    let lastAnchor = null;
+    let lastClient = null;
+    const seenReactions = new Set();
+
+    function sendReaction(emoji) {
+        const now = Date.now();
+        if (now - lastReactionAt < REACTION_COOLDOWN_MS) return;
+        lastReactionAt = now;
+
+        // Fall back to the desktop centre if the pointer has not moved yet
+        let anchor = lastAnchor;
+        let client = lastClient;
+        if (!anchor) {
+            const desktop = document.getElementById('desktop');
+            if (!desktop) return;
+            const rect = desktop.getBoundingClientRect();
+            anchor = { key: 'desktop', rect: rect };
+            client = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+        }
+
+        const payload = {
+            e: emoji,
+            a: anchor.key,
+            ox: Math.round(client.x - anchor.rect.left),
+            oy: Math.round(client.y - anchor.rect.top),
+            ts: now,
+            // Distinguishes rapid repeats of the same emoji at the same spot
+            id: myId + '-' + now
+        };
+
+        reactionsRef.get(payload.id).put(payload);
+        spawnReaction(payload); // instant local feedback, no relay round-trip
+        seenReactions.add(payload.id);
+    }
+
+    function spawnReaction(data) {
+        const rect = resolveAnchor(data.a);
+        if (!rect) return;
+
+        const el = document.createElement('div');
+        el.className = 'cursor-reaction';
+        el.textContent = data.e;
+        // Randomised drift so simultaneous reactions do not perfectly overlap
+        el.style.setProperty('--drift', (Math.random() * 44 - 22).toFixed(1) + 'px');
+        el.style.setProperty('--spin', (Math.random() * 28 - 14).toFixed(1) + 'deg');
+        el.style.left = Math.round(rect.left + data.ox) + 'px';
+        el.style.top = Math.round(rect.top + data.oy) + 'px';
+
+        layer.appendChild(el);
+        setTimeout(() => el.remove(), REACTION_LIFETIME_MS);
+    }
+
+    function setupReactions() {
+        window.addEventListener('keydown', (e) => {
+            if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+            // Never steal a keystroke from something the user is typing into
+            const t = e.target;
+            if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+
+            const emoji = REACTION_KEYS[e.key];
+            if (!emoji) return;
+            sendReaction(emoji);
+        });
+
+        reactionsRef.map().on((data, id) => {
+            if (!data || !data.e || !data.a) return;
+            if (seenReactions.has(id)) return;
+            seenReactions.add(id);
+
+            const age = Date.now() - (data.ts || 0);
+            if (age > REACTION_LIFETIME_MS) {
+                // Reactions are momentary; do not let them accumulate in the graph
+                if (age > GRAPH_PRUNE_MS) reactionsRef.get(id).put(null);
+                return;
+            }
+
+            spawnReaction(data);
+        });
+
+        // Bound the local dedupe set
+        setInterval(() => {
+            if (seenReactions.size > 300) seenReactions.clear();
+        }, 30000);
     }
 
     // ------------------------------------------------------------------
@@ -264,6 +368,76 @@
     });
 
     // ------------------------------------------------------------------
+    // "N people looking at this"
+    //
+    // Peers already broadcast which anchor they are pointing at, so viewer
+    // counts need no extra traffic - this is purely a read of the cursor
+    // stream we are already receiving.
+    // ------------------------------------------------------------------
+
+    const VIEWER_BADGE_CLASS = 'viewer-badge';
+
+    /** Count peers per anchor key, including the anchor's parent window. */
+    function viewerCounts() {
+        const counts = new Map();
+        const now = Date.now();
+
+        peers.forEach((peer) => {
+            if (!peer.a || now - peer.lastSeen > CURSOR_TTL_MS) return;
+            counts.set(peer.a, (counts.get(peer.a) || 0) + 1);
+        });
+
+        return counts;
+    }
+
+    function refreshViewerBadges() {
+        const counts = viewerCounts();
+
+        // Clear badges whose anchor no longer has viewers
+        document.querySelectorAll('.' + VIEWER_BADGE_CLASS).forEach((badge) => {
+            const key = badge.dataset.forAnchor;
+            if (!counts.has(key)) badge.remove();
+        });
+
+        counts.forEach((count, key) => {
+            // Only content-ish anchors get a badge; a cursor sitting on the
+            // wallpaper is not "looking at" anything.
+            if (key === 'desktop') return;
+
+            const host = findBadgeHost(key);
+            if (!host) return;
+
+            let badge = host.querySelector(':scope > .' + VIEWER_BADGE_CLASS);
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = VIEWER_BADGE_CLASS;
+                badge.dataset.forAnchor = key;
+                host.appendChild(badge);
+            }
+            badge.textContent = count === 1 ? '1 viewing' : count + ' viewing';
+            badge.dataset.forAnchor = key;
+        });
+    }
+
+    /** The element a badge should be attached to for a given anchor key. */
+    function findBadgeHost(key) {
+        const matches = document.querySelectorAll(anchorSelector(key));
+        for (let i = 0; i < matches.length; i++) {
+            const el = matches[i];
+            const rect = el.getBoundingClientRect();
+            if (rect.width === 0 || rect.height === 0) continue;
+
+            // For windows, hang the badge off the titlebar so it does not sit
+            // on top of content.
+            if (key.startsWith('win:')) {
+                return el.querySelector('.window-titlebar') || el;
+            }
+            return el;
+        }
+        return null;
+    }
+
+    // ------------------------------------------------------------------
     // Presence - the online count must not depend on people wiggling a mouse
     // ------------------------------------------------------------------
 
@@ -329,6 +503,13 @@
 
     // Prune expired cursors even when no updates are arriving.
     setInterval(() => scheduleRender(false), 2000);
+
+    // Viewer badges change slowly; a 1s cadence is plenty and keeps the
+    // DOM work off the cursor render path.
+    setInterval(refreshViewerBadges, 1000);
+
+    // Reactions work on every device, including ones with no cursor to publish
+    setupReactions();
 
     if (publishesCursor) {
         window.addEventListener('mousemove', publishPosition, { passive: true });
