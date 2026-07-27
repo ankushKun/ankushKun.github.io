@@ -11,11 +11,11 @@ Each section maps to a specific content partial.
 
 {{ if eq .Section "wins" }}
 {{ $contentPartial = "apps/wins/list.html" }}
-{{ $contentData = dict "id" "wins-page" "title" "Wins" }}
+{{ $contentData = dict "id" "wins-page" "title" "Wins" "data" .Site.Data.wins }}
 
 {{ else if eq .Section "contact" }}
 {{ $contentPartial = "apps/contact/book.html" }}
-{{ $contentData = dict "id" "contact-page" "title" "Contacts" }}
+{{ $contentData = dict "id" "contact-page" "title" "Contacts" "data" .Site.Data.contact }}
 
 {{ else if eq .Section "schedule" }}
 {{ $contentPartial = "apps/contact/schedule.html" }}
