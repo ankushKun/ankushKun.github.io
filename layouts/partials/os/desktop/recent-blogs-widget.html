@@ -5,7 +5,7 @@
 {{ $allPages := $blogs | union $projects | union $timeline }}
 {{ $recentPages := first 5 ($allPages.ByDate.Reverse) }}
 
-<div class="desktop-widget recent-blogs-widget">
+<div class="desktop-widget recent-blogs-widget" data-cursor-anchor="widget:recent">
     <div class="widget-header">
         <span class="widget-icon blink-new">NEW</span>
         <span class="widget-title">Recent Activity</span>

@@ -1,9 +1,13 @@
 /**
  * v86 Linux Emulator Integration for Terminal
  * Uses v86 (x86 emulator in JavaScript/WebAssembly) with Linux
- * 
+ *
  * Uses v86's built-in xterm.js support via serial_container_xtermjs
  * which expects a DOM element (not a Terminal instance)
+ *
+ * State is per-window: Terminal and Portal each get their own emulator
+ * instance, keyed by window id, so opening or closing one never touches
+ * the other.
  */
 
 (function () {
@@ -64,6 +68,9 @@
     // ============================================================
     const DEFAULT_PROFILE = 'buildroot';
 
+    // Which window id is allowed to persist state to IndexedDB.
+    const PERSISTED_WINDOW_ID = 'terminal';
+
     // ============================================================
     // v86 Core Configuration
     // ============================================================
@@ -74,20 +81,54 @@
         vgaBiosUrl: '/v86/vgabios.bin',
     };
 
-    // State
-    let v86Emulator = null;
-    let v86Loaded = false;
-    let displayMode = 'vga'; // 'vga' or 'serial'
-    let inputCaptured = false;
-    let currentProfile = null;
-    let currentScreenContainer = null;
-    let currentWindowElement = null;
-    let serialFitAddon = null;
-    let loaderOverlay = null;
-    let autoSaveInterval = null;
-    let currentTerminalId = null;
-    let autoSaveEnabled = false; // Can be toggled via toolbar
-    let saveOnCloseEnabled = false; // Save state when window/tab closes
+    // ============================================================
+    // Per-window instance registry
+    // ============================================================
+    // terminalId -> instance. Every piece of mutable emulator state lives on an
+    // instance so Terminal and Portal can run side by side.
+    const instances = new Map();
+
+    function createInstance(terminalId) {
+        return {
+            id: terminalId,
+            emulator: null,
+            loaded: false,
+            displayMode: 'vga',        // 'vga' or 'serial'
+            inputCaptured: false,
+            profile: null,
+            screenContainer: null,
+            serialContainer: null,
+            windowElement: null,
+            fitAddon: null,
+            resizeObserver: null,
+            loaderOverlay: null,
+            autoSaveInterval: null,
+            autoSaveEnabled: false,    // Can be toggled via toolbar
+            saveOnCloseEnabled: false, // Save state when window/tab closes
+            saveStatusTimeout: null,
+            originalWindowTitle: null,
+            // Teardown callbacks for every document/window listener and observer
+            // this instance registers. Without these the listeners outlive the window.
+            cleanups: [],
+        };
+    }
+
+    function getInstance(terminalId) {
+        return instances.get(terminalId) || null;
+    }
+
+    /** Register a listener and return a remover, tracked for teardown. */
+    function addTrackedListener(inst, target, type, handler, options) {
+        target.addEventListener(type, handler, options);
+        inst.cleanups.push(() => target.removeEventListener(type, handler, options));
+    }
+
+    function runCleanups(inst) {
+        inst.cleanups.forEach((fn) => {
+            try { fn(); } catch (e) { /* ignore */ }
+        });
+        inst.cleanups = [];
+    }
 
     // ============================================================
     // IndexedDB State Persistence
@@ -115,48 +156,42 @@
     }
 
     // State save status indicator (shows in window title)
-    let saveStatusTimeout = null;
-    let originalWindowTitle = null;
+    function showSaveStatus(inst, message, isComplete = false) {
+        if (!inst || !inst.windowElement) return;
 
-    function showSaveStatus(message, isComplete = false) {
-        if (!currentWindowElement) return;
-
-        // Update window title
-        const titleElement = currentWindowElement.querySelector('.window-title');
+        // Update the title text span, not the whole titlebar
+        const titleElement = inst.windowElement.querySelector('.window-title-text')
+            || inst.windowElement.querySelector('.window-title');
         if (!titleElement) return;
 
-        // Store original title if not already stored
-        if (!originalWindowTitle) {
-            originalWindowTitle = titleElement.textContent;
+        if (!inst.originalWindowTitle) {
+            inst.originalWindowTitle = titleElement.textContent;
         }
 
-        // Update title with status
-        titleElement.textContent = `${originalWindowTitle} - ${message}`;
+        titleElement.textContent = `${inst.originalWindowTitle} - ${message}`;
 
-        // Clear any existing timeout
-        if (saveStatusTimeout) {
-            clearTimeout(saveStatusTimeout);
-            saveStatusTimeout = null;
+        if (inst.saveStatusTimeout) {
+            clearTimeout(inst.saveStatusTimeout);
+            inst.saveStatusTimeout = null;
         }
 
-        // Auto-restore title after 2 seconds if complete
         if (isComplete) {
-            saveStatusTimeout = setTimeout(() => {
-                if (titleElement && originalWindowTitle) {
-                    titleElement.textContent = originalWindowTitle;
+            inst.saveStatusTimeout = setTimeout(() => {
+                if (titleElement && inst.originalWindowTitle) {
+                    titleElement.textContent = inst.originalWindowTitle;
                 }
             }, 2000);
         }
     }
 
     // Capture xterm.js terminal buffer content
-    function captureTerminalBuffer() {
-        if (!v86Emulator?.serial_adapter?.term) {
+    function captureTerminalBuffer(inst) {
+        if (!inst.emulator?.serial_adapter?.term) {
             return null;
         }
 
         try {
-            const term = v86Emulator.serial_adapter.term;
+            const term = inst.emulator.serial_adapter.term;
             const buffer = term.buffer.active;
             const lines = [];
 
@@ -185,13 +220,13 @@
     }
 
     // Restore terminal buffer content
-    function restoreTerminalBuffer(terminalData) {
-        if (!terminalData?.lines || !v86Emulator?.serial_adapter?.term) {
+    function restoreTerminalBuffer(inst, terminalData) {
+        if (!terminalData?.lines || !inst.emulator?.serial_adapter?.term) {
             return false;
         }
 
         try {
-            const term = v86Emulator.serial_adapter.term;
+            const term = inst.emulator.serial_adapter.term;
 
             // Clear current terminal
             term.clear();
@@ -213,16 +248,16 @@
     }
 
     // Save emulator state to IndexedDB
-    async function saveEmulatorState(terminalId) {
-        if (!v86Emulator || !v86Loaded) {
+    async function saveEmulatorState(inst) {
+        if (!inst || !inst.emulator || !inst.loaded) {
             console.log('Cannot save state: emulator not ready');
             return false;
         }
 
         try {
-            showSaveStatus('[saving state...]');
+            showSaveStatus(inst, '[saving state...]');
             console.log('Saving v86 state...');
-            const state = await v86Emulator.save_state();
+            const state = await inst.emulator.save_state();
             const db = await openStateDB();
 
             return new Promise((resolve, reject) => {
@@ -230,31 +265,33 @@
                 const store = transaction.objectStore(STORE_NAME);
 
                 // Also capture terminal buffer for serial mode
-                const terminalBuffer = captureTerminalBuffer();
+                const terminalBuffer = captureTerminalBuffer(inst);
 
                 const record = {
-                    id: terminalId || currentTerminalId || 'default',
+                    id: inst.id,
                     state: state,
-                    profile: currentProfile ? Object.keys(BOOT_PROFILES).find(k => BOOT_PROFILES[k] === currentProfile) : DEFAULT_PROFILE,
+                    profile: inst.profile
+                        ? Object.keys(BOOT_PROFILES).find(k => BOOT_PROFILES[k] === inst.profile)
+                        : DEFAULT_PROFILE,
                     savedAt: Date.now(),
-                    displayMode: displayMode,
+                    displayMode: inst.displayMode,
                     terminalBuffer: terminalBuffer
                 };
 
                 const request = store.put(record);
                 request.onsuccess = () => {
                     console.log(`State saved (${formatBytes(state.byteLength)})`);
-                    showSaveStatus(`[saved state (${formatBytes(state.byteLength)})]`, true);
+                    showSaveStatus(inst, `[saved state (${formatBytes(state.byteLength)})]`, true);
                     resolve(true);
                 };
                 request.onerror = () => {
-                    showSaveStatus('[save failed]', true);
+                    showSaveStatus(inst, '[save failed]', true);
                     reject(request.error);
                 };
             });
         } catch (error) {
             console.error('Failed to save emulator state:', error);
-            showSaveStatus('[save failed]', true);
+            showSaveStatus(inst, '[save failed]', true);
             return false;
         }
     }
@@ -267,7 +304,7 @@
             return new Promise((resolve, reject) => {
                 const transaction = db.transaction([STORE_NAME], 'readonly');
                 const store = transaction.objectStore(STORE_NAME);
-                const request = store.get(terminalId || 'default');
+                const request = store.get(terminalId || PERSISTED_WINDOW_ID);
 
                 request.onsuccess = () => resolve(request.result || null);
                 request.onerror = () => reject(request.error);
@@ -286,7 +323,7 @@
             return new Promise((resolve, reject) => {
                 const transaction = db.transaction([STORE_NAME], 'readwrite');
                 const store = transaction.objectStore(STORE_NAME);
-                const request = store.delete(terminalId || currentTerminalId || 'default');
+                const request = store.delete(terminalId || PERSISTED_WINDOW_ID);
 
                 request.onsuccess = () => {
                     console.log('Saved state cleared');
@@ -301,28 +338,26 @@
     }
 
     // Restore emulator from saved state
-    async function restoreFromSavedState(savedState) {
-        if (!v86Emulator || !savedState?.state) {
+    async function restoreFromSavedState(inst, savedState) {
+        if (!inst || !inst.emulator || !savedState?.state) {
             return false;
         }
 
         try {
             console.log('Restoring saved state...');
-            await v86Emulator.restore_state(savedState.state);
+            await inst.emulator.restore_state(savedState.state);
             console.log('State restored successfully!');
 
             // Restore display mode
-            if (savedState.displayMode && savedState.displayMode !== displayMode) {
-                const screenContainer = currentScreenContainer;
-                const serialContainer = screenContainer?.parentElement?.querySelector('.v86-serial-container');
-                setDisplayMode(savedState.displayMode, screenContainer, serialContainer);
+            if (savedState.displayMode && savedState.displayMode !== inst.displayMode) {
+                setDisplayMode(inst, savedState.displayMode);
             }
 
             // Restore terminal buffer content (for serial mode)
             if (savedState.terminalBuffer) {
                 // Small delay to ensure terminal is ready
                 setTimeout(() => {
-                    restoreTerminalBuffer(savedState.terminalBuffer);
+                    restoreTerminalBuffer(inst, savedState.terminalBuffer);
                 }, 100);
             }
 
@@ -334,82 +369,83 @@
     }
 
     // Start auto-save interval
-    function startAutoSave(terminalId) {
-        stopAutoSave(); // Clear any existing interval
+    function startAutoSave(inst) {
+        stopAutoSave(inst); // Clear any existing interval
 
-        // Only enable auto-save for 'terminal' window, not portal or others
-        if (terminalId !== 'terminal') {
+        // Only persist the main Terminal window, not Portal or others
+        if (inst.id !== PERSISTED_WINDOW_ID) {
             console.log('Auto-save not available for this window type');
             return;
         }
 
-        if (!autoSaveEnabled) {
+        if (!inst.autoSaveEnabled) {
             console.log('Auto-save disabled');
             return;
         }
 
-        autoSaveInterval = setInterval(() => {
-            if (v86Emulator && v86Loaded && autoSaveEnabled && currentTerminalId === 'terminal') {
-                saveEmulatorState(terminalId).catch(console.error);
+        inst.autoSaveInterval = setInterval(() => {
+            if (inst.emulator && inst.loaded && inst.autoSaveEnabled) {
+                saveEmulatorState(inst).catch(console.error);
             }
         }, AUTO_SAVE_INTERVAL_MS);
 
-        // Save state when tab becomes hidden or before unload
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-        window.addEventListener('beforeunload', handleBeforeUnload);
+        // Save state when tab becomes hidden or before unload.
+        // Bound per instance so teardown removes exactly these handlers.
+        inst.onVisibilityChange = () => {
+            if (document.hidden && inst.emulator && inst.loaded && inst.autoSaveEnabled) {
+                saveEmulatorState(inst).catch(console.error);
+            }
+        };
+        inst.onBeforeUnload = () => {
+            if (inst.emulator && inst.loaded && inst.saveOnCloseEnabled) {
+                saveEmulatorState(inst).catch(console.error);
+            }
+        };
+        document.addEventListener('visibilitychange', inst.onVisibilityChange);
+        window.addEventListener('beforeunload', inst.onBeforeUnload);
 
         console.log(`Auto-save enabled (every ${AUTO_SAVE_INTERVAL_MS / 1000}s)`);
     }
 
     // Stop auto-save interval
-    function stopAutoSave() {
-        if (autoSaveInterval) {
-            clearInterval(autoSaveInterval);
-            autoSaveInterval = null;
+    function stopAutoSave(inst) {
+        if (inst.autoSaveInterval) {
+            clearInterval(inst.autoSaveInterval);
+            inst.autoSaveInterval = null;
         }
-        document.removeEventListener('visibilitychange', handleVisibilityChange);
-        window.removeEventListener('beforeunload', handleBeforeUnload);
+        if (inst.onVisibilityChange) {
+            document.removeEventListener('visibilitychange', inst.onVisibilityChange);
+            inst.onVisibilityChange = null;
+        }
+        if (inst.onBeforeUnload) {
+            window.removeEventListener('beforeunload', inst.onBeforeUnload);
+            inst.onBeforeUnload = null;
+        }
     }
 
     // Toggle auto-save
-    function setAutoSaveEnabled(enabled) {
-        autoSaveEnabled = enabled;
-        if (enabled && currentTerminalId) {
-            startAutoSave(currentTerminalId);
+    function setAutoSaveEnabled(inst, enabled) {
+        inst.autoSaveEnabled = enabled;
+        if (enabled) {
+            startAutoSave(inst);
         } else {
-            stopAutoSave();
+            stopAutoSave(inst);
         }
         console.log(`Auto-save ${enabled ? 'enabled' : 'disabled'}`);
-    }
-
-    // Handle visibility change (tab hidden/visible)
-    function handleVisibilityChange() {
-        // Only auto-save for 'terminal' window
-        if (document.hidden && v86Emulator && v86Loaded && autoSaveEnabled && currentTerminalId === 'terminal') {
-            saveEmulatorState().catch(console.error);
-        }
-    }
-
-    // Handle before unload (tab closing)
-    function handleBeforeUnload() {
-        // Only save on close for 'terminal' window
-        if (v86Emulator && v86Loaded && saveOnCloseEnabled && currentTerminalId === 'terminal') {
-            saveEmulatorState().catch(console.error);
-        }
     }
 
     // ============================================================
     // State Management Toolbar
     // ============================================================
 
-    function createToolbar(container) {
-        if (!currentWindowElement) return null;
+    function createToolbar(inst) {
+        if (!inst.windowElement) return null;
 
-        // Only show state management toolbar for 'terminal' window, not portal or others
-        if (currentTerminalId !== 'terminal') return null;
+        // Only show state management toolbar for the persisted Terminal window
+        if (inst.id !== PERSISTED_WINDOW_ID) return null;
 
         // Find the title bar
-        const titleBar = currentWindowElement.querySelector('.window-titlebar');
+        const titleBar = inst.windowElement.querySelector('.window-titlebar');
         if (!titleBar) return null;
 
         // Create dropdown button (arrow) for title bar
@@ -430,11 +466,11 @@
             <button class="v86-toolbar-btn danger" data-action="reset" title="Delete saved state">🗑️ Reset</button>
             <div class="v86-toolbar-divider"></div>
             <label class="v86-toolbar-checkbox">
-                <input type="checkbox" id="v86-autosave-toggle" ${autoSaveEnabled ? 'checked' : ''}>
+                <input type="checkbox" data-toggle="autosave" ${inst.autoSaveEnabled ? 'checked' : ''}>
                 <span>Auto-save (15s)</span>
             </label>
             <label class="v86-toolbar-checkbox">
-                <input type="checkbox" id="v86-save-on-close" ${saveOnCloseEnabled ? 'checked' : ''}>
+                <input type="checkbox" data-toggle="save-on-close" ${inst.saveOnCloseEnabled ? 'checked' : ''}>
                 <span>Save on close</span>
             </label>
             <label class="v86-toolbar-label">upload files by<br/>dropping them on<br/> the terminal window</label>
@@ -457,8 +493,8 @@
 
         dropdownBtn.addEventListener('click', toggleDropdown);
 
-        // Close dropdown when clicking outside
-        document.addEventListener('click', (e) => {
+        // Close dropdown when clicking outside (tracked so it dies with the window)
+        addTrackedListener(inst, document, 'click', (e) => {
             if (isOpen && !toolbar.contains(e.target) && e.target !== dropdownBtn) {
                 closeDropdown();
             }
@@ -467,46 +503,44 @@
         // Add event listeners for toolbar actions
         toolbar.querySelector('[data-action="save"]').addEventListener('click', async (e) => {
             e.stopPropagation();
-            if (v86Emulator && v86Loaded) {
-                await saveEmulatorState();
+            if (inst.emulator && inst.loaded) {
+                await saveEmulatorState(inst);
             }
         });
 
         toolbar.querySelector('[data-action="load"]').addEventListener('click', async (e) => {
             e.stopPropagation();
-            const savedState = await loadEmulatorState(currentTerminalId);
+            const savedState = await loadEmulatorState(inst.id);
             if (savedState) {
-                await restoreFromSavedState(savedState);
-                showSaveStatus('state loaded ✓', true);
+                await restoreFromSavedState(inst, savedState);
+                showSaveStatus(inst, 'state loaded ✓', true);
             } else {
-                showSaveStatus('no saved state', true);
+                showSaveStatus(inst, 'no saved state', true);
             }
         });
 
         toolbar.querySelector('[data-action="reset"]').addEventListener('click', async (e) => {
             e.stopPropagation();
-            if (confirm('Delete saved state and restart? The terminal will reboot fresh.')) {
-                await clearEmulatorState(currentTerminalId);
+            const confirmReset = window.showConfirm
+                ? window.showConfirm('Delete saved state?', 'The terminal will reboot fresh and any saved session will be lost.', { confirmLabel: 'Delete & Restart', danger: true })
+                : Promise.resolve(confirm('Delete saved state and restart? The terminal will reboot fresh.'));
+            if (await confirmReset) {
+                await clearEmulatorState(inst.id);
                 closeDropdown();
 
-                // Temporarily disable save on close to prevent saving during restart
-                saveOnCloseEnabled = false;
+                // Prevent saving during the restart
+                inst.saveOnCloseEnabled = false;
 
-                // Store the terminal ID before closing
-                const termId = currentTerminalId;
-
-                // Find and close the terminal window, then reopen it
-                const win = currentWindowElement;
+                const termId = inst.id;
+                const win = inst.windowElement;
                 if (win) {
-                    // Close the window by clicking the close button
                     const closeBtn = win.querySelector('.traffic-light.close');
                     if (closeBtn) {
                         closeBtn.click();
                     }
 
-                    // Reopen the terminal window after a short delay
+                    // Reopen the terminal window after the close animation
                     setTimeout(() => {
-                        // Use the global openWindow function from mavericks.js
                         if (window.openContentWindow) {
                             window.openContentWindow(termId, 'Terminal', null);
                         }
@@ -515,15 +549,15 @@
             }
         });
 
-        toolbar.querySelector('#v86-autosave-toggle').addEventListener('change', (e) => {
+        toolbar.querySelector('[data-toggle="autosave"]').addEventListener('change', (e) => {
             e.stopPropagation();
-            setAutoSaveEnabled(e.target.checked);
+            setAutoSaveEnabled(inst, e.target.checked);
         });
 
-        toolbar.querySelector('#v86-save-on-close').addEventListener('change', (e) => {
+        toolbar.querySelector('[data-toggle="save-on-close"]').addEventListener('change', (e) => {
             e.stopPropagation();
-            saveOnCloseEnabled = e.target.checked;
-            console.log(`Save on close ${saveOnCloseEnabled ? 'enabled' : 'disabled'}`);
+            inst.saveOnCloseEnabled = e.target.checked;
+            console.log(`Save on close ${inst.saveOnCloseEnabled ? 'enabled' : 'disabled'}`);
         });
 
         // Prevent toolbar interactions from affecting the terminal
@@ -608,23 +642,27 @@
         }, 300);
     }
 
-    // Load v86 library dynamically
+    // Load v86 library dynamically (shared across instances)
+    let v86ScriptPromise = null;
     function loadV86Script() {
-        return new Promise((resolve, reject) => {
-            if (window.V86) {
-                resolve();
-                return;
-            }
+        if (window.V86) return Promise.resolve();
+        if (v86ScriptPromise) return v86ScriptPromise;
 
+        v86ScriptPromise = new Promise((resolve, reject) => {
             const script = document.createElement('script');
             script.src = V86_CORE.libv86Url;
             script.onload = resolve;
-            script.onerror = () => reject(new Error('Failed to load v86'));
+            script.onerror = () => {
+                v86ScriptPromise = null;
+                reject(new Error('Failed to load v86'));
+            };
             document.head.appendChild(script);
         });
+
+        return v86ScriptPromise;
     }
 
-    // Load xterm.js, FitAddon, and v86 CSS lazily
+    // Load xterm.js, FitAddon, and v86 CSS lazily (shared across instances)
     let xtermLoading = null;
     function loadXterm() {
         if (xtermLoading) return xtermLoading;
@@ -655,10 +693,16 @@
                 const addonScript = document.createElement('script');
                 addonScript.src = '/xterm/addon.js';
                 addonScript.onload = resolve;
-                addonScript.onerror = () => reject(new Error('Failed to load xterm-addon-fit'));
+                addonScript.onerror = () => {
+                    xtermLoading = null;
+                    reject(new Error('Failed to load xterm-addon-fit'));
+                };
                 document.head.appendChild(addonScript);
             };
-            xtermScript.onerror = () => reject(new Error('Failed to load xterm.js'));
+            xtermScript.onerror = () => {
+                xtermLoading = null;
+                reject(new Error('Failed to load xterm.js'));
+            };
             document.head.appendChild(xtermScript);
         });
 
@@ -666,11 +710,14 @@
     }
 
     // Switch display mode between VGA and Serial
-    function setDisplayMode(mode, screenContainer, serialContainer) {
-        if (mode === displayMode) return;
+    function setDisplayMode(inst, mode) {
+        if (mode === inst.displayMode) return;
 
-        console.log(`Switching to ${mode} mode`);
-        displayMode = mode;
+        console.log(`[${inst.id}] Switching to ${mode} mode`);
+        inst.displayMode = mode;
+
+        const screenContainer = inst.screenContainer;
+        const serialContainer = inst.serialContainer;
 
         if (mode === 'serial') {
             // Show serial, hide VGA
@@ -678,10 +725,9 @@
             if (screenContainer) screenContainer.style.display = 'none';
 
             // Fit the terminal after it becomes visible
-            if (serialFitAddon) {
+            if (inst.fitAddon) {
                 setTimeout(() => {
-                    serialFitAddon.fit();
-                    console.log('Serial terminal fitted on mode switch');
+                    try { inst.fitAddon.fit(); } catch (e) { /* ignore */ }
                 }, 50);
             }
         } else {
@@ -717,8 +763,13 @@
             return;
         }
 
-        // Store terminal ID for state persistence
-        currentTerminalId = terminalId;
+        // Tear down only a previous instance of THIS window, never a sibling window's.
+        if (instances.has(terminalId)) {
+            await destroyV86(terminalId);
+        }
+
+        const inst = createInstance(terminalId);
+        instances.set(terminalId, inst);
 
         // Check for saved state
         const savedState = await loadEmulatorState(terminalId);
@@ -730,6 +781,9 @@
         try {
             console.log('Loading xterm.js and v86...');
             await Promise.all([loadXterm(), loadV86Script()]);
+
+            // The window may have been closed while the libraries were downloading.
+            if (instances.get(terminalId) !== inst) return;
 
             console.log('Initializing v86 emulator...');
 
@@ -747,27 +801,17 @@
 
             console.log(`Booting: ${profile.name}`);
 
-            // cleanup existing emulator if any
-            if (v86Emulator) {
-                destroyV86();
-            }
-
             // Store profile and containers for input capture
-            currentProfile = profile;
-            currentScreenContainer = screenContainer;
-            currentWindowElement = windowElement;
+            inst.profile = profile;
+            inst.screenContainer = screenContainer;
+            inst.serialContainer = serialContainer;
+            inst.windowElement = windowElement;
 
             // Create loader overlay for download progress
-            loaderOverlay = createLoaderOverlay(contentContainer);
+            inst.loaderOverlay = createLoaderOverlay(contentContainer);
 
             // Create state management toolbar
-            createToolbar(contentContainer);
-
-            // Track download progress
-            let downloadedFiles = 0;
-            let totalFiles = 4; // bios, vga_bios, wasm, boot image
-            let currentFileLoaded = 0;
-            let currentFileSize = 0;
+            createToolbar(inst);
 
             const options = {
                 wasm_path: V86_CORE.wasmUrl,
@@ -819,43 +863,42 @@
                     break;
             }
 
-            v86Emulator = new V86(options);
+            inst.emulator = new V86(options);
 
             // Track if we've received serial output
             let serialOutputReceived = false;
 
             // Listen for serial output to switch display mode
             // Only switch if the profile doesn't have vga: true
-            v86Emulator.add_listener("serial0-output-byte", function (byte) {
+            inst.emulator.add_listener("serial0-output-byte", function () {
                 if (!serialOutputReceived && !profile.vga) {
                     serialOutputReceived = true;
                     console.log('Serial output detected, switching to serial mode');
-                    setDisplayMode('serial', screenContainer, serialContainer);
+                    setDisplayMode(inst, 'serial');
                 }
             });
 
             // Listen for emulator events
-            v86Emulator.add_listener("emulator-ready", async function () {
-                console.log('v86 emulator ready!');
+            inst.emulator.add_listener("emulator-ready", async function () {
+                console.log(`[${inst.id}] v86 emulator ready!`);
 
                 // Try to attach FitAddon to v86's xterm terminal
-                if (v86Emulator.serial_adapter && v86Emulator.serial_adapter.term) {
+                if (inst.emulator.serial_adapter && inst.emulator.serial_adapter.term) {
                     try {
-                        const term = v86Emulator.serial_adapter.term;
+                        const term = inst.emulator.serial_adapter.term;
                         if (typeof FitAddon !== 'undefined') {
-                            serialFitAddon = new FitAddon.FitAddon();
-                            term.loadAddon(serialFitAddon);
+                            inst.fitAddon = new FitAddon.FitAddon();
+                            term.loadAddon(inst.fitAddon);
                             setTimeout(() => {
-                                serialFitAddon.fit();
-                                console.log('Serial terminal fitted');
+                                try { inst.fitAddon.fit(); } catch (e) { /* ignore */ }
                             }, 100);
 
-                            // Re-fit on container resize
+                            // Re-fit on container resize (disconnected on teardown)
                             if (serialContainer) {
-                                const resizeObserver = new ResizeObserver(() => {
-                                    serialFitAddon.fit();
+                                inst.resizeObserver = new ResizeObserver(() => {
+                                    try { inst.fitAddon.fit(); } catch (e) { /* ignore */ }
                                 });
-                                resizeObserver.observe(serialContainer);
+                                inst.resizeObserver.observe(serialContainer);
                             }
                         }
                     } catch (e) {
@@ -867,7 +910,8 @@
                 if (savedState) {
                     // Small delay to ensure emulator is fully initialized
                     setTimeout(async () => {
-                        const restored = await restoreFromSavedState(savedState);
+                        if (instances.get(terminalId) !== inst) return;
+                        const restored = await restoreFromSavedState(inst, savedState);
                         if (restored) {
                             console.log('Emulator restored from saved state!');
                         }
@@ -875,22 +919,21 @@
                 }
             });
 
-            v86Emulator.add_listener("emulator-started", function () {
-                console.log('v86 emulator started!');
+            inst.emulator.add_listener("emulator-started", function () {
+                console.log(`[${inst.id}] v86 emulator started!`);
                 // Hide loader when emulator starts
-                if (loaderOverlay) {
-                    hideLoaderOverlay(loaderOverlay);
-                    loaderOverlay = null;
+                if (inst.loaderOverlay) {
+                    hideLoaderOverlay(inst.loaderOverlay);
+                    inst.loaderOverlay = null;
                 }
             });
 
             // Listen for download progress
-            v86Emulator.add_listener("download-progress", function (e) {
-                const { file_name, file_index, file_count, loaded, total } = e;
+            inst.emulator.add_listener("download-progress", function (e) {
+                const { file_name, loaded, total } = e;
 
-                // Update progress display
                 updateLoaderProgress(
-                    loaderOverlay,
+                    inst.loaderOverlay,
                     loaded,
                     total,
                     file_name ? file_name.split('/').pop() : null
@@ -899,17 +942,17 @@
 
             // Setup VGA input capture if profile uses VGA
             if (profile.vga) {
-                setupVGAInputCapture(screenContainer, windowElement);
+                setupVGAInputCapture(inst);
             }
 
             // Start auto-save for state persistence
-            startAutoSave(terminalId);
+            startAutoSave(inst);
 
             // Setup drag-and-drop file upload
-            setupFileDrop(contentContainer);
+            setupFileDrop(inst, contentContainer);
 
-            v86Loaded = true;
-            console.log('v86 setup complete!');
+            inst.loaded = true;
+            console.log(`[${inst.id}] v86 setup complete!`);
 
         } catch (error) {
             console.error('v86 loading error:', error);
@@ -920,7 +963,7 @@
     // Drag and Drop File Upload
     // ============================================================
 
-    function setupFileDrop(container) {
+    function setupFileDrop(inst, container) {
         if (!container) return;
 
         // Create drop overlay
@@ -964,7 +1007,7 @@
             dragCounter = 0;
             dropOverlay.classList.remove('visible');
 
-            if (!v86Emulator || !v86Loaded) {
+            if (!inst.emulator || !inst.loaded) {
                 console.warn('Emulator not ready for file upload');
                 return;
             }
@@ -979,59 +1022,62 @@
 
                     // Upload to root directory in the emulator (files accessible from /)
                     const path = `/${file.name}`;
-                    v86Emulator.create_file(path, uint8Array);
+                    inst.emulator.create_file(path, uint8Array);
 
                     console.log(`Uploaded file: ${file.name} (${file.size} bytes) to ${path}`);
-                    showSaveStatus(`uploaded ${file.name} ✓`, true);
+                    showSaveStatus(inst, `uploaded ${file.name} ✓`, true);
                 } catch (err) {
                     console.error(`Failed to upload ${file.name}:`, err);
-                    showSaveStatus(`upload failed: ${file.name}`, true);
+                    showSaveStatus(inst, `upload failed: ${file.name}`, true);
                 }
             }
         });
     }
 
     // Toggle VGA input capture
-    function setInputCapture(enabled) {
-        if (!v86Emulator || !currentProfile?.vga) return;
+    function setInputCapture(inst, enabled) {
+        if (!inst.emulator || !inst.profile?.vga) return;
 
-        inputCaptured = enabled;
-        v86Emulator.keyboard_set_enabled(enabled);
-        v86Emulator.mouse_set_enabled(enabled);
+        inst.inputCaptured = enabled;
+        inst.emulator.keyboard_set_enabled(enabled);
+        inst.emulator.mouse_set_enabled(enabled);
 
         // Update visual indicator
-        if (currentScreenContainer) {
-            currentScreenContainer.classList.toggle('input-captured', enabled);
+        if (inst.screenContainer) {
+            inst.screenContainer.classList.toggle('input-captured', enabled);
         }
 
-        console.log(`Input capture: ${enabled ? 'LOCKED' : 'UNLOCKED'}`);
+        console.log(`[${inst.id}] Input capture: ${enabled ? 'LOCKED' : 'UNLOCKED'}`);
     }
 
     // Setup VGA input capture handlers
-    function setupVGAInputCapture(screenContainer, windowElement) {
+    function setupVGAInputCapture(inst) {
+        const screenContainer = inst.screenContainer;
+        const windowElement = inst.windowElement;
+
         // Start with input NOT captured
-        setInputCapture(false);
+        setInputCapture(inst, false);
 
         // Click on screen to capture input
         screenContainer.addEventListener('click', () => {
-            if (!inputCaptured) {
-                setInputCapture(true);
+            if (!inst.inputCaptured) {
+                setInputCapture(inst, true);
             }
         });
 
-        // Escape key releases capture
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && inputCaptured) {
+        // Escape key releases capture (tracked - previously leaked per window)
+        addTrackedListener(inst, document, 'keydown', (e) => {
+            if (e.key === 'Escape' && inst.inputCaptured) {
                 e.preventDefault();
                 e.stopPropagation();
-                setInputCapture(false);
+                setInputCapture(inst, false);
             }
         });
 
         // Click outside window releases capture
-        document.addEventListener('mousedown', (e) => {
-            if (inputCaptured && windowElement && !windowElement.contains(e.target)) {
-                setInputCapture(false);
+        addTrackedListener(inst, document, 'mousedown', (e) => {
+            if (inst.inputCaptured && windowElement && !windowElement.contains(e.target)) {
+                setInputCapture(inst, false);
             }
         });
 
@@ -1042,15 +1088,22 @@
         screenContainer.appendChild(hint);
     }
 
-    // Cleanup when terminal window is closed
-    async function destroyV86() {
-        // Stop auto-save
-        stopAutoSave();
+    // Cleanup when a terminal window is closed. Scoped to one window id so
+    // closing Portal can never stop the Terminal's emulator (or vice versa).
+    async function destroyV86(terminalId) {
+        const inst = terminalId ? getInstance(terminalId) : null;
+        if (!inst) return;
 
-        // Save state before closing (if enabled and this is the terminal window)
-        if (saveOnCloseEnabled && v86Emulator && v86Loaded && currentTerminalId === 'terminal') {
+        // Remove from the registry first so in-flight async callbacks bail out.
+        instances.delete(inst.id);
+
+        // Stop auto-save
+        stopAutoSave(inst);
+
+        // Save state before closing (if enabled and this is the persisted window)
+        if (inst.saveOnCloseEnabled && inst.emulator && inst.loaded && inst.id === PERSISTED_WINDOW_ID) {
             try {
-                await saveEmulatorState();
+                await saveEmulatorState(inst);
                 console.log('State saved before closing');
             } catch (e) {
                 console.warn('Could not save state before closing:', e);
@@ -1058,40 +1111,57 @@
         }
 
         // Release input capture first
-        if (inputCaptured) {
-            setInputCapture(false);
+        if (inst.inputCaptured) {
+            setInputCapture(inst, false);
         }
+
+        if (inst.saveStatusTimeout) {
+            clearTimeout(inst.saveStatusTimeout);
+            inst.saveStatusTimeout = null;
+        }
+
+        if (inst.resizeObserver) {
+            inst.resizeObserver.disconnect();
+            inst.resizeObserver = null;
+        }
+
+        // Remove every document/window listener this instance registered
+        runCleanups(inst);
 
         // Remove loader overlay if still visible
-        if (loaderOverlay) {
-            loaderOverlay.remove();
-            loaderOverlay = null;
+        if (inst.loaderOverlay) {
+            inst.loaderOverlay.remove();
+            inst.loaderOverlay = null;
         }
 
-        if (v86Emulator) {
-            v86Emulator.stop();
-            v86Emulator = null;
+        if (inst.emulator) {
+            try { inst.emulator.stop(); } catch (e) { /* ignore */ }
+            inst.emulator = null;
         }
-        v86Loaded = false;
-        displayMode = 'vga';
-        inputCaptured = false;
-        currentProfile = null;
-        currentScreenContainer = null;
-        currentWindowElement = null;
-        currentTerminalId = null;
+
+        inst.loaded = false;
+        inst.fitAddon = null;
+        inst.profile = null;
+        inst.screenContainer = null;
+        inst.serialContainer = null;
+        inst.windowElement = null;
     }
 
     // Expose functions globally
     window.setupV86Terminal = setupV86Terminal;
     window.destroyV86 = destroyV86;
 
-    // Expose state management functions
-    window.saveV86State = saveEmulatorState;
-    window.clearV86State = clearEmulatorState;
-    window.loadV86State = loadEmulatorState;
+    // Expose state management functions (id-scoped; default to the Terminal window)
+    window.saveV86State = (id) => {
+        const inst = getInstance(id || PERSISTED_WINDOW_ID);
+        return inst ? saveEmulatorState(inst) : Promise.resolve(false);
+    };
+    window.clearV86State = (id) => clearEmulatorState(id || PERSISTED_WINDOW_ID);
+    window.loadV86State = (id) => loadEmulatorState(id || PERSISTED_WINDOW_ID);
 
     // Expose for debugging
     window.V86_PROFILES = BOOT_PROFILES;
     window.V86_ACTIVE = DEFAULT_PROFILE;
+    window.V86_INSTANCES = instances;
 
 })();

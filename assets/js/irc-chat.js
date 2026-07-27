@@ -7,6 +7,8 @@
     const IRC_CHANNEL = 'general';
     const MAX_MESSAGES = 110;
     const PRESENCE_TIMEOUT = 10000;
+    const FLOOD_WINDOW_MS = 10000;
+    const FLOOD_MAX_MESSAGES = 8;
     const KLIPY_API_KEY = "zIUfW4jTZIuTIhNTSM66eooPq7WjjcKRnLyLoLd3ikyo15Q4kX2nfwMd0n0CmP96";
     const KLIPY_API_BASE = "https://api.klipy.com/v2";
 
@@ -113,6 +115,35 @@
         }
     };
 
+    // One AudioContext for the whole module. Browsers cap how many can exist at
+    // once, so this must never be constructed per notification.
+    let sharedAudioContext = null;
+
+    function getSharedAudioContext() {
+        if (sharedAudioContext) return sharedAudioContext;
+        const Ctor = window.AudioContext || window.webkitAudioContext;
+        if (!Ctor) return null;
+        try {
+            sharedAudioContext = new Ctor();
+        } catch (e) {
+            return null;
+        }
+        return sharedAudioContext;
+    }
+
+    // Sheet helpers from mavericks.js, with a native fallback if the window
+    // manager has not loaded (IRC can be lazy-loaded before it).
+    function notify(title, message) {
+        if (window.showAlert) return window.showAlert(title, message);
+        alert(title + (message ? '\n\n' + message : ''));
+        return Promise.resolve(true);
+    }
+
+    function confirmSheet(title, message, opts) {
+        if (window.showConfirm) return window.showConfirm(title, message, opts);
+        return Promise.resolve(confirm(title + (message ? '\n\n' + message : '')));
+    }
+
     let gunLoadPromise = null;
 
     function loadGun() {
@@ -162,6 +193,45 @@
     let nsfwLoadPromise = null;
     const nsfwCache = new Map(); // Cache NSFW check results by URL
 
+    // Third-party scripts, pinned with subresource integrity.
+    //
+    // These were previously loaded from @latest. That silently drifts, and the
+    // whole NSFW pipeline fails OPEN - a breaking upstream release would post
+    // unmoderated GIFs with no visible error. The versions below are exactly
+    // what @latest resolved to, so pinning changes no behaviour.
+    //
+    // Note: nsfwjs "latest" is 4.3.0, but 4.3.0 moved the browser bundle to
+    // dist/browser/. jsDelivr was quietly falling back to 4.0.0, the newest
+    // version still carrying dist/nsfwjs.min.js. Pinned to 4.0.0 to match what
+    // production actually runs; moving to 4.3.0 needs the new path and a test
+    // pass against the self-hosted model in /static/models/nsfwjs/.
+    const CDN = {
+        omggif: {
+            url: 'https://cdn.jsdelivr.net/npm/omggif@1.0.10/omggif.min.js',
+            sri: 'sha384-Hl3rgTBtnvFd3zuruRruxaN0mFkAsSaHLU/F9QdzRmlK04Fn4oo6sGHmPwoAYv5i'
+        },
+        tfjs: {
+            url: 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js',
+            sri: 'sha384-vE8hbVJ4lezako5rlvE7bY0BVzWlFhZncPlckrqNwcUQpVtgbENTgZ8TBbnPjZre'
+        },
+        nsfwjs: {
+            url: 'https://cdn.jsdelivr.net/npm/nsfwjs@4.0.0/dist/nsfwjs.min.js',
+            sri: 'sha384-/3A0TkK7UxeMymKT+Hn+vGr5RaOhqRjJcTM4G7xcQzN3n+8AxEiELkN8rV231a6D'
+        }
+    };
+
+    function loadScript(dep) {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = dep.url;
+            script.integrity = dep.sri;
+            script.crossOrigin = 'anonymous';
+            script.onload = resolve;
+            script.onerror = () => reject(new Error('Failed to load ' + dep.url));
+            document.head.appendChild(script);
+        });
+    }
+
     // Load omggif for GIF frame extraction
     let omggifLoaded = false;
     let omggifLoadPromise = null;
@@ -170,16 +240,12 @@
         if (omggifLoaded) return Promise.resolve();
         if (omggifLoadPromise) return omggifLoadPromise;
 
-        omggifLoadPromise = new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/omggif@1.0.10/omggif.min.js';
-            script.onload = () => {
-                omggifLoaded = true;
-                console.log('[NSFW] omggif loaded, available:', typeof window.GifReader);
-                resolve();
-            };
-            script.onerror = reject;
-            document.head.appendChild(script);
+        omggifLoadPromise = loadScript(CDN.omggif).then(() => {
+            omggifLoaded = true;
+            console.log('[NSFW] omggif loaded, available:', typeof window.GifReader);
+        }).catch((e) => {
+            omggifLoadPromise = null;
+            throw e;
         });
 
         return omggifLoadPromise;
@@ -268,24 +334,12 @@
             try {
                 // Load TensorFlow.js
                 if (!window.tf) {
-                    await new Promise((resolve, reject) => {
-                        const tfScript = document.createElement('script');
-                        tfScript.src = 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js';
-                        tfScript.onload = resolve;
-                        tfScript.onerror = reject;
-                        document.head.appendChild(tfScript);
-                    });
+                    await loadScript(CDN.tfjs);
                 }
 
                 // Load NSFW.js
                 if (!window.nsfwjs) {
-                    await new Promise((resolve, reject) => {
-                        const nsfwScript = document.createElement('script');
-                        nsfwScript.src = 'https://cdn.jsdelivr.net/npm/nsfwjs@latest/dist/nsfwjs.min.js';
-                        nsfwScript.onload = resolve;
-                        nsfwScript.onerror = reject;
-                        document.head.appendChild(nsfwScript);
-                    });
+                    await loadScript(CDN.nsfwjs);
                 }
 
                 // Set TensorFlow backend to GPU (as recommended in minimal demo)
@@ -523,13 +577,59 @@
         let allMessages = []; // Track all messages with {key, time} for cleanup
         let online = {}; // Maps uuid -> {nick, uuid, status, lastSeen}
         let uuidCache = {}; // Maps nick -> uuid (persists even when offline)
-        let presenceInt = null;
         let hasLeft = false;
         let lastSystemMsg = {}; // Track last system message per user to collapse duplicates
         let joinTime = 0; // Track when user joined to avoid notifying for old messages
         let lastCursorPos = 0; // Track last known cursor position
         const nsfwQueue = []; // Queue for NSFW checks
         let isProcessingQueue = false; // Flag for queue processing
+        let unreadCount = 0;      // messages that arrived while scrolled up
+        let unreadMentions = 0;   // mentions that arrived while backgrounded
+        let baseWindowTitle = '';
+        let unreadPill = null;
+
+        // ---- Connection lifecycle -------------------------------------------
+        // Everything connect() registers is recorded here. Without this, logging
+        // out and rejoining - or closing and reopening the window - stacked a
+        // second set of intervals, Gun subscriptions and unload handlers on top
+        // of the first, each one still writing to the relay.
+        const timers = new Set();
+        const timeouts = new Set();
+        const subscriptions = new Set();
+        let onBeforeUnload = null;
+        let offConnection = null;
+
+        function trackInterval(id) { timers.add(id); return id; }
+        function trackTimeout(id) { timeouts.add(id); return id; }
+
+        function trackSubscription(ev) {
+            // Gun hands the subscription's event object to every callback
+            // invocation; keep the first one so we can .off() it later.
+            if (ev && typeof ev.off === 'function') subscriptions.add(ev);
+        }
+
+        function teardownConnection() {
+            timers.forEach(clearInterval);
+            timers.clear();
+            timeouts.forEach(clearTimeout);
+            timeouts.clear();
+            subscriptions.forEach((ev) => {
+                try { ev.off(); } catch (e) { /* ignore */ }
+            });
+            subscriptions.clear();
+            // .map().on() yields a per-key event object, so closing the chains
+            // themselves is what actually stops future keys from subscribing.
+            try { if (chat) chat.map().off(); } catch (e) { /* ignore */ }
+            try { if (presence) presence.map().off(); } catch (e) { /* ignore */ }
+            if (onBeforeUnload) {
+                window.removeEventListener('beforeunload', onBeforeUnload);
+                onBeforeUnload = null;
+            }
+            if (offConnection) {
+                offConnection();
+                offConnection = null;
+            }
+        }
 
         // Cleanup old messages from Gun.js to keep database size manageable
         function cleanupOldMessages() {
@@ -583,6 +683,38 @@
                 isProcessingQueue = false;
             }
         }
+
+        // Jump-to-latest pill. Auto-scrolling on every message used to drag the
+        // reader away from history they were in the middle of reading.
+        (function setupUnreadPill() {
+            const col = root.querySelector('.irc-chat-col');
+            if (!col) return;
+            unreadPill = document.createElement('button');
+            unreadPill.type = 'button';
+            unreadPill.className = 'irc-unread-pill';
+            unreadPill.hidden = true;
+            unreadPill.innerHTML = '<span class="irc-unread-count"></span><span aria-hidden="true"> ↓</span>';
+            unreadPill.addEventListener('click', (e) => {
+                e.stopPropagation();
+                scrollToBottom();
+                clearUnread();
+            });
+            unreadPill.addEventListener('mousedown', (e) => e.stopPropagation());
+            col.appendChild(unreadPill);
+
+            els.log.addEventListener('scroll', () => {
+                if (isPinnedToBottom()) clearUnread();
+            }, { passive: true });
+        })();
+
+        // Clear the mention badge as soon as the window is looked at
+        root.addEventListener('mousedown', () => {
+            if (unreadMentions) {
+                unreadMentions = 0;
+                updateWindowBadge();
+            }
+        });
+        document.addEventListener('visibilitychange', () => updateWindowBadge());
 
         // Events
         els.nickBtn.addEventListener('click', join);
@@ -655,9 +787,13 @@
         });
 
         // Play notification sound (Discord-like)
+        // Reuses one AudioContext: browsers cap concurrent contexts (~6 in Chrome),
+        // so constructing one per mention silently kills the ping mid-session.
         function playNotificationSound() {
             try {
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const audioContext = getSharedAudioContext();
+                if (!audioContext) return;
+                if (audioContext.state === 'suspended') audioContext.resume();
 
                 // First tone (lower pitch)
                 const oscillator1 = audioContext.createOscillator();
@@ -1130,7 +1266,7 @@
             if (!nick) return els.nickInput.focus();
 
             if (!els.termsInput.checked) {
-                alert('You must accept the content warning to join.');
+                notify('Content warning', 'You must accept the content warning before joining.');
                 return;
             }
 
@@ -1167,8 +1303,11 @@
                 hasLeft = true;
                 publishMessage('left the room', 'system');
                 presence.get(myUUID).put(null);
-                if (presenceInt) clearInterval(presenceInt);
             }
+
+            // Drop every interval, timeout, Gun subscription and unload handler
+            // from the previous session before a rejoin can register new ones.
+            teardownConnection();
 
             // Clear localStorage
             localStorage.removeItem('irc_nick');
@@ -1215,12 +1354,14 @@
             const snapshot = await scanPresence(presence);
             if (nickTakenByOther(snapshot, myNick, myUUID)) {
                 els.status.textContent = 'Nickname already in use';
-                alert('Nickname already in use. Pick another.');
+                const taken = myNick;
                 logout();
+                notify('Nickname unavailable', `"${taken}" is already in use. Pick another.`);
                 return;
             }
 
-            chat.map().on((data, key) => {
+            chat.map().on(function (data, key, _msg, ev) {
+                trackSubscription(ev);
                 if (!data) return;
 
                 const m = parseGunData(data);
@@ -1253,23 +1394,23 @@
             });
 
             announce();
-            if (presenceInt) clearInterval(presenceInt);
-            presenceInt = setInterval(announce, 5000);
+            trackInterval(setInterval(announce, 5000));
 
-            setTimeout(() => {
+            trackTimeout(setTimeout(() => {
                 publishMessage('entered the room', 'system');
-            }, 500);
+            }, 500));
 
-            window.addEventListener('beforeunload', () => {
+            onBeforeUnload = () => {
                 if (myNick && presence && !hasLeft) {
                     hasLeft = true;
                     publishMessage('left the room', 'system');
                     presence.get(myUUID).put(null);
-                    if (presenceInt) clearInterval(presenceInt);
                 }
-            });
+            };
+            window.addEventListener('beforeunload', onBeforeUnload);
 
-            presence.map().on((data, uuid) => {
+            presence.map().on(function (data, uuid, _msg, ev) {
+                trackSubscription(ev);
                 if (!data) {
                     if (online[uuid]) {
                         delete online[uuid];
@@ -1291,19 +1432,40 @@
                 }
             });
 
-            setInterval(cleanStale, 10000);
-            setInterval(cleanupOldMessages, 30000);
+            trackInterval(setInterval(cleanStale, 10000));
+            trackInterval(setInterval(cleanupOldMessages, 30000));
 
-            setInterval(() => {
+            trackInterval(setInterval(() => {
                 els.log.querySelectorAll('.irc-msg-time').forEach(timeEl => {
                     const timestamp = parseInt(timeEl.dataset.timestamp);
                     if (timestamp) {
                         timeEl.textContent = formatRelativeTime(timestamp);
                     }
                 });
-            }, 10000);
+            }, 10000));
 
-            els.status.textContent = 'Connected as ' + myNick;
+            setConnectionStatus();
+        }
+
+        // Reflect real relay connectivity rather than unconditionally claiming
+        // success - previously the status said "Connected as <nick>" even with
+        // every relay unreachable, so people typed into the void.
+        function setConnectionStatus() {
+            if (offConnection) {
+                offConnection();
+                offConnection = null;
+            }
+            if (!window.SiteGun.getConnection) {
+                els.status.textContent = 'Connected as ' + myNick;
+                return;
+            }
+            offConnection = window.SiteGun.getConnection().onChange((connected) => {
+                if (!myNick) return;
+                els.status.textContent = connected
+                    ? 'Connected as ' + myNick
+                    : 'Offline - reconnecting…';
+                els.status.classList.toggle('is-offline', !connected);
+            });
         }
 
         function announce() {
@@ -1363,8 +1525,31 @@
         }
 
 
+        // Client-side flood control. Not a security boundary - anyone can write
+        // to the relay directly - but it stops the UI being used to spam and
+        // keeps an accidental key-repeat from filling the channel.
+        const sendTimes = [];
+
+        function isFlooding() {
+            const now = Date.now();
+            while (sendTimes.length && now - sendTimes[0] > FLOOD_WINDOW_MS) {
+                sendTimes.shift();
+            }
+            return sendTimes.length >= FLOOD_MAX_MESSAGES;
+        }
+
         function publishMessage(text, type = 'msg', forceAction = false) {
             if (!chat) return;
+
+            // System messages (join/leave/delete) are not user-initiated.
+            if (type !== 'system') {
+                if (isFlooding()) {
+                    addMsg('', `Slow down - max ${FLOOD_MAX_MESSAGES} messages per ${FLOOD_WINDOW_MS / 1000}s.`, true);
+                    return;
+                }
+                sendTimes.push(Date.now());
+            }
+
             const isAction = forceAction;
             const key = Date.now() + '-' + Math.random().toString(36).substr(2, 6);
             chat.get(key).put({
@@ -1706,7 +1891,8 @@
                 gifImg.className = 'irc-msg-gif';
                 gifImg.alt = 'GIF';
                 gifImg.loading = 'lazy';
-                gifImg.onload = scrollToBottom;
+                // Only chase the bottom if the reader is already there
+                gifImg.onload = () => { if (isPinnedToBottom(true)) scrollToBottom(); };
 
                 gifContainer.appendChild(gifImg);
                 textEl.appendChild(gifContainer);
@@ -1774,12 +1960,19 @@
                 delBtn.title = 'Delete message';
                 delBtn.onclick = (e) => {
                     e.stopPropagation();
-                    if (confirm('Are you sure you want to delete this message?')) {
-                        deleteMessage(key, nick);
-                    }
+                    confirmSheet('Delete this message?', 'It will be replaced by a system message for everyone in the channel.', {
+                        confirmLabel: 'Delete',
+                        danger: true
+                    }).then((ok) => {
+                        if (ok) deleteMessage(key, nick);
+                    });
                 };
                 row.appendChild(delBtn);
             }
+
+            // Was the reader at the bottom BEFORE this message landed? Decided
+            // up front, because inserting changes scrollHeight.
+            const wasPinned = isPinnedToBottom();
 
             // Insert in chronological order
             const msgTime = timestamp || Date.now();
@@ -1821,13 +2014,75 @@
             }
 
             while (els.log.children.length > MAX_MESSAGES) els.log.removeChild(els.log.firstChild);
-            scrollToBottom();
-            // Scroll again after a short delay to account for layout shifts
-            setTimeout(scrollToBottom, 100);
+
+            if (wasPinned) {
+                scrollToBottom();
+                // Again after layout settles (images, wrapped text)
+                setTimeout(() => { if (isPinnedToBottom(true)) scrollToBottom(); }, 100);
+            } else if (isNewMessage && !isSystem) {
+                // Reader is up in the history - do not yank them down.
+                unreadCount++;
+                updateUnreadPill();
+            }
+
+            if (mentionsMe && isNewMessage) {
+                unreadMentions++;
+                updateWindowBadge();
+            }
+        }
+
+        const PIN_TOLERANCE_PX = 48;
+
+        /** True when the log is scrolled to (or very near) the newest message. */
+        function isPinnedToBottom(loose) {
+            const el = els.log;
+            const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
+            return distance <= (loose ? PIN_TOLERANCE_PX * 4 : PIN_TOLERANCE_PX);
         }
 
         function scrollToBottom() {
             els.log.scrollTop = els.log.scrollHeight;
+        }
+
+        function updateUnreadPill() {
+            if (!unreadPill) return;
+            if (unreadCount <= 0) {
+                unreadPill.hidden = true;
+                return;
+            }
+            unreadPill.hidden = false;
+            unreadPill.querySelector('.irc-unread-count').textContent =
+                unreadCount === 1 ? '1 new message' : `${unreadCount} new messages`;
+        }
+
+        function clearUnread() {
+            unreadCount = 0;
+            updateUnreadPill();
+        }
+
+        /** Mention badge on the window title, visible when IRC is not focused. */
+        function updateWindowBadge() {
+            const titleEl = win.querySelector('.window-title-text');
+            if (!titleEl) return;
+            if (!baseWindowTitle) baseWindowTitle = titleEl.textContent;
+
+            const isForeground = !win.classList.contains('inactive')
+                && win.style.display !== 'none'
+                && document.visibilityState === 'visible';
+
+            if (isForeground || unreadMentions === 0) {
+                unreadMentions = 0;
+                titleEl.textContent = baseWindowTitle;
+            } else {
+                titleEl.textContent = `${baseWindowTitle} (${unreadMentions})`;
+            }
+
+            const chip = document.querySelector(`.menubar-min-chip[data-tray-for="irc-chat"] .menubar-min-label`);
+            if (chip && baseWindowTitle) {
+                chip.textContent = unreadMentions > 0
+                    ? `${baseWindowTitle} (${unreadMentions})`
+                    : baseWindowTitle;
+            }
         }
 
         function updateMsg(key, m) {
@@ -1939,14 +2194,17 @@
             }
         };
 
-        // Expose cleanup function for when window is closed
+        // Expose cleanup function for when window is closed.
+        // Must release everything connect() registered - the window element is
+        // discarded, but intervals and Gun subscriptions would otherwise keep
+        // running against detached DOM for the rest of the session.
         win.ircCleanup = function () {
             if (myNick && presence && chat && !hasLeft) {
                 hasLeft = true;
                 publishMessage('left the room', 'system');
                 presence.get(myUUID).put(null);
-                if (presenceInt) clearInterval(presenceInt);
             }
+            teardownConnection();
         };
     }
 
