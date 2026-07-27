@@ -41,11 +41,12 @@
             </div>
         </div>
 
+        {{/* The canvas is a direct child of the stage on purpose. Wrapping it
+        made it a flex item of the wrapper, where the default align-items:
+        stretch forces its height and destroys the intrinsic 960x600 ratio. */}}
         <div class="paint-stage">
-            <div class="paint-mat">
-                <canvas class="paint-canvas" width="960" height="600"></canvas>
-                <div class="paint-loading">Loading canvas…</div>
-            </div>
+            <canvas class="paint-canvas" width="960" height="600"></canvas>
+            <div class="paint-loading">Loading canvas…</div>
         </div>
 
         <div class="paint-statusbar">
