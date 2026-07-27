@@ -12,6 +12,8 @@
  *
  *     { a: "icon:terminal", ox: 31, oy: 44 }
  *
+ * Cursors are anonymous - no nickname is rendered or published.
+ *
  * The receiver finds its own copy of that element and places the cursor at
  * rect.left + ox, rect.top + oy. Because anchored elements are a fixed CSS size
  * (an icon is always 80px wide), the offset lands pixel-exact for everyone -
@@ -29,7 +31,6 @@
     const CURSOR_TTL_MS = 6000;       // hide a cursor we stopped hearing from
     const PRESENCE_TTL_MS = 15000;    // count someone as online this long after a beat
     const GRAPH_PRUNE_MS = 60000;     // delete truly abandoned nodes from the graph
-    const NICK_MAX = 12;
 
     // Cursors are a pointing device; a touch screen has nothing to broadcast.
     // Presence still runs so the online count stays honest on mobile.
@@ -42,11 +43,6 @@
     if (!myId) {
         myId = Math.random().toString(36).slice(2, 11);
         localStorage.setItem('multiplayer-cursor-id', myId);
-    }
-
-    function myNick() {
-        const nick = localStorage.getItem('irc_nick');
-        return nick ? String(nick).slice(0, NICK_MAX) : '';
     }
 
     // ------------------------------------------------------------------
@@ -62,7 +58,7 @@
     onlineCountEl.id = 'online-count';
     document.body.appendChild(onlineCountEl);
 
-    // peerId -> { a, ox, oy, nick, lastSeen, el, labelEl }
+    // peerId -> { a, ox, oy, lastSeen, el, positioned }
     const peers = new Map();
 
     // ------------------------------------------------------------------
@@ -125,12 +121,11 @@
             a: anchor.key,
             ox: Math.round(e.clientX - anchor.rect.left),
             oy: Math.round(e.clientY - anchor.rect.top),
-            n: myNick(),
             ts: now
         };
 
         // Skip redundant writes when the pointer is parked.
-        const signature = payload.a + ':' + payload.ox + ':' + payload.oy + ':' + payload.n;
+        const signature = payload.a + ':' + payload.ox + ':' + payload.oy;
         if (signature === lastPayload) return;
 
         lastSent = now;
@@ -216,22 +211,13 @@
         });
     }
 
-    function createPeerElement(nick) {
+    function createPeerElement() {
         const el = document.createElement('div');
         el.className = 'remote-cursor';
         el.innerHTML =
-            '<img class="remote-cursor-icon" src="/icons/cursor.svg" width="24" height="24" alt="">' +
-            '<span class="remote-cursor-label"></span>';
-        const labelEl = el.querySelector('.remote-cursor-label');
-        setLabel(labelEl, nick);
+            '<img class="remote-cursor-icon" src="/icons/cursor.svg" width="24" height="24" alt="">';
         layer.appendChild(el);
-        return { el, labelEl };
-    }
-
-    function setLabel(labelEl, nick) {
-        if (!labelEl) return;
-        labelEl.textContent = nick || '';
-        labelEl.hidden = !nick;
+        return el;
     }
 
     function removePeer(id) {
@@ -265,12 +251,8 @@
 
         let peer = peers.get(id);
         if (!peer) {
-            const created = createPeerElement(data.n);
-            peer = { el: created.el, labelEl: created.labelEl, nick: data.n || '' };
+            peer = { el: createPeerElement() };
             peers.set(id, peer);
-        } else if (peer.nick !== (data.n || '')) {
-            peer.nick = data.n || '';
-            setLabel(peer.labelEl, peer.nick);
         }
 
         peer.a = data.a;
@@ -288,7 +270,7 @@
     const presentPeers = new Map(); // id -> lastBeat
 
     function announcePresence() {
-        presenceRef.get(myId).put({ ts: Date.now(), n: myNick() });
+        presenceRef.get(myId).put({ ts: Date.now() });
     }
 
     function updateOnlineCount() {
