@@ -2191,8 +2191,31 @@ a.event-item.event-link {
 }
 
 /* ---- Page turn ----
-   The moving leaf carries the outgoing page on its front and the incoming one
-   on its back, so the reveal happens mid-rotation the way paper does. */
+
+   A rigid rotateY reads as a rotating card, not paper. Four things make it
+   read as a leaf instead, all driven from one keyframe timeline:
+
+   1. SHAPED MOTION. Paper is slow to lift - you are working against its
+      stiffness - then gravity takes it fast past vertical and it settles.
+      A single cubic-bezier cannot express that, so the rotation is
+      keyframed in phases rather than transitioned.
+   2. FLEX. A curled page projects narrower than a flat one, so scaleX dips
+      through the middle of the turn and returns to 1 at both ends. That is
+      the cheap, robust cue for bend - real geometry would need the leaf
+      split into strips, and overflow/clip-path both force transform-style
+      back to flat, so each strip would need a separate clipping child.
+   3. LIFT. translateZ raises the leaf off the spread as it passes vertical.
+   4. LIGHT. Each face darkens toward its hinge, peaking mid-turn, and the
+      page being uncovered brightens out of the leaf's shadow.
+
+   Keyframes are used rather than a transition for a second reason: an
+   animation needs no previously-computed starting value, so unhiding the
+   leaf and starting the turn in the same frame is safe. The transition
+   version needed a forced reflow between the two or it silently skipped. */
+
+.gb-book {
+    --gb-flip-ms: 780ms;
+}
 
 .gb-flip {
     position: absolute;
@@ -2201,8 +2224,6 @@ a.event-item.event-link {
     width: calc(50% - 7px);
     z-index: 5;
     transform-style: preserve-3d;
-    /* Slight ease-in then ease-out: paper is heavy to lift and drops fast */
-    transition: transform 620ms cubic-bezier(0.44, 0.02, 0.28, 1);
     pointer-events: none;
     will-change: transform;
 }
@@ -2214,21 +2235,73 @@ a.event-item.event-link {
 .gb-flip.is-forward {
     right: 7px;
     transform-origin: left center;
-    transform: rotateY(0deg);
-}
-
-.gb-flip.is-forward.is-turning {
-    transform: rotateY(-179deg);
 }
 
 .gb-flip:not(.is-forward) {
     left: 7px;
     transform-origin: right center;
-    transform: rotateY(0deg);
+}
+
+.gb-flip.is-forward.is-turning {
+    animation: gbTurnForward var(--gb-flip-ms) both;
 }
 
 .gb-flip:not(.is-forward).is-turning {
-    transform: rotateY(179deg);
+    animation: gbTurnBack var(--gb-flip-ms) both;
+}
+
+@keyframes gbTurnForward {
+    0% {
+        transform: rotateY(0deg) scaleX(1) translateZ(0);
+        animation-timing-function: cubic-bezier(0.32, 0, 0.62, 0.24);
+    }
+    22% {
+        transform: rotateY(-26deg) scaleX(0.985) translateZ(6px);
+        animation-timing-function: cubic-bezier(0.4, 0, 0.5, 1);
+    }
+    52% {
+        /* Past vertical, most curled, furthest off the page */
+        transform: rotateY(-96deg) scaleX(0.9) translateZ(16px);
+        animation-timing-function: cubic-bezier(0.3, 0.5, 0.4, 1);
+    }
+    78% {
+        transform: rotateY(-149deg) scaleX(0.94) translateZ(8px);
+        animation-timing-function: cubic-bezier(0.3, 0.6, 0.4, 1);
+    }
+    92% {
+        /* Slight overshoot, then settle - paper lands with a little bounce */
+        transform: rotateY(-181.5deg) scaleX(0.995) translateZ(1px);
+        animation-timing-function: ease-out;
+    }
+    100% {
+        transform: rotateY(-179.6deg) scaleX(1) translateZ(0);
+    }
+}
+
+@keyframes gbTurnBack {
+    0% {
+        transform: rotateY(0deg) scaleX(1) translateZ(0);
+        animation-timing-function: cubic-bezier(0.32, 0, 0.62, 0.24);
+    }
+    22% {
+        transform: rotateY(26deg) scaleX(0.985) translateZ(6px);
+        animation-timing-function: cubic-bezier(0.4, 0, 0.5, 1);
+    }
+    52% {
+        transform: rotateY(96deg) scaleX(0.9) translateZ(16px);
+        animation-timing-function: cubic-bezier(0.3, 0.5, 0.4, 1);
+    }
+    78% {
+        transform: rotateY(149deg) scaleX(0.94) translateZ(8px);
+        animation-timing-function: cubic-bezier(0.3, 0.6, 0.4, 1);
+    }
+    92% {
+        transform: rotateY(181.5deg) scaleX(0.995) translateZ(1px);
+        animation-timing-function: ease-out;
+    }
+    100% {
+        transform: rotateY(179.6deg) scaleX(1) translateZ(0);
+    }
 }
 
 /* Must mirror .gb-page exactly, or the ruled grid jumps mid-turn */
@@ -2245,51 +2318,105 @@ a.event-item.event-link {
             rgba(0, 0, 0, 0) 0 calc(var(--gb-line) - 1px),
             rgba(150, 130, 95, 0.2) calc(var(--gb-line) - 1px) var(--gb-line)),
         linear-gradient(180deg, #fdf9ee 0%, #f6efdd 100%);
-    box-shadow: 0 6px 22px rgba(60, 40, 20, 0.35);
 }
 
 .gb-flip-back {
     transform: rotateY(180deg);
 }
 
-/* Paper shading: the leaf darkens toward its hinge as it lifts, which is what
-   sells the curve. Painted as an overlay so it rides with each face. */
+/* Shading rides on each face: dark toward the hinge, brightest across the
+   middle of the sheet, peaking as the leaf stands up. */
 .gb-flip-face::after {
     content: "";
     position: absolute;
     inset: 0;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 620ms ease;
 }
 
 .gb-flip-front::after {
-    background: linear-gradient(270deg,
-            rgba(90, 60, 30, 0) 55%,
-            rgba(90, 60, 30, 0.16) 88%,
-            rgba(70, 45, 20, 0.3) 100%);
+    background:
+        linear-gradient(270deg,
+            rgba(255, 252, 240, 0.5) 0%,
+            rgba(120, 85, 45, 0) 34%,
+            rgba(96, 64, 30, 0.22) 84%,
+            rgba(70, 45, 20, 0.42) 100%);
 }
 
 .gb-flip-back::after {
-    background: linear-gradient(270deg,
-            rgba(90, 60, 30, 0) 55%,
-            rgba(90, 60, 30, 0.14) 88%,
-            rgba(70, 45, 20, 0.26) 100%);
+    background:
+        linear-gradient(270deg,
+            rgba(255, 252, 240, 0.42) 0%,
+            rgba(120, 85, 45, 0) 34%,
+            rgba(96, 64, 30, 0.2) 84%,
+            rgba(70, 45, 20, 0.38) 100%);
 }
 
 .gb-flip.is-turning .gb-flip-face::after {
-    opacity: 1;
+    animation: gbLeafShade var(--gb-flip-ms) both;
 }
 
-/* The page being uncovered darkens briefly, as if in the leaf's shadow */
-.gb-book.is-turning .gb-page {
-    animation: gbPageShadow 620ms ease;
+@keyframes gbLeafShade {
+    0% { opacity: 0.05; }
+    52% { opacity: 1; }
+    100% { opacity: 0.05; }
 }
 
-@keyframes gbPageShadow {
-    0% { filter: brightness(0.94); }
-    60% { filter: brightness(0.985); }
-    100% { filter: brightness(1); }
+/* Drop shadow beneath the leaf, strongest when it stands off the page */
+.gb-flip.is-turning::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 2px;
+    background: rgba(45, 28, 12, 0.5);
+    filter: blur(14px);
+    /* Inside a preserve-3d context painting order comes from depth, not
+       z-index, so the shadow is pushed behind the faces in 3D space. */
+    transform: translateZ(-3px);
+    animation: gbLeafShadow var(--gb-flip-ms) both;
+}
+
+@keyframes gbLeafShadow {
+    0% { opacity: 0; transform: translateZ(-3px) translateX(0) scale(1); }
+    52% { opacity: 0.55; transform: translateZ(-3px) translateX(-6%) scale(0.97); }
+    100% { opacity: 0; transform: translateZ(-3px) translateX(0) scale(1); }
+}
+
+/* Shadow the leaf casts across the page it is uncovering. Anchored to the
+   spine side of whichever page is being revealed. */
+.gb-book.is-turning .gb-page::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    animation: gbCastShadow var(--gb-flip-ms) both;
+}
+
+.gb-book.is-turning-forward .gb-page-right::after {
+    background: linear-gradient(90deg,
+            rgba(60, 38, 16, 0.5) 0%,
+            rgba(60, 38, 16, 0.16) 38%,
+            rgba(60, 38, 16, 0) 72%);
+}
+
+.gb-book.is-turning:not(.is-turning-forward) .gb-page-left::after {
+    background: linear-gradient(270deg,
+            rgba(60, 38, 16, 0.5) 0%,
+            rgba(60, 38, 16, 0.16) 38%,
+            rgba(60, 38, 16, 0) 72%);
+}
+
+/* The page the leaf is leaving keeps no cast shadow */
+.gb-book.is-turning-forward .gb-page-left::after,
+.gb-book.is-turning:not(.is-turning-forward) .gb-page-right::after {
+    display: none;
+}
+
+@keyframes gbCastShadow {
+    0% { opacity: 1; }
+    58% { opacity: 0.55; }
+    100% { opacity: 0; }
 }
 
 /* ---- Controls ---- */
@@ -2654,7 +2781,12 @@ a.event-item.event-link {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .gb-flip {
-        transition: none;
+    /* turn() already skips the animation entirely under reduced motion; this
+       is a backstop in case the class is ever applied another way. */
+    .gb-flip,
+    .gb-flip-face::after,
+    .gb-flip::before,
+    .gb-page::after {
+        animation: none !important;
     }
 }
