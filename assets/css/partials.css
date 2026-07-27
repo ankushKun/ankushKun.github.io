@@ -1904,15 +1904,19 @@ a.event-item.event-link {
     display: flex;
     flex-direction: column;
     height: 100%;
+    min-height: 0;
     background: #ececec;
     font-family: var(--font-system, -apple-system, BlinkMacSystemFont, sans-serif);
 }
 
+/* ---- Toolbar ---- */
+
 .paint-toolbar {
+    flex: none;
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 14px;
+    gap: 10px;
     padding: 8px 12px;
     background: linear-gradient(180deg, #fdfdfd 0%, #e7eaee 100%);
     border-bottom: 1px solid #c9ced5;
@@ -1920,6 +1924,13 @@ a.event-item.event-link {
        canvas stage instead of behind it. */
     position: relative;
     z-index: 2;
+}
+
+.paint-sep {
+    width: 1px;
+    height: 22px;
+    background: #cdd2d8;
+    box-shadow: 1px 0 0 rgba(255, 255, 255, 0.85);
 }
 
 .paint-tools,
@@ -1993,16 +2004,6 @@ a.event-item.event-link {
     margin-left: auto;
 }
 
-.paint-status {
-    font-size: 11px;
-    color: #7a808a;
-}
-
-.paint-status.is-offline {
-    color: #c0392b;
-    font-weight: 600;
-}
-
 .paint-clear {
     padding: 5px 12px;
     font-family: inherit;
@@ -2018,26 +2019,47 @@ a.event-item.event-link {
     background: linear-gradient(180deg, #fff 0%, #f0f0f0 100%);
 }
 
+/* ---- Stage ----
+   The canvas carries width/height attributes, so it has an intrinsic 960x600
+   aspect just like an <img>. Letting max-width/max-height do the work keeps
+   the element box exactly equal to the drawing box, which pointer-to-logical
+   mapping depends on. A CSS aspect-ratio here fought the intrinsic size and
+   let the canvas overflow the window. */
+
 .paint-stage {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px;
+    overflow: hidden;
     position: relative;
     z-index: 1;
-    flex: 1;
-    display: grid;
-    place-items: center;
-    min-height: 0;
-    padding: 12px;
     background:
-        repeating-conic-gradient(#e4e6e9 0% 25%, #eef0f2 0% 50%) 50% / 16px 16px;
+        repeating-conic-gradient(#e2e5e9 0% 25%, #edeff2 0% 50%) 50% / 14px 14px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.paint-mat {
+    position: relative;
+    display: flex;
+    max-width: 100%;
+    max-height: 100%;
+    min-height: 0;
+    border-radius: 2px;
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.22),
+        0 4px 14px rgba(0, 0, 0, 0.22);
 }
 
 .paint-canvas {
+    display: block;
     max-width: 100%;
     max-height: 100%;
-    /* Keep the fixed 960x600 logical space undistorted at any window size */
-    aspect-ratio: 960 / 600;
+    width: auto;
+    height: auto;
     background: #fff;
-    border: 1px solid #b9bfc6;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
     cursor: crosshair;
     touch-action: none;
 }
@@ -2051,7 +2073,7 @@ a.event-item.event-link {
     inset: 0;
     display: grid;
     place-items: center;
-    background: rgba(236, 236, 236, 0.86);
+    background: rgba(255, 255, 255, 0.9);
     font-size: 12px;
     color: #7a808a;
 }
@@ -2060,13 +2082,46 @@ a.event-item.event-link {
     display: none;
 }
 
-.paint-note {
-    margin: 0;
-    padding: 7px 12px;
+/* ---- Status bar ---- */
+
+.paint-statusbar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 12px;
     font-size: 11px;
     color: #8a8f97;
-    background: #f4f5f7;
+    background: linear-gradient(180deg, #f7f8fa 0%, #eceef1 100%);
     border-top: 1px solid #d8dce1;
+}
+
+.paint-hint {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.paint-status {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #5a9c5a;
+    font-weight: 600;
+}
+
+.paint-status::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.paint-status.is-offline {
+    color: #c0392b;
 }
 
 @media (max-width: 640px) {
@@ -2075,13 +2130,19 @@ a.event-item.event-link {
         padding: 7px 8px;
     }
 
-    .paint-toolbar-end {
-        width: 100%;
-        margin-left: 0;
-        justify-content: space-between;
+    .paint-sep {
+        display: none;
     }
 
-    .paint-note {
+    .paint-stage {
+        padding: 8px;
+    }
+
+    .paint-hint {
         display: none;
+    }
+
+    .paint-statusbar {
+        justify-content: flex-end;
     }
 }
