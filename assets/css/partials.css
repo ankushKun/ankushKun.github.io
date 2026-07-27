@@ -1908,7 +1908,6 @@ a.event-item.event-link {
     align-items: center;
     justify-content: center;
     padding: 14px 16px 4px;
-    perspective: 2000px;
 }
 
 .gb-book {
@@ -1918,6 +1917,10 @@ a.event-item.event-link {
     max-width: 820px;
     height: 100%;
     padding: 7px;
+    /* Perspective belongs on the turning leaf's own parent. On .gb-book-area
+       it was a grandparent, so the rotation projected flat. */
+    perspective: 1900px;
+    perspective-origin: 50% 45%;
     transform-style: preserve-3d;
     border-radius: 4px;
     /* Board edge visible around the paper */
@@ -2187,7 +2190,9 @@ a.event-item.event-link {
     color: rgba(120, 100, 70, 0.55);
 }
 
-/* ---- Page turn ---- */
+/* ---- Page turn ----
+   The moving leaf carries the outgoing page on its front and the incoming one
+   on its back, so the reveal happens mid-rotation the way paper does. */
 
 .gb-flip {
     position: absolute;
@@ -2196,8 +2201,10 @@ a.event-item.event-link {
     width: calc(50% - 7px);
     z-index: 5;
     transform-style: preserve-3d;
-    transition: transform 620ms cubic-bezier(0.42, 0, 0.3, 1);
+    /* Slight ease-in then ease-out: paper is heavy to lift and drops fast */
+    transition: transform 620ms cubic-bezier(0.44, 0.02, 0.28, 1);
     pointer-events: none;
+    will-change: transform;
 }
 
 .gb-flip[hidden] {
@@ -2211,7 +2218,7 @@ a.event-item.event-link {
 }
 
 .gb-flip.is-forward.is-turning {
-    transform: rotateY(-178deg);
+    transform: rotateY(-179deg);
 }
 
 .gb-flip:not(.is-forward) {
@@ -2221,7 +2228,7 @@ a.event-item.event-link {
 }
 
 .gb-flip:not(.is-forward).is-turning {
-    transform: rotateY(178deg);
+    transform: rotateY(179deg);
 }
 
 /* Must mirror .gb-page exactly, or the ruled grid jumps mid-turn */
@@ -2238,11 +2245,51 @@ a.event-item.event-link {
             rgba(0, 0, 0, 0) 0 calc(var(--gb-line) - 1px),
             rgba(150, 130, 95, 0.2) calc(var(--gb-line) - 1px) var(--gb-line)),
         linear-gradient(180deg, #fdf9ee 0%, #f6efdd 100%);
-    box-shadow: 0 0 24px rgba(90, 60, 30, 0.3);
+    box-shadow: 0 6px 22px rgba(60, 40, 20, 0.35);
 }
 
 .gb-flip-back {
     transform: rotateY(180deg);
+}
+
+/* Paper shading: the leaf darkens toward its hinge as it lifts, which is what
+   sells the curve. Painted as an overlay so it rides with each face. */
+.gb-flip-face::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 620ms ease;
+}
+
+.gb-flip-front::after {
+    background: linear-gradient(270deg,
+            rgba(90, 60, 30, 0) 55%,
+            rgba(90, 60, 30, 0.16) 88%,
+            rgba(70, 45, 20, 0.3) 100%);
+}
+
+.gb-flip-back::after {
+    background: linear-gradient(270deg,
+            rgba(90, 60, 30, 0) 55%,
+            rgba(90, 60, 30, 0.14) 88%,
+            rgba(70, 45, 20, 0.26) 100%);
+}
+
+.gb-flip.is-turning .gb-flip-face::after {
+    opacity: 1;
+}
+
+/* The page being uncovered darkens briefly, as if in the leaf's shadow */
+.gb-book.is-turning .gb-page {
+    animation: gbPageShadow 620ms ease;
+}
+
+@keyframes gbPageShadow {
+    0% { filter: brightness(0.94); }
+    60% { filter: brightness(0.985); }
+    100% { filter: brightness(1); }
 }
 
 /* ---- Controls ---- */
