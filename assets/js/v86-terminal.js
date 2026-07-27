@@ -521,7 +521,10 @@
 
         toolbar.querySelector('[data-action="reset"]').addEventListener('click', async (e) => {
             e.stopPropagation();
-            if (confirm('Delete saved state and restart? The terminal will reboot fresh.')) {
+            const confirmReset = window.showConfirm
+                ? window.showConfirm('Delete saved state?', 'The terminal will reboot fresh and any saved session will be lost.', { confirmLabel: 'Delete & Restart', danger: true })
+                : Promise.resolve(confirm('Delete saved state and restart? The terminal will reboot fresh.'));
+            if (await confirmReset) {
                 await clearEmulatorState(inst.id);
                 closeDropdown();
 

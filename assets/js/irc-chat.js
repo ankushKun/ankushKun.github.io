@@ -131,6 +131,19 @@
         return sharedAudioContext;
     }
 
+    // Sheet helpers from mavericks.js, with a native fallback if the window
+    // manager has not loaded (IRC can be lazy-loaded before it).
+    function notify(title, message) {
+        if (window.showAlert) return window.showAlert(title, message);
+        alert(title + (message ? '\n\n' + message : ''));
+        return Promise.resolve(true);
+    }
+
+    function confirmSheet(title, message, opts) {
+        if (window.showConfirm) return window.showConfirm(title, message, opts);
+        return Promise.resolve(confirm(title + (message ? '\n\n' + message : '')));
+    }
+
     let gunLoadPromise = null;
 
     function loadGun() {
@@ -570,6 +583,10 @@
         let lastCursorPos = 0; // Track last known cursor position
         const nsfwQueue = []; // Queue for NSFW checks
         let isProcessingQueue = false; // Flag for queue processing
+        let unreadCount = 0;      // messages that arrived while scrolled up
+        let unreadMentions = 0;   // mentions that arrived while backgrounded
+        let baseWindowTitle = '';
+        let unreadPill = null;
 
         // ---- Connection lifecycle -------------------------------------------
         // Everything connect() registers is recorded here. Without this, logging
@@ -666,6 +683,38 @@
                 isProcessingQueue = false;
             }
         }
+
+        // Jump-to-latest pill. Auto-scrolling on every message used to drag the
+        // reader away from history they were in the middle of reading.
+        (function setupUnreadPill() {
+            const col = root.querySelector('.irc-chat-col');
+            if (!col) return;
+            unreadPill = document.createElement('button');
+            unreadPill.type = 'button';
+            unreadPill.className = 'irc-unread-pill';
+            unreadPill.hidden = true;
+            unreadPill.innerHTML = '<span class="irc-unread-count"></span><span aria-hidden="true"> ↓</span>';
+            unreadPill.addEventListener('click', (e) => {
+                e.stopPropagation();
+                scrollToBottom();
+                clearUnread();
+            });
+            unreadPill.addEventListener('mousedown', (e) => e.stopPropagation());
+            col.appendChild(unreadPill);
+
+            els.log.addEventListener('scroll', () => {
+                if (isPinnedToBottom()) clearUnread();
+            }, { passive: true });
+        })();
+
+        // Clear the mention badge as soon as the window is looked at
+        root.addEventListener('mousedown', () => {
+            if (unreadMentions) {
+                unreadMentions = 0;
+                updateWindowBadge();
+            }
+        });
+        document.addEventListener('visibilitychange', () => updateWindowBadge());
 
         // Events
         els.nickBtn.addEventListener('click', join);
@@ -1217,7 +1266,7 @@
             if (!nick) return els.nickInput.focus();
 
             if (!els.termsInput.checked) {
-                alert('You must accept the content warning to join.');
+                notify('Content warning', 'You must accept the content warning before joining.');
                 return;
             }
 
@@ -1305,8 +1354,9 @@
             const snapshot = await scanPresence(presence);
             if (nickTakenByOther(snapshot, myNick, myUUID)) {
                 els.status.textContent = 'Nickname already in use';
-                alert('Nickname already in use. Pick another.');
+                const taken = myNick;
                 logout();
+                notify('Nickname unavailable', `"${taken}" is already in use. Pick another.`);
                 return;
             }
 
@@ -1841,7 +1891,8 @@
                 gifImg.className = 'irc-msg-gif';
                 gifImg.alt = 'GIF';
                 gifImg.loading = 'lazy';
-                gifImg.onload = scrollToBottom;
+                // Only chase the bottom if the reader is already there
+                gifImg.onload = () => { if (isPinnedToBottom(true)) scrollToBottom(); };
 
                 gifContainer.appendChild(gifImg);
                 textEl.appendChild(gifContainer);
@@ -1909,12 +1960,19 @@
                 delBtn.title = 'Delete message';
                 delBtn.onclick = (e) => {
                     e.stopPropagation();
-                    if (confirm('Are you sure you want to delete this message?')) {
-                        deleteMessage(key, nick);
-                    }
+                    confirmSheet('Delete this message?', 'It will be replaced by a system message for everyone in the channel.', {
+                        confirmLabel: 'Delete',
+                        danger: true
+                    }).then((ok) => {
+                        if (ok) deleteMessage(key, nick);
+                    });
                 };
                 row.appendChild(delBtn);
             }
+
+            // Was the reader at the bottom BEFORE this message landed? Decided
+            // up front, because inserting changes scrollHeight.
+            const wasPinned = isPinnedToBottom();
 
             // Insert in chronological order
             const msgTime = timestamp || Date.now();
@@ -1956,13 +2014,75 @@
             }
 
             while (els.log.children.length > MAX_MESSAGES) els.log.removeChild(els.log.firstChild);
-            scrollToBottom();
-            // Scroll again after a short delay to account for layout shifts
-            setTimeout(scrollToBottom, 100);
+
+            if (wasPinned) {
+                scrollToBottom();
+                // Again after layout settles (images, wrapped text)
+                setTimeout(() => { if (isPinnedToBottom(true)) scrollToBottom(); }, 100);
+            } else if (isNewMessage && !isSystem) {
+                // Reader is up in the history - do not yank them down.
+                unreadCount++;
+                updateUnreadPill();
+            }
+
+            if (mentionsMe && isNewMessage) {
+                unreadMentions++;
+                updateWindowBadge();
+            }
+        }
+
+        const PIN_TOLERANCE_PX = 48;
+
+        /** True when the log is scrolled to (or very near) the newest message. */
+        function isPinnedToBottom(loose) {
+            const el = els.log;
+            const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
+            return distance <= (loose ? PIN_TOLERANCE_PX * 4 : PIN_TOLERANCE_PX);
         }
 
         function scrollToBottom() {
             els.log.scrollTop = els.log.scrollHeight;
+        }
+
+        function updateUnreadPill() {
+            if (!unreadPill) return;
+            if (unreadCount <= 0) {
+                unreadPill.hidden = true;
+                return;
+            }
+            unreadPill.hidden = false;
+            unreadPill.querySelector('.irc-unread-count').textContent =
+                unreadCount === 1 ? '1 new message' : `${unreadCount} new messages`;
+        }
+
+        function clearUnread() {
+            unreadCount = 0;
+            updateUnreadPill();
+        }
+
+        /** Mention badge on the window title, visible when IRC is not focused. */
+        function updateWindowBadge() {
+            const titleEl = win.querySelector('.window-title-text');
+            if (!titleEl) return;
+            if (!baseWindowTitle) baseWindowTitle = titleEl.textContent;
+
+            const isForeground = !win.classList.contains('inactive')
+                && win.style.display !== 'none'
+                && document.visibilityState === 'visible';
+
+            if (isForeground || unreadMentions === 0) {
+                unreadMentions = 0;
+                titleEl.textContent = baseWindowTitle;
+            } else {
+                titleEl.textContent = `${baseWindowTitle} (${unreadMentions})`;
+            }
+
+            const chip = document.querySelector(`.menubar-min-chip[data-tray-for="irc-chat"] .menubar-min-label`);
+            if (chip && baseWindowTitle) {
+                chip.textContent = unreadMentions > 0
+                    ? `${baseWindowTitle} (${unreadMentions})`
+                    : baseWindowTitle;
+            }
         }
 
         function updateMsg(key, m) {
