@@ -15,7 +15,10 @@
     const MAX_NAME = 24;
     const MAX_FROM = 24;
     const MAX_BLURB = 100;
-    const PER_PAGE = 3;              // entries on one page, so 6 per spread
+    // An entry occupies whole ruled lines: 2 for the signature, 1 for the
+    // meta row, 1 for an optional note, 1 blank between entries.
+    const LINES_PER_ENTRY = 5;
+    const FALLBACK_LINE_PX = 34;     // must match --gb-line in the stylesheet
     const SAVE_COOLDOWN_MS = 4000;
     const FLIP_MS = 620;
 
@@ -63,6 +66,13 @@
         if (months < 12) return months + 'mo ago';
         return Math.floor(months / 12) + 'y ago';
     }
+
+    // Authored constants, not user data - safe to inject as markup.
+    const ICONS = {
+        email: '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4.5" width="20" height="15" rx="2.5"/><path d="m2.6 7 9.4 5.8L21.4 7"/></svg>',
+        x: '<svg viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',
+        ig: '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.6" cy="6.4" r="1.3" fill="currentColor" stroke="none"/></svg>'
+    };
 
     function dateStamp(ts) {
         if (!ts) return '';
@@ -146,8 +156,8 @@
         // ---- Page rendering -------------------------------------------
 
         function contactLinks(data) {
-            const frag = document.createDocumentFragment();
-            const add = (href, label, glyph) => {
+            const links = [];
+            const add = (href, label, icon) => {
                 const a = document.createElement('a');
                 a.className = 'gb-entry-link';
                 a.href = href;
@@ -157,59 +167,81 @@
                 a.rel = 'nofollow ugc noopener noreferrer';
                 a.title = label;
                 a.setAttribute('aria-label', label);
-                a.textContent = glyph;
-                frag.appendChild(a);
+                a.innerHTML = icon;
+                links.push(a);
             };
-            if (data.email) add('mailto:' + data.email, data.email, '@');
-            if (data.x) add('https://x.com/' + data.x, '@' + data.x + ' on X', '𝕏');
-            if (data.ig) add('https://instagram.com/' + data.ig, '@' + data.ig + ' on Instagram', '◉');
-            return frag;
+            if (data.email) add('mailto:' + data.email, data.email, ICONS.email);
+            if (data.x) add('https://x.com/' + data.x, '@' + data.x + ' on X', ICONS.x);
+            if (data.ig) add('https://instagram.com/' + data.ig, '@' + data.ig + ' on Instagram', ICONS.ig);
+            return links;
         }
 
+        /**
+         * Entries are laid out on the page's baseline grid: every block is a
+         * whole number of ruled lines tall, so the printed rows land on the
+         * rules no matter how many entries a page holds.
+         */
         function buildEntry(id, data) {
             const row = document.createElement('article');
             row.className = 'gb-entry' + (id === myId ? ' is-me' : '');
+            if (data.blurb) row.classList.add('has-blurb');
 
+            // Two lines for the signature, so it has room to breathe and its
+            // baseline lands on the second rule.
             const sig = document.createElement('div');
             sig.className = 'gb-entry-sig';
             renderSignatureInto(sig, data.name, id, data.variant);
             row.appendChild(sig);
 
-            const rule = document.createElement('div');
-            rule.className = 'gb-entry-rule';
-            row.appendChild(rule);
-
+            // One line: who, where from, links, date.
             const meta = document.createElement('div');
             meta.className = 'gb-entry-meta';
 
-            const who = document.createElement('span');
-            who.className = 'gb-entry-name';
-            who.textContent = data.name;
-            meta.appendChild(who);
+            const who = document.createElement('div');
+            who.className = 'gb-entry-who';
+
+            const name = document.createElement('span');
+            name.className = 'gb-entry-name';
+            name.textContent = data.name;
+            who.appendChild(name);
+
+            if (id === myId) {
+                const you = document.createElement('span');
+                you.className = 'gb-entry-you';
+                you.textContent = 'you';
+                who.appendChild(you);
+            }
 
             if (data.from) {
                 const from = document.createElement('span');
                 from.className = 'gb-entry-from';
                 from.textContent = 'of ' + data.from;
-                meta.appendChild(from);
+                who.appendChild(from);
             }
 
-            const when = document.createElement('span');
+            meta.appendChild(who);
+
+            const tail = document.createElement('div');
+            tail.className = 'gb-entry-tail';
+
+            const links = contactLinks(data);
+            if (links.length) {
+                const wrap = document.createElement('span');
+                wrap.className = 'gb-entry-links';
+                links.forEach((a) => wrap.appendChild(a));
+                tail.appendChild(wrap);
+            }
+
+            const when = document.createElement('time');
             when.className = 'gb-entry-date';
             when.title = relativeTime(data.ts);
             when.textContent = dateStamp(data.ts);
-            meta.appendChild(when);
+            tail.appendChild(when);
 
-            const links = contactLinks(data);
-            if (links.childNodes.length) {
-                const wrap = document.createElement('span');
-                wrap.className = 'gb-entry-links';
-                wrap.appendChild(links);
-                meta.appendChild(wrap);
-            }
-
+            meta.appendChild(tail);
             row.appendChild(meta);
 
+            // One more line for the note, only when there is one.
             if (data.blurb) {
                 const blurb = document.createElement('p');
                 blurb.className = 'gb-entry-blurb';
@@ -220,8 +252,23 @@
             return row;
         }
 
+        /**
+         * How many entries fit on a page, measured rather than assumed. A
+         * fixed count overflowed the page at the default window size and the
+         * last entry was silently clipped by the page's overflow:hidden.
+         */
+        function perPage() {
+            const page = els.pageR;
+            if (!page || !page.clientHeight) return 2;
+
+            const styles = getComputedStyle(page);
+            const line = parseFloat(styles.getPropertyValue('--gb-line')) || FALLBACK_LINE_PX;
+            const usable = page.clientHeight - parseFloat(styles.paddingBottom || 0);
+            return Math.max(1, Math.floor(usable / (line * LINES_PER_ENTRY)));
+        }
+
         function pageCount() {
-            return Math.max(1, Math.ceil(ordered.length / PER_PAGE));
+            return Math.max(1, Math.ceil(ordered.length / perPage()));
         }
 
         /**
@@ -241,7 +288,8 @@
         function paintPage(el, pageIndex) {
             el.innerHTML = '';
 
-            const slice = ordered.slice(pageIndex * PER_PAGE, pageIndex * PER_PAGE + PER_PAGE);
+            const per = perPage();
+            const slice = ordered.slice(pageIndex * per, pageIndex * per + per);
 
             if (!slice.length) {
                 const blank = document.createElement('div');
@@ -558,14 +606,24 @@
 
         // Resizing the window can switch between one and two pages per view.
         // Keep the reader on the same underlying page across that change.
-        let lastPer = pagesPerView();
+        // Resizing changes both how many pages are shown side by side (width)
+        // and how many entries fit on a page (height). Track both, and keep
+        // the reader looking at roughly the same entry across the change.
+        let lastCols = pagesPerView();
+        let lastPer = perPage();
         if ('ResizeObserver' in window) {
             const ro = new ResizeObserver(() => {
-                const per = pagesPerView();
-                if (per === lastPer) return;
-                const currentPage = spread * lastPer;
+                const cols = pagesPerView();
+                const per = perPage();
+                if (cols === lastCols && per === lastPer) return;
+
+                const firstEntry = spread * lastCols * lastPer;
+                lastCols = cols;
                 lastPer = per;
-                spread = Math.min(Math.floor(currentPage / per), spreadCount() - 1);
+                spread = Math.min(
+                    Math.floor(firstEntry / (cols * per)),
+                    spreadCount() - 1
+                );
                 paintSpread();
             });
             ro.observe(root);

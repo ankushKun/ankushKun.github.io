@@ -3886,6 +3886,42 @@ a.finder-row {
     top: calc(100% + 4px);
 }
 
+/* Windows are overflow:hidden, so a tooltip on a control near the bottom edge
+   gets clipped. Controls that sit low in their window opt into flipping the
+   tooltip above instead. */
+[data-tip][data-tip-pos="above"]::after {
+    top: auto;
+    bottom: calc(100% + 6px);
+    transform: translateX(-50%) translateY(3px);
+}
+
+[data-tip][data-tip-pos="above"]:hover::after,
+[data-tip][data-tip-pos="above"]:focus-visible::after {
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Tooltips on the left/right extremes would run past the window edge */
+[data-tip][data-tip-align="start"]::after {
+    left: 0;
+    transform: translateX(0) translateY(-3px);
+}
+
+[data-tip][data-tip-align="start"]:hover::after,
+[data-tip][data-tip-align="start"]:focus-visible::after {
+    transform: translateX(0) translateY(0);
+}
+
+[data-tip][data-tip-align="end"]::after {
+    left: auto;
+    right: 0;
+    transform: translateX(0) translateY(-3px);
+}
+
+[data-tip][data-tip-align="end"]:hover::after,
+[data-tip][data-tip-align="end"]:focus-visible::after {
+    transform: translateX(0) translateY(0);
+}
+
 @media (hover: none) {
     /* Touch has no hover; a stuck tooltip is worse than none */
     [data-tip]::after {

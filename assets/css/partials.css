@@ -1928,18 +1928,24 @@ a.event-item.event-link {
 
 /* One declaration only. A separate `background-image` after a `background`
    shorthand replaces the shorthand's image layer, which previously left the
-   pages with no fill at all and the board showing through. */
+   pages with no fill at all and the board showing through.
+
+   --gb-line is the ruled rhythm. Every entry block is a whole number of these
+   tall, and the rules are drawn at the BOTTOM of each band, so printed rows
+   land on the lines instead of floating between them. */
 .gb-page {
+    --gb-line: 34px;
     position: relative;
     flex: 1 1 50%;
     min-width: 0;
     overflow: hidden;
-    padding: 16px 18px 24px;
+    /* No top padding: content starts on the grid's first band */
+    padding: 0 18px calc(var(--gb-line) * 0.8);
     color: #33291c;
     background:
         repeating-linear-gradient(180deg,
-            rgba(0, 0, 0, 0) 0 33px,
-            rgba(150, 130, 95, 0.18) 33px 34px),
+            rgba(0, 0, 0, 0) 0 calc(var(--gb-line) - 1px),
+            rgba(150, 130, 95, 0.2) calc(var(--gb-line) - 1px) var(--gb-line)),
         linear-gradient(180deg, #fdf9ee 0%, #f6efdd 100%);
 }
 
@@ -1983,19 +1989,19 @@ a.event-item.event-link {
     clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 76%, 0 100%);
 }
 
-/* ---- Entries ---- */
+/* ---- Entries: three or four ruled lines each ---- */
 
 .gb-entry {
     position: relative;
-    padding: 2px 0 8px;
-    margin-bottom: 8px;
 }
 
+/* Signature spans two lines and sits on the second rule */
 .gb-entry-sig {
-    height: 44px;
+    height: calc(var(--gb-line) * 2);
     display: flex;
     align-items: flex-end;
-    margin-bottom: 2px;
+    /* Lift clear of the rule so the ink rests on it rather than crossing it */
+    padding-bottom: 5px;
 }
 
 .gb-entry-sig svg {
@@ -2005,61 +2011,87 @@ a.event-item.event-link {
     overflow: visible;
 }
 
-/* Names with no drawable glyphs fall back to type */
 .gb-entry-sig.is-fallback {
-    align-items: center;
+    align-items: flex-end;
     font-family: "Snell Roundhand", "Apple Chancery", "Segoe Script", cursive;
-    font-size: 25px;
+    font-size: 27px;
+    line-height: 1.1;
     color: #1c2a4a;
 }
 
-.gb-entry-rule {
-    height: 1px;
-    background: rgba(120, 95, 60, 0.45);
-    margin-bottom: 5px;
+/* One line: who on the left, links and date on the right */
+.gb-entry-meta {
+    height: var(--gb-line);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 10px;
+    padding-bottom: 6px;
+    font-size: 11px;
+    color: #7d6a4d;
 }
 
-.gb-entry-meta {
+.gb-entry-who,
+.gb-entry-tail {
     display: flex;
     align-items: baseline;
-    flex-wrap: wrap;
-    gap: 6px;
-    font-size: 10.5px;
-    color: #7d6a4d;
+    gap: 7px;
+    min-width: 0;
+}
+
+.gb-entry-tail {
+    flex: none;
 }
 
 .gb-entry-name {
     font-weight: 700;
     color: #4c3d28;
-    overflow-wrap: anywhere;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.gb-entry-from,
+.gb-entry-you {
+    flex: none;
+    padding: 0 5px;
+    font-size: 8.5px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: #fff;
+    background: #9a5a3c;
+    border-radius: 7px;
+}
+
+.gb-entry-from {
+    font-style: italic;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .gb-entry-date {
     font-style: italic;
-}
-
-.gb-entry-date {
-    margin-left: auto;
     white-space: nowrap;
+    color: #8b7658;
 }
 
 .gb-entry-links {
     display: inline-flex;
-    gap: 5px;
+    align-self: center;
+    gap: 4px;
 }
 
 .gb-entry-link {
     display: inline-grid;
     place-items: center;
-    width: 17px;
-    height: 17px;
-    font-size: 10px;
-    line-height: 1;
-    text-decoration: none;
-    color: #5d4a30;
-    background: rgba(120, 95, 60, 0.14);
+    width: 19px;
+    height: 19px;
+    color: #6b563a;
+    background: rgba(120, 95, 60, 0.13);
+    border: 1px solid rgba(120, 95, 60, 0.16);
     border-radius: 4px;
+    transition: background 0.1s ease, color 0.1s ease;
 }
 
 .gb-entry-link:hover {
@@ -2067,20 +2099,45 @@ a.event-item.event-link {
     color: #2f2415;
 }
 
-.gb-entry-blurb {
-    margin: 4px 0 0;
-    font-size: 11.5px;
-    line-height: 1.5;
-    color: #5a4a33;
-    overflow-wrap: anywhere;
+.gb-entry-link svg {
+    display: block;
 }
 
-.gb-entry.is-me .gb-entry-rule {
-    background: rgba(150, 60, 40, 0.5);
+/* One line for the note */
+.gb-entry-blurb {
+    height: var(--gb-line);
+    margin: 0;
+    display: flex;
+    align-items: flex-end;
+    padding-bottom: 6px;
+    font-size: 11.5px;
+    line-height: 1.35;
+    color: #5a4a33;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Blank ruled line after every entry: keeps the grid and gives the page air.
+   Applied unconditionally - the folio is the page's last child, so a
+   :last-child exception would never match anyway, and the paging maths
+   assumes a uniform 5 lines per entry. */
+.gb-entry::after {
+    content: "";
+    display: block;
+    height: var(--gb-line);
+}
+
+.gb-entry.is-me .gb-entry-sig {
+    /* faint highlight for your own line */
+    background: linear-gradient(180deg, rgba(200, 120, 60, 0) 55%, rgba(200, 120, 60, 0.07) 100%);
 }
 
 .gb-page-blank {
-    padding: 26px 4px;
+    height: calc(var(--gb-line) * 2);
+    display: flex;
+    align-items: flex-end;
+    padding-bottom: 6px;
     font-size: 12px;
     font-style: italic;
     color: rgba(120, 100, 70, 0.62);
@@ -2134,17 +2191,19 @@ a.event-item.event-link {
     transform: rotateY(178deg);
 }
 
+/* Must mirror .gb-page exactly, or the ruled grid jumps mid-turn */
 .gb-flip-face {
+    --gb-line: 34px;
     position: absolute;
     inset: 0;
     overflow: hidden;
-    padding: 16px 18px 24px;
+    padding: 0 18px calc(var(--gb-line) * 0.8);
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
     background:
         repeating-linear-gradient(180deg,
-            rgba(0, 0, 0, 0) 0 33px,
-            rgba(150, 130, 95, 0.18) 33px 34px),
+            rgba(0, 0, 0, 0) 0 calc(var(--gb-line) - 1px),
+            rgba(150, 130, 95, 0.2) calc(var(--gb-line) - 1px) var(--gb-line)),
         linear-gradient(180deg, #fdf9ee 0%, #f6efdd 100%);
     box-shadow: 0 0 24px rgba(90, 60, 30, 0.3);
 }
