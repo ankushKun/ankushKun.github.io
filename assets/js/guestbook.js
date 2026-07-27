@@ -15,9 +15,10 @@
     const MAX_NAME = 24;
     const MAX_FROM = 24;
     const MAX_BLURB = 100;
-    // An entry occupies whole ruled lines: 2 for the signature, 1 for the
-    // meta row, 1 for an optional note, 1 blank between entries.
-    const LINES_PER_ENTRY = 5;
+    // An entry occupies whole ruled lines: 2 for the signature (with the
+    // place/date stacked beside it), 1 for the note and contact icons, 1
+    // blank between entries.
+    const LINES_PER_ENTRY = 4;
     const FALLBACK_LINE_PX = 34;     // must match --gb-line in the stylesheet
     const SAVE_COOLDOWN_MS = 4000;
     const FLIP_MS = 620;
@@ -177,77 +178,77 @@
         }
 
         /**
-         * Entries are laid out on the page's baseline grid: every block is a
-         * whole number of ruled lines tall, so the printed rows land on the
-         * rules no matter how many entries a page holds.
+         * Two columns on the page's baseline grid.
+         *
+         *   ┌──────────────────────────┬──────────────┐
+         *   │  signature (2 lines)     │ name         │
+         *   │                          │ from …       │
+         *   │                          │ on <date>    │
+         *   ├──────────────────────────┼──────────────┤
+         *   │  note (1 line)           │  ✉ 𝕏 ◉       │
+         *   └──────────────────────────┴──────────────┘
+         *
+         * The signature gets the full width it needs while the metadata fills
+         * what used to be dead space beside it, so an entry is four ruled
+         * lines instead of five.
          */
         function buildEntry(id, data) {
             const row = document.createElement('article');
             row.className = 'gb-entry' + (id === myId ? ' is-me' : '');
-            if (data.blurb) row.classList.add('has-blurb');
 
-            // Two lines for the signature, so it has room to breathe and its
-            // baseline lands on the second rule.
             const sig = document.createElement('div');
             sig.className = 'gb-entry-sig';
             renderSignatureInto(sig, data.name, id, data.variant);
             row.appendChild(sig);
 
-            // One line: who, where from, links, date.
-            const meta = document.createElement('div');
-            meta.className = 'gb-entry-meta';
+            // Right column, top: who they are, where from, when.
+            const aside = document.createElement('div');
+            aside.className = 'gb-entry-aside';
 
-            const who = document.createElement('div');
-            who.className = 'gb-entry-who';
+            const nameLine = document.createElement('div');
+            nameLine.className = 'gb-entry-nameline';
 
             const name = document.createElement('span');
             name.className = 'gb-entry-name';
             name.textContent = data.name;
-            who.appendChild(name);
+            nameLine.appendChild(name);
 
             if (id === myId) {
                 const you = document.createElement('span');
                 you.className = 'gb-entry-you';
                 you.textContent = 'you';
-                who.appendChild(you);
+                nameLine.appendChild(you);
             }
+            aside.appendChild(nameLine);
 
             if (data.from) {
-                const from = document.createElement('span');
+                const from = document.createElement('div');
                 from.className = 'gb-entry-from';
-                from.textContent = 'of ' + data.from;
-                who.appendChild(from);
-            }
-
-            meta.appendChild(who);
-
-            const tail = document.createElement('div');
-            tail.className = 'gb-entry-tail';
-
-            const links = contactLinks(data);
-            if (links.length) {
-                const wrap = document.createElement('span');
-                wrap.className = 'gb-entry-links';
-                links.forEach((a) => wrap.appendChild(a));
-                tail.appendChild(wrap);
+                from.textContent = 'from ' + data.from;
+                aside.appendChild(from);
             }
 
             const when = document.createElement('time');
             when.className = 'gb-entry-date';
             when.title = relativeTime(data.ts);
-            when.textContent = dateStamp(data.ts);
-            tail.appendChild(when);
+            when.textContent = 'on ' + dateStamp(data.ts);
+            aside.appendChild(when);
 
-            meta.appendChild(tail);
-            row.appendChild(meta);
+            row.appendChild(aside);
 
-            // One more line for the note, only when there is one.
-            if (data.blurb) {
-                const blurb = document.createElement('p');
-                blurb.className = 'gb-entry-blurb';
-                blurb.textContent = data.blurb;
-                row.appendChild(blurb);
-            }
+            // Left column, bottom: the note. Always present so the grid keeps
+            // its shape even when someone left no message.
+            const blurb = document.createElement('p');
+            blurb.className = 'gb-entry-blurb';
+            blurb.textContent = data.blurb || '';
+            row.appendChild(blurb);
+
+            // Right column, bottom: contact icons.
+            const links = contactLinks(data);
+            const wrap = document.createElement('div');
+            wrap.className = 'gb-entry-links';
+            links.forEach((a) => wrap.appendChild(a));
+            row.appendChild(wrap);
 
             return row;
         }
