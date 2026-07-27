@@ -1916,6 +1916,10 @@ a.event-item.event-link {
     padding: 8px 12px;
     background: linear-gradient(180deg, #fdfdfd 0%, #e7eaee 100%);
     border-bottom: 1px solid #c9ced5;
+    /* Own stacking layer so tooltips hanging below a tool render over the
+       canvas stage instead of behind it. */
+    position: relative;
+    z-index: 2;
 }
 
 .paint-tools,
@@ -1976,8 +1980,10 @@ a.event-item.event-link {
     transform: translateY(-1px);
 }
 
+/* Inset ring: the toolbar sits flush against the top of the window, which is
+   overflow:hidden, so an outward ring gets clipped. */
 .paint-swatch.is-selected {
-    box-shadow: 0 0 0 2px #fff, 0 0 0 4px #2f6fd0;
+    box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 4px #2f6fd0;
 }
 
 .paint-toolbar-end {
@@ -2014,6 +2020,7 @@ a.event-item.event-link {
 
 .paint-stage {
     position: relative;
+    z-index: 1;
     flex: 1;
     display: grid;
     place-items: center;
