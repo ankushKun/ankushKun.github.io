@@ -1999,11 +1999,15 @@ a.event-item.event-link {
    Putting the metadata beside the signature instead of under it reclaims the
    dead space to its right and drops an entry from five lines to four. */
 
+/* The aside column is given a real width rather than `auto` + a percentage
+   max-width: a percentage there resolves against a grid area that is itself
+   still being sized, and browsers collapse it to almost nothing - the name
+   truncated to "A." and the date to "on 28 Jul 20…". */
 .gb-entry {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) 150px;
     grid-template-rows: calc(var(--gb-line) * 2) var(--gb-line) var(--gb-line);
-    column-gap: 16px;
+    column-gap: 18px;
 }
 
 /* Signature: full left column of row 1, resting on the second rule */
@@ -2030,44 +2034,40 @@ a.event-item.event-link {
     color: #1c2a4a;
 }
 
-/* Aside: stacked, right-aligned, hugging the top of row 1 */
+/* Aside: two lines that land on the same two rules the signature spans, so
+   both columns share the page's rhythm instead of the right side floating.
+   Text wraps rather than ellipsising - "from K…" tells the reader nothing. */
 .gb-entry-aside {
     grid-column: 2;
     grid-row: 1;
-    align-self: start;
-    justify-self: end;
-    max-width: 44%;
-    padding-top: 3px;
-    text-align: right;
-    font-size: 10.5px;
-    line-height: 1.5;
-    color: #7d6a4d;
-}
-
-.gb-entry-nameline {
-    display: flex;
-    align-items: baseline;
-    justify-content: flex-end;
-    gap: 5px;
+    display: grid;
+    grid-template-rows: var(--gb-line) var(--gb-line);
     min-width: 0;
+    text-align: right;
+    font-size: 11px;
+    color: #7d6a4d;
+    overflow-wrap: anywhere;
 }
 
-.gb-entry-name {
-    font-size: 11.5px;
-    font-weight: 700;
-    color: #4c3d28;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+.gb-entry-asideline {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    gap: 6px;
+    min-width: 0;
+    /* Same inset as every other row, so the text rests on its rule */
+    padding-bottom: 6px;
+    line-height: 1.3;
 }
 
 .gb-entry-you {
     flex: none;
-    padding: 0 5px;
+    padding: 0 6px;
     font-size: 8.5px;
     font-weight: 700;
     letter-spacing: 0.5px;
     text-transform: uppercase;
+    line-height: 1.7;
     color: #fff;
     background: #9a5a3c;
     border-radius: 7px;
@@ -2076,9 +2076,7 @@ a.event-item.event-link {
 .gb-entry-from,
 .gb-entry-date {
     font-style: italic;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    min-width: 0;
 }
 
 .gb-entry-date {
@@ -2093,6 +2091,7 @@ a.event-item.event-link {
     display: flex;
     align-items: flex-end;
     min-width: 0;
+    /* Same bottom inset as the icon row so the two sit on one line */
     padding-bottom: 6px;
     font-size: 11.5px;
     line-height: 1.35;
@@ -2109,23 +2108,28 @@ a.event-item.event-link {
     align-self: end;
     justify-self: end;
     display: flex;
-    gap: 4px;
-    padding-bottom: 4px;
+    align-items: center;
+    gap: 5px;
+    padding-bottom: 6px;
 }
 
-.gb-entry-link {
+/* Scoped to .gb-desk deliberately: `.window-content a` sets the accent blue
+   at (0,1,1), which outranks a bare `.gb-entry-link` at (0,1,0) and turned
+   these icons blue, since the SVGs paint with currentColor. */
+.gb-desk .gb-entry-link {
     display: inline-grid;
     place-items: center;
-    width: 19px;
-    height: 19px;
+    width: 18px;
+    height: 18px;
     color: #6b563a;
+    text-decoration: none;
     background: rgba(120, 95, 60, 0.13);
-    border: 1px solid rgba(120, 95, 60, 0.16);
+    border: 1px solid rgba(120, 95, 60, 0.18);
     border-radius: 4px;
     transition: background 0.1s ease, color 0.1s ease;
 }
 
-.gb-entry-link:hover {
+.gb-desk .gb-entry-link:hover {
     background: rgba(120, 95, 60, 0.3);
     color: #2f2415;
 }
@@ -2143,9 +2147,9 @@ a.event-item.event-link {
     grid-row: 3;
 }
 
-.gb-entry.is-me .gb-entry-sig {
-    background: linear-gradient(180deg, rgba(200, 120, 60, 0) 55%, rgba(200, 120, 60, 0.07) 100%);
-}
+/* "Your" entry is marked by the badge alone. A tinted panel behind the
+   signature only reached as far as the signature's own box, which read as a
+   stray rectangle rather than a highlight. */
 
 .gb-page-blank {
     height: calc(var(--gb-line) * 2);
@@ -2553,6 +2557,12 @@ a.event-item.event-link {
 /* ---- Narrow windows: one leaf at a time ---- */
 
 @media (max-width: 720px) {
+    /* Single leaf is wider, but keep the aside from crowding the signature */
+    .gb-entry {
+        grid-template-columns: minmax(0, 1fr) 132px;
+        column-gap: 12px;
+    }
+
     .gb-page-left {
         display: none;
     }
