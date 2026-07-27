@@ -5,7 +5,7 @@
         {{ partial "os/window/controls.html" (dict "closeLink" "/") }}
         <div class="window-title">{{ .title }}</div>
         {{ with .permalink }}
-        <a href="{{ . }}" target="_blank" class="titlebar-link" title="Open in new tab">↗</a>
+        <a href="{{ . }}" target="_blank" class="titlebar-link" data-tip="Open in new tab">↗</a>
         {{ end }}
     </div>
     <div class="window-content {{ with .contentClass }}{{ . }}{{ end }}" {{ with .contentStyle }} style="{{ . }}" {{ end

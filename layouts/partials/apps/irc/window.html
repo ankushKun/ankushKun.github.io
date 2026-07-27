@@ -5,7 +5,7 @@
     <div class="irc-window">
         <!-- Nickname Prompt -->
         <!-- Nickname Prompt -->
-        <div class="irc-nick-prompt" id="nick-prompt-{{ .id }}">
+        <div class="irc-nick-prompt">
             <div class="irc-nick-dialog">
                 <div class="irc-login-header">
                     <div class="irc-logo-container">
@@ -29,23 +29,26 @@
                     <h2 class="irc-welcome-title">Welcome!</h2>
                     <p class="irc-welcome-sub">Please enter your nickname to continue.</p>
 
-                    <div class="irc-input-container">
-                        <label for="nick-input-{{ .id }}" class="irc-input-label">Nickname</label>
+                    {{/* This markup is cloned out of the hidden #window-contents template
+                    into each live window, so `id` + `for` would resolve to the invisible
+                    copy. Labels wrap their inputs instead - implicit association needs no id. */}}
+                    <label class="irc-input-container">
+                        <span class="irc-input-label">Nickname</span>
                         <div class="irc-input-wrapper">
-                            <input type="text" id="nick-input-{{ .id }}" maxlength="10" autocomplete="off">
+                            <input type="text" maxlength="10" autocomplete="off">
                         </div>
-                    </div>
+                    </label>
 
                     <div class="irc-terms">
                         <label>
-                            <input type="checkbox" id="terms-input-{{ .id }}">
+                            <input type="checkbox">
                             <span class="irc-terms-text">I acknowledge that this chat contains user-generated content
                                 (messages & GIFs) which may include profanity or NSFW material.</span>
                         </label>
                     </div>
 
                     <div class="irc-login-actions">
-                        <button id="nick-submit-{{ .id }}" class="irc-submit-btn" title="Sign In">
+                        <button class="irc-submit-btn" title="Sign In">
                             Sign In
                         </button>
                     </div>
@@ -210,6 +213,7 @@
     }
 
     .irc-input-container {
+        display: block;
         width: 100%;
         margin-bottom: 15px;
     }
@@ -375,6 +379,11 @@
         color: #777;
     }
 
+    .irc-status.is-offline {
+        color: #c0392b;
+        font-weight: 600;
+    }
+
     .irc-logout {
         background: none;
         border: none;
@@ -414,6 +423,46 @@
         flex-direction: column;
         /* border-right removed to avoid double border with user-col */
         overflow: hidden;
+        /* Anchor for the jump-to-latest pill */
+        position: relative;
+    }
+
+    .irc-unread-pill {
+        position: absolute;
+        left: 50%;
+        bottom: 10px;
+        transform: translateX(-50%);
+        z-index: 5;
+        padding: 4px 12px;
+        font-family: inherit;
+        font-size: 11px;
+        color: #fff;
+        background: #2f6fd0;
+        border: none;
+        border-radius: 11px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        cursor: pointer;
+        animation: ircPillIn 0.18s ease;
+    }
+
+    .irc-unread-pill[hidden] {
+        display: none;
+    }
+
+    .irc-unread-pill:hover {
+        background: #3a7ee0;
+    }
+
+    @keyframes ircPillIn {
+        from {
+            opacity: 0;
+            transform: translateX(-50%) translateY(6px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
     }
 
     .irc-log {
