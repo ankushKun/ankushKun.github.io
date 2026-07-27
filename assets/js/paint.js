@@ -229,8 +229,9 @@
             btn.style.background = hex;
             btn.setAttribute('role', 'radio');
             btn.setAttribute('aria-checked', i === 0 ? 'true' : 'false');
+            // No data-tip here: the swatch already shows the colour, so a hex
+            // tooltip is noise that only risks clipping against the toolbar.
             btn.setAttribute('aria-label', 'Colour ' + hex);
-            btn.dataset.tip = hex;
             btn.addEventListener('click', () => {
                 const all = els.palette.querySelectorAll('.paint-swatch');
                 all.forEach((b) => {
