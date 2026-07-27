@@ -21,7 +21,7 @@
     const LINES_PER_ENTRY = 4;
     const FALLBACK_LINE_PX = 34;     // must match --gb-line in the stylesheet
     const SAVE_COOLDOWN_MS = 4000;
-    const FLIP_MS = 620;
+    const FLIP_MS = 780;             // must match --gb-flip-ms in the stylesheet
 
     // ---- Field normalisation -------------------------------------------
 
@@ -376,37 +376,41 @@
 
             flipping = true;
             const forward = dir > 0;
+            const from = spread;
 
-            // Front face: the page that is lifting off the current spread
-            paintPage(els.flipFront, forward ? spread * 2 + 1 : spread * 2);
-            // Back face: what is underneath once it has turned
+            // The leaf carries the outgoing page on its front and the incoming
+            // one on its back, so the reveal happens mid-rotation.
+            paintPage(els.flipFront, forward ? from * 2 + 1 : from * 2);
             paintPage(els.flipBack, forward ? target * 2 : target * 2 + 1);
+
+            // Only the page the leaf UNCOVERS is repainted now. The page it
+            // will come to rest on keeps its old content until the leaf's back
+            // face is over it - repainting both up front made the far page pop
+            // to new content the instant you clicked, which no book does.
+            if (forward) {
+                paintPage(els.pageR, target * 2 + 1);
+            } else {
+                paintPage(els.pageL, target * 2);
+            }
+
+            spread = target;
 
             els.flip.hidden = false;
             els.flip.classList.toggle('is-forward', forward);
+            // Restart the animation cleanly if a previous one left the class on
             els.flip.classList.remove('is-turning');
-
-            // Reveal the destination spread beneath the moving leaf
-            spread = target;
-            paintPage(els.pageL, spread * 2);
-            paintPage(els.pageR, spread * 2 + 1);
-
-            // Force a reflow so the browser records the leaf's starting
-            // rotation. Without it, unhiding and rotating land in the same
-            // style pass and the transition is skipped entirely.
-            void els.flip.offsetWidth;
+            els.book.classList.remove('is-turning');
 
             requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    els.flip.classList.add('is-turning');
-                    els.book.classList.add('is-turning');
-                });
+                els.flip.classList.add('is-turning');
+                els.book.classList.toggle('is-turning-forward', forward);
+                els.book.classList.add('is-turning');
             });
 
             const done = setTimeout(() => {
                 els.flip.hidden = true;
                 els.flip.classList.remove('is-turning', 'is-forward');
-                els.book.classList.remove('is-turning');
+                els.book.classList.remove('is-turning', 'is-turning-forward');
                 flipping = false;
                 paintSpread();
             }, FLIP_MS);
