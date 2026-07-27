@@ -4016,3 +4016,134 @@ a.finder-row {
     outline: 2px solid #fff;
     outline-offset: 1px;
 }
+
+/* ==========================================================================
+   Menubar status items (battery / network)
+   ========================================================================== */
+
+.menubar-status-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 0 3px;
+    color: rgba(255, 255, 255, 0.92);
+    line-height: 1;
+}
+
+.menubar-status-item[hidden] {
+    display: none;
+}
+
+.menubar-status-label {
+    font-size: 11px;
+    letter-spacing: -0.2px;
+}
+
+.menubar-status-item.is-offline {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+@media (max-width: 640px) {
+    /* Percentage text is the first thing to go on a narrow menubar */
+    .menubar-status-label {
+        display: none;
+    }
+}
+
+/* ==========================================================================
+   Cursor reactions - press 1-8 to burst an emoji for everyone in the room
+   ========================================================================== */
+
+.cursor-reaction {
+    position: absolute;
+    z-index: 5;
+    font-size: 26px;
+    line-height: 1;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    animation: reactionFloat 2.2s cubic-bezier(0.22, 0.8, 0.3, 1) forwards;
+    will-change: transform, opacity;
+}
+
+@keyframes reactionFloat {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.4) rotate(0deg);
+    }
+
+    12% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.25) rotate(calc(var(--spin, 0deg) * 0.3));
+    }
+
+    28% {
+        transform: translate(-50%, -50%) scale(1) rotate(var(--spin, 0deg));
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(calc(-50% + var(--drift, 0px)), calc(-50% - 110px)) scale(0.9) rotate(var(--spin, 0deg));
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cursor-reaction {
+        animation: reactionFade 1.4s linear forwards;
+    }
+
+    @keyframes reactionFade {
+        0% { opacity: 0; }
+        15% { opacity: 1; }
+        100% { opacity: 0; }
+    }
+}
+
+/* ==========================================================================
+   "N viewing" badges - driven entirely by the anchor keys peers already
+   broadcast for their cursors, so they cost no extra network traffic.
+   ========================================================================== */
+
+.viewer-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    z-index: 6;
+    padding: 1px 6px;
+    border-radius: 8px;
+    background: rgba(47, 111, 208, 0.92);
+    color: #fff;
+    font-family: var(--font-system, -apple-system, BlinkMacSystemFont, sans-serif);
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 1.6;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
+    animation: viewerBadgeIn 0.18s ease;
+}
+
+@keyframes viewerBadgeIn {
+    from { opacity: 0; transform: scale(0.7); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Every other badge host already establishes a positioning context. */
+.project-card {
+    position: relative;
+}
+
+/* On a titlebar, sit against the right edge rather than over the title.
+   Uses its own keyframes so the entry animation does not fight the
+   translateY that centres it. */
+.window-titlebar > .viewer-badge {
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    animation-name: viewerBadgeFadeIn;
+}
+
+@keyframes viewerBadgeFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}

@@ -157,6 +157,8 @@
             } else {
                 try { localStorage.setItem('booted', '1'); } catch (e) { }
             }
+            // Read by mavericks.js to decide whether to play the startup chime
+            window.__firstBoot = !seenBoot;
 
             function hideLoader() {
                 if (window.__bootLoaderReady) return;
@@ -533,6 +535,10 @@
                     <line x1="3" y1="8.5" x2="9" y2="8.5" stroke="rgba(0,0,0,0.2)" stroke-width="0.6"/>
                 </svg>
             </div>
+            {{/* Populated from the Battery Status / Network Information APIs.
+            Stay hidden when the browser does not expose them. */}}
+            <div class="menubar-status-item" id="menubar-battery" hidden></div>
+            <div class="menubar-status-item" id="menubar-network" hidden></div>
             <div class="menubar-icon" role="button" tabindex="0" aria-label="Spotlight Search"
                 onclick="toggleSpotlightFromMenu()"
                 onkeydown="if(event.key === 'Enter' || event.key === ' ') { toggleSpotlightFromMenu(); event.preventDefault(); }"

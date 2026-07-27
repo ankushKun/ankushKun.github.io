@@ -35,6 +35,8 @@
         preloadHighResWallpaper();
         lazyLoadImages();
         setupSearchIndex();
+        setupStartupChime();
+        setupMenubarStatus();
 
         // Check for deep link or auto-open About Me
         setTimeout(() => {
@@ -634,6 +636,99 @@
         }, ms);
     }
 
+    // ================================================
+    // Menubar status items - real device state, not decoration
+    // Both APIs are optional and unevenly supported (Firefox and Safari expose
+    // neither), so each item stays hidden unless it has something true to say.
+    // ================================================
+
+    function setupMenubarStatus() {
+        setupBatteryStatus();
+        setupNetworkStatus();
+    }
+
+    function batteryIcon(level, charging) {
+        const fill = Math.max(0, Math.min(1, level));
+        const w = Math.round(fill * 14);
+        const colour = charging ? '#5ac85a' : (fill <= 0.2 ? '#e0524a' : '#fff');
+        return `
+            <svg width="22" height="11" viewBox="0 0 25 12" aria-hidden="true">
+                <rect x="0.5" y="0.5" width="21" height="11" rx="2.5"
+                      fill="none" stroke="rgba(255,255,255,0.75)"/>
+                <rect x="22.5" y="4" width="2" height="4" rx="1" fill="rgba(255,255,255,0.75)"/>
+                <rect x="2" y="2" width="${w}" height="8" rx="1" fill="${colour}"/>
+                ${charging ? '<path d="M12 1.5 L8.6 6.4 H11 L10 10.5 L13.6 5.4 H11.2 Z" fill="#1d1d1f" opacity="0.85"/>' : ''}
+            </svg>`;
+    }
+
+    function setupBatteryStatus() {
+        const el = document.getElementById('menubar-battery');
+        if (!el || !navigator.getBattery) return;
+
+        navigator.getBattery().then((battery) => {
+            const render = () => {
+                const pct = Math.round(battery.level * 100);
+                el.hidden = false;
+                el.innerHTML = `<span class="menubar-status-label">${pct}%</span>` +
+                    batteryIcon(battery.level, battery.charging);
+                el.dataset.tip = battery.charging
+                    ? `Battery ${pct}% — charging`
+                    : `Battery ${pct}%`;
+            };
+
+            render();
+            battery.addEventListener('levelchange', render);
+            battery.addEventListener('chargingchange', render);
+        }).catch(() => { /* permission denied or unavailable */ });
+    }
+
+    function setupNetworkStatus() {
+        const el = document.getElementById('menubar-network');
+        if (!el) return;
+
+        const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+
+        const render = () => {
+            const online = navigator.onLine;
+
+            // effectiveType is a coarse 2g/3g/4g bucket - map it to wifi bars.
+            let bars = 3;
+            if (!online) {
+                bars = 0;
+            } else if (conn && conn.effectiveType) {
+                bars = { 'slow-2g': 1, '2g': 1, '3g': 2, '4g': 3 }[conn.effectiveType] ?? 3;
+            }
+
+            const arc = (r, active) =>
+                `<path d="M${9 - r} ${11 - r * 0.35} A${r} ${r} 0 0 1 ${9 + r} ${11 - r * 0.35}"
+                       fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"
+                       opacity="${active ? 0.95 : 0.28}"/>`;
+
+            el.hidden = false;
+            el.innerHTML = `
+                <svg width="16" height="12" viewBox="0 0 18 13" aria-hidden="true">
+                    ${arc(8, bars >= 3)}
+                    ${arc(5.2, bars >= 2)}
+                    ${arc(2.4, bars >= 1)}
+                    <circle cx="9" cy="11" r="1.1" fill="#fff" opacity="${online ? 0.95 : 0.28}"/>
+                </svg>`;
+
+            const label = !online
+                ? 'Offline'
+                : conn && conn.effectiveType
+                    ? `Online — ${conn.effectiveType.toUpperCase()}`
+                    : 'Online';
+            el.dataset.tip = label;
+            el.setAttribute('aria-label', label);
+            el.classList.toggle('is-offline', !online);
+        };
+
+        render();
+        window.addEventListener('online', render);
+        window.addEventListener('offline', render);
+        if (conn && conn.addEventListener) conn.addEventListener('change', render);
+    }
+
     // Clock
     function setupClock() {
         const clock = document.getElementById('clock');
@@ -1224,6 +1319,14 @@
                     ['↑ ↓', 'Move through results'],
                     ['↵', 'Open the selected result'],
                     ['Esc', 'Close search or dismiss a dialog']
+                ]
+            },
+            {
+                name: 'Reactions',
+                items: [
+                    ['1 – 8', 'Burst an emoji at your cursor for everyone here'],
+                    ['❤️ 🔥 😂 🎉', 'Keys 1 2 3 4'],
+                    ['👀 🤯 👍 💀', 'Keys 5 6 7 8']
                 ]
             }
         ];
@@ -2731,6 +2834,77 @@
         } catch (e) {
             console.log('Konami sound unavailable:', e.message);
         }
+    }
+
+    // ================================================
+    // Startup chime
+    // The classic Mac boot chord: a big detuned F#/Gb major voicing with a
+    // long tail. Plays once per visitor, alongside the boot screen.
+    // ================================================
+
+    function playStartupChime() {
+        try {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioContext.state === 'suspended') audioContext.resume();
+            if (audioContext.state !== 'running') return false;
+
+            const now = audioContext.currentTime + 0.02;
+            const master = audioContext.createGain();
+
+            // Gentle low-pass so the chord reads warm rather than buzzy
+            const filter = audioContext.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(1800, now);
+            filter.frequency.exponentialRampToValueAtTime(700, now + 2.4);
+
+            master.connect(filter);
+            filter.connect(audioContext.destination);
+
+            master.gain.setValueAtTime(0, now);
+            master.gain.linearRampToValueAtTime(0.16, now + 0.06);
+            master.gain.exponentialRampToValueAtTime(0.0001, now + 2.6);
+
+            // F#3 A#3 C#4 F#4 - slightly detuned pairs give the chorused shimmer
+            const voices = [185.00, 233.08, 277.18, 369.99, 554.37];
+
+            voices.forEach((freq) => {
+                [-2.5, 2.5].forEach((detune) => {
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now);
+                    osc.detune.setValueAtTime(detune, now);
+                    gain.gain.value = 1 / (voices.length * 2);
+                    osc.connect(gain);
+                    gain.connect(master);
+                    osc.start(now);
+                    osc.stop(now + 2.7);
+                });
+            });
+
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function setupStartupChime() {
+        // baseof.html sets this before the boot screen renders
+        if (!window.__firstBoot) return;
+
+        if (playStartupChime()) return;
+
+        // Autoplay policy blocked it - most browsers require a gesture first.
+        // Take the very next interaction, once, and then stop listening.
+        const onGesture = () => {
+            document.removeEventListener('pointerdown', onGesture);
+            document.removeEventListener('keydown', onGesture);
+            playStartupChime();
+        };
+        document.addEventListener('pointerdown', onGesture, { once: true });
+        document.addEventListener('keydown', onGesture, { once: true });
     }
 
     // Error/Bonk sound for error notifications

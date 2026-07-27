@@ -75,6 +75,8 @@
                 gunRoot().get('live').get('cursors').get(room || roomKey()),
             presence: (room) =>
                 gunRoot().get('live').get('presence').get(room || roomKey()),
+            reactions: (room) =>
+                gunRoot().get('live').get('reactions').get(room || roomKey()),
             ircPresence: (channel = 'general') =>
                 gunRoot().get('live').get('irc').get(channel).get('presence'),
         },
