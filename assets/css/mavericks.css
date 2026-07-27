@@ -3554,3 +3554,91 @@ a.finder-row {
         touch-action: pan-y pinch-zoom;
     }
 }
+
+/* ==========================================================================
+   Multiplayer cursors
+   Anchor rects are viewport-relative (getBoundingClientRect), so the layer is
+   fixed rather than absolutely positioned inside body.
+   ========================================================================== */
+
+#cursor-layer {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 999998;
+    overflow: hidden;
+}
+
+.remote-cursor {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 2px;
+    will-change: transform;
+    /* Peers publish ~14 updates/sec; this smooths the gaps between them. */
+    transition: transform 90ms linear, opacity 150ms ease;
+}
+
+/* Suppressed when a LOCAL layout change moved the anchor - the cursor has to
+   travel with the window being dragged, not glide toward it afterwards. */
+#cursor-layer.is-instant .remote-cursor {
+    transition: opacity 150ms ease;
+}
+
+.remote-cursor-icon {
+    display: block;
+    flex: none;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35));
+}
+
+.remote-cursor-label {
+    margin-top: 12px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: rgba(30, 30, 30, 0.82);
+    color: #fff;
+    font-family: var(--font-system, -apple-system, BlinkMacSystemFont, sans-serif);
+    font-size: 10px;
+    line-height: 1.5;
+    white-space: nowrap;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.remote-cursor-label[hidden] {
+    display: none;
+}
+
+/* Peer is pointing at something this viewer does not have open. */
+.remote-cursor.is-orphaned {
+    opacity: 0.25;
+}
+
+#online-count {
+    position: fixed;
+    bottom: 2px;
+    left: 2px;
+    background: rgba(70, 70, 70, 0.75);
+    color: #fff;
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-family: var(--font-system, -apple-system, BlinkMacSystemFont, sans-serif);
+    font-size: 9px;
+    line-height: 1.4;
+    z-index: 999999;
+    pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .remote-cursor {
+        transition: none;
+    }
+}
+
+/* Hidden until a cursor has resolved a valid anchor at least once. */
+.remote-cursor[hidden] {
+    display: none;
+}
