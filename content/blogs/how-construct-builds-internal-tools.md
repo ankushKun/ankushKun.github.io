@@ -104,5 +104,9 @@ Once the first build opens, use it. The missing field, unclear status, or unnece
 ## Related resources
 
 - [Construct homepage](https://construct.computer)
-- [What is an AI employee?](/blog/what-is-an-ai-employee/)
-- [AI workflow automation](/blog/ai-workflow-automation/)
+- [What is an AI employee?](https://construct.computer/blog/what-is-an-ai-employee/)
+- [AI workflow automation](https://construct.computer/blog/ai-workflow-automation/)
+
+---
+
+*Originally posted on [construct.computer](https://construct.computer/blog/build-internal-tools-with-construct/).*

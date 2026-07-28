@@ -84,3 +84,7 @@ A team piloting inbound lead qualification, for example, would run this scorecar
 - [The EU AI Act](https://artificialintelligenceact.eu/article/14/)
 - [Digital Applied: AI agent failure framework](https://www.digitalapplied.com/blog/88-percent-ai-agents-never-reach-production-failure-framework)
 - [Digital Applied: Agent-washing definition and buyer's scorecard](https://www.digitalapplied.com/blog/agent-washing-definition-buyers-scorecard-2026)
+
+---
+
+*Originally posted on [construct.computer](https://construct.computer/blog/how-to-choose-an-ai-agent-platform-for-your-team/).*
