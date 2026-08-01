@@ -1,9 +1,9 @@
 {{/* Blog Article - reusable blog post layout */}}
 {{/* Usage: {{ partial "blog-article.html" . }} where . is a Page */}}
 <article class="blog-post">
-    {{ if .Params.image }}
+    {{ with or .Params.image .Params.og_image }}
     <div class="post-cover-image">
-        <img src="{{ .Params.image }}" alt="{{ .Title }}">
+        <img src="{{ . }}" alt="{{ $.Title }}">
     </div>
     {{ end }}
 
