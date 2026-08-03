@@ -80,23 +80,29 @@
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-/* Cover Image (Contained) */
+/* Cover Image — edge-to-edge, clipped to the frame.
+   Higher specificity than `.window-content img` (mavericks.css loads later)
+   so its vertical margins cannot letterbox the card. */
 .post-cover-image {
     margin: 0 auto 32px auto;
     max-width: 100%;
-    border-radius: 4px;
+    border-radius: 6px;
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    background: white;
-    padding: 4px;
     border: 1px solid #C0C0C0;
+    line-height: 0;
 }
 
-.post-cover-image img {
+.post-cover-image img,
+.window-content .post-cover-image img {
     display: block;
     width: 100%;
     height: auto;
-    border-radius: 2px;
+    margin: 0;
+    max-width: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
 }
 
 /* Content Typography */
