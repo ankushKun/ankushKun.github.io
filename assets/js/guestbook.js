@@ -564,6 +564,9 @@
                 });
             }
 
+            // Stops the visit toast on future loads without waiting for Gun
+            localStorage.setItem('guestbook-signed', myId);
+
             closeCard();
             setStatus(existing ? 'Entry updated' : 'Signed — welcome');
         }
@@ -648,6 +651,10 @@
                     ts: Number(data.ts) || 0,
                     updatedTs: Number(data.updatedTs) || 0
                 });
+                // Cover visitors who signed before the toast existed
+                if (id === myId) {
+                    localStorage.setItem('guestbook-signed', myId);
+                }
                 schedulePaint();
             });
 

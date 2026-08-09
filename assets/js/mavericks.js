@@ -9,7 +9,9 @@
     // URL reflects the focused window, so a window can be linked and bookmarked
     // and the browser Back button steps back through them.
     const ENABLE_DEEP_LINKING = true;
-    const ENABLE_HIRE_NOTIFICATION = false; // Set to true to show hire popup after first interaction
+    const ENABLE_GUESTBOOK_NOTIFICATION = true; // Nudge unsigned visitors after first interaction
+    const GUESTBOOK_SIGNED_KEY = 'guestbook-signed';
+    const VISITOR_ID_KEY = 'multiplayer-cursor-id';
 
     // State
     let windowZIndex = 100;
@@ -21,6 +23,99 @@
 
     // Initialize
     document.addEventListener('DOMContentLoaded', init);
+
+    function getOrCreateVisitorId() {
+        let id = localStorage.getItem(VISITOR_ID_KEY);
+        if (!id) {
+            id = Math.random().toString(36).slice(2, 11);
+            localStorage.setItem(VISITOR_ID_KEY, id);
+        }
+        return id;
+    }
+
+    /** True when this visitor already has a guestbook entry (local flag or Gun). */
+    function checkGuestbookSigned(visitorId) {
+        return new Promise((resolve) => {
+            if (!visitorId) return resolve(false);
+            if (localStorage.getItem(GUESTBOOK_SIGNED_KEY) === visitorId) {
+                return resolve(true);
+            }
+            if (!window.SiteGun || !window.SiteGun.paths || !window.SiteGun.paths.apps.guestbook) {
+                return resolve(false);
+            }
+
+            let settled = false;
+            const done = (signed) => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timer);
+                resolve(signed);
+            };
+
+            const timer = setTimeout(() => done(false), 1500);
+
+            try {
+                window.SiteGun.paths.apps.guestbook().get(visitorId).once((data) => {
+                    if (data && data.name) {
+                        localStorage.setItem(GUESTBOOK_SIGNED_KEY, visitorId);
+                        done(true);
+                    } else {
+                        done(false);
+                    }
+                });
+            } catch (e) {
+                done(false);
+            }
+        });
+    }
+
+    function getGuestbookNotificationIconHtml() {
+        const iconEl = document.querySelector('.desktop-icon[data-window="guestbook"] .icon-image');
+        return iconEl ? iconEl.innerHTML : '';
+    }
+
+    async function maybeShowGuestbookNotification() {
+        if (openWindows.has('guestbook')) return;
+
+        const visitorId = getOrCreateVisitorId();
+        if (localStorage.getItem(GUESTBOOK_SIGNED_KEY) === visitorId) return;
+
+        const signed = await checkGuestbookSigned(visitorId);
+        if (signed || openWindows.has('guestbook')) return;
+
+        showNotification({
+            title: 'Guestbook',
+            message: 'Got a minute? Sign the book before you go.',
+            iconHtml: getGuestbookNotificationIconHtml(),
+            duration: 8000,
+            onClick: () => {
+                openWindow('guestbook', 'Guestbook');
+            }
+        });
+    }
+
+    function setupGuestbookNotification() {
+        if (!ENABLE_GUESTBOOK_NOTIFICATION) return;
+
+        // Show 2 seconds after first user interaction so the notification sound can play
+        let hasTriggered = false;
+        const onFirstInteraction = () => {
+            if (hasTriggered) return;
+            hasTriggered = true;
+
+            document.removeEventListener('click', onFirstInteraction);
+            document.removeEventListener('keydown', onFirstInteraction);
+            document.removeEventListener('touchstart', onFirstInteraction);
+
+            setTimeout(() => {
+                maybeShowGuestbookNotification();
+            }, 2000);
+        };
+
+        document.addEventListener('click', onFirstInteraction);
+        document.addEventListener('keydown', onFirstInteraction);
+        document.addEventListener('touchstart', onFirstInteraction);
+    }
 
     function init() {
         setupClock();
@@ -60,34 +155,7 @@
             }
         }, 300);
 
-        if (ENABLE_HIRE_NOTIFICATION) {
-            // Show hire notification 2 seconds after first user interaction (so sound can play)
-            let hasShownHireNotification = false;
-            const showHireNotification = () => {
-                if (hasShownHireNotification) return;
-                hasShownHireNotification = true;
-
-                // Remove listeners
-                document.removeEventListener('click', showHireNotification);
-                document.removeEventListener('keydown', showHireNotification);
-                document.removeEventListener('touchstart', showHireNotification);
-
-                setTimeout(() => {
-                    showNotification({
-                        title: "I am Available for Hire!",
-                        message: "Looking for an engineer or know someone who is? Click here to see resume.",
-                        icon: "/pfp.png",
-                        onClick: () => {
-                            openWindow('resume', 'Resume');
-                        }
-                    });
-                }, 2000);
-            };
-
-            document.addEventListener('click', showHireNotification);
-            document.addEventListener('keydown', showHireNotification);
-            document.addEventListener('touchstart', showHireNotification);
-        }
+        setupGuestbookNotification();
     }
 
     // Preload high-resolution wallpaper
