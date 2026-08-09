@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "title": "Top Picks",
+  "updated": "2026-08-10",
+  "manifestHash": "f65a4acdb486a8f6",
+  "tracks": [
+    {
+      "id": "b0805e1131e1",
+      "videoId": "tDgjTP8fuz4",
+      "title": "Not Tomorrow (Long Version)",
+      "artist": "Silent Hill",
+      "durationSec": 176,
+      "thumb": "/music/covers/tDgjTP8fuz4.jpg"
+    },
+    {
+      "id": "38802b1a2ae4",
+      "videoId": "ZwLvcaDMhU8",
+      "title": "Promise (Reprise)",
+      "artist": "",
+      "durationSec": 105,
+      "thumb": "/music/covers/ZwLvcaDMhU8.jpg"
+    },
+    {
+      "id": "c47f2a807ebe",
+      "videoId": "lXoVugTertI",
+      "title": "Subwoofer Lullaby",
+      "artist": "",
+      "durationSec": 209,
+      "thumb": "/music/covers/lXoVugTertI.jpg"
+    },
+    {
+      "id": "dd001a3c7cd4",
+      "videoId": "5w3rRFWzjcM",
+      "title": "Sweden",
+      "artist": "",
+      "durationSec": 216,
+      "thumb": "/music/covers/5w3rRFWzjcM.jpg"
+    },
+    {
+      "id": "58e31d3786ae",
+      "videoId": "enHmnTPsp9w",
+      "title": "I Want Love (Studio Mix)",
+      "artist": "",
+      "durationSec": 281,
+      "thumb": "/music/covers/enHmnTPsp9w.jpg"
+    },
+    {
+      "id": "617e8ee71333",
+      "videoId": "jb1SkDjaXk8",
+      "title": "Obstacles",
+      "artist": "Syd Matters",
+      "durationSec": 210,
+      "thumb": "/music/covers/jb1SkDjaXk8.jpg"
+    },
+    {
+      "id": "6cbcf714a658",
+      "videoId": "Qg6BwvDcANg",
+      "title": "Tessellate [OFFICIAL VIDEO]",
+      "artist": "alt-J",
+      "durationSec": 188,
+      "thumb": "/music/covers/Qg6BwvDcANg.jpg"
+    },
+    {
+      "id": "c940346ee4ad",
+      "videoId": "maWHojZTnTg",
+      "title": "Aria Math",
+      "artist": "",
+      "durationSec": 310,
+      "thumb": "/music/covers/maWHojZTnTg.jpg"
+    },
+    {
+      "id": "5a08bd1f010a",
+      "videoId": "_ZaeKhITDWw",
+      "title": "Hazardous Environments",
+      "artist": "",
+      "durationSec": 83,
+      "thumb": "/music/covers/_ZaeKhITDWw.jpg"
+    },
+    {
+      "id": "db62097964d0",
+      "videoId": "td3P1-cfZ4E",
+      "title": "Theme of Laura",
+      "artist": "",
+      "durationSec": 205,
+      "thumb": "/music/covers/td3P1-cfZ4E.jpg"
+    }
+  ]
+}

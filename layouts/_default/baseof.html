@@ -526,6 +526,71 @@
             {{/* Minimized windows land here instead of vanishing - without a dock,
             the Finder dropdown was the only way to get a window back. */}}
             <div class="menubar-minimized" id="menubar-minimized" role="group" aria-label="Minimized windows"></div>
+
+            {{/* Music Now Playing - marquee + clean miniplayer dropdown */}}
+            <div class="menubar-music" id="menubar-music" hidden>
+                <button type="button" class="mu-mb-toggle" id="mu-mb-toggle" aria-label="Music"
+                    aria-haspopup="true" aria-expanded="false">
+                    <svg class="mu-mb-note" viewBox="0 0 16 16" width="11" height="11" aria-hidden="true">
+                        <path fill="currentColor"
+                            d="M6 12.5V4.2l7-1.4v8.2a2 2 0 1 1-1.2-1.8V4.7L7 5.9v6.6a2 2 0 1 1-1-.9z" />
+                    </svg>
+                    <span class="mu-mb-marquee" aria-hidden="true">
+                        <span class="mu-mb-marquee-inner is-static">
+                            <span class="mu-mb-text">Music</span>
+                        </span>
+                    </span>
+                </button>
+                <div class="mu-mb-dropdown" id="mu-mb-dropdown" role="menu" hidden>
+                    <div class="mu-mb-now">
+                        <div class="mu-mb-artwrap">
+                            <img class="mu-mb-art" alt="" draggable="false" hidden>
+                            <div class="mu-mb-art-ph" aria-hidden="true">♪</div>
+                        </div>
+                        <div class="mu-mb-meta">
+                            <div class="mu-mb-title" aria-live="polite">Music</div>
+                            <div class="mu-mb-artist">Waiting for a mix…</div>
+                        </div>
+                    </div>
+                    <div class="mu-mb-scrub">
+                        <span class="mu-mb-time mu-mb-time-cur">0:00</span>
+                        <input type="range" class="mu-mb-seek mu-mb-range" min="0" max="0" value="0" step="1"
+                            aria-label="Seek">
+                        <span class="mu-mb-time mu-mb-time-dur">-0:00</span>
+                    </div>
+                    <div class="mu-mb-transport" role="group" aria-label="Transport">
+                        <button type="button" class="mu-mb-btn mu-mb-prev" aria-label="Previous">
+                            <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                                <path fill="currentColor" d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/>
+                            </svg>
+                        </button>
+                        <button type="button" class="mu-mb-btn mu-mb-play" aria-label="Play">
+                            <svg class="mu-mb-icon-play" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                                <path fill="currentColor" d="M8 5v14l11-7z"/>
+                            </svg>
+                            <svg class="mu-mb-icon-pause" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" hidden>
+                                <path fill="currentColor" d="M6 5h4v14H6zm8 0h4v14h-4z"/>
+                            </svg>
+                        </button>
+                        <button type="button" class="mu-mb-btn mu-mb-next" aria-label="Next">
+                            <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                                <path fill="currentColor" d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <label class="mu-mb-vol">
+                        <svg class="mu-mb-vol-icon" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                            <path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/>
+                        </svg>
+                        <input type="range" class="mu-mb-volume mu-mb-range" min="0" max="100" value="80" step="1"
+                            aria-label="Volume">
+                    </label>
+                    <div class="dropdown-divider" aria-hidden="true"></div>
+                    <div class="dropdown-item mu-mb-open" role="menuitem" tabindex="0">Open Music</div>
+                    <div class="dropdown-item mu-mb-stop" role="menuitem" tabindex="0">Stop and hide</div>
+                </div>
+            </div>
+
             <div class="menubar-icon menubar-sticky-icon" id="menubar-sticky-toggle" role="button" tabindex="0"
                 aria-label="Show Sticky Note" data-tip="Sticky Note" hidden>
                 <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
@@ -557,6 +622,10 @@
     <!-- Window Container -->
     <div class="windows-container" id="windows-container"></div>
 
+    {{/* Music audio engine mount - the official YT player lives here as a 1x1
+    offscreen iframe; the video surface is never shown anywhere on the site. */}}
+    <div id="mu-ambient-yt-mount" class="mu-yt-hidden" aria-hidden="true"></div>
+
     <!-- Main JS -->
     {{ $js := resources.Get "js/mavericks.js" | resources.Minify | resources.Fingerprint }}
     <script src="{{ $js.Permalink }}"></script>
@@ -573,6 +642,7 @@
         "GUESTBOOK_URL"     "js/guestbook.js"
         "SIGNATURE_URL"     "js/signature.js"
         "PAINT_URL"         "js/paint.js"
+        "MUSIC_URL"         "js/music-player.js"
     -}}
     <script>
         {{- range $key, $path := $lazyAssets -}}
@@ -597,6 +667,11 @@
     <script src="{{ $gunConfig.Permalink }}"></script>
     {{ $stickyNote := resources.Get "js/sticky-note.js" | resources.Minify | resources.Fingerprint }}
     <script src="{{ $stickyNote.Permalink }}"></script>
+    {{/* Music engine + ambient Now Playing widget (eager: autoplay after first gesture) */}}
+    {{- with resources.Get "js/music-player.js" -}}
+    {{- $musicJs := . | resources.Minify | resources.Fingerprint }}
+    <script src="{{ $musicJs.Permalink }}"></script>
+    {{- end }}
     {{ $cursors := resources.Get "js/cursors.js" | resources.Minify | resources.Fingerprint }}
     <script src="{{ $cursors.Permalink }}"></script>
 </body>
