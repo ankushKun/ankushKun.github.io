@@ -1,0 +1,117 @@
+{{/* Music - iTunes 11-style player: toolbar LCD, Cover Flow, songs table */}}
+{{- $id := .id -}}
+<div id="content-{{ $id }}" class="window-content" data-music-window="true">
+    <div class="mu-app">
+        <div class="mu-toolbar" role="toolbar" aria-label="Playback">
+            <div class="mu-toolbar-left">
+                <div class="mu-transport" role="group" aria-label="Transport">
+                    <button type="button" class="mu-btn mu-prev" aria-label="Previous" disabled>
+                        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                            <path fill="currentColor" d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/>
+                        </svg>
+                    </button>
+                    <button type="button" class="mu-btn mu-play primary" aria-label="Play" disabled>
+                        <svg class="mu-icon-play" viewBox="0 0 24 24" width="17" height="17" aria-hidden="true">
+                            <path fill="currentColor" d="M8 5v14l11-7z"/>
+                        </svg>
+                        <svg class="mu-icon-pause" viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" hidden>
+                            <path fill="currentColor" d="M6 5h4v14H6zm8 0h4v14h-4z"/>
+                        </svg>
+                    </button>
+                    <button type="button" class="mu-btn mu-next" aria-label="Next" disabled>
+                        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+                            <path fill="currentColor" d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/>
+                        </svg>
+                    </button>
+                </div>
+                <label class="mu-vol">
+                    <svg class="mu-vol-icon" viewBox="0 0 24 24" width="12" height="12" aria-hidden="true">
+                        <path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z"/>
+                    </svg>
+                    <input type="range" class="mu-volume mu-app-range" min="0" max="100" value="80" step="1"
+                        aria-label="Volume" disabled style="--mu-fill: 80%">
+                </label>
+            </div>
+
+            <div class="mu-lcd" aria-label="Now playing">
+                <div class="mu-lcd-artwrap">
+                    <img class="mu-lcd-art" alt="" draggable="false" hidden>
+                    <div class="mu-lcd-art-ph" aria-hidden="true">?</div>
+                </div>
+                <div class="mu-lcd-meta">
+                    <div class="mu-lcd-topline">
+                        <div class="mu-lcd-text">
+                            <div class="mu-lcd-title">No songs</div>
+                            <div class="mu-lcd-sub">Add a mix to start listening</div>
+                        </div>
+                        <button type="button" class="mu-shuffle" aria-label="Shuffle off" aria-pressed="false" disabled>
+                            <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true">
+                                <path fill="currentColor" d="M10.59 9.17 5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="mu-lcd-scrub">
+                        <span class="mu-lcd-time-cur">0:00</span>
+                        <input type="range" class="mu-seek mu-app-range" min="0" max="0" value="0" step="1"
+                            aria-label="Seek" disabled style="--mu-fill: 0%">
+                        <span class="mu-lcd-time-rem">-0:00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mu-toolbar-right">
+                <label class="mu-search">
+                    <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true">
+                        <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/>
+                        <path d="m20 20-3.5-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <input type="search" class="mu-filter" placeholder="Search mix" aria-label="Search mix"
+                        autocomplete="off" spellcheck="false">
+                </label>
+            </div>
+        </div>
+
+        <div class="mu-body">
+            <aside class="mu-sidebar" aria-label="Playlists">
+                <div class="mu-sidebar-section">PLAYLISTS</div>
+                <button type="button" class="mu-sidebar-item is-selected" aria-current="true">
+                    <span class="mu-sidebar-icon" aria-hidden="true">♪</span>
+                    <span class="mu-playlist-title">Mix</span>
+                </button>
+            </aside>
+
+            <div class="mu-main">
+                <div class="mu-coverflow" tabindex="0" role="listbox" aria-label="Cover Flow" hidden>
+                    <div class="mu-coverflow-stage" aria-hidden="true"></div>
+                    <div class="mu-coverflow-floor" aria-hidden="true"></div>
+                    <div class="mu-coverflow-caption">
+                        <div class="mu-coverflow-title"></div>
+                        <div class="mu-coverflow-artist"></div>
+                    </div>
+                </div>
+
+                <div class="mu-table-wrap">
+                    <table class="mu-table" aria-label="Songs">
+                        <thead>
+                            <tr>
+                                <th class="mu-col-status" scope="col" aria-label="Playing"></th>
+                                <th class="mu-col-name is-sorted" scope="col" data-sort="title" tabindex="0" role="columnheader" aria-sort="none">Name</th>
+                                <th class="mu-col-time" scope="col" data-sort="duration" tabindex="0" role="columnheader" aria-sort="none">Time</th>
+                                <th class="mu-col-artist" scope="col" data-sort="artist" tabindex="0" role="columnheader" aria-sort="none">Artist</th>
+                            </tr>
+                        </thead>
+                        <tbody class="mu-table-body"></tbody>
+                    </table>
+                    <div class="mu-empty">
+                        <p>No songs</p>
+                        <p class="mu-empty-hint">Add a mix to start listening</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mu-statusbar" aria-live="polite">
+            <span class="mu-status-text">0 songs</span>
+        </div>
+    </div>
+</div>

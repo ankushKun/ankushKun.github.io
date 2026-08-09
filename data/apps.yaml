@@ -144,6 +144,20 @@ apps:
       type: partial
       partial: icons/desktop/paint.html
 
+  - id: music
+    label: Music
+    title: Music
+    type: app
+    description: iTunes-style player — Cover Flow, songs, and a mix to play
+    desktop: true
+    searchable: true
+    defaultSize:
+      width: 920
+      height: 640
+    icon:
+      type: partial
+      partial: icons/desktop/music.html
+
   - id: contact
     label: Contacts
     title: Contacts

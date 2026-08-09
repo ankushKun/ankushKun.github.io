@@ -2811,3 +2811,1385 @@ a.event-item.event-link {
         animation: none !important;
     }
 }
+
+/* =========================================================
+   Music - iTunes 11-style window
+   ========================================================= */
+
+/* Live windows clone .mu-app only (not the template wrapper), so target
+   the window chrome + .mu-app for fill height. */
+[data-window-id="music"] .window-content,
+[data-music-window] {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    background: #ececec;
+    padding: 0;
+}
+
+.mu-app {
+    --mu-ink: #1e1e1e;
+    --mu-muted: #6a6a6a;
+    --mu-accent: #007AFF;
+    --mu-row-alt: #f2f3f5;
+    --mu-row-sel: #cfe0f5;
+    --mu-toolbar-h: 64px;
+    --mu-status-h: 22px;
+    --mu-sidebar-w: 150px;
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: #ececec;
+    color: var(--mu-ink);
+    font-family: "Lucida Grande", "Helvetica Neue", "Segoe UI", sans-serif;
+    font-size: 12px;
+}
+
+/* ----- Toolbar ----- */
+
+.mu-toolbar {
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: minmax(150px, 0.9fr) minmax(280px, 1.6fr) minmax(120px, 0.85fr);
+    align-items: center;
+    gap: 12px;
+    min-height: var(--mu-toolbar-h);
+    padding: 8px 12px;
+    background:
+        linear-gradient(180deg, #fafafa 0%, #e0e0e0 45%, #cfcfcf 55%, #bdbdbd 100%);
+    border-bottom: 1px solid #8e8e8e;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.mu-toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.mu-toolbar-right {
+    display: flex;
+    justify-content: flex-end;
+    min-width: 0;
+}
+
+.mu-transport {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.mu-btn {
+    appearance: none;
+    border: 1px solid rgba(0, 0, 0, 0.28);
+    border-radius: 50%;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(180deg, #f7f7f7 0%, #d2d2d2 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        0 1px 1px rgba(0, 0, 0, 0.12);
+    color: #2a2a2a;
+    cursor: pointer;
+}
+
+.mu-btn.primary {
+    width: 32px;
+    height: 32px;
+}
+
+.mu-btn:hover:not(:disabled) {
+    background: linear-gradient(180deg, #ffffff 0%, #d8d8d8 100%);
+}
+
+.mu-btn:active:not(:disabled) {
+    background: linear-gradient(180deg, #c8c8c8 0%, #e0e0e0 100%);
+}
+
+.mu-btn:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.mu-btn svg {
+    display: block;
+}
+
+.mu-btn svg[hidden] {
+    display: none !important;
+}
+
+.mu-btn.mu-play .mu-icon-play {
+    display: block;
+}
+
+.mu-btn.mu-play .mu-icon-pause {
+    display: none;
+}
+
+.mu-btn.mu-play.is-playing .mu-icon-play {
+    display: none;
+}
+
+.mu-btn.mu-play.is-playing .mu-icon-pause {
+    display: block;
+}
+
+.mu-btn.mu-play.is-playing .mu-icon-pause[hidden] {
+    display: block !important;
+}
+
+.mu-btn.mu-play:not(.is-playing) .mu-icon-play[hidden] {
+    display: block !important;
+}
+
+.mu-vol {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #555;
+    min-width: 0;
+}
+
+.mu-vol .mu-app-range {
+    width: 70px;
+}
+
+.mu-search {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 160px;
+    width: 100%;
+    padding: 4px 9px;
+    border-radius: 12px;
+    background: #fff;
+    border: 1px solid #9a9a9a;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+    color: #777;
+}
+
+.mu-filter {
+    appearance: none;
+    border: 0;
+    outline: none;
+    background: transparent;
+    width: 100%;
+    min-width: 0;
+    font: inherit;
+    font-size: 11px;
+    color: var(--mu-ink);
+}
+
+.mu-filter::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+}
+
+/* Shared thin range (toolbar volume + LCD seek) */
+.mu-app-range {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    margin: 0;
+    border-radius: 999px;
+    background: linear-gradient(
+        90deg,
+        #8a9098 0%,
+        #8a9098 var(--mu-fill, 0%),
+        rgba(0, 0, 0, 0.18) var(--mu-fill, 0%)
+    );
+    outline: none;
+    cursor: pointer;
+}
+
+.mu-app-range::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 999px;
+    background: transparent;
+}
+
+.mu-app-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 11px;
+    height: 11px;
+    margin-top: -3.5px;
+    border-radius: 50%;
+    background: #f4f4f6;
+    border: 1px solid rgba(0, 0, 0, 0.25);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.mu-app-range::-moz-range-track {
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.18);
+    border: 0;
+}
+
+.mu-app-range::-moz-range-progress {
+    height: 4px;
+    border-radius: 999px;
+    background: #8a9098;
+}
+
+.mu-app-range::-moz-range-thumb {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: #f4f4f6;
+    border: 1px solid rgba(0, 0, 0, 0.25);
+}
+
+.mu-app-range:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+/* ----- Recessed LCD — inset into the silver chrome, not a dark pod ----- */
+
+.mu-lcd {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 8px;
+    align-items: stretch;
+    min-width: 0;
+    min-height: 48px;
+    padding: 5px 8px 6px;
+    border-radius: 6px;
+    background:
+        linear-gradient(180deg, #d0d3d8 0%, #b8bcc2 45%, #aeb2b8 100%);
+    border: 1px solid rgba(70, 76, 86, 0.55);
+    box-shadow:
+        inset 0 2px 3px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(0, 0, 0, 0.12),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.45),
+        0 1px 0 rgba(255, 255, 255, 0.55);
+    color: #1e1e1e;
+    overflow: hidden;
+}
+
+.mu-lcd-artwrap {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    align-self: center;
+    border-radius: 3px;
+    overflow: hidden;
+    background: #8a9098;
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    flex-shrink: 0;
+}
+
+/* Beat .window-content img { margin: 12px 0 } which left a gray gap above LCD art */
+.window-content .mu-lcd-art,
+.mu-lcd-art {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    margin: 0;
+    object-fit: cover;
+    object-position: center center;
+    display: block;
+}
+
+.mu-lcd-art[hidden] {
+    display: none !important;
+}
+
+.mu-lcd-art-ph {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.55);
+    background: linear-gradient(145deg, #9aa0a8, #6a7078);
+}
+
+.mu-lcd-meta {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+}
+
+.mu-lcd-topline {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    min-width: 0;
+}
+
+.mu-lcd-text {
+    min-width: 0;
+    flex: 1;
+}
+
+.mu-lcd-title {
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #1a1a1a;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.mu-lcd-sub {
+    font-size: 9px;
+    line-height: 1.2;
+    margin-top: 1px;
+    color: rgba(30, 30, 30, 0.62);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mu-lcd-scrub {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) 32px;
+    align-items: center;
+    gap: 5px;
+}
+
+.mu-lcd-time-cur,
+.mu-lcd-time-rem {
+    font-size: 9px;
+    font-variant-numeric: tabular-nums;
+    color: rgba(30, 30, 30, 0.55);
+    line-height: 1;
+}
+
+.mu-lcd-time-rem {
+    text-align: right;
+}
+
+.mu-lcd .mu-app-range {
+    background: linear-gradient(
+        90deg,
+        #5a6068 0%,
+        #5a6068 var(--mu-fill, 0%),
+        rgba(0, 0, 0, 0.16) var(--mu-fill, 0%)
+    );
+}
+
+.mu-lcd .mu-app-range::-webkit-slider-thumb {
+    background: #f7f7f9;
+    border-color: rgba(0, 0, 0, 0.28);
+}
+
+.mu-shuffle {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: rgba(30, 30, 30, 0.4);
+    padding: 0;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 2px;
+    margin-top: 1px;
+}
+
+.mu-shuffle.is-on {
+    color: #0066d6;
+}
+
+.mu-shuffle:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.mu-shuffle:hover:not(:disabled) {
+    color: #1a1a1a;
+}
+
+/* ----- Body: sidebar + main ----- */
+
+.mu-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    background: #fff;
+}
+
+.mu-sidebar {
+    flex: 0 0 var(--mu-sidebar-w);
+    width: var(--mu-sidebar-w);
+    background: #e6e6e6;
+    border-right: 1px solid #b0b0b0;
+    padding: 8px 0;
+    overflow: auto;
+}
+
+.mu-sidebar-section {
+    padding: 4px 12px 6px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: #7a7a7a;
+}
+
+.mu-sidebar-item {
+    appearance: none;
+    border: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    background: transparent;
+    font: inherit;
+    font-size: 12px;
+    color: var(--mu-ink);
+    text-align: left;
+    cursor: default;
+}
+
+.mu-sidebar-item.is-selected {
+    background: linear-gradient(180deg, #6aa8e8 0%, #3a7ec8 100%);
+    color: #fff;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+}
+
+.mu-sidebar-icon {
+    opacity: 0.85;
+    width: 1em;
+    text-align: center;
+}
+
+.mu-main {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: #111;
+}
+
+/* ----- Cover Flow (iTunes-style 3D + mirror floor) ----- */
+
+.mu-coverflow {
+    --mu-cf-ms: 480ms;
+    --mu-cf-ease: cubic-bezier(0.22, 0.7, 0.25, 1);
+    --mu-cf-size: 150px;
+    container-type: size;
+    container-name: coverflow;
+    flex: 0 1 42%;
+    min-height: 168px;
+    max-height: 320px;
+    position: relative;
+    outline: none;
+    background:
+        radial-gradient(ellipse 90% 50% at 50% 36%, #242424 0%, #0a0a0a 70%, #000 100%);
+    border-bottom: 1px solid #000;
+    overflow: hidden;
+}
+
+.mu-coverflow[hidden] {
+    display: none !important;
+}
+
+.mu-coverflow:focus-visible {
+    box-shadow: inset 0 0 0 2px rgba(0, 122, 255, 0.55);
+}
+
+.mu-coverflow.is-snap .mu-cf-cover,
+.mu-coverflow.is-snap .mu-coverflow-caption {
+    transition: none !important;
+}
+
+.mu-coverflow-stage {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 10px;
+    bottom: 44px;
+    perspective: 1200px;
+    perspective-origin: 50% 45%;
+    transform-style: preserve-3d;
+    overflow: visible;
+    pointer-events: auto;
+}
+
+/* Thin caption scrim only — not a %-height floor that creeps up when short */
+.mu-coverflow-floor {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 48px;
+    pointer-events: none;
+    z-index: 0;
+    background: linear-gradient(
+        180deg,
+        transparent 0%,
+        rgba(0, 0, 0, 0.35) 45%,
+        rgba(0, 0, 0, 0.72) 100%
+    );
+}
+
+/*
+ * Cover node is strictly square. Only the centered cover gets a CSS reflection —
+ * reflecting rotated side covers makes them read as tall portrait posters.
+ */
+.mu-cf-cover {
+    position: absolute;
+    /* Center in the stage (caption already reserved via stage bottom) */
+    top: 50%;
+    left: 50%;
+    width: min(var(--mu-cf-size), 58cqh);
+    height: min(var(--mu-cf-size), 58cqh);
+    margin: 0;
+    transform-style: flat;
+    transition: transform var(--mu-cf-ms) var(--mu-cf-ease);
+    cursor: pointer;
+    pointer-events: auto;
+    -webkit-user-select: none;
+    user-select: none;
+    z-index: 1;
+    will-change: transform;
+    overflow: visible;
+}
+
+.mu-cf-face {
+    position: relative;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 1px;
+    overflow: hidden;
+    background: #111;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    box-shadow:
+        0 10px 28px rgba(0, 0, 0, 0.7),
+        0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.mu-coverflow.is-reduced .mu-cf-cover.is-center .mu-cf-face {
+    -webkit-box-reflect: none;
+}
+
+.mu-cf-face::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.32);
+    opacity: 1;
+    pointer-events: none;
+    transition: opacity calc(var(--mu-cf-ms) * 0.7) ease;
+}
+
+.mu-cf-cover.is-center .mu-cf-face::after {
+    opacity: 0;
+}
+
+.mu-cf-cover:not(.is-center):hover .mu-cf-face::after {
+    opacity: 0.14;
+}
+
+.mu-cf-cover img,
+.mu-cf-ph {
+    width: 100%;
+    height: 100%;
+    display: block;
+    pointer-events: none;
+}
+
+/* Same global window img margin was breaking Cover Flow faces */
+.window-content .mu-cf-cover img,
+.mu-cf-cover img {
+    max-width: none;
+    margin: 0;
+    object-fit: cover;
+    object-position: center center;
+}
+
+.mu-cf-ph {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 42px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.35);
+    background: linear-gradient(145deg, #4a4a4a, #222);
+}
+
+.mu-cf-cover.is-center {
+    cursor: default;
+}
+
+.mu-cf-cover.is-center .mu-cf-face {
+    box-shadow:
+        0 16px 40px rgba(0, 0, 0, 0.85),
+        0 0 0 1px rgba(255, 255, 255, 0.18);
+    -webkit-box-reflect: below 3px
+        linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.5) 40%, transparent 100%);
+}
+
+.mu-cf-cover:not(.is-center) .mu-cf-face {
+    box-shadow:
+        0 8px 22px rgba(0, 0, 0, 0.65),
+        0 0 0 1px rgba(255, 255, 255, 0.06);
+    -webkit-box-reflect: none;
+}
+
+.mu-coverflow-caption {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 6px;
+    text-align: center;
+    color: #f5f5f5;
+    pointer-events: none;
+    z-index: 40;
+    padding: 0 24px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+        opacity 160ms ease,
+        transform 160ms ease;
+}
+
+.mu-coverflow-caption.is-swap {
+    opacity: 0;
+    transform: translateY(6px);
+}
+
+.mu-coverflow-title {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mu-coverflow-artist {
+    font-size: 11px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.7);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+}
+
+/* Short Cover Flow: keep covers centered with top breathing room */
+@container coverflow (max-height: 220px) {
+    .mu-cf-cover {
+        width: min(112px, 52cqh);
+        height: min(112px, 52cqh);
+        top: 50%;
+    }
+
+    .mu-cf-cover.is-center .mu-cf-face {
+        -webkit-box-reflect: none;
+    }
+
+    .mu-coverflow-floor {
+        height: 40px;
+    }
+
+    .mu-coverflow-stage {
+        top: 8px;
+        bottom: 36px;
+    }
+
+    .mu-coverflow-caption {
+        bottom: 4px;
+    }
+
+    .mu-coverflow-title {
+        font-size: 12px;
+    }
+
+    .mu-coverflow-artist {
+        font-size: 10px;
+    }
+}
+
+@container coverflow (max-height: 170px) {
+    .mu-cf-cover {
+        width: min(92px, 48cqh);
+        height: min(92px, 48cqh);
+        top: 50%;
+    }
+
+    .mu-coverflow-floor {
+        height: 34px;
+    }
+
+    .mu-coverflow-stage {
+        top: 6px;
+        bottom: 30px;
+    }
+}
+
+/* ----- Songs table ----- */
+
+.mu-table-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    background: #fff;
+    position: relative;
+}
+
+.mu-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.mu-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: linear-gradient(180deg, #f7f7f7 0%, #dcdcdc 100%);
+    border-bottom: 1px solid #a8a8a8;
+    border-right: 1px solid #c8c8c8;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    text-align: left;
+    color: #333;
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.mu-table thead th:last-child {
+    border-right: 0;
+}
+
+.mu-table thead th.is-sorted {
+    background: linear-gradient(180deg, #e8eef6 0%, #c8d8ec 100%);
+}
+
+.mu-col-status {
+    width: 24px;
+    cursor: default !important;
+}
+
+.mu-col-time {
+    width: 58px;
+    text-align: right !important;
+}
+
+.mu-col-artist {
+    width: 30%;
+}
+
+.mu-table tbody tr {
+    cursor: pointer;
+}
+
+.mu-table tbody tr:nth-child(even) {
+    background: var(--mu-row-alt);
+}
+
+.mu-table tbody tr.is-browse {
+    background: #e8eef6;
+}
+
+.mu-table tbody tr.is-playing {
+    background: var(--mu-row-sel);
+}
+
+.mu-table tbody td {
+    padding: 4px 8px;
+    border-bottom: 1px solid transparent;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 12px;
+    vertical-align: middle;
+}
+
+.mu-table .mu-cell-status {
+    text-align: center;
+    color: var(--mu-accent);
+    font-size: 9px;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+
+.mu-table .mu-cell-time {
+    font-variant-numeric: tabular-nums;
+    color: var(--mu-muted);
+    text-align: right;
+}
+
+.mu-empty {
+    display: none;
+    position: absolute;
+    inset: 40px 0 0;
+    padding: 28px 16px;
+    text-align: center;
+    color: var(--mu-muted);
+    background: #fff;
+}
+
+.mu-empty.is-visible {
+    display: block;
+}
+
+.mu-empty p {
+    margin: 0 0 4px;
+    font-weight: 600;
+    color: var(--mu-ink);
+}
+
+.mu-empty-hint {
+    font-weight: 400 !important;
+    color: var(--mu-muted) !important;
+    font-size: 12px;
+}
+
+/* ----- Status bar ----- */
+
+.mu-statusbar {
+    flex: 0 0 var(--mu-status-h);
+    height: var(--mu-status-h);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(180deg, #ececec 0%, #d0d0d0 100%);
+    border-top: 1px solid #a8a8a8;
+    font-size: 10px;
+    color: #555;
+}
+
+@media (max-width: 720px) {
+    .mu-toolbar {
+        grid-template-columns: 1fr;
+        min-height: 0;
+        padding: 8px 10px;
+        gap: 8px;
+    }
+
+    .mu-toolbar-left,
+    .mu-toolbar-right {
+        justify-content: space-between;
+    }
+
+    .mu-sidebar {
+        display: none;
+    }
+
+    .mu-coverflow {
+        --mu-cf-size: 108px;
+        flex-basis: 38%;
+        min-height: 150px;
+        max-height: 200px;
+    }
+
+    .mu-cf-cover {
+        top: 50%;
+    }
+
+    .mu-coverflow-floor {
+        height: 40px;
+    }
+
+    .mu-coverflow-caption {
+        bottom: 4px;
+    }
+
+    .mu-coverflow-title {
+        font-size: 12px;
+    }
+
+    .mu-coverflow-artist {
+        font-size: 10px;
+    }
+}
+/* =========================================================
+   Music - menubar Now Playing (marquee + miniplayer)
+   ========================================================= */
+
+.menubar-music {
+    position: relative;
+    display: flex;
+    align-items: center;
+    /* Fixed chip width — never grow/shrink with title length */
+    flex: 0 0 196px;
+    width: 196px;
+    max-width: 196px;
+    z-index: 10002;
+}
+
+.menubar-music[hidden] {
+    display: none !important;
+}
+
+.mu-mb-toggle {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: 20px;
+    padding: 0 8px 0 7px;
+    border-radius: 4px;
+    cursor: pointer;
+    font: inherit;
+}
+
+.mu-mb-toggle:hover,
+.menubar-music.open .mu-mb-toggle {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+.mu-mb-note {
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+    opacity: 0.95;
+    margin-right: 1px;
+}
+
+.menubar-music.is-playing .mu-mb-note {
+    animation: mu-mb-pulse 1.2s ease-in-out infinite;
+}
+
+.mu-mb-marquee {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    /* Fade both edges so scrolling text soft-enters / soft-exits */
+    mask-image: linear-gradient(
+        90deg,
+        transparent 0%,
+        #000 14%,
+        #000 86%,
+        transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+        90deg,
+        transparent 0%,
+        #000 14%,
+        #000 86%,
+        transparent 100%
+    );
+}
+
+.mu-mb-marquee-inner {
+    display: inline-flex;
+    gap: 0;
+    white-space: nowrap;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    will-change: transform;
+}
+
+.mu-mb-marquee-inner.is-scrolling {
+    animation: mu-mb-scroll 12s linear infinite;
+}
+
+.mu-mb-marquee-inner.is-static {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mu-mb-marquee-inner.is-static .mu-mb-text {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mu-mb-text {
+    display: inline-block;
+}
+
+.mu-mb-dropdown {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 268px;
+    padding: 12px 0 6px;
+    background: rgba(36, 36, 38, 0.97);
+    backdrop-filter: blur(24px) saturate(1.2);
+    -webkit-backdrop-filter: blur(24px) saturate(1.2);
+    border-radius: 10px;
+    box-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.55),
+        0 0 0 0.5px rgba(255, 255, 255, 0.12);
+    z-index: 10050;
+    color: white;
+}
+
+.mu-mb-dropdown[hidden] {
+    display: none !important;
+}
+
+.mu-mb-now {
+    display: grid;
+    grid-template-columns: 52px 1fr;
+    gap: 11px;
+    padding: 0 14px 10px;
+    align-items: center;
+}
+
+.mu-mb-artwrap {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #2a2a2e;
+    box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.12);
+}
+
+.mu-mb-art {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    margin: 0;
+    object-fit: cover;
+    object-position: center center;
+    display: block;
+}
+
+.mu-mb-art[hidden] {
+    display: none !important;
+}
+
+.mu-mb-art-ph {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.35);
+    background: linear-gradient(145deg, #3a3a40, #222226);
+}
+
+.mu-mb-meta {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.mu-mb-title {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mu-mb-artist {
+    font-size: 11px;
+    line-height: 1.25;
+    color: rgba(255, 255, 255, 0.55);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mu-mb-scrub {
+    display: grid;
+    grid-template-columns: 28px 1fr 36px;
+    align-items: center;
+    gap: 6px;
+    padding: 0 14px 6px;
+}
+
+.mu-mb-time {
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.mu-mb-time-cur {
+    text-align: left;
+}
+
+.mu-mb-time-dur {
+    text-align: right;
+}
+
+/* Thin Apple-like range controls */
+.mu-mb-range {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    margin: 0;
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    outline: none;
+    cursor: pointer;
+}
+
+.mu-mb-range::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.mu-mb-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    margin-top: -4px;
+    border-radius: 50%;
+    background: #f2f2f7;
+    border: 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.mu-mb-range::-moz-range-track {
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.18);
+    border: 0;
+}
+
+.mu-mb-range::-moz-range-progress {
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.55);
+}
+
+.mu-mb-range::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #f2f2f7;
+    border: 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.mu-mb-seek.mu-mb-range {
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.7) 0%,
+        rgba(255, 255, 255, 0.7) var(--mu-mb-seek-pct, 0%),
+        rgba(255, 255, 255, 0.18) var(--mu-mb-seek-pct, 0%)
+    );
+}
+
+.mu-mb-volume.mu-mb-range {
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.7) 0%,
+        rgba(255, 255, 255, 0.7) var(--mu-mb-vol-pct, 80%),
+        rgba(255, 255, 255, 0.18) var(--mu-mb-vol-pct, 80%)
+    );
+}
+
+.mu-mb-transport {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+    padding: 2px 14px 8px;
+}
+
+.mu-mb-btn {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.92);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 120ms ease, color 120ms ease;
+}
+
+.mu-mb-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.mu-mb-btn:active {
+    background: rgba(255, 255, 255, 0.16);
+}
+
+.mu-mb-btn.mu-mb-play {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.12);
+    position: relative;
+}
+
+.mu-mb-btn.mu-mb-play:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.mu-mb-btn svg {
+    display: block;
+    flex-shrink: 0;
+    fill: currentColor;
+    color: inherit;
+}
+
+/* Class-based play/pause toggle — more reliable than [hidden] + inline display */
+.mu-mb-btn.mu-mb-play .mu-mb-icon-play {
+    display: block;
+}
+
+.mu-mb-btn.mu-mb-play .mu-mb-icon-pause {
+    display: none;
+}
+
+.mu-mb-btn.mu-mb-play.is-playing .mu-mb-icon-play {
+    display: none;
+}
+
+.mu-mb-btn.mu-mb-play.is-playing .mu-mb-icon-pause {
+    display: block;
+}
+
+.mu-mb-btn svg[hidden] {
+    display: none !important;
+}
+
+/* When using is-playing class, ignore residual hidden on the visible icon */
+.mu-mb-btn.mu-mb-play.is-playing .mu-mb-icon-pause[hidden] {
+    display: block !important;
+}
+
+.mu-mb-btn.mu-mb-play:not(.is-playing) .mu-mb-icon-play[hidden] {
+    display: block !important;
+}
+
+.mu-mb-vol {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 16px 10px;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.mu-mb-vol-icon {
+    flex-shrink: 0;
+    opacity: 0.75;
+}
+
+.mu-mb-vol .mu-mb-range {
+    flex: 1;
+}
+
+.mu-mb-dropdown .dropdown-divider {
+    height: 1px;
+    margin: 2px 0 4px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.mu-mb-dropdown .dropdown-item {
+    padding: 7px 14px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.mu-mb-dropdown .dropdown-item:hover,
+.mu-mb-dropdown .dropdown-item:focus {
+    background: rgba(0, 122, 255, 0.85);
+    outline: none;
+}
+
+/* Official YT player: 1x1 offscreen mount; video never shown */
+.mu-yt-hidden {
+    position: fixed;
+    left: -9999px;
+    top: 0;
+    width: 1px;
+    height: 1px;
+    opacity: 0.01;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+@keyframes mu-mb-scroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(calc(-1 * var(--mu-mb-shift, 50%))); }
+}
+
+@keyframes mu-mb-pulse {
+    0%, 100% { opacity: 0.75; }
+    50% { opacity: 1; }
+}
+
+@media (max-width: 768px) {
+    .menubar-music {
+        flex-basis: 132px;
+        width: 132px;
+        max-width: 132px;
+    }
+
+    .mu-mb-dropdown {
+        width: min(268px, calc(100vw - 16px));
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mu-cf-cover {
+        transition: none !important;
+    }
+
+    .mu-coverflow-caption {
+        transition: none !important;
+    }
+
+    .mu-coverflow-stage {
+        perspective: none;
+    }
+
+    .mu-coverflow.is-reduced .mu-cf-cover:not(.is-center) {
+        display: none !important;
+    }
+
+    .mu-mb-marquee-inner.is-scrolling,
+    .menubar-music.is-playing .mu-mb-note {
+        animation: none !important;
+    }
+}

@@ -282,6 +282,7 @@
                 const finderDropdown = document.getElementById('finder-dropdown');
                 if (appleDropdown) appleDropdown.classList.remove('open');
                 if (finderDropdown) finderDropdown.classList.remove('open');
+                if (typeof window.closeMusicMenu === 'function') window.closeMusicMenu();
             }
         });
     }
@@ -1015,6 +1016,7 @@
         // Close Finder dropdown
         const finderDropdown = document.getElementById('finder-dropdown');
         if (finderDropdown) finderDropdown.classList.remove('open');
+        if (typeof window.closeMusicMenu === 'function') window.closeMusicMenu();
     };
 
     // Finder Menu - Show open windows
@@ -1030,6 +1032,7 @@
         // Close Apple dropdown
         const appleDropdown = document.getElementById('apple-dropdown');
         if (appleDropdown) appleDropdown.classList.remove('open');
+        if (typeof window.closeMusicMenu === 'function') window.closeMusicMenu();
 
         // Update windows list before showing
         updateFinderWindowsList();
@@ -1080,6 +1083,7 @@
         const finderDropdown = document.getElementById('finder-dropdown');
         if (appleDropdown) appleDropdown.classList.remove('open');
         if (finderDropdown) finderDropdown.classList.remove('open');
+        if (typeof window.closeMusicMenu === 'function') window.closeMusicMenu();
     };
 
     window.closeAllWindows = function () {
@@ -1454,7 +1458,8 @@
             // The signature engine must be present before the book paints
             deps: ['SIGNATURE_URL']
         },
-        'paint': { urlKey: 'PAINT_URL', init: 'initPaint', cleanup: 'paintCleanup' }
+        'paint': { urlKey: 'PAINT_URL', init: 'initPaint', cleanup: 'paintCleanup' },
+        'music': { urlKey: 'MUSIC_URL', init: 'initMusicPlayer', cleanup: 'musicCleanup' }
     };
 
     const lazyScriptLoads = new Map(); // urlKey -> Promise
@@ -2299,6 +2304,7 @@
     }
 
     // Expose openWindow globally for calendar view and other modules
+    window.openWindow = openWindow;
     window.openContentWindow = function (windowId, title, permalink) {
         openWindow(windowId, title, { width: 900, height: 650 }, permalink);
     };
