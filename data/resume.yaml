@@ -1,0 +1,130 @@
+# The resume, as data. Rendered at /resume/ and in the Resume window
+# (layouts/partials/apps/resume/page.html), as markdown at /resume/index.md
+# and as structured data (layouts/partials/apps/resume/jsonld.html).
+#
+# This is a transcription of static/resume.pdf, which stays the download.
+# Edit both together: change the text here, then replace static/resume.pdf
+# (print /resume/ to PDF, or export a new one).
+#
+# `highlights` and `summary` lines are inline markdown: **bold** and
+# [links](https://...) work. Links to pages of this site are root-relative.
+
+name: Ankush Singh
+headline: Full-Stack Web3 Engineer
+
+# The PDF this page transcribes, and the name it is saved under
+pdf: /resume.pdf
+pdfDownloadName: Ankush-Singh-Resume.pdf
+
+contact:
+  - label: ankush4singh@gmail.com
+    url: mailto:ankush4singh@gmail.com
+  - label: Github
+    url: https://github.com/ankushKun
+  - label: Linkedin
+    url: https://linkedin.com/in/ankushKun
+  - label: Twitter
+    url: https://x.com/ankushKun_
+  # On paper this points back at the site, so it is shown in print only
+  - label: Portfolio
+    url: https://ankush.one
+    printOnly: true
+
+# start/end are years as written in the PDF; leave `end` out for a current role.
+experience:
+  - org: Forward Research
+    role: Entrepreneur in Residence
+    start: "2024"
+    end: "2025"
+    highlights:
+      - "Launched production ready products including [BetterIDEa](https://betteridea.arweave.net), [VisualAO](/projects/2025.visual-ao/), [Subspace](https://subspace.arweave.net), [WAuth](https://github.com/subspace-dev/wauth) & more."
+      - "Shipped 5+ developer tools, used by 1K+ developers across the ecosystem."
+    tech: [React, NextJS, GraphQL, REST APIs, Cryptography]
+
+  - org: Arweave India
+    role: Developer Relations Engineer
+    start: "2024"
+    end: "2025"
+    highlights:
+      - "Provided technical mentorship to **100+ developers**, helping teams ship on-chain projects."
+      - "Co-organised **flagship events** & **4+ hackerhouses** to grow the Arweave community in India."
+    tech: [React, NextJS, ExpressJS, TailwindCSS, Hardware Engineering]
+
+  - org: Physics Wallah
+    role: Software Engineer Intern
+    team: New Products Initiative Team
+    start: "2022"
+    end: "2023"
+    highlights:
+      - "Built an interactive live-class system enabling faculty to create questions, parse real-time YouTube chat (10K+ messages), and show analytics."
+      - "Used in high-scale live classes with 50K+ concurrent viewers, improving engagement and teaching workflow."
+    tech: [ElectronJS, Python, Flask, YouTube Data API, AWS, Linux Cloud Hosting]
+
+projects:
+  - name: TradeX
+    url: https://tradex.cards
+    summary: Pokemon card perpetuals trading platform
+    more: /projects/2026.pokeperps/
+    highlights:
+      - "Realtime pricing from TCGplayer & on demand oracle uploads"
+      - "Live and trading enabled on Solana Mainnet"
+
+  - name: MyPokemonScanner
+    # mypokemonscanner.com is offline (static/resume.pdf still links it), so the
+    # site is linked as a Wayback Machine snapshot instead of through `url`.
+    summary: "Pokemon card scanner & identifier with live pricing data ([archived snapshot](https://web.archive.org/web/20260227180613/https://mypokemonscanner.com/))"
+    more: /blogs/pokemon-scanner/
+    highlights:
+      - "Implements **MobileClip-S2** for identifying over **40K+ pokemon card** images in EN & JP"
+      - "Can identify any pokemon card within seconds and give its latest pricing data from various sources."
+
+  - name: pixels.earth
+    url: https://pixels.earth
+    summary: On-chain, real-time multiplayer pixel canvas mapped to the entire world
+    more: /projects/2025.pixels-earth/
+    highlights:
+      - "Designed a shard-based territory system where users can unlock land, own regions, and monetize activity on their shards."
+
+  - name: BetterIDEa
+    url: https://betteridea.arweave.net
+    summary: Tooling suite for Arweave/AO
+    more: /projects/2023.betteridea/
+    highlights:
+      - "Used by 30K+ users; **acquired by Forward Research**."
+
+  - name: AO Package Manager
+    summary: Web3 Package Manager
+    more: /projects/2024.apm/
+    highlights:
+      - "Serves 100+ Lua packages with 1K+ downloads."
+      - "**Now a part of AO core infra**, enabling instant install/publish by builders."
+
+  - name: DumDumDeploy
+    summary: Deployments platform like Vercel
+    more: /projects/2024.dumdumdeploy/
+    highlights:
+      - "Built the original platform; later evolved into [Arlink](https://arlink.arweave.net), Arweave’s flagship deployment tool."
+      - "Arlink raised a seed round at a $2.5M valuation."
+
+# "Skills & Interests" in the PDF. Each group is one line there.
+skills:
+  - label: Frontend
+    items: [React, Next.js, React Native, Expo, TypeScript, Tauri]
+  - label: Backend
+    items: [Node.js, NestJS, Express, Hono, Bun, REST APIs, Rust, GraphQL, MongoDB, SQL, Firebase, Supabase]
+  - label: AIML
+    items: [TF.js, OpenCV, "Embedding Models (MobileClip, SigLIP, CLIP)", LLMs, PyTorch]
+  - label: Web3
+    items: [Solidity, Ethereum, Rust, Solana, Arweave]
+  - label: Tools
+    items: [Docker, AWS, Google Analytics, PostHog, Nginx, Linux, Git, Nix containers]
+  - label: Hardware
+    items: [Raspberry Pi, Embedded Systems, Arduino]
+
+interests: [Hardware Projects, Physics Experiments, Musical Instruments, Retro game collector]
+
+education:
+  - degree: Bachelor of Engineering
+    field: Computer Science
+    school: Chandigarh University
+    location: India

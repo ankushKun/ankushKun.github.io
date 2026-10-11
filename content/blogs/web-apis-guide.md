@@ -4,7 +4,7 @@ draft = false
 title = "A Noob's Guide to Web APIs"
 description = "Learn what APIs are, how they work, and how to create your own simple API using Node.js and Express. A complete beginner-friendly tutorial with practical code examples covering REST principles, HTTP methods, and building GET/POST endpoints."
 summary = 'Learn what APIs are, how they work, and how to create your own simple API using Node.js and Express.'
-tags = ['nodejs', 'express', 'api', 'web-development', 'backend']
+tags = ['web', 'tutorial']
 author = 'Ankush'
 +++
 
@@ -12,16 +12,12 @@ author = 'Ankush'
 
 An API — Application Programming Interface, defines how different applications can talk to each other and exchange data through structured requests and responses.
 
----
-
 ## API Types
 
 1. **Web APIs** — the one we will be focusing on today
 2. **OS APIs** — Windows APIs, Android APIs, etc
 3. **Library APIs** — Like a python library
 4. **Hardware APIs** — allow accessing hardware functions (embedded libraries?)
-
----
 
 ## RESTful Web APIs
 
@@ -47,8 +43,6 @@ Whenever an API is called, it will always return a **status code** (a number) to
 - **3XX**: Redirects (e.g., 301 — Moved Permanently)
 - **4XX**: Client errors (e.g., 400 — Bad Request, 401 — Unauthorised, 404 — Not Found)
 - **5XX**: Server errors (e.g., 500 — Internal Server Error)
-
----
 
 ## Let's Write an API Endpoint Ourselves
 
@@ -91,8 +85,6 @@ And open `http://localhost:3000/` on any browser. It should show "Hello World".
 
 Try changing the string in `res.send('this one')` to simple HTML like `<h1>Hi there</h1>` and restart the express server (ctrl+c and `node index.js` again), check if something changes on the served page.
 
----
-
 ## Defining a POST Endpoint
 
 But this is just for GET requests, we cannot make POST requests to this endpoint.
@@ -122,8 +114,6 @@ This should print the response as:
 **Hello Ankush!**
 
 BOOM! You just created a GET and POST request! A majority of web APIs are comprised of just GET and POST requests.
-
----
 
 ## Time to Write Some Frontend
 

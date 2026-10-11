@@ -4,7 +4,7 @@ draft = false
 title = 'Publish to NPM from GitHub Actions using OIDC'
 description = "Step-by-step guide to automate npm package publishing through GitHub Actions using OpenID Connect (OIDC). Set up trusted publishing without API keys or access tokens for secure, provenance-verified releases."
 summary = 'Learn how to automate npm package publishing through GitHub Actions using OpenID Connect (OIDC) - no API keys or access tokens required.'
-tags = ['npm', 'github-actions', 'oidc', 'ci-cd', 'nodejs']
+tags = ['developer-tools', 'tutorial']
 author = 'Ankush'
 +++
 
@@ -14,13 +14,12 @@ One of the improvements was the introduction of **[OpenID Connect](https://openi
 
 Today we're having a look at how you can implement it for your packages as well.
 
----
-
 ## Step 1: Setup a Node Package (or skip if you already have one)
 
 As an example, we'll create a fresh package which just logs "hello world" to console.
 
-> **NOTE:** This package is only meant as a demo for this blog. It is not recommended to create such packages for yourself — you should just setup OIDC on your existing packages :)
+> [!NOTE]
+> This package is only meant as a demo for this blog. It is not recommended to create such packages for yourself — you should just setup OIDC on your existing packages :)
 
 ```bash
 mkdir npm-oidc-demo && cd npm-oidc-demo
@@ -59,7 +58,8 @@ export function helloWorld() {
 }
 ```
 
-> **Note:** An already published package is required to use OIDC (might change in the future, who knows…)
+> [!NOTE]
+> An already published package is required to use OIDC (might change in the future, who knows…)
 
 Run `npm login` and follow the steps to link the npm CLI with your npmjs account. When successful, run `npm whoami` and it should print your username.
 
@@ -79,8 +79,6 @@ npm notice 📦  npm-oidc-demo@1.0.0
 ```
 
 The package is now available at [`https://www.npmjs.com/package/npm-oidc-demo`](https://www.npmjs.com/package/npm-oidc-demo).
-
----
 
 ## Step 2: Update OIDC Details on Package Settings
 
@@ -130,8 +128,6 @@ Push the YAML file to the repo and update the OIDC details on the package settin
 update and save the settings.
 
 Now when you create a new release on the github repo, a workflow will start running which will publish the package to npm with provenance.
-
----
 
 ## Step 3: Create a Release on GitHub to Run the Action
 
