@@ -1,4 +1,6 @@
 apps:
+  # The retired Contacts and Now apps live on as aliases, so old
+  # /?open=contact and /?open=now links land here (and /contact/ redirects).
   - id: about
     label: About Me
     title: About Me
@@ -6,25 +8,30 @@ apps:
     description: About Ankush
     desktop: true
     searchable: true
+    contentPermalink: /about/
+    aliases: [contact, contacts, now]
     defaultSize:
       width: 1000
       height: 700
     icon:
       type: image
-      src: /pfp.png
+      src: /pfp-128.webp
       fit: cover
 
+  # The window body is the page at /resume/ (data/resume.yaml rendered by
+  # layouts/partials/apps/resume/page.html); /resume.pdf stays the download.
   - id: resume
     label: Resume
     title: Resume
     type: app
-    description: View resume
+    description: Experience, projects, skills and education, with the PDF to download
     desktop: true
     searchable: true
-    contentPermalink: /resume.pdf
+    contentPermalink: /resume/
+    aliases: [cv, resume.pdf]
     defaultSize:
-      width: 1000
-      height: 700
+      width: 860
+      height: 720
     icon:
       type: image
       src: /icons/resume.png
@@ -59,6 +66,8 @@ apps:
       type: partial
       partial: icons/desktop/document.html
 
+  # The hackathons are timeline entries; the retired Wins app's old
+  # /?open=wins links land here (and /wins/ redirects).
   - id: timeline
     label: Timeline
     title: Timeline
@@ -67,6 +76,7 @@ apps:
     desktop: true
     searchable: true
     contentPermalink: /timeline/
+    aliases: [wins]
     defaultSize:
       width: 1000
       height: 700
@@ -144,6 +154,42 @@ apps:
       type: partial
       partial: icons/desktop/paint.html
 
+  - id: activity
+    label: Activity Monitor
+    title: Activity Monitor
+    type: app
+    description: Live GitHub activity, what is playing, who is online and the current build
+    desktop: true
+    searchable: true
+    aliases:
+      - activity-monitor
+    defaultSize:
+      width: 820
+      height: 600
+    icon:
+      type: image
+      src: /icons/activity.webp
+
+  - id: daily-puzzle
+    label: Daily Puzzle
+    title: Daily Puzzle
+    type: app
+    description: A new Minesweeper field every day, the same for everyone, with a shared leaderboard
+    # Lives only in the Games window (and Spotlight, /?open=daily-puzzle)
+    desktop: false
+    dock: false
+    searchable: true
+    group: games
+    aliases:
+      - puzzle
+      - minesweeper
+    defaultSize:
+      width: 760
+      height: 580
+    icon:
+      type: image
+      src: /icons/daily-puzzle.webp
+
   - id: music
     label: Music
     title: Music
@@ -158,35 +204,56 @@ apps:
       type: partial
       partial: icons/desktop/music.html
 
-  - id: contact
-    label: Contacts
-    title: Contacts
+  # The visitor's own achievements and visit streak (kept in their browser).
+  - id: passport
+    label: Passport
+    title: Passport
     type: app
-    description: Contact information
-    desktop: false
+    description: Your achievements and visit streak on this site
+    desktop: true
     searchable: true
-    contentPermalink: /contact/
+    aliases: [achievements, game-center, streak]
     defaultSize:
-      width: 900
-      height: 650
+      width: 760
+      height: 640
     icon:
-      type: partial
-      partial: icons/desktop/phone.html
+      type: image
+      src: /icons/passport.webp
 
-  - id: wins
-    label: Wins
-    title: Wins
+  # The site's changelog, from git history (data/changelog.json,
+  # scripts/changelog.mjs). Opened from the Apple menu and Spotlight.
+  - id: software-update
+    label: Software Update
+    title: Software Update
     type: app
-    description: Hackathon wins
+    description: What changed on this site, and what is new since your last visit
     desktop: false
     searchable: true
-    contentPermalink: /wins/
+    aliases: [updates, changelog, whats-new]
     defaultSize:
-      width: 900
-      height: 650
+      width: 720
+      height: 600
     icon:
-      type: partial
-      partial: icons/desktop/trophy.html
+      type: image
+      src: /icons/software-update.webp
+
+  # /uses/ is a draft (content/uses/_index.md). Uncomment once it is published.
+  # It is a TextEdit document: the window body is the page at contentPermalink
+  # (layout = "textedit", layouts/partials/apps/textedit/document.html).
+  # - id: uses
+  #   label: Uses
+  #   title: Uses
+  #   type: app
+  #   description: The hardware, software and services Ankush uses
+  #   desktop: false
+  #   searchable: true
+  #   contentPermalink: /uses/
+  #   defaultSize:
+  #     width: 720
+  #     height: 640
+  #   icon:
+  #     type: partial
+  #     partial: icons/desktop/textedit.html
 
   - id: book-a-call
     label: Schedule Call
@@ -199,8 +266,38 @@ apps:
       width: 1000
       height: 700
     icon:
-      type: partial
-      partial: icons/desktop/calendar.html
+      type: image
+      src: /icons/book-a-call.webp
+
+  - id: privacy
+    label: Privacy
+    title: Privacy
+    type: app
+    description: What this site collects and shares
+    desktop: false
+    searchable: true
+    contentPermalink: /privacy/
+    defaultSize:
+      width: 760
+      height: 640
+    icon:
+      type: image
+      src: /icons/privacy.webp
+
+  - id: credits
+    label: Credits
+    title: Credits
+    type: app
+    description: Acknowledgements and third-party licences
+    desktop: false
+    searchable: true
+    contentPermalink: /credits/
+    defaultSize:
+      width: 820
+      height: 640
+    icon:
+      type: image
+      src: /icons/credits.webp
 
   - id: portal
     label: Portal
@@ -222,6 +319,8 @@ apps:
     title: Quake 3 Arena
     type: game
     description: Classic FPS multiplayer arena shooter
+    author: id Software
+    source: https://thelongestyard.link/q3a-demo/
     desktop: false
     searchable: true
     group: games
@@ -237,6 +336,8 @@ apps:
     title: Last Cat Standing
     type: game
     description: Play Last Cat Standing game
+    author: Ankush Singh
+    source: https://ankushkun.itch.io/cat
     desktop: false
     searchable: true
     group: games
@@ -252,6 +353,7 @@ apps:
     title: DOOM
     type: game
     description: Play DOOM game
+    author: id Software
     desktop: false
     searchable: true
     group: games
@@ -282,6 +384,8 @@ apps:
     title: Alien Hominid
     type: game
     description: Flash game - Alien Hominid
+    author: Tom Fulp and Dan Paladin
+    source: https://www.alienhominid.com/
     desktop: false
     searchable: true
     group: games
@@ -297,6 +401,8 @@ apps:
     title: Fly Guy
     type: game
     description: Flash game - Fly Guy
+    author: Trevor Van Meter
+    source: http://www.trevorvanmeter.com/flyguy/
     desktop: false
     searchable: true
     group: games
@@ -336,3 +442,23 @@ apps:
     icon:
       type: image
       src: /games/wasted-sky.png
+
+  # The visitor's settings for this site (assets/js/preferences.js,
+  # layouts/partials/apps/preferences/). Opened from the Apple menu, the
+  # desktop's right-click menu and Spotlight; panes via SitePrefs.openPane().
+  - id: preferences
+    label: System Preferences
+    title: System Preferences
+    type: app
+    description: Desktop picture, light or dark appearance, highlight colour, sounds and motion
+    desktop: false
+    # Kept in the Dock, at the end of the apps, as on a Mac
+    dock: true
+    searchable: true
+    aliases: [settings, prefs, appearance, dark-mode, theme, wallpaper, desktop-background, accessibility]
+    defaultSize:
+      width: 680
+      height: 540
+    icon:
+      type: image
+      src: /icons/preferences.webp

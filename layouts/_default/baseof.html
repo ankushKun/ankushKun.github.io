@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="{{ .Site.Language.Lang }}">
+<html lang="en-US">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 
     {{ if .IsHome }}
     <!-- macOS Boot Screen Loader - Inline to prevent FOUC -->
@@ -19,6 +19,16 @@
             z-index: 999999;
             background-color: #b3b3b3;
             transition: opacity 0.6s ease-out;
+            /* CSS-only safety net: if the script below never runs or throws,
+               the boot screen still gets out of the way on its own. */
+            animation: boot-failsafe 0.01s linear 6s forwards;
+        }
+
+        @keyframes boot-failsafe {
+            to {
+                visibility: hidden;
+                pointer-events: none;
+            }
         }
 
         #macos-boot-loader.fade-out {
@@ -142,6 +152,7 @@
             }
         }
     </style>
+    <noscript><style>#macos-boot-loader { display: none; }</style></noscript>
 
     <script>
         // Track loading state immediately
@@ -200,31 +211,99 @@
     {{ end }}
 
     <!-- SEO Meta Tags -->
-    <title>{{ if .IsHome }}{{ .Site.Title }} - Software Engineer | AI Agents, DeFi & Developer Tools{{ else }}{{ .Title }} | {{ .Site.Title }}{{ end }}</title>
-    {{- $metaDesc := "Ankush Singh — Software engineer building AI agents, DeFi protocols on Solana, and developer tools. Portfolio, blog, and open-source projects." -}}
+    {{- $is404 := eq .Kind "404" -}}
+    {{- $isTagList := in (slice "term" "taxonomy") .Kind -}}
+    {{- $authorName := site.Params.profile.name | default site.Params.author.name | default "Ankush Singh" -}}
+    {{- /* "Co-founder and CTO, Construct Computer": same role the Person JSON-LD and About window state */ -}}
+    {{- $role := site.Params.profile.jobTitle | default "Software Engineer" -}}
+    {{- with site.Params.profile.worksFor }}{{ $role = printf "%s, %s" $role .name }}{{ end -}}
+    {{- $pageTitle := .Title -}}
+    {{- $tagName := .Title -}}
+    {{- if eq .Kind "term" }}{{ $tagName = .Data.Term }}{{ $pageTitle = printf "#%s — posts & projects" $tagName }}{{ end }}
+    <title>{{ if .IsHome }}{{ .Site.Title }} - {{ $role }}{{ else }}{{ $pageTitle }} | {{ .Site.Title }}{{ end }}</title>
+    {{- /* Description: front matter, then summary, then the site default.
+    Always one line of plain text, at most 160 characters. */ -}}
+    {{- $metaDesc := site.Params.description -}}
     {{- with .Description -}}{{- $metaDesc = . -}}{{- else -}}{{- with .Summary -}}{{- $metaDesc = . -}}{{- end -}}{{- end -}}
+    {{- if eq .Kind "term" -}}
+    {{- $metaDesc = printf "Posts and projects tagged %s on %s's site." $tagName $authorName -}}
+    {{- else if eq .Kind "taxonomy" -}}
+    {{- $metaDesc = printf "Every tag used across %s's blog posts and projects." $authorName -}}
+    {{- end -}}
+    {{- $metaDesc = $metaDesc | plainify | htmlUnescape | replaceRE `\s+` " " | strings.TrimSpace -}}
+    {{- if and .IsPage (eq .Section "timeline") (not .Description) (lt (strings.RuneCount $metaDesc) 70) -}}
+    {{- /* Timeline entries are often a few words; say what and when. */ -}}
+    {{- $when := .Date.Format "January 2006" -}}
+    {{- if eq .Params.date_precision "year" }}{{ $when = .Date.Format "2006" }}{{ end -}}
+    {{- $body := "" -}}
+    {{- if and $metaDesc (ne $metaDesc (site.Params.description | plainify | htmlUnescape)) }}{{ $body = printf " %s" (strings.TrimRight "." $metaDesc | printf "%s.") }}{{ end -}}
+    {{- $metaDesc = printf "%s — %s.%s Part of %s's timeline." .Title $when $body $authorName -}}
+    {{- end -}}
+    {{- /* Too long: stop at the last full sentence that fits, and only cut
+    mid-sentence (with an ellipsis) when there is none. */ -}}
+    {{- if gt (strings.RuneCount $metaDesc) 160 -}}
+    {{- with findRE `^.{60,159}[.!?](?:\s)` (substr $metaDesc 0 161) 1 -}}
+    {{- $metaDesc = index . 0 | strings.TrimSpace -}}
+    {{- end -}}
+    {{- end -}}
+    {{- /* truncate returns escaped HTML: right for the meta attributes, but
+    JSON-LD needs the plain string or entities end up in it literally. */ -}}
+    {{- $metaDescPlain := $metaDesc | truncate 160 | htmlUnescape -}}
+    {{- $metaDesc = $metaDesc | truncate 160 -}}
+    {{- $indexable := partial "seo/indexable.html" . -}}
+    {{- $canonical := .Params.canonical | default .Permalink -}}
+    {{- /* Social image: the page's own og_image, else a generated card (blog
+    posts and projects, see seo/card.html), else the site default */}}
+    {{- $ogImage := false -}}
+    {{- with .Params.og_image }}{{ $ogImage = partial "seo/image.html" . }}{{ end -}}
+    {{- if not $ogImage }}{{ $ogImage = partial "seo/card.html" . }}{{ end -}}
+    {{- if not $ogImage }}{{ $ogImage = partial "seo/image.html" "/og-image.jpg" }}{{ end }}
     <meta name="description" content="{{ $metaDesc }}">
-    <meta name="author" content="{{ with .Params.author }}{{ . }}{{ else }}Ankush Singh{{ end }}">
-    <meta name="keywords"
-        content="{{ if .Params.tags }}{{ delimit .Params.tags ", " }}, {{ end }}Ankush Singh, Software Engineer, AI Agents, DeFi, Solana, Developer Tools, Arweave, AO, Web3, Blockchain, Open Source, React, TypeScript, Rust">
-    <link rel="canonical" href="{{ .Permalink }}">
-    <meta name="robots" content="{{ if .Params.noindex }}noindex, nofollow{{ else }}index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1{{ end }}">
+    <meta name="author" content="{{ $authorName }}">
+    {{- /* Keywords only where the page has tags of its own */}}
+    {{ with .Params.tags }}<meta name="keywords" content="{{ delimit . ", " }}">{{ end }}
+    {{- /* A cross-posted article names its original with `canonical` in front matter */}}
+    {{ if not $is404 }}<link rel="canonical" href="{{ $canonical }}">{{ end }}
+    <meta name="robots" content="{{ if $is404 }}noindex{{ else if .Params.noindex }}noindex, nofollow{{ else if not $indexable }}noindex, follow{{ else }}index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1{{ end }}">
 
+    <!-- Feeds -->
+    {{ with site.Home.OutputFormats.Get "rss" -}}
+    <link rel="alternate" type="application/rss+xml" href="{{ .Permalink }}" title="{{ site.Title }} — everything">
+    {{ end -}}
+    {{ with .CurrentSection }}{{ if not .IsHome }}{{ $sectionTitle := .Title }}{{ with .OutputFormats.Get "rss" -}}
+    <link rel="alternate" type="application/rss+xml" href="{{ .Permalink }}" title="{{ site.Title }} — {{ $sectionTitle }}">
+    {{ end }}{{ end }}{{ end -}}
+    {{ if not (eq .Section "blogs") }}{{ with site.GetPage "/blogs" }}{{ with .OutputFormats.Get "rss" -}}
+    <link rel="alternate" type="application/rss+xml" href="{{ .Permalink }}" title="{{ site.Title }} — Blog">
+    {{ end }}{{ end }}{{ end }}
+
+    {{ with site.Home.OutputFormats.Get "jsonfeed" -}}
+    <link rel="alternate" type="application/feed+json" href="{{ .Permalink }}" title="{{ site.Title }} — JSON Feed">
+    {{ end }}
     <!-- AI/LLM Discovery -->
-    <link rel="alternate" type="text/markdown" href="{{ .Site.BaseURL }}llms.txt" title="LLM Context">
-    <link rel="alternate" type="text/markdown" href="{{ .Site.BaseURL }}llms-full.txt" title="LLM Full Context">
+    {{- /* This page as plain markdown (layouts/_default/single.md, list.md).
+    The home page has no markdown twin: its plain-text form is /llms.txt. */}}
+    {{ with .OutputFormats.Get "markdown" -}}
+    <link rel="alternate" type="text/markdown" href="{{ .Permalink }}" title="{{ $pageTitle }} (Markdown)">
+    {{ end -}}
+    {{ if .IsHome -}}
+    {{ with .OutputFormats.Get "llms" }}<link rel="alternate" type="text/plain" href="{{ .Permalink }}" title="llms.txt">{{ end }}
+    {{ with .OutputFormats.Get "llmsfull" }}<link rel="alternate" type="text/plain" href="{{ .Permalink }}" title="llms-full.txt">{{ end }}
+    {{- end }}
 
+    {{ if not $is404 }}
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="{{ if .IsPage }}article{{ else }}{{ if .IsHome }}profile{{ else }}website{{ end }}{{ end }}">
     <meta property="og:url" content="{{ .Permalink }}">
-    <meta property="og:title" content="{{ if .IsHome }}Ankush Singh — Software Engineer{{ else }}{{ .Title }}{{ end }}">
+    <meta property="og:title" content="{{ if .IsHome }}{{ $authorName }} — {{ $role }}{{ else }}{{ $pageTitle }}{{ end }}">
     <meta property="og:description" content="{{ $metaDesc }}">
-    <meta property="og:image"
-        content="{{ with .Params.og_image }}{{ . | absURL }}{{ else }}{{ .Site.BaseURL }}og-image.jpg{{ end }}">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
+    <meta property="og:image" content="{{ $ogImage.url }}">
+    {{- if and $ogImage.width $ogImage.height }}
+    <meta property="og:image:width" content="{{ $ogImage.width }}">
+    <meta property="og:image:height" content="{{ $ogImage.height }}">
+    {{- end }}
     <meta property="og:image:alt"
-        content="{{ if .IsHome }}Ankush Singh — Software Engineer building AI agents, DeFi protocols, and developer tools{{ else }}{{ .Title }} — {{ .Site.Title }}{{ end }}">
+        content="{{ if .IsHome }}{{ $authorName }} — {{ $role }}, building AI agents and developer tools{{ else }}{{ $pageTitle }} — {{ .Site.Title }}{{ end }}">
     <meta property="og:site_name" content="{{ .Site.Title }}">
     <meta property="og:locale" content="en_US">
     {{ if .IsHome }}
@@ -234,8 +313,8 @@
     {{ end }}
     {{ if .IsPage }}
     <meta property="article:published_time" content="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}">
-    {{ with .GitInfo }}<meta property="article:modified_time" content="{{ .AuthorDate.Format "2006-01-02T15:04:05Z07:00" }}">{{ end }}
-    <meta property="article:author" content="{{ with .Params.author }}{{ . }}{{ else }}Ankush Singh{{ end }}">
+    {{ if not .Lastmod.IsZero }}<meta property="article:modified_time" content="{{ .Lastmod.Format "2006-01-02T15:04:05Z07:00" }}">{{ end }}
+    <meta property="article:author" content="{{ $authorName }}">
     {{ with .Section }}<meta property="article:section" content="{{ . | title }}">{{ end }}
     {{ range .Params.tags }}<meta property="article:tag" content="{{ . }}">
     {{ end }}
@@ -245,27 +324,39 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@ankushKun_">
     <meta name="twitter:creator" content="@ankushKun_">
-    <meta name="twitter:title" content="{{ if .IsHome }}Ankush Singh — Software Engineer{{ else }}{{ .Title }}{{ end }}">
+    <meta name="twitter:title" content="{{ if .IsHome }}{{ $authorName }} — {{ $role }}{{ else }}{{ $pageTitle }}{{ end }}">
     <meta name="twitter:description" content="{{ $metaDesc }}">
-    <meta name="twitter:image"
-        content="{{ with .Params.og_image }}{{ . | absURL }}{{ else }}{{ .Site.BaseURL }}og-image.jpg{{ end }}">
+    <meta name="twitter:image" content="{{ $ogImage.url }}">
     <meta name="twitter:image:alt"
-        content="{{ if .IsHome }}Ankush Singh — Software Engineer building AI agents, DeFi protocols, and developer tools{{ else }}{{ .Title }} — {{ .Site.Title }}{{ end }}">
+        content="{{ if .IsHome }}{{ $authorName }} — {{ $role }}, building AI agents and developer tools{{ else }}{{ $pageTitle }} — {{ .Site.Title }}{{ end }}">
+    {{ end }}
 
     <!-- Structured Data (JSON-LD) for SEO & SGO -->
+    {{- /* The Person is declared once per page; every other block points at
+    its @id. Blocks built as dicts go through jsonify, so quotes, newlines and
+    markup in titles or descriptions can never break the JSON. */ -}}
+    {{- $personId := printf "%s#person" site.Home.Permalink -}}
+    {{- $personRef := dict "@id" $personId }}
+    {{- /* Home and /about/ are the profile pages: there the Person is the
+    ProfilePage's mainEntity instead of a block of its own. */ -}}
+    {{- $isProfile := or .IsHome (and .IsSection (eq .Section "about")) }}
+    {{ if and .IsSection (eq .Section "resume") -}}
+    {{- /* /resume/: a ProfilePage of its own, built from data/resume.yaml */ -}}
+    {{ partial "apps/resume/jsonld.html" . }}
+    {{- else if not $isProfile -}}
+    <script type="application/ld+json">{{ merge (dict "@context" "https://schema.org") (partial "seo/person.html" .) | jsonify | safeJS }}</script>
+    {{- end }}
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
         "@type": "WebSite",
+        "@id": "{{ .Site.BaseURL }}#website",
         "name": "{{ .Site.Title }}",
+        "alternateName": ["Ankush Singh", "ankushKun"],
         "url": "{{ .Site.BaseURL }}",
         "description": "{{ .Site.Params.description }}",
         "inLanguage": "en-US",
-        "author": {
-            "@type": "Person",
-            "name": "{{ .Site.Params.author.name }}",
-            "url": "{{ .Site.BaseURL }}"
-        },
+        "author": { "@id": "{{ $personId }}" },
         "potentialAction": {
             "@type": "SearchAction",
             "target": {
@@ -276,74 +367,37 @@
         }
     }
     </script>
-    {{ if .IsHome }}
+    {{ if $isProfile }}
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
         "@type": "ProfilePage",
-        "mainEntity": {
-            "@type": "Person",
-            "@id": "{{ .Site.BaseURL }}#person",
-            "name": "Ankush Singh",
-            "alternateName": "ankushKun",
-            "description": "Software engineer building AI agents, DeFi protocols on Solana and Monad, and developer tools. Open-source contributor with 12+ hackathon wins.",
-            "url": "{{ .Site.BaseURL }}",
-            "image": {
-                "@type": "ImageObject",
-                "url": "{{ .Site.BaseURL }}pfp.png",
-                "width": 512,
-                "height": 512
-            },
-            "jobTitle": "Software Engineer",
-            "knowsAbout": [
-                "AI Agents", "Autonomous Trading", "DeFi", "Solana", "Monad",
-                "Arweave", "AO Computation Network", "React", "TypeScript",
-                "Rust", "Lua", "Cloudflare Workers", "WebAssembly",
-                "Blockchain Development", "Developer Tools", "Open Source"
-            ],
-            "sameAs": [
-                "https://x.com/ankushKun_",
-                "https://github.com/ankushKun",
-                "https://linkedin.com/in/ankushkun",
-                "https://t.me/ankushKun",
-                "https://instagram.com/ankushKun_",
-                "https://youtube.com/@ankushkun",
-                "https://ankushkun.medium.com"
-            ]
-        },
+        "url": "{{ .Permalink }}",
+        "mainEntity": {{ partial "seo/person.html" . | jsonify | safeJS }},
         "dateCreated": "2023-01-01",
-        "dateModified": "{{ now.Format "2006-01-02" }}"
+        "dateModified": "{{ site.Lastmod.Format "2006-01-02" }}"
     }
     </script>
     {{ end }}
-    {{ if and .IsPage (or (eq .Section "blogs") (eq .Section "projects")) }}
+    {{ if and .IsPage (eq .Section "blogs") }}
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
-        "@type": "{{ if eq .Section "blogs" }}BlogPosting{{ else }}Article{{ end }}",
+        "@type": "BlogPosting",
         "headline": "{{ .Title }}",
-        "description": "{{ with .Description }}{{ . }}{{ else }}{{ with .Summary }}{{ . }}{{ else }}{{ end }}{{ end }}",
+        "description": "{{ $metaDescPlain }}",
         "url": "{{ .Permalink }}",
         "datePublished": "{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}",
-        {{ with .GitInfo }}"dateModified": "{{ .AuthorDate.Format "2006-01-02T15:04:05Z07:00" }}",{{ end }}
+        {{ if not .Lastmod.IsZero }}"dateModified": "{{ .Lastmod.Format "2006-01-02T15:04:05Z07:00" }}",{{ end }}
+        {{ with .Params.canonical }}"isBasedOn": "{{ . }}",{{ end }}
         "author": {
             "@type": "Person",
-            "@id": "{{ .Site.BaseURL }}#person",
-            "name": "{{ with .Params.author }}{{ . }}{{ else }}Ankush Singh{{ end }}",
-            "url": "https://ankush.one",
-            "sameAs": [
-                "https://x.com/ankushKun_",
-                "https://github.com/ankushKun",
-                "https://linkedin.com/in/ankushkun"
-            ]
+            "@id": "{{ $personId }}",
+            "name": "{{ $authorName }}",
+            "url": "{{ .Site.BaseURL }}"
         },
-        "publisher": {
-            "@type": "Person",
-            "@id": "{{ .Site.BaseURL }}#person",
-            "name": "Ankush Singh",
-            "url": "https://ankush.one"
-        },
-        "image": "{{ with .Params.og_image }}{{ . | absURL }}{{ else }}{{ $.Site.BaseURL }}og-image.jpg{{ end }}",
+        "publisher": { "@id": "{{ $personId }}" },
+        "image": {{ $ogImage.jsonld | jsonify | safeJS }},
         "mainEntityOfPage": {
             "@type": "WebPage",
             "@id": "{{ .Permalink }}"
@@ -378,7 +432,8 @@
     }
     </script>
     {{ end }}
-    {{ if not .IsHome }}
+    {{ partial "seo/jsonld.html" (dict "page" . "personId" $personId "description" $metaDescPlain "image" $ogImage) }}
+    {{ if not (or .IsHome $is404) }}
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
@@ -405,7 +460,7 @@
             ,{
                 "@type": "ListItem",
                 "position": {{ $position }},
-                "name": "{{ .Title }}",
+                "name": "{{ if eq .Kind "term" }}#{{ .Data.Term }}{{ else }}{{ .Title }}{{ end }}",
                 "item": "{{ .Permalink }}"
             }
         ]
@@ -414,49 +469,72 @@
     {{ end }}
 
     <!-- Mobile App & Theme Color -->
-    <meta name="theme-color" content="#f0f0f0">
+    <meta name="theme-color" content="#282c32">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    <!-- Styles -->
-    {{ $mainStyle := resources.Get "css/main.css" }}
-    <link rel="stylesheet" href="{{ $mainStyle.Permalink }}">
-    {{ $style := resources.Get "css/mavericks.css" }}
-    <link rel="stylesheet" href="{{ $style.Permalink }}">
-    {{ $partialsStyle := resources.Get "css/partials.css" }}
-    <link rel="stylesheet" href="{{ $partialsStyle.Permalink }}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    {{/* Visitor preferences (appearance, accent, wallpaper): applied before the
+    stylesheet so the first paint is already themed. It also preloads the
+    chosen wallpaper - the default one is never fetched once another is picked. */}}
+    {{ partial "os/prefs-bootstrap.html" . }}
+    <noscript><link rel="preload" as="image" href="/wallpapers/wallpaper.webp"></noscript>
 
-    <link rel="icon" href="/pfp.png" type="image/x-icon">
+    <!-- Styles -->
+    {{/* One minified, fingerprinted bundle: main -> mavericks -> partials, then
+    every assets/css/apps/*.css in name order. New per-app stylesheets only need
+    to be dropped into css/apps/. resources.Match returns an empty slice when
+    the directory has no files, so the range is a no-op then. */}}
+    {{- $cssParts := slice -}}
+    {{- range slice "css/main.css" "css/mavericks.css" "css/partials.css" -}}
+    {{- with resources.Get . -}}{{- $cssParts = $cssParts | append . -}}{{- else -}}{{- errorf "Core stylesheet %q not found" . -}}{{- end -}}
+    {{- end -}}
+    {{- range sort (resources.Match "css/apps/*.css") "Name" -}}
+    {{- $cssParts = $cssParts | append . -}}
+    {{- end -}}
+    {{- $css := $cssParts | resources.Concat "css/site.css" | resources.Minify | resources.Fingerprint }}
+    <link rel="stylesheet" href="{{ $css.RelPermalink }}">
+    <link rel="preconnect" href="https://p1.ankush.one" crossorigin>
+    <link rel="dns-prefetch" href="https://gun.ankush.one">
+
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+
+    {{/* External-link proxy base (Cloudflare Worker origin). Empty = feature
+    off: allowlisted hosts embed, everything else opens a new tab. */}}
+    <meta name="link-proxy" content="{{ site.Params.linkProxy }}">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
 
     <!-- PostHog Analytics -->
     {{ partial "components/analytics.html" . }}
 
-    <!-- Preload Wallpaper for Performance -->
-    <link rel="preload" as="image" href="/wallpapers/wallpaper.webp">
-
-    <!-- Git Info for About This Site - prefers Cloudflare Pages env vars, falls back to file GitInfo -->
-    {{- $commitHash := "" -}}
-    {{- $commitShort := "" -}}
-    {{- $cfCommit := getenv "CF_PAGES_COMMIT_SHA" -}}
-    {{- if $cfCommit -}}
-    {{- $commitHash = $cfCommit -}}
-    {{- $commitShort = substr $cfCommit 0 7 -}}
-    {{- else if .GitInfo -}}
-    {{- $commitHash = .GitInfo.Hash -}}
-    {{- $commitShort = .GitInfo.AbbreviatedHash -}}
+    <!-- Git Info for About This Site -->
+    {{/* The deploy commit comes from CI (HUGO_PARAMS_GITCOMMIT / GITCOMMITDATE)
+    or Cloudflare Pages. .GitInfo is the last commit that touched THIS page's
+    file, not HEAD, so it is only a fallback for local builds. */}}
+    {{- $commitHash := site.Params.gitcommit | default (getenv "CF_PAGES_COMMIT_SHA") -}}
+    {{- $commitDate := "" -}}
+    {{- if $commitHash -}}
+    {{- with site.Params.gitcommitdate -}}{{- with try (time.AsTime .) -}}{{- with .Value -}}{{- $commitDate = . | time.Format "Jan 2, 2006" -}}{{- end -}}{{- end -}}{{- end -}}
+    {{- else -}}
+    {{- with .GitInfo -}}
+    {{- $commitHash = .Hash -}}
+    {{- $commitDate = .AuthorDate.Format "Jan 2, 2006" -}}
     {{- end -}}
-    {{ if $commitHash }}
-    <meta name="git-commit-hash" content="{{ $commitHash }}">
-    <meta name="git-commit-short" content="{{ $commitShort }}">
-    {{ if .GitInfo }}
-    <meta name="git-commit-date" content="{{ .GitInfo.AuthorDate.Format " Jan 2, 2006" }}">
+    {{- end -}}
+    {{ with $commitHash }}
+    <meta name="git-commit-hash" content="{{ . }}">
+    <meta name="git-commit-short" content="{{ substr . 0 7 }}">
+    {{ with $commitDate }}<meta name="git-commit-date" content="{{ . }}">
     {{ end }}
     {{ end }}
 </head>
 
 <body>
+    {{/* First stop for keyboard users; the shell points it at the focused window when there is one. */}}
+    <a class="skip-link" href="#desktop">Skip to content</a>
     {{ if .IsHome }}
     <!-- macOS Boot Screen Loader -->
     <div id="macos-boot-loader">
@@ -486,45 +564,69 @@
     {{ end }}
 
     <!-- macOS Menu Bar -->
-    <div class="menubar">
+    <header class="menubar" data-nosnippet>
         <div class="menubar-left">
-            <div class="apple-menu" role="button" tabindex="0" aria-label="Apple Menu" aria-haspopup="true"
-                aria-expanded="false" onclick="toggleAppleMenu(event)"
-                onkeydown="if(event.key === 'Enter' || event.key === ' ') { toggleAppleMenu(event); event.preventDefault(); }">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="white" aria-hidden="true">
-                    <path
-                        d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-                </svg>
-                <div class="apple-dropdown" id="apple-dropdown" role="menu">
-                    <div class="dropdown-item" role="menuitem" tabindex="0"
-                        onclick="openAboutThisMac(); closeDropdowns()">About This Site</div>
-                    <div class="dropdown-divider" aria-hidden="true"></div>
-                    <div class="dropdown-item" role="menuitem" tabindex="0"
-                        onclick="closeAllWindows(); closeDropdowns()">Close All Windows</div>
-                    <div class="dropdown-item" role="menuitem" tabindex="0" onclick="tileWindows(); closeDropdowns()">
-                        Tile Windows</div>
-                    <div class="dropdown-divider" aria-hidden="true"></div>
-                    <div class="dropdown-item" role="menuitem" tabindex="0"
-                        onclick="openShortcuts(); closeDropdowns()">Keyboard Shortcuts</div>
-                    <div class="dropdown-divider" aria-hidden="true"></div>
-                    <div class="dropdown-item" role="menuitem" tabindex="0" onclick="location.reload()">Refresh</div>
+            {{/* Menus: the trigger is a real button and the items are buttons or
+            links, wired in mavericks.js (setupMenus) by data-menu-action. */}}
+            <div class="apple-menu">
+                <button type="button" class="menu-trigger" id="apple-menu-trigger" aria-label="Apple menu"
+                    aria-haspopup="menu" aria-expanded="false" aria-controls="apple-dropdown">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="white" aria-hidden="true">
+                        <path
+                            d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
+                    </svg>
+                </button>
+                <div class="apple-dropdown" id="apple-dropdown" role="menu" aria-labelledby="apple-menu-trigger">
+                    <button type="button" class="dropdown-item" role="menuitem" tabindex="-1"
+                        data-menu-action="about-site">About This Site</button>
+                    {{ partial "apps/updates/menu-item.html" . }}
+                    {{/* Only when a Preferences app is registered in data/apps.yaml */}}
+                    {{- range first 1 (where hugo.Data.apps.apps "id" "preferences") }}
+                    <div class="dropdown-divider" role="separator"></div>
+                    <a class="dropdown-item" role="menuitem" tabindex="-1" href="/?open=preferences"
+                        data-menu-action="open-app" data-app="preferences">System Preferences…</a>
+                    {{- end }}
+                    {{/* .menu-compact-only: phones have no File/Window/Help menus
+                    (os/menubar-menus.html), so the essentials stay here for them. */}}
+                    <div class="dropdown-divider menu-compact-only" role="separator"></div>
+                    <button type="button" class="dropdown-item menu-compact-only" role="menuitem" tabindex="-1"
+                        data-menu-action="close-all">Close All Windows</button>
+                    <button type="button" class="dropdown-item menu-compact-only" role="menuitem" tabindex="-1"
+                        data-menu-action="tile">Tile Windows</button>
+                    <div class="dropdown-divider menu-compact-only" role="separator"></div>
+                    <button type="button" class="dropdown-item menu-compact-only" role="menuitem" tabindex="-1"
+                        data-menu-action="tour" data-menu-needs="tour">Welcome Tour</button>
+                    <button type="button" class="dropdown-item menu-compact-only" role="menuitem" tabindex="-1"
+                        data-menu-action="shortcuts">Keyboard Shortcuts</button>
+                    <div class="dropdown-divider" role="separator"></div>
+                    {{/* Real links, so they also work without the desktop shell */}}
+                    <a class="dropdown-item" role="menuitem" tabindex="-1" href="/privacy/"
+                        data-menu-action="open-app" data-app="privacy">Privacy</a>
+                    <a class="dropdown-item" role="menuitem" tabindex="-1" href="/credits/"
+                        data-menu-action="open-app" data-app="credits">Credits</a>
+                    <div class="dropdown-divider" role="separator"></div>
+                    <button type="button" class="dropdown-item" role="menuitem" tabindex="-1"
+                        data-menu-action="reload">Refresh</button>
                 </div>
             </div>
-            <div class="menu-item active finder-menu" role="button" tabindex="0" aria-haspopup="true"
-                onclick="toggleFinderMenu(event)"
-                onkeydown="if(event.key === 'Enter' || event.key === ' ') { toggleFinderMenu(event); event.preventDefault(); }">
-                <span id="active-app-name">Finder</span>
-                <div class="finder-dropdown" id="finder-dropdown" role="menu">
-                    <div class="dropdown-label">Windows</div>
-                    <div id="finder-windows-list">
-                        <div class="dropdown-item empty">No windows open</div>
+            <div class="menu-item active finder-menu">
+                <button type="button" class="menu-trigger" id="finder-menu-trigger" aria-haspopup="menu"
+                    aria-expanded="false" aria-controls="finder-dropdown" aria-describedby="finder-menu-hint">
+                    <span id="active-app-name">Finder</span>
+                </button>
+                <span id="finder-menu-hint" hidden>Window list</span>
+                <div class="finder-dropdown" id="finder-dropdown" role="menu" aria-label="Windows">
+                    <div class="dropdown-label" aria-hidden="true">Windows</div>
+                    <div id="finder-windows-list" role="none">
+                        <div class="dropdown-item empty" role="menuitem" aria-disabled="true">No windows open</div>
                     </div>
                 </div>
             </div>
+            {{ partial "os/menubar-menus.html" . }}
         </div>
         <div class="menubar-right">
-            {{/* Minimized windows land here instead of vanishing - without a dock,
-            the Finder dropdown was the only way to get a window back. */}}
+            {{/* Minimized windows land in the Dock. Where there is no Dock
+            (phones, see apps/dock.css) they become chips here instead. */}}
             <div class="menubar-minimized" id="menubar-minimized" role="group" aria-label="Minimized windows"></div>
 
             {{/* Music Now Playing - marquee + clean miniplayer dropdown */}}
@@ -591,6 +693,11 @@
                 </div>
             </div>
 
+            {{/* People online. cursors.js creates the #online-count button;
+            the shell (setupOnlineInMenubar) moves it in here so the
+            multiplayer side of the site is visible from the menubar. */}}
+            <div class="menubar-online" id="menubar-online" hidden></div>
+
             <div class="menubar-icon menubar-sticky-icon" id="menubar-sticky-toggle" role="button" tabindex="0"
                 aria-label="Show Sticky Note" data-tip="Sticky Note" hidden>
                 <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
@@ -600,35 +707,109 @@
                     <line x1="3" y1="8.5" x2="9" y2="8.5" stroke="rgba(0,0,0,0.2)" stroke-width="0.6"/>
                 </svg>
             </div>
-            <div class="menubar-icon" role="button" tabindex="0" aria-label="Spotlight Search"
-                onclick="toggleSpotlightFromMenu()"
-                onkeydown="if(event.key === 'Enter' || event.key === ' ') { toggleSpotlightFromMenu(); event.preventDefault(); }"
-                data-tip="Search (⌘Space)">
+            {{/* Sound effects mute. The shell (setupSoundToggle) fills in the
+            icon, pressed state and label from the saved preference. */}}
+            <button type="button" class="menubar-icon menubar-sound" id="menubar-sound" aria-pressed="false"
+                aria-label="Sound effects on" data-tip="Sound effects: on">
+                <svg width="15" height="14" viewBox="0 0 18 16" fill="none" stroke="white" stroke-width="1.6"
+                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                    <path d="M2 6h2.5L8 3v10L4.5 10H2z" fill="white" />
+                    <path d="M11 5.5a3.5 3.5 0 0 1 0 5" />
+                    <path d="M13.2 3.3a6.5 6.5 0 0 1 0 9.4" />
+                </svg>
+            </button>
+            <button type="button" class="menubar-icon menubar-spotlight" id="menubar-spotlight"
+                aria-label="Search" aria-haspopup="dialog" data-tip="Search (⌘K)">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"
                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <circle cx="11" cy="11" r="8"></circle>
                     <path d="m21 21-4.3-4.3"></path>
                 </svg>
-            </div>
-            <span class="menu-status" id="clock" aria-label="Clock"></span>
+            </button>
+            <time class="menu-status" id="clock"></time>
         </div>
-    </div>
+    </header>
 
     <!-- Desktop -->
-    <div class="desktop" id="desktop" data-cursor-anchor="desktop">
+    <main class="desktop" id="desktop" data-cursor-anchor="desktop" tabindex="-1">
         {{ block "main" . }}{{ end }}
-    </div>
+    </main>
 
     <!-- Window Container -->
     <div class="windows-container" id="windows-container"></div>
+
+    {{ partial "os/dock.html" . }}
 
     {{/* Music audio engine mount - the official YT player lives here as a 1x1
     offscreen iframe; the video surface is never shown anywhere on the site. */}}
     <div id="mu-ambient-yt-mount" class="mu-yt-hidden" aria-hidden="true"></div>
 
+    {{/* App registry - one compact record per app in data/apps.yaml, so the
+    shell can resolve ids, aliases, sizes and icons without fetching the search
+    index. iconHtmlChrome is derivable: it is iconHtml with the class
+    "app-icon-spotlight" swapped for "app-icon-chrome". */}}
+    {{- $registry := slice -}}
+    {{- range hugo.Data.apps.apps -}}
+    {{- $entry := dict
+        "id" .id
+        "title" .title
+        "label" (.label | default .title)
+        "type" (.type | default "app")
+        "description" (.description | default "")
+        "searchable" (.searchable | default false)
+        "aliases" (.aliases | default slice)
+        "iconHtml" (partial "os/app-icon.html" (dict "app" . "context" "spotlight"))
+    -}}
+    {{- /* In the Dock: `dock: true|false` in apps.yaml, else whatever has a desktop icon */ -}}
+    {{- $inDock := .desktop | default false -}}
+    {{- if isset . "dock" -}}{{- $inDock = .dock -}}{{- end -}}
+    {{- if $inDock -}}{{- $entry = merge $entry (dict "dock" true) -}}{{- end -}}
+    {{- with .contentPermalink -}}{{- $entry = merge $entry (dict "contentPermalink" .) -}}{{- end -}}
+    {{- with .defaultSize -}}{{- $entry = merge $entry (dict "width" .width "height" .height) -}}{{- end -}}
+    {{- $registry = $registry | append $entry -}}
+    {{- end }}
+    <script type="application/json" id="app-registry">{{ $registry | jsonify | safeJS }}</script>
+
+    {{/* YouTube facade (shortcodes/youtube.html). Delegated, so it also covers
+    content injected into windows, and registered in the capture phase ahead of
+    the shell's link handlers so a play click is never treated as an external
+    link. Modifier and middle clicks fall through to the plain youtu.be link. */}}
+    <script>
+        document.addEventListener('click', function (e) {
+            if (e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+            var a = e.target && e.target.closest ? e.target.closest('a.yt-lite[data-yt]') : null;
+            if (!a) return;
+            var id = a.getAttribute('data-yt');
+            if (!/^[A-Za-z0-9_-]{6,20}$/.test(id)) return;
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            var frame = document.createElement('iframe');
+            frame.src = 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1&rel=0';
+            frame.title = a.getAttribute('data-title') || 'YouTube video';
+            frame.setAttribute('frameborder', '0');
+            frame.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen');
+            frame.setAttribute('allowfullscreen', '');
+            frame.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+            a.parentNode.replaceChild(frame, a);
+            frame.focus();
+        }, true);
+    </script>
+
     <!-- Main JS -->
     {{ $js := resources.Get "js/mavericks.js" | resources.Minify | resources.Fingerprint }}
-    <script src="{{ $js.Permalink }}"></script>
+    <script src="{{ $js.Permalink }}" defer></script>
+    {{- /* Document pages (blog, projects, timeline), standalone and in windows:
+    image viewer, contents highlight, reading progress, code overflow fade. */ -}}
+    {{- with resources.Get "js/doc.js" }}
+    {{ $docJs := . | resources.Minify | resources.Fingerprint }}
+    <script src="{{ $docJs.Permalink }}" defer></script>
+    {{- end }}
+    {{- /* Personal desktop (icon arrangement, private stickies, welcome tour).
+    Desktop only, deferred behind the shell it extends through window.SiteShell. */ -}}
+    {{- if .IsHome }}{{ with resources.Get "js/desktop-personal.js" }}
+    {{ $personal := . | resources.Minify | resources.Fingerprint }}
+    <script src="{{ $personal.Permalink }}" defer></script>
+    {{- end }}{{ end }}
 
     {{/* Bundles fetched on demand when their window is first opened.
     Each URL is emitted only if the asset resolves - resources.Get returns nil
@@ -638,11 +819,19 @@
     {{- $lazyAssets := dict
         "V86_CSS_URL"       "css/v86.css"
         "V86_TERMINAL_URL"  "js/v86-terminal.js"
+        "TERMINAL_SHELL_URL" "js/terminal-shell.js"
         "IRC_CHAT_URL"      "js/irc-chat.js"
         "GUESTBOOK_URL"     "js/guestbook.js"
         "SIGNATURE_URL"     "js/signature.js"
         "PAINT_URL"         "js/paint.js"
+        "PASSPORT_URL"      "js/passport.js"
+        "POST_SOCIAL_URL"   "js/post-social.js"
+        "ON_THIS_DAY_URL"   "js/on-this-day.js"
+        "ACTIVITY_URL"      "js/activity-monitor.js"
+        "DAILY_PUZZLE_URL"  "js/daily-puzzle.js"
+        "SOFTWARE_UPDATE_URL" "js/software-update.js"
         "MUSIC_URL"         "js/music-player.js"
+        "PREFERENCES_URL"   "js/preferences.js"
     -}}
     <script>
         {{- range $key, $path := $lazyAssets -}}
@@ -657,23 +846,83 @@
         {{- end }}
     </script>
 
-    <!-- Gun.js Multiplayer Cursors -->
-    {{/* Pinned + SRI: an unpinned tag meant any upstream release could take every
-    realtime feature (cursors, sticky note, IRC) down at once. */}}
-    <script src="https://cdn.jsdelivr.net/npm/gun@0.2020.1241/gun.js"
-        integrity="sha384-kbwmlcfKNZA6XzoIlQUaH+9lLpNh5TWrzzDmSlCpY48SEs49CCDQs50Q6x2xAl4v"
-        crossorigin="anonymous"></script>
-    {{ $gunConfig := resources.Get "js/gun-config.js" | resources.Minify | resources.Fingerprint }}
-    <script src="{{ $gunConfig.Permalink }}"></script>
-    {{ $stickyNote := resources.Get "js/sticky-note.js" | resources.Minify | resources.Fingerprint }}
-    <script src="{{ $stickyNote.Permalink }}"></script>
-    {{/* Music engine + ambient Now Playing widget (eager: autoplay after first gesture) */}}
-    {{- with resources.Get "js/music-player.js" -}}
-    {{- $musicJs := . | resources.Minify | resources.Fingerprint }}
-    <script src="{{ $musicJs.Permalink }}"></script>
+    {{ partial "apps/updates/boot.html" . }}
+
+    {{/* Service worker: registration, kill switch, update notice (docs/service-worker.md) */}}
+    {{ partial "sw/register.html" . }}
+
+    <!-- Gun.js realtime bundle: Gun + config + sticky note + multiplayer cursors -->
+    {{/* Gun is self-hosted (assets/js/vendor/gun.js is gun@0.2020.1241/gun.js,
+    byte-identical to the jsDelivr file previously pinned with SRI) and shipped
+    in one fingerprinted bundle with the scripts that need it at boot. Nothing
+    here is needed for first paint, so the bundle is injected once the document
+    is parsed and the browser is idle. Lazily opened apps (IRC, guestbook,
+    paint) keep polling for window.SiteGun; window.__loadRealtime() forces the
+    load for anything that cannot wait. Gun itself is concatenated unminified -
+    only our own files go through the minifier. */}}
+    {{- $realtimeParts := slice -}}
+    {{- with resources.Get "js/vendor/gun.js" -}}{{- $realtimeParts = $realtimeParts | append . -}}{{- end -}}
+    {{- if $realtimeParts -}}
+    {{- range slice "js/gun-config.js" "js/sticky-note.js" "js/cursors.js" "js/retention.js" -}}
+    {{- with resources.Get . -}}{{- $realtimeParts = $realtimeParts | append (. | resources.Minify) -}}{{- else -}}{{- warnf "Realtime script %q not found; it is left out of the bundle." . -}}{{- end -}}
+    {{- end -}}
+    {{- $realtime := $realtimeParts | resources.Concat "js/realtime.js" | resources.Fingerprint }}
+    <script>
+        (function () {
+            var loaded = false;
+            function load() {
+                if (loaded) return;
+                loaded = true;
+                var s = document.createElement('script');
+                s.src = {{ $realtime.Permalink }};
+                s.async = true;
+                document.head.appendChild(s);
+            }
+            window.__loadRealtime = load;
+            function whenIdle() {
+                if (window.requestIdleCallback) requestIdleCallback(load, { timeout: 2000 });
+                else setTimeout(load, 200);
+            }
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', whenIdle);
+            else whenIdle();
+        })();
+    </script>
+    {{- else -}}
+    {{- warnf "js/vendor/gun.js not found; realtime features (cursors, sticky note, IRC, guestbook, paint) will be unavailable." -}}
     {{- end }}
-    {{ $cursors := resources.Get "js/cursors.js" | resources.Minify | resources.Fingerprint }}
-    <script src="{{ $cursors.Permalink }}"></script>
+    {{- if .IsHome }}
+    {{/* Music engine + ambient Now Playing widget. The engine is only needed
+    once the visitor interacts (autoplay needs a gesture anyway), so the home
+    page fetches window.MUSIC_URL on the first click/tap instead of at boot.
+    Opening the Music app loads the same URL through the lazy-app loader; the
+    short delay and the checks below keep the two from double-loading it. */}}
+    <script>
+        (function () {
+            function onGesture(e) {
+                // Keyboard activation (Enter/Space on a focused control) fires a
+                // synthetic click with detail 0; it must not arm ambient music.
+                if (e && e.type === 'click' && e.detail === 0) return;
+                document.removeEventListener('click', onGesture, true);
+                document.removeEventListener('touchstart', onGesture, true);
+                window.__musicGestureAt = Date.now();
+                setTimeout(function () {
+                    var src = window.MUSIC_URL;
+                    if (!src || window.SiteMusic || window.__musicLoaded) return;
+                    var scripts = document.getElementsByTagName('script');
+                    for (var i = 0; i < scripts.length; i++) {
+                        if (scripts[i].src === src) return;
+                    }
+                    var s = document.createElement('script');
+                    s.src = src;
+                    s.async = true;
+                    document.head.appendChild(s);
+                }, 1200);
+            }
+            document.addEventListener('click', onGesture, true);
+            document.addEventListener('touchstart', onGesture, { capture: true, passive: true });
+        })();
+    </script>
+    {{- end }}
 </body>
 
 </html>

@@ -1,0 +1,19 @@
+/* Flash game windows are black: tint the shared loading and error states
+   so they stay readable there. Markup comes from initFlashGame() in
+   mavericks.js (.flash-loading, .window-empty). */
+.flash-loading {
+    color: #ccc;
+}
+
+.flash-game-player .window-empty {
+    min-height: 0;
+    color: #a0a0a8;
+}
+
+.flash-game-player .window-empty-title {
+    color: #f2f2f4;
+}
+
+.flash-game-player .window-empty-text {
+    color: #a0a0a8;
+}

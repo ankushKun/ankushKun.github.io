@@ -1,0 +1,245 @@
+/* ================================================
+   Personal desktop: arranged icons and private sticky notes
+   Script: assets/js/desktop-personal.js. Nothing here applies on compact
+   layouts, where the desktop is a launcher grid.
+   ================================================ */
+
+:root {
+    /* Stickies paper, as in the Stickies app. Paper stays paper in the
+       dark appearance; only its shadow deepens. */
+    --sticky-yellow: #fff8a8;
+    --sticky-yellow-bar: #fdf07a;
+    --sticky-blue: #c8e8fb;
+    --sticky-blue-bar: #ace0fb;
+    --sticky-green: #cff7c5;
+    --sticky-green-bar: #b4f0a8;
+    --sticky-pink: #fbd0de;
+    --sticky-pink-bar: #f8b7cc;
+    --sticky-purple: #e2d4fb;
+    --sticky-purple-bar: #d1bdf8;
+    --sticky-gray: #ececec;
+    --sticky-gray-bar: #dcdcdc;
+    --sticky-ink: #2b2b2b;
+    --sticky-ink-soft: rgba(0, 0, 0, 0.42);
+    --sticky-edge: rgba(0, 0, 0, 0.14);
+    --sticky-shadow: 0 6px 16px rgba(0, 0, 0, 0.22), 0 1px 3px rgba(0, 0, 0, 0.18);
+    --sticky-shadow-lifted: 0 12px 28px rgba(0, 0, 0, 0.28), 0 2px 6px rgba(0, 0, 0, 0.2);
+    --icon-slot: rgba(255, 255, 255, 0.16);
+    --icon-slot-edge: rgba(255, 255, 255, 0.55);
+}
+
+html[data-appearance="dark"] {
+    --sticky-shadow: 0 8px 20px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.4);
+    --sticky-shadow-lifted: 0 14px 32px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.45);
+}
+
+/* ---------- Arranged icons ---------- */
+
+.desktop-icons.is-arranged {
+    position: relative;
+    display: block;
+}
+
+.desktop-icons.is-arranged > .desktop-icon {
+    position: absolute;
+}
+
+.desktop-icons.is-settling > .desktop-icon {
+    transition: top 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), right 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.1s ease;
+}
+
+.desktop-icon.is-dragging {
+    z-index: 5;
+    opacity: 0.82;
+    cursor: grabbing;
+    transition: none;
+    pointer-events: none;
+}
+
+body.is-icon-dragging,
+body.is-icon-dragging * {
+    cursor: grabbing !important;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* Where the icon will land */
+.desktop-icon-slot {
+    position: absolute;
+    margin: 4px;
+    border-radius: 8px;
+    background: var(--icon-slot);
+    box-shadow: inset 0 0 0 1px var(--icon-slot-edge);
+    pointer-events: none;
+}
+
+.desktop-icon-slot[hidden] {
+    display: none;
+}
+
+/* ---------- Private sticky notes ---------- */
+
+.private-stickies {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    /* Above the icons and the widget, below the shared note (z-index 50) */
+    z-index: 40;
+}
+
+.private-sticky {
+    --paper: var(--sticky-yellow);
+    --bar: var(--sticky-yellow-bar);
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    min-width: 160px;
+    min-height: 120px;
+    max-width: 480px;
+    max-height: 480px;
+    background: var(--paper);
+    border: 1px solid var(--sticky-edge);
+    box-shadow: var(--sticky-shadow);
+    resize: both;
+    overflow: hidden;
+    pointer-events: auto;
+    font-family: var(--font-system);
+    color: var(--sticky-ink);
+}
+
+.private-sticky[data-color="blue"] { --paper: var(--sticky-blue); --bar: var(--sticky-blue-bar); }
+.private-sticky[data-color="green"] { --paper: var(--sticky-green); --bar: var(--sticky-green-bar); }
+.private-sticky[data-color="pink"] { --paper: var(--sticky-pink); --bar: var(--sticky-pink-bar); }
+.private-sticky[data-color="purple"] { --paper: var(--sticky-purple); --bar: var(--sticky-purple-bar); }
+.private-sticky[data-color="gray"] { --paper: var(--sticky-gray); --bar: var(--sticky-gray-bar); }
+
+.private-sticky.is-new {
+    animation: privateStickyIn 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+@keyframes privateStickyIn {
+    from { transform: scale(0.86); opacity: 0; }
+    to { transform: none; opacity: 1; }
+}
+
+.private-sticky.is-dragging {
+    box-shadow: var(--sticky-shadow-lifted);
+}
+
+.private-sticky-titlebar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: none;
+    height: 18px;
+    padding: 0 5px;
+    background: var(--bar);
+    cursor: grab;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.private-sticky.is-dragging .private-sticky-titlebar {
+    cursor: grabbing;
+}
+
+/* The Stickies close box: a small square, top left */
+.private-sticky-close {
+    position: relative;
+    z-index: 1;
+    width: 10px;
+    height: 10px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--sticky-ink-soft);
+    border-radius: 1px;
+    background: transparent;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.private-sticky:hover .private-sticky-close,
+.private-sticky:focus-within .private-sticky-close {
+    opacity: 1;
+}
+
+.private-sticky-close:hover {
+    background: var(--sticky-edge);
+}
+
+.private-sticky-close:focus-visible,
+.private-sticky-grip:focus-visible {
+    opacity: 1;
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 1px;
+}
+
+/* The rest of the bar is the handle; as a button it takes keyboard moves */
+.private-sticky-grip {
+    position: absolute;
+    inset: 0 0 0 20px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: inherit;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.private-sticky-text {
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+    margin: 0;
+    padding: 6px 9px 12px;
+    border: 0;
+    resize: none;
+    background: transparent;
+    font-family: "Marker Felt", "Noteworthy", var(--font-system);
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--sticky-ink);
+    outline: none;
+}
+
+.private-sticky-text::placeholder {
+    color: var(--sticky-ink-soft);
+}
+
+/* ---------- Compact layouts: none of this ---------- */
+@media (max-width: 768px), (pointer: coarse) and (max-height: 500px) {
+    .desktop-icons.is-arranged {
+        position: static;
+        display: flex;
+    }
+
+    .desktop-icons.is-arranged > .desktop-icon {
+        position: relative;
+        right: auto !important;
+        top: auto !important;
+    }
+
+    .desktop-icon-slot,
+    .private-stickies {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .desktop-icons.is-settling > .desktop-icon,
+    .private-sticky.is-new {
+        transition: none;
+        animation: none;
+    }
+}
+
+@media print {
+    .private-stickies {
+        display: none !important;
+    }
+}

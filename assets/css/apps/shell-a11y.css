@@ -1,0 +1,174 @@
+/* ================================================
+   Shell accessibility
+   Menubar menus built from real buttons and links, window focus, the
+   actionable notification body and the compact window switcher.
+   Markup: layouts/_default/baseof.html (menubar) and assets/js/mavericks.js.
+   ================================================ */
+
+/* The online pill sits above everything; keep it off the phone window
+   switcher sheet, whose bottom row it would otherwise cover. */
+body:has(.window-switcher-backdrop.open) #online-count {
+    visibility: hidden;
+}
+
+/* ---------- Menubar menu triggers ---------- */
+
+/* The wrapper (.apple-menu / .finder-menu) keeps its box and hover; the
+   button inside is the control. Its ::before stretches over the wrapper so
+   the whole pill is the hit area and carries the focus ring. */
+.menu-trigger {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    border-radius: 0;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.menu-trigger::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 3px;
+}
+
+.menu-trigger:focus {
+    outline: none;
+}
+
+.menu-trigger:focus-visible::before {
+    outline: 2px solid #fff;
+    outline-offset: -2px;
+}
+
+.menu-trigger[aria-expanded="true"]::before {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* The Apple menu fades in with `transition: all`, which keeps it
+   visibility:hidden for the first frame, and a hidden item cannot take focus.
+   Flip visibility at once on the way in; the way out still fades. */
+.apple-dropdown.open {
+    transition: opacity 0.15s ease, transform 0.15s ease, visibility 0s;
+}
+
+/* ---------- Menu items ---------- */
+
+a.dropdown-item {
+    display: block;
+    text-decoration: none;
+}
+
+.dropdown-item[hidden] {
+    display: none;
+}
+
+button.dropdown-item.window-item {
+    display: flex;
+}
+
+/* Keyboard focus reads like the pointer highlight */
+.apple-dropdown .dropdown-item:focus-visible,
+.finder-dropdown .dropdown-item:focus-visible {
+    background: var(--accent-fill);
+    outline: none;
+}
+
+/* ---------- Menubar icon buttons ---------- */
+
+button.menubar-icon {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+button.menubar-icon:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+button.menubar-icon:focus-visible,
+.menubar-min-chip:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: -2px;
+}
+
+/* ---------- Focus targets that are not controls ---------- */
+
+/* <main> is only a skip-link target */
+#desktop:focus {
+    outline: none;
+}
+
+/* A window takes focus when it opens, so the keyboard lands inside it. No
+   ring around the whole window: the active titlebar already shows which one
+   is in front, and the controls inside keep their own focus rings. */
+.window:focus,
+.window:focus-visible {
+    outline: none;
+}
+
+/* ---------- Tray chip fallback icon ---------- */
+
+.generic-window-icon {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* ---------- Notifications ---------- */
+
+.notification-body {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+button.notification-body {
+    margin: 0;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    background: none;
+    border: 0;
+    border-radius: 6px;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+button.notification-body:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 4px;
+}
+
+.notification-body .notification-title,
+.notification-body .notification-message {
+    display: block;
+}
+
+/* ---------- Window switcher (compact) ---------- */
+
+.window-switcher-icon {
+    display: inline-flex;
+    flex: none;
+    width: 24px;
+    height: 24px;
+    color: var(--text-tertiary);
+}
+
+.window-switcher-item:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: -2px;
+}

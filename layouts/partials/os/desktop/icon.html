@@ -33,8 +33,14 @@ OR for SVG:
 {{- $height = .height -}}
 {{- end -}}
 {{- end -}}
-<button class="desktop-icon" data-cursor-anchor="icon:{{ $window }}" data-window="{{ $window }}" data-title="{{ $title }}"{{ with $permalink }} data-permalink="{{ . }}"{{ end }}{{ with $width }} data-width="{{ . }}"{{ end }}{{ with $height }} data-height="{{ . }}"{{ end }} aria-label="{{ $label }}"
+{{- /* An app with a page of its own is a real link (crawlers, no-JS, Cmd-click);
+setupDesktopIcons in mavericks.js opens the window on a plain click. */ -}}
+{{ if $permalink -}}
+<a class="desktop-icon" href="{{ $permalink }}" draggable="false" data-cursor-anchor="icon:{{ $window }}" data-window="{{ $window }}" data-title="{{ $title }}" data-permalink="{{ $permalink }}"{{ with $width }} data-width="{{ . }}"{{ end }}{{ with $height }} data-height="{{ . }}"{{ end }} aria-label="{{ $label }}">
+{{- else -}}
+<button class="desktop-icon" data-cursor-anchor="icon:{{ $window }}" data-window="{{ $window }}" data-title="{{ $title }}"{{ with $width }} data-width="{{ . }}"{{ end }}{{ with $height }} data-height="{{ . }}"{{ end }} aria-label="{{ $label }}"
     tabindex="0">
+{{- end }}
     <div class="icon-image">
         {{ if $app }}
         {{ partial "os/app-icon.html" (dict "app" $app "context" "desktop") }}
@@ -47,4 +53,4 @@ OR for SVG:
         {{ end }}
     </div>
     <span class="icon-label">{{ $label }}</span>
-</button>
+{{ if $permalink }}</a>{{ else }}</button>{{ end }}

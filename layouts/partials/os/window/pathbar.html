@@ -1,0 +1,35 @@
+{{/*
+Path bar - the strip along the bottom of a Finder window, for direct-link
+pages. Left: where this page sits (Desktop › Projects › MegaPlace), which is
+the visible twin of the BreadcrumbList JSON-LD. Right: the site menu from
+hugo.toml [menu.main], so every page links to every section.
+
+Rendered outside .window-content on purpose: the desktop shell lifts only
+.window-content out of a fetched page, so the bar never shows up inside a
+desktop window (which has the desktop icons behind it instead).
+
+Usage: {{ partial "os/window/pathbar.html" . }} where . is the Page
+*/}}
+<div class="window-pathbar app-statusbar">
+<nav class="pathbar-trail" aria-label="Breadcrumb">
+    <ol>
+        <li><a href="{{ site.Home.RelPermalink }}">Desktop</a></li>
+        {{- range .Ancestors.Reverse }}
+        {{- if not .IsHome }}
+        <li><a href="{{ .RelPermalink }}">{{ .Title }}</a></li>
+        {{- end }}
+        {{- end }}
+        {{- if not .IsHome }}
+        <li aria-current="page"><span>{{ if eq .Kind "term" }}#{{ .Data.Term }}{{ else }}{{ .Title }}{{ end }}</span></li>
+        {{- end }}
+    </ol>
+</nav>
+{{- with site.Menus.main }}
+<nav class="pathbar-sitenav" aria-label="Site">
+    {{- $current := $ }}
+    {{- range . }}
+    <a href="{{ .URL }}"{{ if eq $current.RelPermalink .URL }} aria-current="page"{{ end }}>{{ .Name }}</a>
+    {{- end }}
+</nav>
+{{- end }}
+</div>

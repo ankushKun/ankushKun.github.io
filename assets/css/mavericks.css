@@ -8,6 +8,15 @@
     --menubar-height: 24px;
     --window-titlebar-height: 22px;
 
+    /* Safe-area insets (notch / home indicator). 0px everywhere else. */
+    --sat: env(safe-area-inset-top, 0px);
+    --sar: env(safe-area-inset-right, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px);
+    /* Menubar height including the top inset. --menubar-height stays a plain
+       px value because the shell JS parses it. */
+    --menubar-total: calc(var(--menubar-height) + var(--sat));
+
     /* Small viewport height for mobile Safari - fallback to vh for older browsers */
     --vh-full: 100vh;
     --vh-full: 100svh;
@@ -20,10 +29,24 @@
     --accent-blue-active: #0055B3;
     --accent-blue-light: #E8F2FC;
     --accent-blue-subtle: rgba(0, 122, 255, 0.08);
+    /* Highlight behind white text (selections, Spotlight, filled chips):
+       4.9:1 with white, where the #007AFF fill gives 4:1. Per-accent values
+       sit with the accent blocks below. */
+    --accent-fill: #1A6FD8;
+    --accent-fill-text: #FFFFFF;
+    /* Text-on-white link colour (5.6:1). --accent-blue stays for fills. */
+    --link: #0060DF;
+    /* Small accent-coloured text and glyphs (info rows, table links, the
+       itch.io banner). The fill blue is only 4:1 on white, so text uses the
+       legible --link shade in every appearance and highlight colour. */
+    --accent-text: var(--link);
+    /* Inline code in running text (5.3:1 on its #F4F4F4 chip) */
+    --code-inline: #C2185B;
 
     /* Secondary Blue - Softer Aqua blue for headers/sections */
-    --accent-blue-muted: #5A8CBB;
-    --accent-blue-muted-light: #6B9BC3;
+    /* Deep enough for white labels (month headers, date badges) at 4.5:1 */
+    --accent-blue-muted: #3F72A6;
+    --accent-blue-muted-light: #4479AE;
 
     /* === MAVERICKS BLUISH-GRAY PALETTE === */
     /* Authentic Mavericks colors with subtle blue tint */
@@ -42,8 +65,8 @@
     /* Borders medium */
     --gray-500: #8E99A4;
     /* Disabled text */
-    --gray-600: #6E7A85;
-    /* Secondary text */
+    --gray-600: #5A6570;
+    /* Secondary text (4.5:1 on the toolbar gradient) */
     --gray-700: #525D66;
     /* Primary text muted */
     --gray-800: #3A4249;
@@ -57,9 +80,85 @@
     --text-primary: #1C2024;
     --text-color: #2C3338;
     --text-secondary: #525D66;
-    --text-tertiary: #6E7A85;
-    --text-placeholder: #8E99A4;
+    --text-tertiary: #5A6570;
+    --text-placeholder: #6B7682;
     --text-inverse: #FFFFFF;
+    /* Running text inside windows, and its dimmer companion for metadata */
+    --text-body: #444444;
+    --text-muted: #666666;
+    /* Quiet labels (section captions, column headers, close glyphs);
+       4.5:1 on the grey sidebar gradient */
+    --text-quiet: #636363;
+    --link-hover: #004499;
+
+    /* === SURFACES ===
+       Every panel, list, field and chip background comes from this set, so
+       the dark appearance only has to redefine the tokens (see the
+       html[data-appearance="dark"] block below). */
+    --surface: #FFFFFF;
+    /* Panels, table headers, info boxes */
+    --surface-alt: #F5F5F7;
+    /* App chrome behind tool strips (Paint, Music) */
+    --surface-sunken: #ECECEC;
+    /* Floating panels: notifications, popovers */
+    --surface-overlay: rgba(245, 245, 247, 0.95);
+    --surface-overlay-hover: rgba(240, 240, 245, 0.98);
+    /* Chips, tags, small flat controls */
+    --control: #E8E8E8;
+    --control-hover: #D8D8DC;
+    /* Quoted and inline-code backgrounds */
+    --code-bg: #F4F4F4;
+    --quote-bg: #F9F9F9;
+    --window-content-bg: rgba(255, 255, 255, 0.8);
+    /* Desktop widget glass */
+    --glass-bg: rgba(255, 255, 255, 0.85);
+    --sidebar-bg: linear-gradient(180deg, #E8E8EC 0%, #D8D8DC 100%);
+    /* Brushed-metal strips (Music toolbar, table headers, status bars) */
+    --metal-bg: linear-gradient(180deg, #fafafa 0%, #e0e0e0 45%, #cfcfcf 55%, #bdbdbd 100%);
+    --metal-border: #8e8e8e;
+    --header-bg: linear-gradient(180deg, #f7f7f7 0%, #dcdcdc 100%);
+    --header-bg-active: linear-gradient(180deg, #e8eef6 0%, #c8d8ec 100%);
+    --statusbar-bg: linear-gradient(180deg, #ececec 0%, #d0d0d0 100%);
+    --sheet-bg: linear-gradient(180deg, #f6f6f6 0%, #ececec 100%);
+
+    /* === BORDERS AND TINTS === */
+    --border: #E0E0E0;
+    --border-subtle: #EAEAEA;
+    --border-strong: #C8C8C8;
+    /* Lines drawn on window chrome (title bar, sidebars) */
+    --border-chrome: #B0B0B0;
+    --hairline: rgba(0, 0, 0, 0.08);
+    --hairline-strong: rgba(0, 0, 0, 0.25);
+    --hover-tint: rgba(0, 0, 0, 0.05);
+    --press-tint: rgba(0, 0, 0, 0.1);
+    --press-tint-strong: rgba(0, 0, 0, 0.15);
+    /* Embossed text and top-edge highlights; they vanish on dark surfaces */
+    --emboss: rgba(255, 255, 255, 0.8);
+    --bevel: rgba(255, 255, 255, 0.85);
+    --selection: #B5D5FF;
+    --focus-ring: #4a90e2;
+    /* "Archived" badge on projects that are no longer maintained */
+    --archived-bg: #F3ECDD;
+    --archived-border: #E0D2B4;
+    --archived-text: #6F521A;
+    --titlebar-text: #4A4A4A;
+    --titlebar-text-inactive: #999;
+    /* Raised flat controls (segmented buttons, the selected Paint tool) */
+    --control-raised: #FFFFFF;
+    /* Translucent white lift on hover over a tinted strip */
+    --raise-tint: rgba(255, 255, 255, 0.6);
+    /* Sortable column headers */
+    --header-bg-hover: linear-gradient(180deg, #ffffff 0%, #d8d8d8 100%);
+    --header-bg-pressed: linear-gradient(180deg, #c8c8c8 0%, #e0e0e0 100%);
+    /* Range sliders (Music volume and seek) */
+    --slider-fill: #8a9098;
+    --slider-track: rgba(0, 0, 0, 0.18);
+    /* Inline error notes and "prize" chips */
+    --danger-text: #8c2318;
+    --danger-bg: #fbeae7;
+    --danger-border: #e8bfb8;
+    --prize-text: #A05A00;
+    --prize-bg: #FFF8E1;
 
     /* === WINDOW CHROME === */
     /* Mavericks window chrome with bluish-gray tint */
@@ -80,13 +179,8 @@
     --traffic-yellow-border: #DEA123;
     --traffic-green: #28C840;
     --traffic-green-border: #1AAB29;
-    --traffic-inactive: #C9D1D9;
-
-    /* === FINDER ICON COLORS === */
-    --folder-orange: #FF9500;
-    --folder-orange-dark: #E68600;
-    --document-blue: #007AFF;
-    --document-blue-dark: #0066D6;
+    --traffic-inactive: #CDCDCD;
+    --traffic-inactive-border: #B0B0B0;
 
     /* === SEMANTIC COLORS === */
     --success: #34C759;
@@ -95,13 +189,16 @@
     --info: #5856D6;
 
     /* === EVENT/TAG TYPE COLORS === */
-    --type-hackathon: #5856D6;
-    --type-fellowship: #34C759;
-    --type-work: #FF9500;
-    --type-open-source: #007AFF;
-    --type-speaking: #FF2D55;
-    --type-achievement: #FFCC00;
-    --type-project: #30B0C7;
+    /* Text colours of the timeline .event-type badges; the badge fill is a
+       10% tint of the same token. Each clears 4.5:1 on its own tint. */
+    --type-hackathon: #6d28d9;
+    --type-fellowship: #be185d;
+    --type-work: #1d4ed8;
+    --type-open-source: #166534;
+    --type-speaking: #9a3412;
+    --type-achievement: #854d0e;
+    --type-project: #0369a1;
+    --type-blog: #7e22ce;
 
     /* === SCROLLBAR === */
     --scrollbar-track: #E6EAEF;
@@ -117,7 +214,204 @@
 
     /* === TYPOGRAPHY === */
     --font-system: "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", Geneva, Verdana, sans-serif;
-    --font-mono: 'Menlo', 'Monaco', monospace;
+    --font-mono: Menlo, Monaco, Consolas, "DejaVu Sans Mono", "Liberation Mono", monospace;
+}
+
+/* ==========================================================================
+   APPEARANCE: DARK
+   html[data-appearance] is set before first paint by the preferences
+   bootstrap (layouts/partials/os/prefs-bootstrap.html). Dark only redefines
+   tokens; the few surfaces that are painted with literal colours (IRC, the
+   music LCD, code blocks...) carry their own dark rules next to the light
+   ones. A graphite take on Aqua: Mavericks had no dark mode, so this keeps
+   the gel, the bevels and the blue, and only turns the lights down.
+   Screen only: a printout always uses the light tokens (dark ink, white paper).
+   ========================================================================== */
+@media screen {
+html[data-appearance="dark"] {
+    color-scheme: dark;
+
+    --accent-blue: #0A84FF;
+    --accent-blue-hover: #3395FF;
+    --accent-blue-active: #0071E3;
+    --accent-blue-light: color-mix(in srgb, var(--accent-blue) 24%, #1F2023);
+    --accent-blue-subtle: color-mix(in srgb, var(--accent-blue) 14%, transparent);
+    --accent-blue-muted: #44709E;
+    --accent-blue-muted-light: #4A76A3;
+    --link: #64AEFF;
+    --link-hover: #8CC4FF;
+    --accent-text: var(--link);
+    --code-inline: #FF8FBF;
+
+    --gray-50: #1E1F22;
+    --gray-100: #232428;
+    --gray-150: #2A2C30;
+    --gray-200: #313338;
+    --gray-300: #3D4046;
+    --gray-400: #50545B;
+    --gray-500: #747A82;
+    --gray-600: #959BA3;
+    --gray-700: #B2B7BE;
+    --gray-800: #C9CDD2;
+    --gray-900: #DEE1E5;
+    --gray-950: #EEF0F2;
+
+    --text-primary: #ECEDEF;
+    --text-color: #DCDEE1;
+    --text-secondary: #B6BAC0;
+    --text-tertiary: #A3A9B0;
+    --text-placeholder: #8A9097;
+    --text-inverse: #FFFFFF;
+    --text-body: #D2D4D8;
+    --text-muted: #A6AAB0;
+    --text-quiet: #92979D;
+
+    --surface: #1F2023;
+    --surface-alt: #26282B;
+    --surface-sunken: #2B2D31;
+    --surface-overlay: rgba(44, 46, 50, 0.95);
+    --surface-overlay-hover: rgba(54, 56, 60, 0.98);
+    --control: #3A3C41;
+    --control-hover: #46494E;
+    --control-raised: #4A4D53;
+    --code-bg: #2D2F34;
+    --quote-bg: #26282C;
+    --window-content-bg: rgba(31, 32, 35, 0.9);
+    --glass-bg: rgba(38, 40, 44, 0.86);
+    --sidebar-bg: linear-gradient(180deg, #2F3135 0%, #282A2E 100%);
+    --metal-bg: linear-gradient(180deg, #5B5E63 0%, #46494D 45%, #3D4044 55%, #34373A 100%);
+    --metal-border: #18191B;
+    --header-bg: linear-gradient(180deg, #3B3D41 0%, #303236 100%);
+    --header-bg-hover: linear-gradient(180deg, #45474C 0%, #383A3E 100%);
+    --header-bg-pressed: linear-gradient(180deg, #2A2C30 0%, #34363A 100%);
+    --header-bg-active: linear-gradient(180deg, #33465F 0%, #2A3A50 100%);
+    --statusbar-bg: linear-gradient(180deg, #333539 0%, #2A2C2F 100%);
+    --sheet-bg: linear-gradient(180deg, #35373B 0%, #2D2F32 100%);
+
+    --border: #3A3C41;
+    --border-subtle: #303237;
+    --border-strong: #4B4E54;
+    --border-chrome: #141517;
+    --hairline: rgba(255, 255, 255, 0.08);
+    --hairline-strong: rgba(255, 255, 255, 0.2);
+    --hover-tint: rgba(255, 255, 255, 0.06);
+    --press-tint: rgba(255, 255, 255, 0.1);
+    --press-tint-strong: rgba(255, 255, 255, 0.15);
+    --raise-tint: rgba(255, 255, 255, 0.08);
+    --emboss: rgba(0, 0, 0, 0.35);
+    --bevel: rgba(255, 255, 255, 0.08);
+    --selection: rgba(64, 128, 230, 0.55);
+    --focus-ring: #5AA9FF;
+    --archived-bg: #3A3326;
+    --archived-border: #5C4D31;
+    --archived-text: #E6CB8E;
+    --titlebar-text: #D9DADD;
+    --titlebar-text-inactive: #85888D;
+    --slider-fill: #A3A9B1;
+    --slider-track: rgba(255, 255, 255, 0.2);
+    --danger-text: #FF9F93;
+    --danger-bg: #3D2421;
+    --danger-border: #6B3A33;
+    --prize-text: #F0C066;
+    --prize-bg: #3A3021;
+
+    --window-bg: rgba(40, 42, 46, 0.95);
+    --window-bg-solid: #28292D;
+    --window-titlebar: linear-gradient(180deg, #4B4D52 0%, #3B3D41 100%);
+    --window-titlebar-inactive: linear-gradient(180deg, #3A3C40 0%, #333539 100%);
+    --window-border: rgba(0, 0, 0, 0.65);
+    --window-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 5px 20px rgba(0, 0, 0, 0.35);
+    --toolbar-bg: linear-gradient(180deg, #3F4146 0%, #35373B 100%);
+    --toolbar-border: #1D1E20;
+    --traffic-inactive: #55585D;
+    --traffic-inactive-border: #45484C;
+
+    --success: #32D74B;
+    --warning: #FF9F0A;
+    --error: #FF453A;
+    --info: #7D7AFF;
+
+    --type-hackathon: #A78BFA;
+    --type-fellowship: #F472B6;
+    --type-work: #60A5FA;
+    --type-open-source: #4ADE80;
+    --type-speaking: #FB923C;
+    --type-achievement: #FACC15;
+    --type-project: #38BDF8;
+    --type-blog: #C084FC;
+
+    --scrollbar-track: #26282B;
+    --scrollbar-thumb: #4F535A;
+    --scrollbar-thumb-hover: #6A6F76;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.45);
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.35);
+    --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.45);
+
+    --btn-text: #ECEDEF;
+    --btn-bg: linear-gradient(180deg, #5C5F64 0%, #4A4D52 100%);
+    --btn-bg-hover: linear-gradient(180deg, #66696E 0%, #54575C 100%);
+    --btn-bg-active: linear-gradient(180deg, #3D4044 0%, #36393D 100%);
+    --btn-border: rgba(0, 0, 0, 0.6);
+    --btn-shadow: 0 1px 1px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    --btn-shadow-active: inset 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+}
+
+/* The wallpaper dims a little so bright photos do not glare around dark windows */
+html[data-appearance="dark"] body.wallpaper-loaded::before,
+html[data-appearance="dark"] body::before {
+    filter: brightness(0.78) saturate(0.95);
+}
+
+/* ==========================================================================
+   ACCENT COLOURS (html[data-accent]). Blue is the stylesheet default, so it
+   needs no block. Each accent sets the fill colour, the darker text/link
+   shade (4.5:1 on white) and the gel button; dark appearance gets lighter
+   link shades. Graphite is the one other appearance 10.9 itself offered.
+   ========================================================================== */
+html[data-accent="graphite"] { --accent-blue: #80868E; --accent-blue-hover: #6E747C; --accent-blue-active: #5D636B; --link: #4F565E; --link-hover: #30353B; --selection: #CCD2D9; --focus-ring: #7C8794; --accent-blue-light: #E8EBEE; }
+html[data-accent="purple"] {--accent-blue: #953D96; --accent-blue-hover: #82318A; --accent-blue-active: #6E2875; --link: #81307F; --link-hover: #5E1F5D; --selection: #E5C7E6; --focus-ring: #A657A7; --accent-blue-light: #F4E8F4; }
+html[data-accent="pink"] {--accent-blue: #E9428C; --accent-blue-hover: #D02F78; --accent-blue-active: #B32264; --link: #B81F67; --link-hover: #8A124B; --selection: #F9C9DE; --focus-ring: #E9428C; --accent-blue-light: #FCE9F2; }
+html[data-accent="red"] {--accent-blue: #E0383E; --accent-blue-hover: #C82A30; --accent-blue-active: #AD2026; --link: #C1262C; --link-hover: #8F171C; --selection: #F7C6C7; --focus-ring: #E0383E; --accent-blue-light: #FCEAEA; }
+html[data-accent="orange"] {--accent-blue: #F7821B; --accent-blue-hover: #E06F0A; --accent-blue-active: #C25E05; --link: #9A4C00; --link-hover: #7A3C00; --selection: #FCD9B8; --focus-ring: #F7821B; --accent-blue-light: #FEF1E4; }
+html[data-accent="green"] {--accent-blue: #4DA83A; --accent-blue-hover: #3E942D; --accent-blue-active: #317D22; --link: #2A7020; --link-hover: #1F5916; --selection: #CBE8C4; --focus-ring: #4DA83A; --accent-blue-light: #EBF6E8; }
+
+/* --accent-fill: the highlight behind white text (menu and list selections,
+   Spotlight, filled chips). The plain accent is a fill for dots, rings and
+   bars; behind text it only reaches 2.6-4:1, so each colour has a deeper
+   shade that clears 4.5:1 with white in both appearances. */
+html[data-accent="graphite"] { --accent-fill: #69707A; }
+html[data-accent="purple"] { --accent-fill: #8E3A90; }
+html[data-accent="pink"] { --accent-fill: #C2286F; }
+html[data-accent="red"] { --accent-fill: #C4262C; }
+html[data-accent="orange"] { --accent-fill: #B05300; }
+html[data-accent="green"] { --accent-fill: #2F7A23; }
+
+html[data-accent]:not([data-accent="blue"]) {
+    --accent-text: var(--link);
+    --accent-blue-subtle: color-mix(in srgb, var(--accent-blue) 8%, transparent);
+    /* The gel is built on the fill shade, so its white label holds 4.5:1 */
+    --btn-primary-bg: linear-gradient(180deg, color-mix(in srgb, var(--accent-fill) 85%, white) 0%, color-mix(in srgb, var(--accent-fill) 82%, black) 100%);
+    --btn-primary-bg-hover: linear-gradient(180deg, color-mix(in srgb, var(--accent-fill) 78%, white) 0%, var(--accent-fill) 100%);
+    --btn-primary-bg-active: linear-gradient(180deg, var(--accent-fill) 0%, color-mix(in srgb, var(--accent-fill) 70%, black) 100%);
+    --btn-primary-border: color-mix(in srgb, var(--accent-fill) 75%, black);
+}
+
+@media screen {
+html[data-appearance="dark"][data-accent="graphite"] { --accent-blue: #8E949C; --link: #B9C0C8; --link-hover: #DDE2E7; --focus-ring: #9AA3AD; }
+html[data-appearance="dark"][data-accent="purple"] { --accent-blue: #A550A7; --link: #DA9BDB; --link-hover: #EBC3EC; --focus-ring: #C27CC3; }
+html[data-appearance="dark"][data-accent="pink"] { --accent-blue: #F25C9E; --link: #FF94C2; --link-hover: #FFBEDA; --focus-ring: #F25C9E; }
+html[data-appearance="dark"][data-accent="red"] { --accent-blue: #F0484E; --link: #FF8F92; --link-hover: #FFB9BB; --focus-ring: #F0484E; }
+html[data-appearance="dark"][data-accent="orange"] { --accent-blue: #F7892A; --link: #FFB46B; --link-hover: #FFD0A1; --focus-ring: #F7892A; }
+html[data-appearance="dark"][data-accent="green"] { --accent-blue: #5DB84A; --link: #8FDA7E; --link-hover: #B8EBAD; --focus-ring: #5DB84A; }
+html[data-appearance="dark"][data-accent]:not([data-accent="blue"]) {
+    --accent-blue-light: color-mix(in srgb, var(--accent-blue) 24%, #1F2023);
+    --accent-blue-subtle: color-mix(in srgb, var(--accent-blue) 14%, transparent);
+    --selection: color-mix(in srgb, var(--accent-blue) 50%, transparent);
+}
 }
 
 /* Reset */
@@ -140,14 +434,39 @@ body {
     font-family: var(--font-system);
     font-size: 13px;
     -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
     user-select: none;
+}
+
+/* Mavericks text-selection blue; a translucent variant keeps light-on-dark
+   code blocks readable while selected. */
+::selection {
+    background: var(--selection);
+    color: inherit;
+}
+
+.window-content pre ::selection,
+.window-content pre::selection {
+    background: rgba(120, 170, 255, 0.4);
 }
 
 body {
     /* Wallpaper handled by ::before pseudo-element */
-    /* Fallback color matches wallpaper to prevent white flash */
-    background-color: #3b1d46;
+    /* The wallpaper's dominant colour, so there is never a white flash */
+    background-color: var(--desktop-color);
     position: relative;
+}
+
+/* Desktop wallpaper. These are the defaults (data/wallpapers.yaml `default`);
+   the preferences bootstrap in <head> overrides them inline on <html> with the
+   visitor's choice before first paint. */
+:root {
+    --desktop-color: #3b1d46;
+    --desktop-wallpaper: url('/wallpapers/wallpaper.webp');
+    /* Tiny 24x15 base64 preview of wallpaper.webp - loads instantly.
+       Regenerate whenever the default wallpaper changes. */
+    --desktop-wallpaper-preview: url('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAASABIAAD/4QBMRXhpZgAATU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAGKADAAQAAAABAAAADwAAAAD/7QA4UGhvdG9zaG9wIDMuMAA4QklNBAQAAAAAAAA4QklNBCUAAAAAABDUHYzZjwCyBOmACZjs+EJ+/8AAEQgADwAYAwEiAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/EAB8BAAMBAQEBAQEBAQEAAAAAAAABAgMEBQYHCAkKC//EALURAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/bAEMAAgICAgICBAICBAYEBAQGCAYGBgYICggICAgICgwKCgoKCgoMDAwMDAwMDA4ODg4ODhAQEBAQEhISEhISEhISEv/bAEMBAwMDBQQFCAQECBMNCw0TExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTE//dAAQAAv/aAAwDAQACEQMRAD8A/HnwZ8O/7TmRrtD94Emv1P8Agx+zJ4Cu/Clx4p1yJXXG0B+5wOfwGa+APAPxt0vSAov7GOQjj7vX6kdq9iu/20bTTdPbSNLsZFgDAiIMVUdM89T3xnpmvtUsLGmoppP5H1eSVaWEpuc3Ft9Xv8ky7+0d4Y8AaJphh0eJIpWPygfefHGcdlHQevaviL7Daf3B+tdT8TvjL/wneqSalFafZd+MIGLBR9Tyfxryb/hIrissVVwbneDOfMs8+sV3UpwSXTQ//9k=');
 }
 
 body::before {
@@ -157,54 +476,68 @@ body::before {
     left: 0;
     right: 0;
     bottom: 0;
-    /* Tiny 24x15 base64 preview of wallpaper.webp - loads instantly.
-       Regenerate whenever the wallpaper changes. */
-    background: url('data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAASABIAAD/4QBMRXhpZgAATU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAAGKADAAQAAAABAAAADwAAAAD/7QA4UGhvdG9zaG9wIDMuMAA4QklNBAQAAAAAAAA4QklNBCUAAAAAABDUHYzZjwCyBOmACZjs+EJ+/8AAEQgADwAYAwEiAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/EAB8BAAMBAQEBAQEBAQEAAAAAAAABAgMEBQYHCAkKC//EALURAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/bAEMAAgICAgICBAICBAYEBAQGCAYGBgYICggICAgICgwKCgoKCgoMDAwMDAwMDA4ODg4ODhAQEBAQEhISEhISEhISEv/bAEMBAwMDBQQFCAQECBMNCw0TExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTExMTE//dAAQAAv/aAAwDAQACEQMRAD8A/HnwZ8O/7TmRrtD94Emv1P8Agx+zJ4Cu/Clx4p1yJXXG0B+5wOfwGa+APAPxt0vSAov7GOQjj7vX6kdq9iu/20bTTdPbSNLsZFgDAiIMVUdM89T3xnpmvtUsLGmoppP5H1eSVaWEpuc3Ft9Xv8ky7+0d4Y8AaJphh0eJIpWPygfefHGcdlHQevaviL7Daf3B+tdT8TvjL/wneqSalFafZd+MIGLBR9Tyfxryb/hIrissVVwbneDOfMs8+sV3UpwSXTQ//9k=') no-repeat center center;
+    background: var(--desktop-wallpaper-preview) no-repeat center center;
     background-size: cover;
-    /* transform: scaleX(-1); */
     z-index: -1;
-    transition: background-image 0.5s ease-in-out;
+    transition: background-image 0.5s ease-in-out, filter 0.3s ease;
 }
 
 /* High-res wallpaper loaded class */
 body.wallpaper-loaded::before {
-    background-image: url('/wallpapers/wallpaper.webp');
+    background-image: var(--desktop-wallpaper);
 }
 
 hr {
     border: none;
     height: 1px;
-    background-color: #C0C0C0;
+    background-color: var(--border-strong);
     margin-top: 4px;
     margin-bottom: 4px;
 }
 
-/* make all scrollbars 1px */
+/* Scrollbars - the single source for the whole site.
+   Chrome 121+, Firefox and Safari 18.2+ use the standard properties (and then
+   ignore ::-webkit-scrollbar); the pseudo-elements are the fallback for
+   older Safari. */
 * {
-    -ms-overflow-style: none;
     scrollbar-width: thin;
-    /* Internet Explorer 10+ and Firefox */
+    scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
 ::-webkit-scrollbar {
-    width: 6px !important;
-    height: 6px !important;
+    width: 6px;
+    height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-    background: transparent !important;
+    background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2) !important;
-    border-radius: 3px !important;
+    background: var(--scrollbar-thumb);
+    border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.3) !important;
+    background: var(--scrollbar-thumb-hover);
 }
 
-/* For Mavericks/Finder theme - hide scrollbar in sidebars if preferred, or keep thin */
+/* Dark surfaces need a light thumb */
+.terminal-xterm-container,
+.terminal-xterm-container *,
+.mu-main,
+.mu-main *,
+.mu-mb-dropdown,
+.mu-mb-dropdown *,
+#spotlight-overlay,
+#spotlight-overlay * {
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+:is(.terminal-xterm-container, .mu-main, .mu-mb-dropdown, #spotlight-overlay) ::-webkit-scrollbar-thumb,
+:is(.terminal-xterm-container, .mu-main, .mu-mb-dropdown)::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+}
 
 /* ================================================
    Menu Bar
@@ -214,14 +547,14 @@ hr {
     top: 0;
     left: 0;
     right: 0;
-    height: var(--menubar-height);
+    height: var(--menubar-total);
     background: var(--menubar-bg);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 8px;
+    padding: var(--sat) max(8px, var(--sar)) 0 max(8px, var(--sal));
     z-index: 10000;
     border-bottom: 1px solid rgba(0, 0, 0, 0.3);
 }
@@ -232,15 +565,26 @@ hr {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    max-width: calc(100vw - 250px);
+    max-width: 100%;
     min-width: 0;
 }
 
+/* The left cluster takes whatever the right one leaves, so a long window
+   title ellipsises at the status items instead of running underneath them.
+   Its min-width keeps the Apple menu and a few letters of the app name. */
 .menubar-left {
     display: flex;
     align-items: center;
     gap: 2px;
     padding-left: 4px;
+    flex: 1 1 0;
+    min-width: 120px;
+}
+
+.menubar-left .finder-menu,
+#finder-menu-trigger {
+    min-width: 0;
+    max-width: 100%;
 }
 
 .menubar-icon {
@@ -305,7 +649,7 @@ hr {
 }
 
 .dropdown-item:hover {
-    background: #007AFF;
+    background: var(--accent-fill);
 }
 
 .dropdown-divider {
@@ -417,31 +761,19 @@ hr {
     gap: 16px;
     color: white;
     font-size: 12px;
+    /* Shrinks only once .menubar-left is down to its min-width, and then only
+       through the minimized-window tray (see .menubar-minimized) */
+    flex: 0 1 auto;
+    min-width: 0;
+}
+
+.menubar-right > * {
+    flex: none;
 }
 
 .menu-status {
     font-weight: 500;
-}
-
-.status-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2px 6px;
-    border-radius: 3px;
-    transition: background 0.15s ease;
-}
-
-.status-icon:hover {
-    background: rgba(255, 255, 255, 0.15);
-}
-
-.status-icon svg {
-    opacity: 0.9;
-}
-
-.status-icon:hover svg {
-    opacity: 1;
+    white-space: nowrap;
 }
 
 /* About This Mac Window */
@@ -467,22 +799,22 @@ hr {
     font-size: 22px;
     font-weight: 600;
     margin-bottom: 4px;
-    color: #1C2024;
+    color: var(--text-primary);
 }
 
 .about-this-mac .about-tagline {
-    color: #666;
+    color: var(--text-muted);
     font-size: 12px;
     margin-bottom: 20px;
 }
 
 .about-this-mac .about-info {
     text-align: left;
-    background: #F5F5F7;
+    background: var(--surface-alt);
     padding: 12px 14px;
     border-radius: 8px;
     margin-bottom: 16px;
-    border: 1px solid #E5E5E7;
+    border: 1px solid var(--border-subtle);
 }
 
 .about-this-mac .about-row {
@@ -490,7 +822,7 @@ hr {
     justify-content: space-between;
     align-items: center;
     padding: 6px 0;
-    border-bottom: 1px solid #E5E5E7;
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 .about-this-mac .about-row:last-child {
@@ -499,24 +831,24 @@ hr {
 
 .about-this-mac .about-label {
     font-size: 12px;
-    color: #666;
+    color: var(--text-muted);
     font-weight: 500;
 }
 
 .about-this-mac .about-value {
     font-size: 12px;
-    color: #333;
+    color: var(--text-color);
     font-weight: 500;
 }
 
 .about-this-mac .about-value a {
-    color: #0066CC;
+    color: var(--link);
     text-decoration: none;
     transition: color 0.15s ease;
 }
 
 .about-this-mac .about-value a:hover {
-    color: #004499;
+    color: var(--link-hover);
     text-decoration: underline;
 }
 
@@ -527,18 +859,18 @@ hr {
 }
 
 .about-this-mac .about-commit-link code {
-    background: #E3E5E8;
+    background: var(--control);
     padding: 2px 6px;
     border-radius: 4px;
     font-size: 11px;
-    font-family: 'Menlo', 'Monaco', monospace;
-    color: #333;
+    font-family: var(--font-mono);
+    color: var(--text-color);
     transition: background 0.15s ease;
 }
 
 .about-this-mac .about-commit-link:hover code {
-    background: #D0E5FF;
-    color: #0066CC;
+    background: var(--accent-blue-light);
+    color: var(--link);
 }
 
 .about-this-mac .about-links {
@@ -552,39 +884,15 @@ hr {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 14px;
-    border-radius: 6px;
+    padding: 6px 14px;
     font-size: 12px;
     font-weight: 500;
-    text-decoration: none;
-    transition: all 0.2s ease;
-}
-
-.about-this-mac .about-btn.github {
-    background: #24292e;
-    color: white;
-}
-
-.about-this-mac .about-btn.github:hover {
-    background: #1a1e22;
-    transform: translateY(-1px);
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
-}
-
-.about-this-mac .about-btn.rss {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    color: white;
-}
-
-.about-this-mac .about-btn.rss:hover {
-    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-    transform: translateY(-1px);
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+    /* Skin: shared Aqua button rules (.mac-btn group) */
 }
 
 .about-this-mac .about-footer {
     font-size: 11px;
-    color: #888;
+    color: var(--text-muted);
     margin: 0;
 }
 
@@ -593,10 +901,10 @@ hr {
    ================================================ */
 .desktop {
     position: fixed;
-    top: var(--menubar-height);
-    left: 0;
-    right: 0;
-    bottom: 0;
+    top: var(--menubar-total);
+    left: var(--sal);
+    right: var(--sar);
+    bottom: var(--sab);
     padding: 20px;
 }
 
@@ -606,7 +914,7 @@ hr {
     left: 20px;
     top: 20px;
     width: 280px;
-    background: rgba(255, 255, 255, 0.85);
+    background: var(--glass-bg);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-radius: 12px;
@@ -649,6 +957,17 @@ hr {
 
 .desktop-sticky-note.is-sync-moving {
     transition: left 0.12s linear, top 0.12s linear;
+}
+
+/* First visit: laid out (so it can be measured and placed) but unseen until
+   the shared note arrives, then faded in where it actually lives. */
+.desktop-sticky-note.is-awaiting {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.desktop-sticky-note.is-revealing {
+    transition: opacity 0.26s ease-out;
 }
 
 .sticky-titlebar {
@@ -695,7 +1014,7 @@ hr {
     flex: 1;
     font-size: 11px;
     font-weight: 600;
-    color: rgba(0, 0, 0, 0.45);
+    color: rgba(0, 0, 0, 0.62);
     text-align: center;
     margin-right: 17px;
     pointer-events: none;
@@ -733,7 +1052,7 @@ hr {
 }
 
 .sticky-body::placeholder {
-    color: rgba(0, 0, 0, 0.28);
+    color: rgba(0, 0, 0, 0.5);
 }
 
 .sticky-body[readonly] {
@@ -747,7 +1066,7 @@ hr {
 
 .sticky-status {
     font-size: 9px;
-    color: rgba(0, 0, 0, 0.35);
+    color: rgba(0, 0, 0, 0.6);
 }
 
 .menubar-sticky-icon {
@@ -771,14 +1090,17 @@ hr {
     align-items: center;
     gap: 8px;
     padding: 12px 14px;
-    background: rgba(0, 0, 0, 0.03);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    background: var(--hover-tint);
+    border-bottom: 1px solid var(--hairline);
 }
 
 .widget-icon {
     font-size: 16px;
 }
 
+/* The colour-cycling NEW text: part of the site's personality, kept exactly
+   as it always was (the owner asked for it). Reduced motion holds it on red,
+   see the end of this block. */
 .widget-icon.blink-new {
     font-size: 10px;
     font-weight: 800;
@@ -809,10 +1131,22 @@ hr {
     }
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .widget-icon.blink-new {
+        animation: none;
+        color: #FF0000;
+    }
+}
+
+html[data-motion="reduce"] .widget-icon.blink-new {
+    animation: none;
+    color: #FF0000;
+}
+
 .widget-title {
     font-size: 13px;
     font-weight: 600;
-    color: #333;
+    color: var(--text-color);
 }
 
 .widget-content {
@@ -831,24 +1165,17 @@ hr {
 }
 
 .widget-blog-item:hover {
-    background: rgba(0, 122, 255, 0.1);
+    background: color-mix(in srgb, var(--accent-blue) 10%, transparent);
 }
 
 .widget-blog-title {
     flex: 1;
     font-size: 12px;
     font-weight: 500;
-    color: #333;
+    color: var(--text-color);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-}
-
-.widget-blog-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 4px;
 }
 
 .widget-blog-type {
@@ -860,32 +1187,51 @@ hr {
     letter-spacing: 0.5px;
 }
 
+/* The chip ink is its fill colour pulled towards the page ink (dark in the
+   light appearance, light in the dark one) so 9px caps stay at 4.5:1. */
+.widget-blog-item {
+    --chip-ink-pull: black;
+    --chip-ink-keep: 52%;
+}
+
+html[data-appearance="dark"] .widget-blog-item {
+    --chip-ink-pull: white;
+    --chip-ink-keep: 60%;
+}
+
 .widget-type-blogs {
-    background: rgba(88, 86, 214, 0.15);
-    color: #5856D6;
+    background: color-mix(in srgb, var(--info) 15%, transparent);
+    color: color-mix(in srgb, var(--info) var(--chip-ink-keep), var(--chip-ink-pull));
 }
 
 .widget-type-projects {
-    background: rgba(0, 122, 255, 0.15);
-    color: #007AFF;
+    background: color-mix(in srgb, var(--accent-blue) 15%, transparent);
+    color: color-mix(in srgb, var(--accent-blue) var(--chip-ink-keep), var(--chip-ink-pull));
 }
 
 .widget-type-timeline {
-    background: rgba(255, 149, 0, 0.15);
-    color: #FF9500;
+    background: color-mix(in srgb, var(--warning) 15%, transparent);
+    color: color-mix(in srgb, var(--warning) var(--chip-ink-keep), var(--chip-ink-pull));
 }
 
 .widget-blog-date {
     font-size: 10px;
-    color: #888;
+    color: var(--text-secondary);
     flex-shrink: 0;
 }
 
 .desktop-icons {
-    display: flex;
-    flex-direction: column;
-    flex-wrap: wrap;
-    align-content: flex-start;
+    /* Finder order (down each column, right to left) in balanced columns:
+       the template sets --icon-rows (about five icons a column, the last
+       column on the left holding the remainder), and desktop-personal.js
+       lowers it on short screens and sets the row pitch to the one the
+       arranged grid uses. */
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(var(--icon-rows, 5), var(--icon-pitch, auto));
+    grid-auto-columns: max-content;
+    justify-content: start;
+    align-content: start;
     gap: 8px;
     height: 100%;
     padding-right: 10px;
@@ -914,7 +1260,7 @@ hr {
 
 .desktop-icon:focus-visible {
     background: rgba(255, 255, 255, 0.2);
-    box-shadow: 0 0 0 2px #007AFF;
+    box-shadow: 0 0 0 2px var(--accent-blue);
 }
 
 .desktop-icon:hover {
@@ -922,7 +1268,7 @@ hr {
 }
 
 .desktop-icon:active {
-    background: rgba(0, 122, 255, 0.6);
+    background: color-mix(in srgb, var(--accent-blue) 60%, transparent);
 }
 
 .icon-image {
@@ -939,6 +1285,10 @@ hr {
     width: var(--app-icon-size);
     height: var(--app-icon-size);
     display: inline-grid;
+    /* One cell exactly the size of the box: with auto tracks the img's
+       percentage height has nothing definite to resolve against, and its
+       width/height attributes stretch it into a tall oval */
+    grid-template: minmax(0, 1fr) / minmax(0, 1fr);
     place-items: center;
     position: relative;
     flex-shrink: 0;
@@ -1098,20 +1448,21 @@ hr {
    ================================================ */
 .windows-container {
     position: fixed;
-    top: var(--menubar-height);
-    left: 0;
-    right: 0;
-    bottom: 0;
+    top: var(--menubar-total);
+    left: var(--sal);
+    right: var(--sar);
+    bottom: var(--sab);
     pointer-events: none;
 }
 
 .window {
     position: absolute;
-    background: var(--window-bg);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
+    /* Solid, not blurred: the 15px backdrop blur sat behind a 92% opaque fill
+       where it was barely visible, and made every drag frame expensive. */
+    background: var(--window-bg-solid);
     border-radius: 6px;
     box-shadow: var(--window-shadow);
+    transition: box-shadow 0.18s ease;
     min-width: 400px;
     min-height: 300px;
     height: fit-content;
@@ -1122,18 +1473,42 @@ hr {
     border: 1px solid var(--window-border);
 }
 
+/* Background windows sit lower: a shallower shadow gives the stack depth */
+.window.inactive {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18), 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Zoomed: edge to edge, so no rounded corners or border */
+.window[data-maximized="true"] {
+    border-radius: 0;
+    border-color: transparent;
+}
+
+.window[data-maximized="true"] .window-titlebar {
+    border-radius: 0;
+}
+
+/* The shell adds .zooming around a zoom/unzoom geometry change */
+.window.zooming {
+    transition: left 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+        top 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+        width 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+        height 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+        border-radius 0.22s ease;
+}
+
 .window.inactive .window-titlebar {
     background: var(--window-titlebar-inactive);
 }
 
 .window.inactive .window-title {
-    color: #999;
+    color: var(--titlebar-text-inactive);
 }
 
 /* Traffic lights turn gray when inactive */
 .window.inactive .traffic-light .traffic-light-face {
-    background: #CDCDCD !important;
-    border-color: #B0B0B0 !important;
+    background: var(--traffic-inactive) !important;
+    border-color: var(--traffic-inactive-border) !important;
 }
 
 .window.inactive .traffic-light-symbol {
@@ -1141,7 +1516,7 @@ hr {
 }
 
 .titlebar-link {
-    color: #666;
+    color: var(--text-muted);
     text-decoration: none;
     font-size: 14px;
     width: 20px;
@@ -1157,8 +1532,8 @@ hr {
 }
 
 .titlebar-link:hover {
-    color: #333;
-    background: rgba(0, 0, 0, 0.05);
+    color: var(--text-color);
+    background: var(--hover-tint);
     opacity: 1;
 }
 
@@ -1174,7 +1549,7 @@ hr {
     padding: 0 10px;
     cursor: grab;
     flex-shrink: 0;
-    border-bottom: 1px solid #B0B0B0;
+    border-bottom: 1px solid var(--border-chrome);
     border-radius: 6px 6px 0 0;
 }
 
@@ -1257,7 +1632,7 @@ hr {
     text-align: center;
     font-size: 13px;
     font-weight: 500;
-    color: #4A4A4A;
+    color: var(--titlebar-text);
     margin-right: 46px;
     white-space: nowrap;
     overflow: hidden;
@@ -1269,46 +1644,24 @@ hr {
     text-overflow: ellipsis;
 }
 
+/* Route pages render the title as a bare text node, and text-overflow does
+   nothing on a flex container: a long title was cut at both ends. */
+.static-window .window-title {
+    display: block;
+}
+
 .window-content {
     flex: 1;
     overflow: auto;
     padding: 0;
-    background: rgba(255, 255, 255, 0.8);
+    background: var(--window-content-bg);
     color: var(--text-color);
     min-height: 0;
 }
 
 /* Child windows (individual items) get padding */
-.window-content .project-detail,
-.window-content .blog-post,
-.window-content .timeline-event,
 .window-content .about-this-mac {
     padding: 16px;
-}
-
-/* Wins and Contact pages get padding */
-/* Wins and Contact get no padding (handled internally) */
-[data-window-id="wins"] .window-content,
-[data-window-id="contact"] .window-content {
-    padding: 0;
-}
-
-.window-content::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-.window-content::-webkit-scrollbar-track {
-    background: #F0F0F0;
-}
-
-.window-content::-webkit-scrollbar-thumb {
-    background: #C0C0C0;
-    border-radius: 4px;
-}
-
-.window-content::-webkit-scrollbar-thumb:hover {
-    background: #A0A0A0;
 }
 
 /* Window resize handle */
@@ -1335,13 +1688,37 @@ hr {
     pointer-events: none;
 }
 
+/* 12-blade progress indicator. One empty element: the blades are an SVG mask
+   over currentColor, so `color` tints it and width/height scale it.
+   Variants: .small (16px), .large (32px), .light (white, for dark surfaces).
+   .spinner is the old class name, kept as an alias. */
+.mac-spinner,
 .spinner {
+    display: inline-block;
+    flex: none;
     width: 24px;
     height: 24px;
-    border: 3px solid rgba(0, 0, 0, 0.1);
-    border-radius: 50%;
-    border-top-color: #007AFF;
-    animation: spin 1s linear infinite;
+    border: 0;
+    color: var(--text-muted);
+    background-color: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='10.75' y='1.5' width='2.5' height='6.5' rx='1.25' transform='rotate(0 12 12)' opacity='0.15'/%3E%3Crect x='10.75' y='1.5' width='2.5' height='6.5' rx='1.25' transform='rotate(30 12 12)' opacity='0.23'/%3E%3Crect x='10.75' y='1.5' width='2.5' height='6.5' rx='1.25' transform='rotate(60 12 12)' opacity='0.3'/%3E%3Crect x='10.75' y='1.5' width='2.5' height='6.5' rx='1.25' transform='rotate(90 12 12)' opacity='0.38'/%3E%3Crect x='10.75' y='1.5' width='2.5' height='6.5' rx='1.25' transform='rotate(120 12 12)' opacity='0.46'/%3E%3Crect x='10.75' y='1.5' width='2.5' height='6.5' rx='1.25' transform='rotate(150 12 12)' opacity='0.54'/%3E%3Crect x='10.75' y='1.5' width='2.5' height='6.5' rx='1.25' transform='rotate(180 12 12)' opacity='0.61'/%3E%3Crect x='10.75' y='1.5' width='2.5' height='6.5' rx='1.25' transform='rotate(210 12 12)' opacity='0.69'/%3E%3Crect x='10.75' y='1.5' width='2.5' height='6.5' rx='1.25' transform='rotate(240 12 12)' opacity='0.77'/%3E%3Crect x='10.75' y='1.5' width='2.5' height='6.5' rx='1.25' transform='rotate(270 12 12)' opacity='0.85'/%3E%3Crect x='10.75' y='1.5' width='2.5' height='6.5' rx='1.25' transform='rotate(300 12 12)' opacity='0.92'/%3E%3Crect x='10.75' y='1.5' width='2.5' height='6.5' rx='1.25' transform='rotate(330 12 12)' opacity='1'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='10.75' y='1.5' width='2.5' height='6.5' rx='1.25' transform='rotate(0 12 12)' opacity='0.15'/%3E%3Crect x='10.75' y='1.5' width='2.5' height='6.5' rx='1.25' transform='rotate(30 12 12)' opacity='0.23'/%3E%3Crect x='10.75' y='1.5' width='2.5' height='6.5' rx='1.25' transform='rotate(60 12 12)' opacity='0.3'/%3E%3Crect x='10.75' y='1.5' width='2.5' height='6.5' rx='1.25' transform='rotate(90 12 12)' opacity='0.38'/%3E%3Crect x='10.75' y='1.5' width='2.5' height='6.5' rx='1.25' transform='rotate(120 12 12)' opacity='0.46'/%3E%3Crect x='10.75' y='1.5' width='2.5' height='6.5' rx='1.25' transform='rotate(150 12 12)' opacity='0.54'/%3E%3Crect x='10.75' y='1.5' width='2.5' height='6.5' rx='1.25' transform='rotate(180 12 12)' opacity='0.61'/%3E%3Crect x='10.75' y='1.5' width='2.5' height='6.5' rx='1.25' transform='rotate(210 12 12)' opacity='0.69'/%3E%3Crect x='10.75' y='1.5' width='2.5' height='6.5' rx='1.25' transform='rotate(240 12 12)' opacity='0.77'/%3E%3Crect x='10.75' y='1.5' width='2.5' height='6.5' rx='1.25' transform='rotate(270 12 12)' opacity='0.85'/%3E%3Crect x='10.75' y='1.5' width='2.5' height='6.5' rx='1.25' transform='rotate(300 12 12)' opacity='0.92'/%3E%3Crect x='10.75' y='1.5' width='2.5' height='6.5' rx='1.25' transform='rotate(330 12 12)' opacity='1'/%3E%3C/svg%3E") center / contain no-repeat;
+    animation: spin 1s steps(12) infinite;
+}
+
+:is(.mac-spinner, .spinner).small {
+    width: 16px;
+    height: 16px;
+}
+
+:is(.mac-spinner, .spinner).large {
+    width: 32px;
+    height: 32px;
+}
+
+:is(.mac-spinner, .spinner).light,
+.window-iframe-dark .window-loader :is(.mac-spinner, .spinner) {
+    color: #fff;
 }
 
 @keyframes spin {
@@ -1350,13 +1727,163 @@ hr {
     }
 }
 
-/* External Window (iframe) Styles */
+/* Empty / error state for a window body. Markup:
+   <div class="window-empty">
+     <div class="window-empty-icon">(svg or .app-icon)</div>
+     <div class="window-empty-title">Nothing here</div>
+     <p class="window-empty-text">Explanation</p>
+     <button class="mac-btn">Retry</button>      (optional)
+   </div> */
+.window-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 100%;
+    padding: 32px 24px;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.window-empty-icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 6px;
+    display: grid;
+    place-items: center;
+    font-size: 40px;
+    line-height: 1;
+    color: var(--gray-500);
+    filter: grayscale(1);
+    opacity: 0.7;
+}
+
+.window-empty-icon :is(svg, img, .app-icon) {
+    width: 48px;
+    height: 48px;
+    --app-icon-size: 48px;
+}
+
+.window-empty-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+.window-content .window-empty-text,
+.window-empty-text {
+    max-width: 340px;
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+.window-empty > .mac-btn,
+.window-empty-actions {
+    margin-top: 10px;
+}
+
+.window-empty-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+}
+
+/* ================================================
+   Shared app chrome: one toolbar and one status bar look.
+   New markup uses .app-toolbar / .app-statusbar (+ -title, -icon, -count);
+   the per-app classes are grouped in so they share the skin and keep only
+   their own layout. Music keeps its iTunes skin on purpose.
+   ================================================ */
+.app-toolbar,
+.projects-toolbar,
+.timeline-toolbar,
+.games-toolbar,
+.blogs-toolbar,
+.gb-toolbar,
+.finder-toolbar,
+.paint-toolbar,
+.external-window .window-toolbar {
+    background: var(--toolbar-bg);
+    border-bottom: 1px solid var(--toolbar-border);
+    flex: none;
+}
+
+/* Single-row toolbars. Paint wraps its tool groups and keeps its own box. */
+.app-toolbar,
+.projects-toolbar,
+.timeline-toolbar,
+.games-toolbar,
+.blogs-toolbar,
+.gb-toolbar,
+.finder-toolbar,
 .external-window .window-toolbar {
     display: flex;
     align-items: center;
-    padding: 6px 12px;
-    background: linear-gradient(180deg, #F0F0F0 0%, #E0E0E0 100%);
-    border-bottom: 1px solid #C0C0C0;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 38px;
+    padding: 4px 12px;
+    box-sizing: border-box;
+}
+
+.app-toolbar-title,
+.projects-title,
+.timeline-title,
+.games-title,
+.blogs-title,
+.finder-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.app-toolbar-icon,
+.projects-icon,
+.timeline-icon,
+.games-icon,
+.blogs-icon {
+    flex: none;
+    font-size: 16px;
+    line-height: 1;
+}
+
+.app-toolbar-count,
+.projects-count,
+.timeline-count,
+.games-count,
+.blogs-count,
+.finder-count {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+}
+
+.app-statusbar,
+.paint-statusbar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 22px;
+    padding: 3px 12px;
+    box-sizing: border-box;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    background: linear-gradient(180deg, var(--gray-50) 0%, var(--gray-150) 100%);
+    border-top: 1px solid var(--toolbar-border);
+}
+
+/* External Window (iframe) Styles */
+.external-window .window-toolbar {
     gap: 8px;
 }
 
@@ -1366,8 +1893,8 @@ hr {
     align-items: center;
     gap: 6px;
     padding: 5px 10px;
-    background: white;
-    border: 1px solid #C8C8C8;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
     border-radius: 6px;
     font-size: 12px;
 }
@@ -1377,7 +1904,7 @@ hr {
 }
 
 .url-text {
-    color: #666;
+    color: var(--text-muted);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1390,20 +1917,92 @@ hr {
     justify-content: center;
     width: 24px;
     height: 24px;
-    background: #E8E8E8;
-    border: 1px solid #C8C8C8;
+    background: var(--control);
+    border: 1px solid var(--border-strong);
     border-radius: 4px;
     text-decoration: none;
-    color: #007AFF;
+    color: var(--accent-text);
     font-size: 14px;
     transition: all 0.2s ease;
 }
 
 .open-external:hover {
-    background: #007AFF;
+    background: var(--accent-fill);
     color: white !important;
     fill: white !important;
-    border-color: #007AFF;
+    border-color: var(--accent-fill);
+}
+
+/* Other toolbar controls of an embedded window (reload, archived snapshot):
+   <button class="toolbar-btn"> or <a class="toolbar-btn">, same 24px look as
+   .open-external. Add .is-loading to spin the reload glyph. */
+.window-toolbar .toolbar-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    font: inherit;
+    font-size: 14px;
+    line-height: 1;
+    background: var(--control);
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    text-decoration: none;
+    color: var(--accent-text);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.window-toolbar .toolbar-btn:hover {
+    background: var(--accent-fill);
+    border-color: var(--accent-fill);
+    color: white;
+}
+
+.window-toolbar .toolbar-btn:is(:disabled, [aria-disabled="true"]) {
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+.window-toolbar .toolbar-btn.is-loading > * {
+    animation: toolbar-btn-spin 0.9s linear infinite;
+}
+
+@keyframes toolbar-btn-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.window-toolbar .open-external,
+.window-toolbar .url-bar {
+    min-width: 0;
+}
+
+.window-toolbar .open-external {
+    flex: none;
+}
+
+/* Blocked-embed panel with more than one way out (new tab, archived copy) */
+.iframe-blocked-fallback .fallback-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+/* .open-external also marks "always a new tab" for the shell's link handler,
+   so it appears on the blocked-iframe fallback button too; that one is a
+   normal push button, not the 24px toolbar icon. */
+.fallback-btn.open-external {
+    display: inline-block;
+    width: auto;
+    height: auto;
+    font-size: 13px;
+    border-color: var(--btn-primary-border);
 }
 
 .window-iframe-container {
@@ -1429,7 +2028,7 @@ hr {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(180deg, #F5F5F7 0%, #E8E8EA 100%);
+    background: var(--sheet-bg);
     text-align: center;
     padding: 40px;
 }
@@ -1442,30 +2041,22 @@ hr {
 .iframe-blocked-fallback h3 {
     font-size: 18px;
     font-weight: 600;
-    color: #333;
+    color: var(--text-color);
     margin-bottom: 8px;
 }
 
 .iframe-blocked-fallback p {
     font-size: 14px;
-    color: #666;
+    color: var(--text-muted);
     margin-bottom: 20px;
 }
 
 .fallback-btn {
     display: inline-block;
-    padding: 10px 24px;
-    background: #007AFF;
-    color: white;
-    border-radius: 8px;
-    text-decoration: none;
-    font-size: 14px;
+    padding: 7px 20px;
+    font-size: 13px;
     font-weight: 500;
-    transition: all 0.2s ease;
-}
-
-.fallback-btn:hover {
-    background: #0056CC;
+    /* Skin: shared Aqua button rules (.mac-btn group, primary) */
 }
 
 .external-window {
@@ -1496,30 +2087,12 @@ hr {
     height: 100%;
 }
 
-.finder-toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 16px;
-    background: linear-gradient(180deg, #F6F6F6 0%, #E8E8E8 100%);
-    border-bottom: 1px solid #C0C0C0;
-}
-
-.finder-title {
-    font-weight: 600;
-    font-size: 13px;
-    color: #333;
-}
-
-.finder-count {
-    font-size: 11px;
-    color: #666;
-}
+/* .finder-toolbar / .finder-title / .finder-count: see "Shared app chrome" */
 
 .finder-content {
     flex: 1;
     overflow: auto;
-    background: rgba(255, 255, 255, 0.8);
+    background: var(--window-content-bg);
 }
 
 .finder-list-view {
@@ -1531,11 +2104,11 @@ hr {
     display: flex;
     align-items: center;
     padding: 6px 12px;
-    background: #F5F5F7;
-    border-bottom: 1px solid #D0D0D0;
+    background: var(--surface-alt);
+    border-bottom: 1px solid var(--border-strong);
     font-size: 11px;
     font-weight: 600;
-    color: #666;
+    color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     position: sticky;
@@ -1546,18 +2119,18 @@ hr {
     display: flex;
     align-items: center;
     padding: 8px 12px;
-    border-bottom: 1px solid #F0F0F0;
+    border-bottom: 1px solid var(--border-subtle);
     cursor: pointer;
     transition: background 0.1s ease;
 }
 
 .finder-row:hover {
-    background: rgba(0, 122, 255, 0.08);
+    background: var(--accent-blue-subtle);
 }
 
 .finder-row:active,
 .finder-row.selected {
-    background: var(--accent-blue);
+    background: var(--accent-fill);
     color: white;
 }
 
@@ -1590,7 +2163,7 @@ hr {
 .col-date {
     width: 100px;
     font-size: 12px;
-    color: #666;
+    color: var(--text-muted);
     text-align: right;
 }
 
@@ -1600,29 +2173,7 @@ hr {
 .project-header {
     padding-bottom: 16px;
     margin-bottom: 20px;
-    border-bottom: 1px solid #E0E0E0;
-}
-
-.project-year {
-    font-size: 13px;
-    color: #666;
-}
-
-.project-summary {
-    font-size: 15px;
-    color: #444;
-    line-height: 1.5;
-    margin: 0;
-}
-
-.project-links-bar {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    padding: 12px 16px;
-    background: #F5F5F7;
-    border-radius: 8px;
-    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border);
 }
 
 .project-link {
@@ -1638,12 +2189,12 @@ hr {
 }
 
 .project-link.website {
-    background: #007AFF;
+    background: var(--accent-fill);
     color: white;
 }
 
 .project-link.website:hover {
-    background: #0056CC;
+    background: var(--accent-blue-active);
 }
 
 .project-link.github {
@@ -1664,138 +2215,23 @@ hr {
     background: #2da44e;
 }
 
-.project-content {
-    line-height: 1.7;
-}
-
-.project-content h2,
-.project-content h3 {
-    margin-top: 24px;
-    margin-bottom: 12px;
-    color: #1a1a1a;
-}
-
-.project-content h2 {
-    font-size: 20px;
-}
-
-.project-content h3 {
-    font-size: 16px;
-}
-
-/* ================================================
-   Timeline Event Layout
-   ================================================ */
-.timeline-event {
-    max-width: 100%;
-}
-
-.event-header {
-    display: flex;
-    gap: 16px;
-    padding-bottom: 16px;
-    margin-bottom: 20px;
-    border-bottom: 1px solid #E0E0E0;
-}
-
-.event-date-badge {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 60px;
-    height: 60px;
-    background: linear-gradient(135deg, #FF9500 0%, #FF5E3A 100%);
-    border-radius: 12px;
-    flex-shrink: 0;
-}
-
-.event-date-badge .event-month {
-    font-size: 12px;
-    font-weight: 600;
-    color: white;
-    text-transform: uppercase;
-}
-
-.event-date-badge .event-year {
-    font-size: 18px;
-    font-weight: 700;
-    color: white;
-}
-
-.event-title-area {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.event-title-area h1 {
-    font-size: 22px;
-    font-weight: 600;
-    color: #1a1a1a;
-    margin-bottom: 4px;
-}
-
-.event-summary {
-    font-size: 14px;
-    color: #666;
-    margin: 0;
-}
-
-.event-content {
-    line-height: 1.7;
-}
-
-.event-content p {
-    margin-bottom: 12px;
-}
-
-/* ================================================
-   Blog Post Layout - See main.css for blog-specific styles
-   ================================================ */
-/* Base blog-post constraints inherited from main.css */
-
-/* Additional styles for blog elements in window context */
-.post-meta {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.post-meta time {
-    font-size: 13px;
-    color: #666;
-}
-
-.post-tags {
-    display: flex;
-    gap: 6px;
-}
-
-.post-tags .tag {
-    padding: 3px 10px;
-    background: #E8E8EA;
-    border-radius: 12px;
-    font-size: 11px;
-    color: #555;
-}
-
 /* ================================================
    Content Styling
    ================================================ */
-.window-content h1 {
+/* Component headings that carry their own class (year headers, section
+   headers, the About name) are styled by that class alone, whether
+   the tag is a div or a heading. :where() keeps the specificity unchanged. */
+.window-content h1:where(:not(.sidebar-name)) {
     font-size: 24px;
     font-weight: 600;
-    color: #1a1a1a;
+    color: var(--text-primary);
     margin-bottom: 16px;
 }
 
-.window-content h2 {
+.window-content h2:where(:not(.year-header, .projects-year-header, .sidebar-name)) {
     font-size: 18px;
     font-weight: 600;
-    color: #2a2a2a;
+    color: var(--text-primary);
     margin-top: 24px;
     margin-bottom: 12px;
 }
@@ -1803,7 +2239,7 @@ hr {
 .window-content h3 {
     font-size: 15px;
     font-weight: 600;
-    color: #3a3a3a;
+    color: var(--text-color);
     margin-top: 20px;
     margin-bottom: 8px;
 }
@@ -1811,7 +2247,7 @@ hr {
 .window-content p {
     line-height: 1.6;
     margin-bottom: 12px;
-    color: #444;
+    color: var(--text-body);
 }
 
 .window-content ul,
@@ -1822,11 +2258,17 @@ hr {
 
 .window-content li {
     margin-bottom: 6px;
-    color: #444;
+    color: var(--text-body);
+}
+
+/* Bullets in markdown windows (Credits, Privacy) read like the paragraphs
+   around them; app lists keep their own line-heights */
+.window-raw-content li {
+    line-height: 1.6;
 }
 
 .window-content a {
-    color: var(--accent-blue);
+    color: var(--link);
     text-decoration: none;
 }
 
@@ -1835,21 +2277,26 @@ hr {
 }
 
 .window-content code {
-    background: #F4F4F4;
+    background: var(--code-bg);
     padding: 2px 6px;
     border-radius: 3px;
-    font-family: "SF Mono", Menlo, Monaco, monospace;
+    font-family: var(--font-mono);
     font-size: 12px;
-    color: #E83E8C;
+    color: var(--code-inline);
 }
 
+/* Hugo's highlighter writes the monokai colours inline on <pre>; the chrome
+   around the block is dark to match. */
 .window-content pre {
-    background: #2D2D2D;
+    background: #272822;
     color: #F8F8F2;
     padding: 16px;
+    border: 1px solid #1a1a1a;
     border-radius: 6px;
+    box-shadow: none;
     overflow-x: auto;
     margin: 16px 0;
+    font-family: var(--font-mono);
 }
 
 .window-content pre code {
@@ -1858,121 +2305,34 @@ hr {
     color: inherit;
 }
 
+/* Touch has no hover, so the Copy button (.code-tools, added by the shell)
+   is always showing: keep it off the first line of code */
+@media (hover: none) {
+    .window-content .highlight:has(> .code-tools) pre {
+        padding-top: 38px;
+    }
+}
+
 .window-content blockquote {
     border-left: 3px solid var(--accent-blue);
     padding-left: 16px;
     margin: 16px 0;
-    color: #666;
+    color: var(--text-muted);
     font-style: italic;
-}
-
-/* ================================================
-   Project Layout - New Consistent Design
-   ================================================ */
-
-.project-detail {
-    max-width: 800px;
-    margin: 0 auto;
-    padding-bottom: 40px;
-}
-
-.project-hero {
-    margin-bottom: 24px;
-    border-bottom: 1px solid #E5E5E5;
-    padding-bottom: 20px;
-}
-
-.project-title {
-    font-size: 28px;
-    font-weight: 700;
-    margin: 0 0 12px 0;
-    line-height: 1.2;
-    color: #1a1a1a;
-}
-
-.project-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 16px;
-}
-
-.project-badge {
-    background: #F0F0F0;
-    color: #555;
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 500;
-}
-
-.project-badge.tag {
-    background: #E8F2FF;
-    color: #0066CC;
-}
-
-.project-lead {
-    font-size: 16px;
-    line-height: 1.5;
-    color: #444;
-    margin: 0;
-}
-
-.project-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-bottom: 32px;
-}
-
-.action-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border-radius: 6px;
-    text-decoration: none;
-    font-size: 13px;
-    font-weight: 500;
-    background: #F5F5F7;
-    color: #333;
-    border: 1px solid #D1D1D6;
-    transition: all 0.2s ease;
-    cursor: pointer;
-}
-
-.action-btn:hover {
-    background: #E5E5E5;
-    text-decoration: none;
-    transform: translateY(-1px);
-}
-
-.action-btn.primary {
-    background: #007AFF;
-    color: white;
-    border-color: #0062CC;
-}
-
-.action-btn.primary:hover {
-    background: #0062CC;
-}
-
-.btn-icon {
-    font-size: 14px;
 }
 
 /* Markdown Content Styling */
 .markdown-body {
     font-size: 15px;
     line-height: 1.6;
-    color: #333;
+    color: var(--text-color);
 }
 
 .markdown-body h2 {
     font-size: 20px;
     margin: 32px 0 16px 0;
     padding-bottom: 8px;
-    border-bottom: 1px solid #EAEAEA;
+    border-bottom: 1px solid var(--border-subtle);
     font-weight: 600;
 }
 
@@ -1996,9 +2356,134 @@ hr {
     margin-bottom: 6px;
 }
 
+/* Safety net for a stray "# heading" in a post body: the template already
+   prints the page title, so body h1s read as section headings. */
+.markdown-body h1 {
+    font-size: 22px;
+    margin: 32px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--gray-300);
+}
+
+/* Plain prose links are underlined so they are not told apart by colour alone.
+   Buttons and shortcode pills carry a class and are left out. */
+.markdown-body a:not([class]),
+.info-text a:not([class]) {
+    color: var(--link);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+}
+
+/* .window-raw-content: markdown rendered straight into a window (Credits,
+   Privacy). A wide table scrolls by itself instead of panning the page. */
+.markdown-body table,
+.window-raw-content table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+/* The table render hook wraps every table in .doc-table-frame > .doc-table.
+   Credits and Privacy have no .doc article (assets/css/apps/doc.css), so they
+   get the same frame here: the inner region scrolls, the frame does not, and
+   a fade on the right edge says there are more columns. The fade follows the
+   scroll position through a scroll-driven animation, so it needs no script;
+   it is off when the table fits (inactive timeline) or there is no support. */
+.window-raw-content .doc-table-frame {
+    position: relative;
+    margin: 16px 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    timeline-scope: --raw-table;
+}
+
+.window-raw-content .doc-table {
+    overflow: auto;
+    border-radius: inherit;
+    scroll-timeline: --raw-table x;
+}
+
+.window-raw-content .doc-table:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.window-raw-content .doc-table table {
+    display: table;
+    max-width: none;
+    margin: 0;
+    overflow: visible;
+}
+
+.window-raw-content .doc-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.window-raw-content .doc-table-frame::after {
+    content: "";
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    bottom: 1px;
+    width: 40px;
+    border-radius: 0 7px 7px 0;
+    background: linear-gradient(to right, transparent, var(--surface) 85%);
+    pointer-events: none;
+    opacity: 0;
+}
+
+@supports (animation-timeline: scroll()) {
+    .window-raw-content .doc-table-frame::after {
+        animation: raw-table-more auto linear both;
+        animation-timeline: --raw-table;
+    }
+}
+
+@keyframes raw-table-more {
+    0%,
+    92% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+.markdown-body .highlight {
+    position: relative;
+}
+
+.heading-anchor {
+    margin-left: 6px;
+    color: var(--text-placeholder);
+    text-decoration: none;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+}
+
+:is(h1, h2, h3, h4, h5, h6):hover > .heading-anchor,
+.heading-anchor:focus-visible {
+    opacity: 1;
+}
+
+.heading-anchor:hover {
+    color: var(--link);
+}
+
+@media (hover: none) {
+    .heading-anchor {
+        opacity: 0.6;
+    }
+}
+
 .markdown-body img,
-.markdown-body p img {
+.markdown-body p img,
+.markdown-body video {
     max-width: min(640px, calc(100% - 48px)) !important;
+    height: auto;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     margin: 24px;
@@ -2009,11 +2494,11 @@ hr {
 }
 
 .markdown-body blockquote {
-    border-left: 4px solid #DFDFDF;
+    border-left: 4px solid var(--border);
     margin: 20px 0;
     padding: 8px 16px;
-    background: #F9F9F9;
-    color: #666;
+    background: var(--quote-bg);
+    color: var(--text-muted);
     font-style: italic;
     border-radius: 0 4px 4px 0;
 }
@@ -2035,32 +2520,21 @@ hr {
 .window-content td {
     padding: 10px 12px;
     text-align: left;
-    border-bottom: 1px solid #E0E0E0;
+    border-bottom: 1px solid var(--border);
 }
 
 .window-content th {
-    background: #F5F5F7;
+    background: var(--surface-alt);
     font-weight: 600;
-    color: #333;
+    color: var(--text-color);
 }
 
 .window-content tr:hover {
-    background: rgba(0, 122, 255, 0.05);
+    background: color-mix(in srgb, var(--accent-blue) 5%, transparent);
 }
 
 .window-content td a {
-    color: var(--accent-blue);
-}
-
-/* Timeline & Project entry styling */
-.timeline-entry time,
-.project-page time {
-    display: block;
-    color: var(--text-secondary);
-    font-size: 12px;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #E0E0E0;
+    color: var(--accent-text);
 }
 
 /* Better select for window content text */
@@ -2069,44 +2543,6 @@ hr {
     padding: 0px;
 }
 
-/* Blog Post */
-.blog-post time {
-    display: block;
-    color: var(--text-secondary);
-    font-size: 12px;
-    margin-bottom: 20px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #E0E0E0;
-}
-
-/* Contact */
-.contact-links {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: 20px;
-}
-
-.contact-link {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    background: #F5F5F7;
-    border-radius: 8px;
-    color: var(--text-color);
-    text-decoration: none;
-    transition: all 0.2s ease;
-}
-
-.contact-link:hover {
-    background: #E8E8EA;
-    text-decoration: none;
-}
-
-.contact-icon {
-    font-size: 20px;
-}
 
 /* ================================================
    Animations
@@ -2135,24 +2571,8 @@ hr {
     }
 }
 
-@keyframes windowOpenCentered {
-    0% {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(0.95);
-    }
-
-    100% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
-    }
-}
-
 .window.opening {
     animation: windowOpen 0.2s ease-out forwards;
-}
-
-.window.centered.opening {
-    animation: windowOpenCentered 0.2s ease-out forwards;
 }
 
 .window.closing {
@@ -2162,150 +2582,6 @@ hr {
 /* ================================================
    Shortcodes
    ================================================ */
-/* Classic Mac "Aqua/Glass" Type Button (Blue) */
-.shortcode-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 6px 18px;
-    min-width: 80px;
-    height: 32px;
-
-    /* 2010-era Glassy Gradient */
-    background: linear-gradient(to bottom, #8dbef9 0%, #3e91eb 49%, #007aff 50%, #0066d6 100%);
-    border: 1px solid #004c9e;
-
-    /* Deep bevels and shadows */
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.5),
-        /* Top Highlight */
-        0 1px 2px rgba(0, 0, 0, 0.2);
-    /* Drop Shadow */
-
-    color: white !important;
-    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.3);
-    /* Debossed Text */
-
-    border-radius: 16px;
-    /* Pill Shape */
-    font-weight: 500;
-    font-size: 13px;
-    text-decoration: none !important;
-    line-height: 1;
-    margin: 4px 6px 4px 0;
-    transition: all 0.1s linear;
-}
-
-.shortcode-button:hover {
-    filter: brightness(1.05);
-}
-
-.shortcode-button:active {
-    background: linear-gradient(to bottom, #3e91eb 0%, #0066d6 100%);
-    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
-    transform: translateY(1px);
-}
-
-/* Classic Mac "Aqua/Glass" Type Button (Gray/Silver) */
-.shortcode-github {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 6px 18px;
-    min-width: 80px;
-    height: 32px;
-
-    /* Silver Glass Gradient */
-    background: linear-gradient(to bottom, #ffffff 0%, #f2f2f2 49%, #e0e0e0 50%, #d0d0d0 100%);
-    border: 1px solid #999;
-
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.9),
-        0 1px 2px rgba(0, 0, 0, 0.1);
-
-    color: #333 !important;
-    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
-
-    border-radius: 16px;
-    font-weight: 500;
-    font-size: 13px;
-    text-decoration: none !important;
-    line-height: 1;
-    margin: 4px 6px 4px 0;
-    transition: all 0.1s linear;
-}
-
-.shortcode-github svg {
-    color: #333;
-    filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.8));
-}
-
-.shortcode-github:hover {
-    filter: brightness(1.02);
-}
-
-.shortcode-github:active {
-    background: linear-gradient(to bottom, #e0e0e0 0%, #d0d0d0 100%);
-    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
-    transform: translateY(1px);
-}
-
-.shortcode-github svg {
-    flex-shrink: 0;
-}
-
-/* Classic Mac "Aqua/Glass" Type Button (Red/NPM) */
-.shortcode-npm {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 6px 18px;
-    min-width: 80px;
-    height: 32px;
-
-    /* Red Glass Gradient */
-    background: linear-gradient(to bottom, #ff8a8a 0%, #ff5f5f 49%, #cc3535 50%, #a62b2b 100%);
-    border: 1px solid #9e2323;
-
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.5),
-        /* Top Highlight */
-        0 1px 2px rgba(0, 0, 0, 0.2);
-
-    color: white !important;
-    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.3);
-
-    border-radius: 16px;
-    font-weight: 500;
-    font-size: 13px;
-    text-decoration: none !important;
-    line-height: 1;
-    margin: 4px 6px 4px 0;
-    transition: all 0.1s linear;
-}
-
-.shortcode-npm svg {
-    color: white;
-    filter: drop-shadow(0 -1px 0 rgba(0, 0, 0, 0.2));
-}
-
-.shortcode-npm:hover {
-    filter: brightness(1.05);
-}
-
-.shortcode-npm:active {
-    background: linear-gradient(to bottom, #ff5f5f 0%, #a62b2b 100%);
-    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
-    transform: translateY(1px);
-}
-
-.shortcode-npm svg {
-    flex-shrink: 0;
-}
-
 .youtube-embed {
     position: relative;
     width: 100%;
@@ -2337,24 +2613,30 @@ hr {
 
 .finder-split {
     display: flex;
-    height: calc(100% - 33px);
+    /* Fills what the toolbar leaves in the .finder-window flex column */
+    flex: 1;
+    min-height: 0;
 }
 
 /* Sidebar */
 .finder-sidebar {
     width: 180px;
-    background: linear-gradient(180deg, #E8E8EC 0%, #D8D8DC 100%);
+    background: var(--sidebar-bg);
     padding: 20px 16px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    border-right: 1px solid #C0C0C0;
+    border-right: 1px solid var(--border-strong);
     flex-shrink: 0;
+    /* A short window scrolls the sidebar rather than squashing its rows */
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
 
 .sidebar-avatar {
     width: 80px;
     height: 80px;
+    flex-shrink: 0;
     border-radius: 50%;
     overflow: hidden;
     background: white;
@@ -2375,15 +2657,9 @@ hr {
 .sidebar-name {
     font-weight: 600;
     font-size: 14px;
-    color: #1a1a1a;
+    color: var(--text-primary);
     margin-bottom: 16px;
     text-align: center;
-}
-
-.sidebar-status {
-    font-size: 11px;
-    color: #555;
-    margin-bottom: 16px;
 }
 
 .sidebar-section {
@@ -2394,45 +2670,17 @@ hr {
 .sidebar-label {
     font-size: 11px;
     font-weight: bold;
-    color: #7A7A7A;
+    color: var(--text-quiet);
     letter-spacing: 0.5px;
     margin-top: 12px;
     margin-bottom: 6px;
     padding-left: 10px;
-    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+    text-shadow: 0 1px 0 var(--emboss);
 }
 
 .sidebar-value {
     font-size: 12px;
-    color: #333;
-}
-
-.sidebar-links {
-    display: flex;
-    gap: 8px;
-    margin-top: auto;
-    padding-top: 16px;
-}
-
-.sidebar-links a {
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: white;
-    border-radius: 6px;
-    text-decoration: none;
-    font-size: 12px;
-    color: #333;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    transition: all 0.2s ease;
-}
-
-.sidebar-links a:hover {
-    background: var(--accent-blue);
-    color: white;
-    transform: translateY(-2px);
+    color: var(--text-color);
 }
 
 /* Main Content */
@@ -2440,41 +2688,12 @@ hr {
     flex: 1;
     padding: 16px;
     overflow-y: auto;
-    background: #F5F5F7;
-}
-
-/* Stats Bar */
-.about-stats-bar {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    padding: 16px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 10px;
-    margin-bottom: 16px;
-}
-
-.stat-item {
-    text-align: center;
-    color: white;
-}
-
-.stat-value {
-    display: block;
-    font-size: 20px;
-    font-weight: 700;
-}
-
-.stat-label {
-    display: block;
-    font-size: 10px;
-    opacity: 0.9;
-    margin-top: 2px;
+    background: var(--surface-alt);
 }
 
 /* Info Panels */
 .info-panel {
-    background: #F5F5F7;
+    background: var(--surface-alt);
     border-radius: 8px;
     padding: 12px 16px;
     margin-bottom: 12px;
@@ -2483,12 +2702,12 @@ hr {
 .info-header {
     font-size: 11px;
     font-weight: 600;
-    color: #666;
+    color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 10px;
     padding-bottom: 6px;
-    border-bottom: 1px solid #E0E0E0;
+    border-bottom: 1px solid var(--border);
 }
 
 .info-row {
@@ -2500,16 +2719,16 @@ hr {
 }
 
 .info-row:not(:last-child) {
-    border-bottom: 1px solid #EAEAEA;
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 .info-label {
-    color: #333;
+    color: var(--text-color);
     font-weight: 500;
 }
 
 .info-row a {
-    color: var(--accent-blue);
+    color: var(--accent-text);
     text-decoration: none;
 }
 
@@ -2517,32 +2736,10 @@ hr {
     text-decoration: underline;
 }
 
-.info-badge {
-    padding: 3px 8px;
-    border-radius: 10px;
-    font-size: 10px;
-    font-weight: 600;
-}
-
-.info-badge.acquired {
-    background: #34C759;
-    color: white;
-}
-
-.info-badge.core {
-    background: #007AFF;
-    color: white;
-}
-
-.info-badge.funded {
-    background: #FF9500;
-    color: white;
-}
-
 .info-text {
     font-size: 13px;
     line-height: 1.6;
-    color: #444;
+    color: var(--text-body);
     margin: 0 0 8px 0;
 }
 
@@ -2551,42 +2748,12 @@ hr {
 }
 
 .info-text a {
-    color: var(--accent-blue);
+    color: var(--accent-text);
     text-decoration: none;
 }
 
 .info-text a:hover {
     text-decoration: underline;
-}
-
-/* Action Buttons - main styles in Project Layout section (~L1203) */
-.about-actions {
-    display: flex;
-    gap: 10px;
-    padding-top: 8px;
-}
-
-/* About page specific overrides for action buttons */
-.about-actions .action-btn {
-    flex: 1;
-    text-align: center;
-}
-
-.about-actions .action-btn.primary {
-    background: #34C759;
-}
-
-.about-actions .action-btn.primary:hover {
-    background: #2da44e;
-}
-
-.about-actions .action-btn.secondary {
-    background: #E8E8EA;
-    color: #333;
-}
-
-.about-actions .action-btn.secondary:hover {
-    background: #D8D8DA;
 }
 
 /* ================================================
@@ -2604,22 +2771,15 @@ hr {
         min-width: 350px;
     }
 
-    /* Adjust menubar active app name */
-    #active-app-name {
-        max-width: calc(100vw - 300px);
-    }
 }
 
-/* Mobile Devices */
-@media (max-width: 768px) {
+/* Mobile Devices ("compact mode": phones in either orientation).
+   The shell JS matches the same query - keep the two in sync. */
+@media (max-width: 768px), (pointer: coarse) and (max-height: 500px) {
 
-    /* Safe area insets for iPhone notch/home indicator */
-    body {
-        /* Ensure content respects safe areas on notched devices */
-        padding-left: env(safe-area-inset-left);
-        padding-right: env(safe-area-inset-right);
-        padding-bottom: env(safe-area-inset-bottom);
-    }
+    /* Safe-area insets are applied to the fixed chrome itself (.menubar,
+       .desktop, .windows-container, #online-count) via the --sa* tokens;
+       padding on body never moved those. */
 
     /* ===== Desktop Widget on Mobile ===== */
     .desktop-widget {
@@ -2630,6 +2790,7 @@ hr {
         max-width: 320px;
         margin: 12px auto;
         order: 2;
+        flex: none;
     }
 
     .desktop-sticky-note {
@@ -2640,6 +2801,7 @@ hr {
         max-width: 320px;
         margin: 12px auto;
         order: 1;
+        flex: none;
         transform: none;
     }
 
@@ -2664,13 +2826,22 @@ hr {
     }
 
     /* ===== Desktop Layout on Mobile ===== */
+    /* The desktop itself scrolls; its children keep their natural height
+       instead of shrinking into clipped inner scrollers. */
     .desktop {
         display: flex;
         flex-direction: column;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        padding-bottom: 20px;
     }
 
     /* ===== Desktop Icons ===== */
     .desktop-icons {
+        display: flex;
+        grid-template-rows: none;
+        flex: none;
         flex-direction: row;
         flex-wrap: wrap;
         align-content: flex-start;
@@ -2679,9 +2850,6 @@ hr {
         gap: 12px;
         padding: 12px;
         height: auto;
-        max-height: calc(100vh - var(--menubar-height) - env(safe-area-inset-bottom, 0px));
-        max-height: calc(100svh - var(--menubar-height));
-        overflow-y: auto;
     }
 
     .desktop-icon {
@@ -2695,20 +2863,19 @@ hr {
     }
 
     .icon-label {
-        font-size: 10px;
-        max-width: 70px;
+        font-size: 12px;
+        max-width: 72px;
     }
 
     /* ===== Menu Bar ===== */
     .menubar {
-        padding: 0 4px;
+        padding: var(--sat) max(4px, var(--sar)) 0 max(4px, var(--sal));
     }
 
     .menubar-left {
         gap: 0;
         padding-left: 0;
-        min-width: 0;
-        flex: 1;
+        min-width: 96px;
     }
 
     .menubar-right {
@@ -2717,7 +2884,6 @@ hr {
     }
 
     #active-app-name {
-        max-width: calc(100vw - 150px);
         font-size: 12px;
     }
 
@@ -2739,6 +2905,11 @@ hr {
     .finder-dropdown {
         min-width: 180px;
         max-width: calc(100vw - 20px);
+        /* A landscape phone is shorter than the Apple menu: scroll it */
+        max-height: calc(100vh - var(--menubar-total) - 8px - var(--sab));
+        max-height: calc(var(--vvh, 100svh) - var(--menubar-total) - 8px - var(--sab));
+        overflow-y: auto;
+        overscroll-behavior: contain;
     }
 
     .dropdown-item {
@@ -2751,24 +2922,18 @@ hr {
     /* ===== Windows ===== */
     .window {
         min-width: 300px !important;
-        width: calc(100vw - 16px) !important;
-        max-width: calc(100vw - 16px) !important;
+        width: calc(100vw - 16px - var(--sal) - var(--sar)) !important;
+        max-width: calc(100vw - 16px - var(--sal) - var(--sar)) !important;
         left: 8px !important;
         top: 8px !important;
-        /* Use svh (small viewport height) for mobile Safari - this ensures 
-           content fits even when Safari's bottom toolbar is visible */
-        height: calc(100vh - var(--menubar-height) - 16px - env(safe-area-inset-bottom, 0px)) !important;
-        height: calc(100svh - var(--menubar-height) - 16px) !important;
-        max-height: calc(100vh - var(--menubar-height) - 16px - env(safe-area-inset-bottom, 0px)) !important;
-        max-height: calc(100svh - var(--menubar-height) - 16px) !important;
+        /* Use svh (small viewport height) for mobile Safari - this ensures
+           content fits even when Safari's bottom toolbar is visible.
+           --vvh is set by the shell while the on-screen keyboard is open. */
+        height: calc(100vh - var(--menubar-total) - 16px - var(--sab)) !important;
+        height: calc(var(--vvh, 100svh) - var(--menubar-total) - 16px - var(--sab)) !important;
+        max-height: calc(100vh - var(--menubar-total) - 16px - var(--sab)) !important;
+        max-height: calc(var(--vvh, 100svh) - var(--menubar-total) - 16px - var(--sab)) !important;
         border-radius: 6px;
-    }
-
-    /* Position all windows similarly on mobile */
-    .window.centered {
-        transform: none;
-        left: 8px !important;
-        top: 8px !important;
     }
 
     .window-titlebar {
@@ -2782,9 +2947,10 @@ hr {
         margin-right: 40px;
     }
 
-    /* Make traffic lights more touch-friendly */
+    /* Make traffic lights more touch-friendly. 14px face + 6px padding each
+       side = 26px hit box, so a 12px gap keeps neighbours from overlapping. */
     .traffic-lights {
-        gap: 8px;
+        gap: 12px;
     }
 
     .traffic-light-face {
@@ -2812,7 +2978,7 @@ hr {
         max-height: auto;
         padding: 16px 12px;
         border-right: none;
-        border-bottom: 1px solid #C0C0C0;
+        border-bottom: 1px solid var(--border-strong);
         flex-direction: row;
         flex-wrap: wrap;
         justify-content: center;
@@ -2892,7 +3058,7 @@ hr {
     }
 
     .finder-row:focus-visible {
-        background: rgba(0, 122, 255, 0.2);
+        background: color-mix(in srgb, var(--accent-blue) 20%, transparent);
     }
 
     .col-name {
@@ -2933,105 +3099,18 @@ hr {
     }
 
     .info-text {
-        font-size: 13px;
+        font-size: 15px;
         line-height: 1.6;
     }
 
-    /* ===== Stats Bar ===== */
-    .about-stats-bar {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-        padding: 12px;
-    }
-
-    .stat-value {
-        font-size: 18px;
-    }
-
-    .stat-label {
-        font-size: 9px;
-    }
-
     /* ===== Project Links ===== */
-    .project-links-bar {
-        padding: 10px 12px;
-        gap: 6px;
-    }
-
     .project-link {
         padding: 10px 16px;
         /* Larger touch target */
         font-size: 14px;
     }
 
-    /* ===== Blog Post ===== */
-    .blog-post {
-        padding: 12px;
-    }
-
-    .post-header {
-        padding-bottom: 12px;
-        margin-bottom: 16px;
-    }
-
-    .post-title {
-        font-size: 22px;
-    }
-
-    .post-meta {
-        font-size: 12px;
-    }
-
-    .post-content {
-        font-size: 14px;
-        line-height: 1.7;
-    }
-
-    .post-content h2 {
-        font-size: 20px;
-        margin-top: 20px;
-    }
-
-    .post-content h3 {
-        font-size: 17px;
-        margin-top: 18px;
-    }
-
-    .post-content pre {
-        font-size: 12px;
-        padding: 12px;
-        border-radius: 6px;
-        overflow-x: auto;
-    }
-
-    .post-content code {
-        font-size: 12px;
-    }
-
-    .post-content img {
-        border-radius: 6px;
-    }
-
-    /* ===== Timeline Event ===== */
-    .event-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-    }
-
-    .event-date-badge {
-        width: 50px;
-        height: 50px;
-    }
-
-    .event-month {
-        font-size: 11px;
-    }
-
-    .event-day {
-        font-size: 18px;
-    }
-
+    /* ===== Timeline list ===== */
     .event-title {
         font-size: 18px;
     }
@@ -3087,24 +3166,6 @@ hr {
         font-size: 12px;
     }
 
-    /* ===== Scrollbars ===== */
-    .window-content::-webkit-scrollbar,
-    .finder-content::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
-    }
-
-    .window-content::-webkit-scrollbar-thumb,
-    .finder-content::-webkit-scrollbar-thumb {
-        border-radius: 3px;
-    }
-
-    /* ===== Contact & Wins Pages ===== */
-    [data-window-id="wins"] .window-content,
-    [data-window-id="contact"] .window-content {
-        padding: 12px;
-    }
-
     /* ===== About This Mac Window ===== */
     .about-window {
         width: calc(100vw - 32px) !important;
@@ -3113,8 +3174,8 @@ hr {
         top: 50px !important;
         transform: none !important;
         height: auto !important;
-        max-height: calc(100vh - var(--menubar-height) - 66px - env(safe-area-inset-bottom, 0px)) !important;
-        max-height: calc(100svh - var(--menubar-height) - 66px) !important;
+        max-height: calc(100vh - var(--menubar-total) - 66px - var(--sab)) !important;
+        max-height: calc(100svh - var(--menubar-total) - 66px - var(--sab)) !important;
     }
 
     .about-this-mac {
@@ -3139,25 +3200,8 @@ hr {
         justify-content: center;
     }
 
-    /* ===== Generic Content Improvements ===== */
-    .about-intro {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-    }
-
-    .experience-item {
-        flex-direction: column;
-    }
-
-    .experience-item .role {
-        min-width: auto;
-    }
-
     /* ===== Touch Improvements ===== */
     /* Make all clickable elements easier to tap */
-    .action-btn,
-    .contact-link,
     .project-link,
     .finder-row,
     .desktop-icon,
@@ -3168,8 +3212,6 @@ hr {
         /* iOS recommended minimum */
     }
 
-    .action-btn,
-    .contact-link,
     .project-link {
         display: inline-flex;
         align-items: center;
@@ -3184,8 +3226,7 @@ hr {
     /* These should remain as full-width flex blocks */
     .finder-row,
     .desktop-icon,
-    .dropdown-item,
-    .contact-link {
+    .dropdown-item {
         display: flex;
     }
 
@@ -3196,11 +3237,14 @@ hr {
         .finder-row:hover {
             background: transparent;
         }
+    }
+}
 
-        /* Always show traffic light symbols */
-        .traffic-light .traffic-light-symbol {
-            opacity: 1 !important;
-        }
+/* Touch has no titlebar hover: always show the traffic light glyphs,
+   whatever the viewport size (tablets included). */
+@media (hover: none) {
+    .traffic-light .traffic-light-symbol {
+        opacity: 1 !important;
     }
 }
 
@@ -3216,12 +3260,10 @@ hr {
     }
 
     .icon-label {
-        font-size: 10px;
         max-width: 72px;
     }
 
     #active-app-name {
-        max-width: calc(100vw - 120px);
         font-size: 11px;
     }
 
@@ -3229,33 +3271,8 @@ hr {
         font-size: 11px;
     }
 
-    .about-stats-bar {
-        grid-template-columns: 1fr;
-        gap: 8px;
-    }
-
-    .stat-item {
-        padding: 8px 0;
-    }
-
     .finder-sidebar {
         padding: 12px 8px;
-    }
-
-    .post-title {
-        font-size: 20px;
-    }
-
-    .post-content {
-        font-size: 13px;
-    }
-
-    .post-content h2 {
-        font-size: 18px;
-    }
-
-    .post-content h3 {
-        font-size: 16px;
     }
 }
 
@@ -3266,8 +3283,8 @@ hr {
     left: 50%;
     transform: translateX(-50%);
     width: 90%;
-    height: calc(100vh - 90px);
-    height: calc(100svh - 90px);
+    height: calc(100vh - 90px - var(--sab));
+    height: calc(100svh - 90px - var(--sab));
     max-width: 1200px;
     background: var(--window-bg);
     border-radius: 6px;
@@ -3293,14 +3310,14 @@ hr {
 }
 
 /* Mobile Static Window Overrides */
-@media (max-width: 768px) {
+@media (max-width: 768px), (pointer: coarse) and (max-height: 500px) {
     .static-window {
-        width: calc(100vw - 16px) !important;
-        max-width: calc(100vw - 16px) !important;
-        left: 8px !important;
-        top: calc(var(--menubar-height) + 8px) !important;
-        height: calc(100vh - var(--menubar-height) - 16px - env(safe-area-inset-bottom, 0px)) !important;
-        height: calc(100svh - var(--menubar-height) - 16px) !important;
+        width: calc(100vw - 16px - var(--sal) - var(--sar)) !important;
+        max-width: calc(100vw - 16px - var(--sal) - var(--sar)) !important;
+        left: calc(8px + var(--sal)) !important;
+        top: calc(var(--menubar-total) + 8px) !important;
+        height: calc(100vh - var(--menubar-total) - 16px - var(--sab)) !important;
+        height: calc(var(--vvh, 100svh) - var(--menubar-total) - 16px - var(--sab)) !important;
         transform: none !important;
     }
 }
@@ -3312,7 +3329,7 @@ a.finder-row {
     display: flex;
 }
 
-/* Sidebar Connect Items - .sidebar-label styles consolidated above (~L1571) */
+/* Sidebar Connect Items */
 
 .connect-item {
     display: flex;
@@ -3323,18 +3340,18 @@ a.finder-row {
     margin-bottom: 0px;
     border-radius: 4px;
     text-decoration: none;
-    color: #262626;
+    color: var(--text-primary);
     cursor: pointer;
     transition: none;
     /* Finder items are snappy */
 }
 
 .connect-item:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: var(--hover-tint);
 }
 
 .connect-item:active {
-    background-color: rgba(0, 0, 0, 0.08);
+    background-color: var(--press-tint);
 }
 
 .connect-item img.icon {
@@ -3353,10 +3370,27 @@ a.finder-row {
     opacity: 1;
 }
 
+/* Grey glyphs would sink into the dark sidebar; lift them to a light grey */
+html[data-appearance="dark"] .connect-item:not(:hover) img.icon {
+    filter: grayscale(100%) brightness(1.8);
+    opacity: 0.75;
+}
+
+/* Badges with white detail (Telegram's plane, Reddit's alien) would wash out
+   to one flat disc under that lift; a light touch keeps the detail readable */
+html[data-appearance="dark"] .connect-item:not(:hover) img.icon:is([src$="/telegram.svg"], [src$="/reddit.svg"]) {
+    filter: grayscale(100%) brightness(1.1);
+}
+
+/* Medium's mark is plain black: no brightness lifts it, so turn it white */
+html[data-appearance="dark"] .connect-item img.icon[src$="/medium.svg"] {
+    filter: invert(1);
+}
+
 .connect-item-label {
     /* The link text itself */
     flex: 1;
-    color: #333;
+    color: var(--text-color);
     font-size: 13px;
     /* Standard system size */
     text-decoration: none;
@@ -3372,8 +3406,8 @@ a.finder-row {
 
 #notification-container {
     position: fixed;
-    top: calc(var(--menubar-height) + 12px);
-    right: 12px;
+    top: calc(var(--menubar-total) + 12px);
+    right: calc(12px + var(--sar));
     z-index: 100000;
     display: flex;
     flex-direction: column;
@@ -3388,15 +3422,15 @@ a.finder-row {
     align-items: flex-start;
     gap: 12px;
     padding: 12px 14px;
-    background: rgba(245, 245, 247, 0.95);
+    background: var(--surface-overlay);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-radius: 10px;
     box-shadow:
         0 4px 24px rgba(0, 0, 0, 0.15),
         0 1px 4px rgba(0, 0, 0, 0.1),
-        inset 0 0.5px 0 rgba(255, 255, 255, 0.8);
-    border: 1px solid rgba(0, 0, 0, 0.08);
+        inset 0 0.5px 0 var(--bevel);
+    border: 1px solid var(--hairline);
     pointer-events: auto;
     transform: translateX(400px);
     opacity: 0;
@@ -3446,7 +3480,7 @@ a.finder-row {
 }
 
 .notification.clickable:hover {
-    background: rgba(240, 240, 245, 0.98);
+    background: var(--surface-overlay-hover);
 }
 
 .notification-icon {
@@ -3483,14 +3517,14 @@ a.finder-row {
 .notification-title {
     font-size: 13px;
     font-weight: 600;
-    color: #1d1d1f;
+    color: var(--text-primary);
     line-height: 1.3;
     margin-bottom: 2px;
 }
 
 .notification-message {
     font-size: 12px;
-    color: #6e6e73;
+    color: var(--text-muted);
     line-height: 1.4;
     word-wrap: break-word;
 }
@@ -3506,7 +3540,7 @@ a.finder-row {
     border: none;
     background: transparent;
     cursor: pointer;
-    color: #86868b;
+    color: var(--text-quiet);
     line-height: 0;
 }
 
@@ -3517,7 +3551,7 @@ a.finder-row {
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.06);
+    background: var(--hover-tint);
     transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
 }
 
@@ -3526,25 +3560,29 @@ a.finder-row {
 }
 
 .notification-close:hover {
-    color: #1d1d1f;
+    color: var(--text-primary);
 }
 
 .notification-close:hover .notification-close-face {
-    background: rgba(0, 0, 0, 0.1);
+    background: var(--press-tint);
 }
 
 .notification-close:active .notification-close-face {
-    background: rgba(0, 0, 0, 0.15);
+    background: var(--press-tint-strong);
     transform: scale(0.95);
 }
 
 /* Mobile responsive */
-@media (max-width: 768px) {
+@media (max-width: 768px), (pointer: coarse) and (max-height: 500px) {
+    /* A window fills the screen here, so anything under the menubar lands on
+       its titlebar, toolbar and search field. Toasts sit at the bottom
+       instead, newest lowest. */
     #notification-container {
-        top: calc(var(--menubar-height) + 40px);
-        /* 40px lower on mobile */
-        right: 8px;
-        left: 8px;
+        top: auto;
+        bottom: calc(12px + var(--sab));
+        flex-direction: column-reverse;
+        right: calc(8px + var(--sar));
+        left: calc(8px + var(--sal));
         max-width: none;
         width: auto;
     }
@@ -3597,13 +3635,13 @@ a.finder-row {
 
 #online-count {
     position: fixed;
-    bottom: 2px;
-    left: 2px;
+    bottom: calc(2px + var(--sab));
+    left: calc(2px + var(--sal));
     background: rgba(70, 70, 70, 0.75);
     color: #fff;
     padding: 2px 5px;
     border-radius: 4px;
-    font-family: var(--font-system, -apple-system, BlinkMacSystemFont, sans-serif);
+    font-family: var(--font-system);
     font-size: 9px;
     line-height: 1.4;
     z-index: 999999;
@@ -3646,11 +3684,11 @@ a.finder-row {
 .sheet {
     width: 100%;
     max-width: 380px;
-    background: linear-gradient(180deg, #f6f6f6 0%, #ececec 100%);
-    border: 1px solid rgba(0, 0, 0, 0.28);
+    background: var(--sheet-bg);
+    border: 1px solid var(--hairline-strong);
     border-radius: 6px;
-    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.85);
-    font-family: var(--font-system, -apple-system, BlinkMacSystemFont, sans-serif);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.42), inset 0 1px 0 var(--bevel);
+    font-family: var(--font-system);
     transform: scale(0.94) translateY(-8px);
     opacity: 0;
     transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.18s ease;
@@ -3669,7 +3707,7 @@ a.finder-row {
 
 .sheet-icon {
     flex: none;
-    color: #6b7785;
+    color: var(--text-tertiary);
 }
 
 .sheet-text {
@@ -3680,7 +3718,7 @@ a.finder-row {
     margin: 0 0 4px;
     font-size: 13px;
     font-weight: 700;
-    color: #1d1d1f;
+    color: var(--text-primary);
     line-height: 1.35;
 }
 
@@ -3688,7 +3726,7 @@ a.finder-row {
     margin: 0;
     font-size: 12px;
     line-height: 1.45;
-    color: #4a4a4f;
+    color: var(--text-body);
 }
 
 .sheet-message[hidden] {
@@ -3702,46 +3740,148 @@ a.finder-row {
     padding: 14px 20px 18px;
 }
 
-.sheet-btn {
-    min-width: 78px;
-    padding: 5px 14px;
+/* ==========================================================================
+   Aqua push button - the one button skin
+   New markup uses .mac-btn (+ .primary / .danger / .small). The older
+   per-app classes are grouped in so they all share the same look; each keeps
+   only its own sizing where it is declared.
+   ========================================================================== */
+
+:root {
+    --btn-text: #1d1d1f;
+    --btn-bg: linear-gradient(180deg, #fefefe 0%, #e9e9e9 100%);
+    --btn-bg-hover: linear-gradient(180deg, #fff 0%, #f0f0f0 100%);
+    --btn-bg-active: linear-gradient(180deg, #dcdcdc 0%, #cfcfcf 100%);
+    --btn-border: rgba(0, 0, 0, 0.32);
+    --btn-shadow: 0 1px 1px rgba(0, 0, 0, 0.08), inset 0 1px 0 #fff;
+    --btn-shadow-active: inset 0 1px 3px rgba(0, 0, 0, 0.18);
+    --btn-radius: 4px;
+
+    /* Deep enough that the white label clears 4.5:1 across the middle of the gel */
+    --btn-primary-text: #fff;
+    --btn-primary-bg: linear-gradient(180deg, #3d8be0 0%, #1660c4 100%);
+    --btn-primary-bg-hover: linear-gradient(180deg, #4994e6 0%, #1d68cc 100%);
+    --btn-primary-bg-active: linear-gradient(180deg, #2f7bd0 0%, #1352a8 100%);
+    --btn-primary-border: #1352a8;
+    --btn-primary-shadow: 0 1px 1px rgba(0, 0, 0, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+
+    --btn-danger-bg: linear-gradient(180deg, #e8695c 0%, #c93125 100%);
+    --btn-danger-bg-hover: linear-gradient(180deg, #ee7a6e 0%, #d63a2d 100%);
+    --btn-danger-bg-active: linear-gradient(180deg, #cf4d40 0%, #a8271d 100%);
+    --btn-danger-border: #a8271d;
+}
+
+.mac-btn,
+.sheet-btn,
+.gb-btn,
+.gb-sign-btn,
+.paint-clear,
+.fallback-btn,
+.about-btn {
     font-family: inherit;
-    font-size: 12px;
-    color: #1d1d1f;
-    background: linear-gradient(180deg, #fefefe 0%, #e9e9e9 100%);
-    border: 1px solid rgba(0, 0, 0, 0.32);
-    border-radius: 4px;
-    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08), inset 0 1px 0 #fff;
+    color: var(--btn-text);
+    background: var(--btn-bg);
+    border: 1px solid var(--btn-border);
+    border-radius: var(--btn-radius);
+    box-shadow: var(--btn-shadow);
+    text-decoration: none;
     cursor: pointer;
 }
 
-.sheet-btn:hover {
-    background: linear-gradient(180deg, #fff 0%, #f0f0f0 100%);
+.mac-btn,
+.sheet-btn {
+    min-width: 78px;
+    padding: 5px 14px;
+    font-size: 12px;
 }
 
-.sheet-btn:active {
-    background: linear-gradient(180deg, #dcdcdc 0%, #cfcfcf 100%);
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.18);
+/* .mac-btn also has to work on <a> */
+.mac-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    line-height: 1.3;
+    white-space: nowrap;
 }
 
-.sheet-btn.primary {
+.mac-btn.small {
+    min-width: 0;
+    padding: 2px 10px;
+    font-size: 11px;
+}
+
+:is(.mac-btn, .sheet-btn, .gb-btn, .gb-sign-btn, .paint-clear, .fallback-btn, .about-btn):hover {
+    background: var(--btn-bg-hover);
+    text-decoration: none;
+}
+
+:is(.mac-btn, .sheet-btn, .gb-btn, .gb-sign-btn, .paint-clear, .fallback-btn, .about-btn):active {
+    background: var(--btn-bg-active);
+    box-shadow: var(--btn-shadow-active);
+}
+
+/* Primary (default-action blue) */
+.mac-btn.primary,
+.sheet-btn.primary,
+.gb-btn.primary,
+.gb-sign-btn,
+.fallback-btn {
+    color: var(--btn-primary-text);
+    background: var(--btn-primary-bg);
+    border-color: var(--btn-primary-border);
+    box-shadow: var(--btn-primary-shadow);
+}
+
+:is(.mac-btn.primary, .sheet-btn.primary, .gb-btn.primary, .gb-sign-btn, .fallback-btn):hover {
+    background: var(--btn-primary-bg-hover);
+}
+
+:is(.mac-btn.primary, .sheet-btn.primary, .gb-btn.primary, .gb-sign-btn, .fallback-btn):active {
+    background: var(--btn-primary-bg-active);
+    box-shadow: var(--btn-shadow-active);
+}
+
+/* Destructive. Written with :is() so it outranks .primary when both are set
+   (the sheet uses "primary danger"). */
+:is(.mac-btn, .sheet-btn, .gb-btn).danger {
     color: #fff;
-    background: linear-gradient(180deg, #5ca4ef 0%, #1f6fd0 100%);
-    border-color: #1a5cb0;
-    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    background: var(--btn-danger-bg);
+    border-color: var(--btn-danger-border);
+    box-shadow: var(--btn-primary-shadow);
 }
 
-.sheet-btn.primary:hover {
-    background: linear-gradient(180deg, #6bb0f4 0%, #2a79d8 100%);
+:is(.mac-btn, .sheet-btn, .gb-btn).danger:hover {
+    background: var(--btn-danger-bg-hover);
 }
 
-.sheet-btn.primary.danger {
-    background: linear-gradient(180deg, #e8695c 0%, #c93125 100%);
-    border-color: #a8271d;
+:is(.mac-btn, .sheet-btn, .gb-btn).danger:active {
+    background: var(--btn-danger-bg-active);
+    box-shadow: var(--btn-shadow-active);
 }
 
-.sheet-btn.primary.danger:hover {
-    background: linear-gradient(180deg, #ee7a6e 0%, #d63a2d 100%);
+:is(.mac-btn, .sheet-btn, .gb-btn, .gb-sign-btn, .paint-clear, .fallback-btn, .about-btn):is(:disabled, [aria-disabled="true"]) {
+    opacity: 0.45;
+    cursor: default;
+    pointer-events: none;
+}
+
+/* Buttons that are links sit inside .window-content, whose link colour and
+   hover underline would otherwise win on specificity. */
+.window-content a:is(.mac-btn, .about-btn) {
+    color: var(--btn-text);
+}
+
+.window-content a:is(.mac-btn.primary, .fallback-btn) {
+    color: var(--btn-primary-text);
+}
+
+.window-content a.mac-btn.danger {
+    color: #fff;
+}
+
+.window-content a:is(.mac-btn, .fallback-btn, .about-btn):hover {
+    text-decoration: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3761,6 +3901,10 @@ a.finder-row {
     align-items: center;
     gap: 4px;
     margin-right: 2px;
+    /* The one shrinkable item in .menubar-right: chips give up their labels
+       before the tray can push into the app name */
+    flex: 0 1 auto;
+    min-width: 0;
 }
 
 .menubar-min-chip {
@@ -3778,6 +3922,8 @@ a.finder-row {
     border: none;
     border-radius: 3px;
     cursor: pointer;
+    flex: 0 1 auto;
+    min-width: 24px;
     animation: trayChipIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -3802,6 +3948,7 @@ a.finder-row {
 }
 
 .menubar-min-label {
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -3816,15 +3963,43 @@ a.finder-row {
     to { transform: scale(1); opacity: 1; }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 768px), (pointer: coarse) and (max-height: 500px) {
     /* Labels are too wide for a phone menubar; icons still identify the window */
     .menubar-min-label {
         display: none;
     }
 
     .menubar-min-chip {
+        flex: none;
         max-width: none;
         padding: 0 4px;
+    }
+
+    /* More chips than fit: the tray scrolls sideways instead of covering the
+       Apple menu and app name (every window is also in the switcher) */
+    .menubar-minimized {
+        overflow-x: auto;
+        overscroll-behavior: contain;
+        scrollbar-width: none;
+    }
+
+    .menubar-minimized::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/* Phones: tighter status items. Below 360px the right cluster alone would
+   not fit beside the Apple menu once Music is playing, so the clock goes -
+   the phone's own status bar shows the time. */
+@media (max-width: 480px) {
+    .menubar-right {
+        gap: 4px;
+    }
+}
+
+@media (max-width: 359px) {
+    #clock {
+        display: none;
     }
 }
 
@@ -3835,7 +4010,7 @@ a.finder-row {
    ========================================================================== */
 
 :where(button, [role="button"], [tabindex]:not([tabindex="-1"]), a):focus-visible {
-    outline: 2px solid #4a90e2;
+    outline: 2px solid var(--focus-ring);
     outline-offset: 2px;
     border-radius: 3px;
 }
@@ -3863,7 +4038,7 @@ a.finder-row {
     padding: 3px 7px;
     background: rgba(28, 28, 30, 0.94);
     color: #fff;
-    font-family: var(--font-system, -apple-system, BlinkMacSystemFont, sans-serif);
+    font-family: var(--font-system);
     font-size: 11px;
     line-height: 1.4;
     white-space: nowrap;
@@ -3952,6 +4127,21 @@ a.finder-row {
     }
 }
 
+/* The same, when "Reduce motion" is ticked in System Preferences >
+   Accessibility (html[data-motion="reduce"], set by the prefs bootstrap). */
+html[data-motion="reduce"] *,
+html[data-motion="reduce"] *::before,
+html[data-motion="reduce"] *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+}
+
+html[data-motion="reduce"] :is(.window.opening, .window.closing, .window.restoring, .menubar-min-chip) {
+    animation: none !important;
+}
+
 /* ==========================================================================
    Keyboard shortcuts window
    ========================================================================== */
@@ -3961,7 +4151,7 @@ a.finder-row {
 }
 
 .shortcuts-pane {
-    font-family: var(--font-system, -apple-system, BlinkMacSystemFont, sans-serif);
+    font-family: var(--font-system);
 }
 
 .shortcuts-group {
@@ -3974,7 +4164,7 @@ a.finder-row {
     font-weight: 700;
     letter-spacing: 0.7px;
     text-transform: uppercase;
-    color: #8a8a8f;
+    color: var(--text-muted);
 }
 
 .shortcuts-group dl {
@@ -3997,17 +4187,17 @@ a.finder-row {
 .shortcuts-row dd {
     margin: 0;
     font-size: 12px;
-    color: #3a3a3c;
+    color: var(--text-color);
 }
 
 .shortcuts-row kbd {
     display: inline-block;
     padding: 2px 6px;
-    font-family: var(--font-system, -apple-system, BlinkMacSystemFont, sans-serif);
+    font-family: var(--font-system);
     font-size: 11px;
-    color: #1d1d1f;
-    background: linear-gradient(180deg, #fff 0%, #ececec 100%);
-    border: 1px solid rgba(0, 0, 0, 0.22);
+    color: var(--text-primary);
+    background: var(--btn-bg);
+    border: 1px solid var(--hairline-strong);
     border-radius: 4px;
     box-shadow: 0 1px 0 rgba(0, 0, 0, 0.12);
     white-space: nowrap;
@@ -4044,7 +4234,7 @@ a.finder-row {
 .irc-gif-item:focus-visible,
 .widget-blog-item:focus-visible,
 .dropdown-item:focus-visible {
-    outline: 2px solid #4a90e2;
+    outline: 2px solid var(--focus-ring);
     outline-offset: 2px;
 }
 
@@ -4115,7 +4305,7 @@ a.finder-row {
     border-radius: 8px;
     background: rgba(47, 111, 208, 0.92);
     color: #fff;
-    font-family: var(--font-system, -apple-system, BlinkMacSystemFont, sans-serif);
+    font-family: var(--font-system);
     font-size: 9px;
     font-weight: 600;
     line-height: 1.6;
@@ -4149,4 +4339,696 @@ a.finder-row {
 @keyframes viewerBadgeFadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
+}
+
+/* ==========================================================================
+   Window drag / resize
+   The shell sets body.is-window-dragging for the length of a drag or resize.
+   ========================================================================== */
+
+/* An iframe under the pointer would swallow mousemove and stall the drag */
+body.is-window-dragging iframe {
+    pointer-events: none;
+}
+
+body.is-window-dragging,
+body.is-window-dragging * {
+    -webkit-user-select: none !important;
+    user-select: none !important;
+}
+
+/* Let the shell own touch gestures on the drag handles */
+.window-titlebar,
+.window-resize {
+    touch-action: none;
+}
+
+/* ==========================================================================
+   Direct-link (static) window states
+   ========================================================================== */
+
+.static-window.zoomed {
+    top: var(--menubar-total) !important;
+    left: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: calc(100vh - var(--menubar-total)) !important;
+    height: calc(100svh - var(--menubar-total)) !important;
+    transform: none !important;
+    animation: none;
+    border-radius: 0;
+    border-color: transparent;
+}
+
+.static-window.zoomed .window-titlebar {
+    border-radius: 0;
+}
+
+/* A traffic light that does nothing here (e.g. minimise on a static page) */
+.traffic-light:is(:disabled, [aria-disabled="true"], .is-disabled) {
+    cursor: default;
+    pointer-events: none;
+}
+
+.traffic-light:is(:disabled, [aria-disabled="true"], .is-disabled) .traffic-light-face {
+    background: var(--traffic-inactive);
+    border-color: var(--traffic-inactive-border);
+}
+
+.traffic-light:is(:disabled, [aria-disabled="true"], .is-disabled) .traffic-light-symbol {
+    visibility: hidden;
+}
+
+/* ==========================================================================
+   Status badges and archived (no longer maintained) projects
+   ========================================================================== */
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 8px;
+    border: 1px solid var(--gray-300);
+    border-radius: 10px;
+    background: var(--gray-150);
+    color: var(--gray-700);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.6;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.status-badge.archived {
+    background: var(--archived-bg);
+    border-color: var(--archived-border);
+    color: var(--archived-text);
+}
+
+/* A button that leads to an archived snapshot rather than the live thing */
+.mac-btn.archived,
+.window-content a.mac-btn.archived {
+    color: var(--gray-700) !important;
+    background: var(--btn-bg-active);
+    border-color: var(--hairline-strong);
+    box-shadow: none;
+    text-shadow: none;
+}
+
+/* ==========================================================================
+   Semantic-tag resets
+   Rows and icons may be <a>, menu items <button>: they must look exactly
+   like the div/button versions.
+   ========================================================================== */
+
+.window-content a:where(.blog-row, .project-card, .event-item, .finder-row),
+a.desktop-icon {
+    color: inherit;
+    text-decoration: none;
+}
+
+.window-content a:where(.blog-row, .project-card, .event-item, .finder-row):hover,
+a.desktop-icon:hover {
+    text-decoration: none;
+}
+
+button.dropdown-item {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    background: none;
+    border: 0;
+    border-radius: 0;
+    font-family: inherit;
+    line-height: inherit;
+    text-align: left;
+}
+
+/* Skip link: off-screen until it takes keyboard focus */
+.skip-link {
+    position: fixed;
+    top: calc(4px + var(--sat));
+    left: calc(4px + var(--sal));
+    z-index: 100001;
+    padding: 6px 12px;
+    border-radius: 4px;
+    background: var(--surface);
+    color: var(--link);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+    transform: translateY(-200%);
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+    transform: none;
+}
+
+/* ==========================================================================
+   Coarse pointers (touch): tap targets and text inputs
+   ========================================================================== */
+
+@media (pointer: coarse) {
+    :root {
+        --menubar-height: 32px;
+        --window-titlebar-height: 32px;
+    }
+
+    .apple-menu,
+    .menubar-icon,
+    .menubar-min-chip {
+        min-width: 40px;
+        min-height: var(--menubar-height);
+        justify-content: center;
+    }
+
+    .mu-mb-toggle {
+        height: var(--menubar-height);
+        min-width: 40px;
+    }
+
+    /* 16px faces in 36px hit boxes that no longer overlap */
+    .traffic-lights {
+        gap: 20px;
+        margin: 0 10px;
+    }
+
+    .traffic-light {
+        padding: 10px;
+        margin: -10px;
+    }
+
+    .traffic-light-face {
+        width: 16px;
+        height: 16px;
+    }
+
+    .window-title {
+        margin-right: 108px;
+    }
+
+    .paint-tool,
+    .paint-size,
+    .gb-nav,
+    .gb-card-close,
+    .mu-btn {
+        min-width: 40px;
+        min-height: 40px;
+    }
+
+    .paint-swatch {
+        min-width: 36px;
+        min-height: 36px;
+    }
+}
+
+/* Phones: a taller titlebar, and the title takes the space left of the lights */
+@media (max-width: 768px), (pointer: coarse) and (max-height: 500px) {
+    :root {
+        --window-titlebar-height: 44px;
+    }
+
+    .window-title {
+        margin-right: 40px;
+    }
+}
+
+@media (pointer: coarse) and (max-width: 768px), (pointer: coarse) and (max-height: 500px) {
+    .traffic-light {
+        padding: 14px 10px;
+        margin: -14px -10px;
+    }
+
+    /* Share and Full Screen keep their 20px look but get a 36x44 hit area;
+       the wider gap keeps two neighbouring hit areas from overlapping */
+    .titlebar-link {
+        position: relative;
+    }
+
+    .titlebar-link::before {
+        content: "";
+        position: absolute;
+        inset: -12px -8px;
+    }
+
+    .window-titlebar .titlebar-link + .titlebar-link {
+        margin-left: 16px;
+    }
+
+    /* Small buttons (Download PDF, Refresh, Reset) reach a finger-sized 32px */
+    .mac-btn.small {
+        min-height: 32px;
+        padding-block: 6px;
+    }
+}
+
+/* iOS zooms the page when a focused field is under 16px */
+@media (hover: none) and (pointer: coarse) {
+
+    input:where([type="text"], [type="search"], [type="email"], [type="url"], [type="tel"], [type="password"], [type="number"], :not([type])),
+    textarea,
+    select,
+    [contenteditable]:not([contenteditable="false"]) {
+        font-size: 16px !important;
+    }
+
+    /* Fixed-height search pills need room for the larger text */
+    .blogs-search {
+        height: 32px;
+    }
+
+    .mu-search {
+        padding-top: 2px;
+        padding-bottom: 2px;
+    }
+}
+
+/* Small-print floors on phones */
+@media (max-width: 768px), (pointer: coarse) and (max-height: 500px) {
+    .window-raw-content :is(th, td) {
+        padding: 8px;
+    }
+
+
+    #online-count,
+    .viewer-badge,
+    .sticky-status {
+        font-size: 11px;
+    }
+}
+
+/* ================================================
+   Window switcher sheet (compact mode)
+   Markup contract for the shell:
+     .window-switcher-backdrop[.open] > .window-switcher[role=dialog]
+       .window-switcher-title
+       button.window-switcher-item[aria-current="true"]  (icon + label)
+         .window-switcher-label
+       button.window-switcher-close   (optional, per row or sheet)
+   plus button.titlebar-back for a text Back control in a phone titlebar.
+   ================================================ */
+.window-switcher-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 100050;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.35);
+}
+
+.window-switcher-backdrop.open {
+    display: flex;
+}
+
+.window-switcher {
+    width: 100%;
+    max-width: 480px;
+    max-height: 70vh;
+    max-height: 70svh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 6px 0 calc(8px + var(--sab));
+    padding-left: var(--sal);
+    padding-right: var(--sar);
+    background: var(--window-bg-solid);
+    border: 1px solid var(--window-border);
+    border-bottom: 0;
+    border-radius: 12px 12px 0 0;
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.3);
+    font-family: var(--font-system);
+    animation: window-switcher-in 0.18s ease-out;
+}
+
+@keyframes window-switcher-in {
+    from {
+        transform: translateY(24px);
+        opacity: 0;
+    }
+}
+
+.window-switcher-title {
+    padding: 8px 16px 6px;
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+}
+
+.window-switcher-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 48px;
+    padding: 6px 16px;
+    font: inherit;
+    font-size: 15px;
+    text-align: left;
+    color: var(--text-primary);
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+}
+
+.window-switcher-item + .window-switcher-item {
+    border-top: 1px solid var(--gray-150);
+}
+
+.window-switcher-item:active {
+    background: var(--accent-blue-subtle);
+}
+
+.window-switcher-item[aria-current="true"],
+.window-switcher-item.active {
+    font-weight: 600;
+    background: var(--accent-blue-light);
+}
+
+.window-switcher-item .app-icon {
+    --app-icon-size: 24px;
+    flex: none;
+}
+
+.window-switcher-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.window-switcher-close {
+    flex: none;
+    min-width: 44px;
+    min-height: 44px;
+    margin: -6px -12px -6px 0;
+    font: inherit;
+    font-size: 18px;
+    line-height: 1;
+    color: var(--text-tertiary);
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+}
+
+.window-switcher-empty {
+    padding: 20px 16px;
+    font-size: 13px;
+    text-align: center;
+    color: var(--text-tertiary);
+}
+
+/* Text "Back" control for a phone titlebar; hidden on the desktop layout. */
+.titlebar-back {
+    display: none;
+}
+
+@media (max-width: 768px), (pointer: coarse) and (max-height: 500px) {
+    .titlebar-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        flex: none;
+        min-width: 44px;
+        height: 44px;
+        margin-left: -6px;
+        padding: 0 8px 0 4px;
+        font: inherit;
+        font-size: 15px;
+        /* The link shade nudged towards the ink, for 4.5:1 on the grey
+           titlebar gradient rather than on white */
+        color: color-mix(in srgb, var(--link) 82%, black);
+        background: transparent;
+        border: 0;
+        cursor: pointer;
+    }
+
+    html[data-appearance="dark"] .titlebar-back {
+        color: color-mix(in srgb, var(--link) 72%, white);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .window-switcher {
+        animation: none;
+    }
+
+    .window-toolbar .toolbar-btn.is-loading > * {
+        animation: none;
+    }
+}
+
+/* ==========================================================================
+   Increased contrast: the system setting, or "Increase contrast" in System
+   Preferences > Accessibility (html[data-contrast="more"]). Secondary text
+   and hairlines get darker (lighter in dark), translucent panels go solid.
+   ========================================================================== */
+@media (prefers-contrast: more) {
+    :root {
+        --text-secondary: #3B444B;
+        --text-tertiary: #4A545D;
+        --text-muted: #474747;
+        --text-quiet: #555555;
+        --text-placeholder: #5A646E;
+        --border: #A9A9A9;
+        --border-subtle: #BEBEBE;
+        --border-strong: #8C8C8C;
+        --hairline: rgba(0, 0, 0, 0.3);
+        --hairline-strong: rgba(0, 0, 0, 0.5);
+        --window-content-bg: #FFFFFF;
+        --glass-bg: rgba(255, 255, 255, 0.97);
+        --menubar-bg: rgba(24, 26, 30, 0.97);
+    }
+}
+
+html[data-contrast="more"] {
+    --text-secondary: #3B444B;
+    --text-tertiary: #4A545D;
+    --text-muted: #474747;
+    --text-quiet: #555555;
+    --text-placeholder: #5A646E;
+    --border: #A9A9A9;
+    --border-subtle: #BEBEBE;
+    --border-strong: #8C8C8C;
+    --hairline: rgba(0, 0, 0, 0.3);
+    --hairline-strong: rgba(0, 0, 0, 0.5);
+    --window-content-bg: #FFFFFF;
+    --glass-bg: rgba(255, 255, 255, 0.97);
+    --menubar-bg: rgba(24, 26, 30, 0.97);
+}
+
+@media screen and (prefers-contrast: more) {
+    html[data-appearance="dark"] {
+        --text-secondary: #D3D6DA;
+        --text-tertiary: #C4C8CD;
+        --text-muted: #CBCED3;
+        --text-quiet: #BCC0C5;
+        --text-placeholder: #AEB3B9;
+        --border: #5D6066;
+        --border-subtle: #50535A;
+        --border-strong: #73777E;
+        --hairline: rgba(255, 255, 255, 0.24);
+        --hairline-strong: rgba(255, 255, 255, 0.4);
+        --window-content-bg: #1A1B1E;
+        --glass-bg: rgba(30, 31, 34, 0.97);
+    }
+}
+
+@media screen {
+    html[data-appearance="dark"][data-contrast="more"] {
+        --text-secondary: #D3D6DA;
+        --text-tertiary: #C4C8CD;
+        --text-muted: #CBCED3;
+        --text-quiet: #BCC0C5;
+        --text-placeholder: #AEB3B9;
+        --border: #5D6066;
+        --border-subtle: #50535A;
+        --border-strong: #73777E;
+        --hairline: rgba(255, 255, 255, 0.24);
+        --hairline-strong: rgba(255, 255, 255, 0.4);
+        --window-content-bg: #1A1B1E;
+        --glass-bg: rgba(30, 31, 34, 0.97);
+    }
+}
+
+/* ==========================================================================
+   Forced colours (Windows High Contrast and friends). The browser repaints
+   text and backgrounds with system colours; these rules keep the things that
+   would otherwise vanish: window edges, focus rings drawn with box-shadow,
+   the traffic lights (pure colour, no text) and menu highlights.
+   ========================================================================== */
+@media (forced-colors: active) {
+
+    :focus-visible,
+    .desktop-icon:focus-visible,
+    .window:focus-visible,
+    .dropdown-item:focus-visible {
+        outline: 2px solid Highlight !important;
+        outline-offset: 2px;
+    }
+
+    .window,
+    .static-window,
+    .desktop-widget,
+    .apple-dropdown,
+    .finder-dropdown,
+    .notification,
+    .sheet {
+        border: 1px solid CanvasText;
+    }
+
+    .menubar,
+    .window-titlebar {
+        border-bottom: 1px solid CanvasText;
+    }
+
+    .traffic-light-face {
+        forced-color-adjust: none;
+        border: 1px solid ButtonText;
+    }
+
+    /* `html` prefix: outranks the gel set later in the app stylesheets */
+    html .dropdown-item:hover,
+    html .finder-row.selected,
+    html .spotlight-result.selected,
+    html .mu-sidebar-item.is-selected,
+    html .sp-source[aria-selected="true"] {
+        forced-color-adjust: none;
+        background: Highlight;
+        color: HighlightText;
+    }
+
+    /* Children of an unadjusted row keep author colours unless told */
+    html body .spotlight-result.selected :is(.spotlight-result-title, .spotlight-result-type, mark),
+    html body .mu-sidebar-item.is-selected * {
+        color: HighlightText;
+    }
+
+    /* A <mark> is otherwise repainted as system Mark text on no fill, which
+       vanished against the Spotlight panel */
+    .spotlight-result:not(.selected) mark {
+        color: CanvasText;
+    }
+
+    .widget-icon.blink-new {
+        border: 1px solid CanvasText;
+    }
+
+    body::before {
+        display: none;
+    }
+}
+
+/* ==========================================================================
+   CLASSIC 10.9 CHROME (html[data-chrome="mavericks"], System Preferences >
+   General > Menu bar). The default chrome borrows the later dark menu bar;
+   this one puts back what Mavericks itself shipped: a pale translucent menu
+   bar with black text, white menus, gel traffic lights and pale-yellow help
+   tags. In the dark appearance the bar and menus stay dark (a bright strip
+   over dark windows would glare); the lights and help tags still change.
+   ========================================================================== */
+html[data-chrome="mavericks"] {
+    --traffic-red: #FC605C;
+    --traffic-red-border: #DE4D47;
+    --traffic-yellow: #FDBC40;
+    --traffic-yellow-border: #DE9F34;
+    --traffic-green: #34C84A;
+    --traffic-green-border: #27AA35;
+}
+
+/* Gel: a soft white glint on top, a darker rim at the bottom */
+html[data-chrome="mavericks"] .traffic-light .traffic-light-face {
+    background-image:
+        radial-gradient(ellipse 70% 45% at 50% 22%, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0) 100%),
+        radial-gradient(circle at 50% 85%, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0) 55%);
+    box-shadow: inset 0 -1px 1px rgba(0, 0, 0, 0.18), 0 0.5px 0 rgba(255, 255, 255, 0.6);
+}
+
+html[data-chrome="mavericks"] [data-tip]::after {
+    background: #FFFFC9;
+    color: #000;
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+}
+
+@media screen {
+    html[data-chrome="mavericks"]:not([data-appearance="dark"]) {
+        --menubar-bg: linear-gradient(180deg, rgba(250, 250, 250, 0.9) 0%, rgba(226, 226, 226, 0.9) 100%);
+        --menu-text-disabled: rgba(0, 0, 0, 0.3);
+        --menu-text-secondary: rgba(0, 0, 0, 0.45);
+    }
+
+    html[data-chrome="mavericks"]:not([data-appearance="dark"]) .menubar {
+        color: #111;
+        border-bottom-color: rgba(0, 0, 0, 0.32);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    }
+
+    html[data-chrome="mavericks"]:not([data-appearance="dark"]) .menubar :is(.menubar-right, .menu-item, .menu-trigger, #active-app-name, .menu-status, .mu-mb-toggle, .menubar-min-chip) {
+        color: #111;
+    }
+
+    /* The white glyphs in the bar turn black */
+    html[data-chrome="mavericks"]:not([data-appearance="dark"]) .menubar :is(#apple-menu-trigger, .menubar-sound, .menubar-spotlight, .mu-mb-toggle, #online-count) svg {
+        filter: invert(1);
+    }
+
+    html[data-chrome="mavericks"]:not([data-appearance="dark"]) .menubar :is(.menu-item:hover, .apple-menu:hover, .menubar-icon:hover, .menubar-min-chip) {
+        background: rgba(0, 0, 0, 0.08);
+    }
+
+    /* An open menu's title turns solid blue, so its highlight has to sit
+       under the label rather than over it */
+    html[data-chrome="mavericks"]:not([data-appearance="dark"]) .menubar :is(.apple-menu, .menu-item, .menubar-menu) {
+        isolation: isolate;
+    }
+
+    html[data-chrome="mavericks"]:not([data-appearance="dark"]) .menubar .menu-trigger[aria-expanded="true"]::before {
+        z-index: -1;
+        background: var(--accent-fill);
+    }
+
+    html[data-chrome="mavericks"]:not([data-appearance="dark"]) .menubar .menu-trigger:focus-visible::before {
+        outline-color: var(--focus-ring);
+    }
+
+    html[data-chrome="mavericks"]:not([data-appearance="dark"]) .menubar .menu-trigger[aria-expanded="true"],
+    html[data-chrome="mavericks"]:not([data-appearance="dark"]) .menubar .menu-trigger[aria-expanded="true"] #active-app-name {
+        color: #fff;
+    }
+
+    html[data-chrome="mavericks"]:not([data-appearance="dark"]) .menubar #apple-menu-trigger[aria-expanded="true"] svg {
+        filter: none;
+    }
+
+    /* White menus, square top corners where they hang from the bar */
+    html[data-chrome="mavericks"]:not([data-appearance="dark"]) :is(.apple-dropdown, .finder-dropdown) {
+        background: rgba(246, 246, 246, 0.97);
+        border-radius: 0 0 5px 5px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28), 0 0 0 0.5px rgba(0, 0, 0, 0.3);
+    }
+
+    html[data-chrome="mavericks"]:not([data-appearance="dark"]) :is(.apple-dropdown, .finder-dropdown) .dropdown-item {
+        color: #111;
+    }
+
+    html[data-chrome="mavericks"]:not([data-appearance="dark"]) :is(.apple-dropdown, .finder-dropdown) .dropdown-item:is(:hover, :focus-visible):not(.empty):not([aria-disabled="true"]) {
+        color: var(--btn-primary-text);
+        background: var(--btn-primary-bg);
+    }
+
+    html[data-chrome="mavericks"]:not([data-appearance="dark"]) :is(.apple-dropdown, .finder-dropdown) .dropdown-divider {
+        background: rgba(0, 0, 0, 0.1);
+    }
+
+    html[data-chrome="mavericks"]:not([data-appearance="dark"]) .finder-dropdown :is(.dropdown-label, .dropdown-item.empty, .window-item-state) {
+        color: rgba(0, 0, 0, 0.45);
+    }
 }

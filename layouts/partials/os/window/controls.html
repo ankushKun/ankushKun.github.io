@@ -16,6 +16,29 @@
                     stroke-linecap="round" />
             </svg></span></span></div>
     {{ end }}
+    {{ if .inert }}
+    {{/* A dialog (e.g. the 404 alert) can only be closed */}}
+    <span class="traffic-light minimize is-disabled" aria-hidden="true"><span class="traffic-light-face"></span></span>
+    <span class="traffic-light maximize is-disabled" aria-hidden="true"><span class="traffic-light-face"></span></span>
+    {{ else if .closeLink }}
+    {{/* Direct-link page: there is nowhere to minimise to, so yellow is a
+    link back to the desktop like red; green is wired up by setupStaticWindows
+    in mavericks.js (toggles .static-window.zoomed). */}}
+    <a href="{{ .closeLink }}" class="traffic-light minimize" data-tip="Back to Desktop" aria-label="Minimize to Desktop"><span
+            class="traffic-light-face"><span class="traffic-light-symbol" aria-hidden="true"><svg width="8"
+                height="8" viewBox="0 0 10 10" focusable="false">
+                <line x1="2.5" y1="5" x2="7.5" y2="5" stroke="currentColor" stroke-width="1.2"
+                    stroke-linecap="round" />
+            </svg></span></span></a>
+    <button type="button" class="traffic-light maximize" aria-label="Zoom window" aria-pressed="false"><span
+            class="traffic-light-face"><span class="traffic-light-symbol" aria-hidden="true"><svg width="8"
+                height="8" viewBox="0 0 10 10" focusable="false">
+                <line x1="5" y1="2.5" x2="5" y2="7.5" stroke="currentColor" stroke-width="1.2"
+                    stroke-linecap="round" />
+                <line x1="2.5" y1="5" x2="7.5" y2="5" stroke="currentColor" stroke-width="1.2"
+                    stroke-linecap="round" />
+            </svg></span></span></button>
+    {{ else }}
     <div class="traffic-light minimize" role="button" tabindex="0" aria-label="Minimize window"><span
             class="traffic-light-face"><span class="traffic-light-symbol" aria-hidden="true"><svg width="8"
                 height="8" viewBox="0 0 10 10" focusable="false">
@@ -30,4 +53,5 @@
                 <line x1="2.5" y1="5" x2="7.5" y2="5" stroke="currentColor" stroke-width="1.2"
                     stroke-linecap="round" />
             </svg></span></span></div>
+    {{ end }}
 </div>

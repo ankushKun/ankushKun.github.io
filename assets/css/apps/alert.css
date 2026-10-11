@@ -1,0 +1,151 @@
+/* ================================================
+   Alert window - an OS X alert dialog on the desktop.
+   Used by the 404 page (layouts/404.html).
+
+   Deliberately not a .static-window: that class is stretched into a
+   full-height sheet on phones, and a dialog should keep its own size.
+   ================================================ */
+
+.alert-window {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(460px, calc(100vw - 32px));
+    max-height: calc(100vh - var(--menubar-total) - 32px);
+    max-height: calc(100svh - var(--menubar-total) - 32px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--window-bg-solid);
+    border: 1px solid var(--window-border);
+    border-radius: 6px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    animation: alertWindowOpen 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+@keyframes alertWindowOpen {
+    0% {
+        transform: translate(-50%, -50%) scale(0.95);
+        opacity: 0;
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .alert-window {
+        animation: none;
+    }
+}
+
+/* The titlebar of an alert is not a drag handle */
+.alert-window .window-titlebar {
+    cursor: default;
+}
+
+.alert-body {
+    display: flex;
+    gap: 16px;
+    padding: 20px 20px 12px;
+    overflow-y: auto;
+}
+
+.alert-icon {
+    flex: none;
+    width: 64px;
+    height: 64px;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
+}
+
+.alert-message {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+.alert-title {
+    margin: 0 0 8px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.4;
+    color: var(--text-primary);
+    overflow-wrap: anywhere;
+}
+
+.alert-text {
+    margin: 0 0 10px;
+}
+
+.alert-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    margin-bottom: 12px;
+}
+
+.alert-subhead {
+    margin: 0 0 4px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+}
+
+.alert-posts {
+    margin: 0;
+    padding-left: 16px;
+}
+
+.alert-posts li + li {
+    margin-top: 2px;
+}
+
+.alert-message a {
+    color: var(--link);
+    text-decoration: none;
+}
+
+.alert-message a:hover,
+.alert-message a:focus-visible {
+    text-decoration: underline;
+}
+
+/* Buttons sit bottom right, default action last, as in an OS X alert */
+.alert-actions {
+    flex: none;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 8px 20px 16px;
+}
+
+/* mavericks.css gives .mac-btn display:inline-flex, which beats `hidden` */
+.alert-actions [hidden] {
+    display: none;
+}
+
+@media (max-width: 480px) {
+    .alert-body {
+        gap: 12px;
+        padding: 16px 16px 8px;
+    }
+
+    .alert-icon,
+    .alert-icon svg {
+        width: 44px;
+        height: 44px;
+    }
+
+    .alert-actions {
+        padding: 8px 16px 14px;
+    }
+}

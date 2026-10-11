@@ -1,0 +1,24 @@
+{{/* Small monochrome toolbar/button glyph (replaces emoji as icons).
+Usage: {{ partial "icons/ui/glyph.html" "search" }}
+       {{ partial "icons/ui/glyph.html" (dict "name" "globe" "size" 14) }}
+Draws in currentColor at 1em unless "size" is given. Always decorative:
+the control it sits in carries the label. Unknown names fall back to "document". */}}
+{{- $name := . -}}
+{{- $size := "1em" -}}
+{{- if reflect.IsMap . -}}{{- $name = .name -}}{{- with .size -}}{{- $size = . -}}{{- end -}}{{- end -}}
+{{- $glyphs := dict
+"search" `<circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/>`
+"globe" `<circle cx="8" cy="8" r="6"/><ellipse cx="8" cy="8" rx="2.5" ry="6"/><path d="M2 8h12"/>`
+"play" `<path d="M5 3.5v9l7.5-4.5z" fill="currentColor"/>`
+"code" `<path d="M5.5 4.5 2 8l3.5 3.5M10.5 4.5 14 8l-3.5 3.5"/>`
+"lock" `<rect x="3.5" y="7" width="9" height="6.5" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/>`
+"tag" `<path d="M2.5 2.5h5l6 6-5 5-6-6z"/><circle cx="5.5" cy="5.5" r=".75" fill="currentColor"/>`
+"person" `<circle cx="8" cy="5.5" r="2.5"/><path d="M3 13.5c0-2.8 2.2-4.5 5-4.5s5 1.7 5 4.5"/>`
+"document" `<path d="M4 1.5h5.5l3 3v10H4zM9.5 1.5v3h3"/>`
+"folder" `<path d="M1.5 3.5H6L7.5 5h7v8h-13z"/>`
+"calendar" `<rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3"/>`
+"download" `<path d="M8 2.5v8M4.5 7.5 8 11l3.5-3.5M3 13.5h10"/>`
+"gamepad" `<rect x="1.5" y="4.5" width="13" height="7" rx="3.5"/><path d="M4 8h3M5.5 6.5v3"/><circle cx="11" cy="8" r=".75" fill="currentColor"/>`
+-}}
+{{- $body := index $glyphs $name | default (index $glyphs "document") -}}
+<svg class="ui-glyph ui-glyph-{{ $name }}" width="{{ $size }}" height="{{ $size }}" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">{{ $body | safeHTML }}</svg>

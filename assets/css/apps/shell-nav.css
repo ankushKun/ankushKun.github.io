@@ -1,0 +1,186 @@
+/* ================================================
+   Shell navigation extras (assets/js/mavericks.js):
+   Spotlight match highlight and index status row, the titlebar Share and
+   Full Screen controls, the Share popover, the menubar sound toggle, and
+   native full screen for game and terminal windows.
+   ================================================ */
+
+/* ---------- Spotlight ---------- */
+
+.spotlight-result mark {
+    background: none;
+    color: inherit;
+    font-weight: 700;
+}
+
+.spotlight-result-type mark {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.spotlight-result-type {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.spotlight-status {
+    padding: 10px 18px;
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 12px;
+    text-align: center;
+}
+
+.spotlight-retry {
+    margin-left: 6px;
+    padding: 2px 10px;
+    font: inherit;
+    color: white;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.spotlight-retry:hover {
+    background: rgba(255, 255, 255, 0.24);
+}
+
+/* ---------- Titlebar controls ---------- */
+
+/* Share and Full Screen are <button class="titlebar-link">; the class was
+   written for an <a>, so take the button chrome off. */
+button.titlebar-link {
+    flex: none;
+    font: inherit;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.titlebar-link svg {
+    display: block;
+}
+
+.titlebar-link + .titlebar-link {
+    margin-left: 2px;
+}
+
+.titlebar-link[aria-expanded="true"],
+.titlebar-fullscreen[aria-pressed="true"] {
+    color: var(--text-color);
+    background: var(--press-tint);
+    opacity: 1;
+}
+
+/* The Terminal's state menu button (v86.css pins it to the titlebar's right
+   edge, which is where Full Screen and Share now sit). It joins the row as
+   the last control instead. v86.css loads later, hence the specificity. */
+.window .window-titlebar > .v86-dropdown-btn {
+    position: static;
+    flex: none;
+    margin-left: 2px;
+    transform: none;
+}
+
+.window .window-titlebar > .v86-dropdown-btn.open {
+    transform: rotate(180deg);
+}
+
+.window.inactive .window-titlebar > .v86-dropdown-btn {
+    display: none;
+}
+
+/* ---------- Share popover ---------- */
+
+.share-popover {
+    position: fixed;
+    z-index: 10002;
+    min-width: 170px;
+    padding: 4px 0;
+    font-family: var(--font-system);
+    background: rgba(40, 40, 40, 0.98);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border-radius: 6px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    animation: sharePopoverIn 0.12s ease;
+}
+
+@keyframes sharePopoverIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+}
+
+.share-item {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 6px 16px;
+    font: inherit;
+    font-size: 13px;
+    line-height: 1.4;
+    text-align: left;
+    text-decoration: none;
+    color: white;
+    background: none;
+    border: 0;
+    cursor: pointer;
+}
+
+.share-item:hover,
+.share-item:focus-visible {
+    background: var(--accent-fill);
+    outline: none;
+}
+
+@media (pointer: coarse) {
+    .share-item {
+        padding: 11px 16px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .share-popover {
+        animation: none;
+    }
+}
+
+/* ---------- Menubar sound toggle ---------- */
+
+button.menubar-sound {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+button.menubar-sound:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.menubar-sound[aria-pressed="true"] {
+    opacity: 0.6;
+}
+
+.menubar-sound svg {
+    display: block;
+}
+
+/* ---------- Native full screen ---------- */
+
+.window-content:fullscreen {
+    width: 100vw;
+    height: 100vh;
+    max-height: none;
+    background: #000;
+}
+
+.window-content:fullscreen::backdrop {
+    background: #000;
+}

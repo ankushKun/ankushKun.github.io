@@ -1,4 +1,38 @@
 {{ define "main" }}
+{{/* Without JavaScript nothing below can open (every window is cloned out of
+#window-contents by mavericks.js), so say who this is and link everywhere. */}}
+<noscript>
+    <div class="noscript-window">
+        <div class="noscript-titlebar">Read Me</div>
+        <div class="noscript-body">
+            <p class="noscript-name"><strong>{{ site.Params.profile.name | default site.Params.author.name }}</strong></p>
+            {{ with site.Params.profile.description }}<p>{{ . }}</p>{{ end }}
+            <p>This site is a little desktop that needs JavaScript. Everything on it is also a plain page:</p>
+            <nav aria-label="Site">
+                <ul class="noscript-nav">
+                    {{ range site.Menus.main }}<li><a href="{{ .URL }}">{{ .Name }}</a></li>{{ end }}
+                </ul>
+            </nav>
+            {{ with site.GetPage "/blogs" }}
+            <h2>Latest posts</h2>
+            <ul>
+                {{ range first 5 .RegularPages.ByDate.Reverse }}
+                <li><a href="{{ .RelPermalink }}">{{ .Title }}</a> <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "Jan 2, 2006" }}</time></li>
+                {{ end }}
+            </ul>
+            {{ end }}
+            {{ with where (where site.RegularPages "Section" "projects") "Params.featured" true }}
+            <h2>Featured projects</h2>
+            <ul>
+                {{ range .ByDate.Reverse }}
+                <li><a href="{{ .RelPermalink }}">{{ .Title }}</a>{{ with .Params.summary }} — {{ . | markdownify }}{{ end }}</li>
+                {{ end }}
+            </ul>
+            {{ end }}
+        </div>
+    </div>
+</noscript>
+
 <!-- Live communal sticky note -->
 {{ partial "os/desktop/sticky-note.html" . }}
 
@@ -6,8 +40,14 @@
 {{ partial "os/desktop/recent-blogs-widget.html" . }}
 
 <!-- Desktop Icons -->
-<div class="desktop-icons">
-    {{ range where $.Site.Data.apps.apps "desktop" true }}
+{{- /* Balanced columns of about five: 10 icons -> 5+5, 13 -> 5+5+3 (the
+short column is the leftmost), 9 -> 5+4. desktop-personal.js applies the same
+rule (columnCounts), and also handles short screens and stragglers. */ -}}
+{{- $desktopApps := where hugo.Data.apps.apps "desktop" true -}}
+{{- $iconCols := math.Max 1 (math.Ceil (div (float (len $desktopApps)) 5)) -}}
+{{- $iconRows := int (math.Max 1 (math.Ceil (div (float (len $desktopApps)) $iconCols))) }}
+<div class="desktop-icons" style="--icon-rows: {{ $iconRows }}">
+    {{ range $desktopApps }}
     {{ partial "os/desktop/icon.html" (dict "app" .) }}
     {{ end }}
 </div>
@@ -31,6 +71,7 @@
     "title" "Blogs"
     "pages" .Pages.ByDate.Reverse
     "prefix" "post"
+    "feed" (.OutputFormats.Get "rss")
     ) }}
     {{ end }}
 
@@ -57,247 +98,243 @@
     ) }}
     {{ end }}
 
-    <!-- WINS CONTENT - Awards Style -->
-    {{ partial "apps/wins/list.html" (dict
-        "id" "wins"
-        "title" "Wins"
-        "data" $.Site.Data.wins
-    ) }}
-
-    <!-- CONTACT CONTENT - Address Book Style -->
-    {{ partial "apps/contact/book.html" (dict
-        "id" "contact"
-        "title" "Contacts"
-        "data" $.Site.Data.contact
-    ) }}
+    {{/* Everything above is content worth crawling and stays real (hidden) HTML.
+    Everything below is app chrome: it ships inside an inert <template id="tpl-<id>">
+    so it is not parsed into the document (no duplicate ids, no hidden copies for
+    querySelector to trip over). mavericks.js getLocalWindowContent() reads the
+    #content-<id> wrapper out of the template. Inline <script>/<style> never run
+    in there - keep them out of these partials. */}}
 
     <!-- SCHEDULE CALL CONTENT -->
+    <template id="tpl-book-a-call">
     {{ partial "components/embed-external.html" (dict
     "id" "book-a-call"
-    "icon" "🔒"
+    "icon" (partial "icons/ui/glyph.html" "lock")
     "title" "https://cal.com/ankushkun/call"
     "url" "https://cal.com/ankushkun/call"
     "downloadLabel" (partial "icons/ui/external-link.html" .)
     ) }}
+    </template>
 
-    <!-- RESUME CONTENT -->
-    {{ partial "components/embed-external.html" (dict
-    "id" "resume"
-    "icon" "📄"
-    "title" "resume.pdf"
-    "url" "/resume.pdf"
-    "downloadLabel" "⬇"
-    ) }}
+    {{/* RESUME: no template. The window body is fetched from /resume/
+    (data/apps.yaml contentPermalink, layouts/resume/list.html). */}}
 
     <!-- GAMES FOLDER CONTENT - Finder Icon View -->
+    <template id="tpl-games">
     {{ partial "apps/games/grid.html" (dict
         "id" "games"
         "title" "Games"
-        "data" $.Site.Data.apps
+        "data" hugo.Data.apps
     ) }}
+    </template>
 
     <!-- ITCH GAME EMBED CONTENT -->
+    <template id="tpl-itch-game">
     {{ partial "components/embed-external.html" (dict
     "id" "itch-game"
     "url" "https://itch.io/embed-upload/15250063?color=EEF2F6"
     "showToolbar" false
     "external" true
     ) }}
+    </template>
 
     <!-- DOOM CONTENT -->
+    <template id="tpl-doom">
     {{ partial "components/embed-external.html" (dict
     "id" "doom"
-    "icon" "🎮"
+    "icon" (partial "icons/ui/glyph.html" "gamepad")
     "title" "Yet Another Doom Clone"
     "url" "/doom/"
     "downloadLabel" (partial "icons/ui/external-link.html" .)
     ) }}
+    </template>
 
     <!-- QUAKE 3 ARENA CONTENT -->
+    <template id="tpl-quake3">
     <div id="content-quake3">
         <div class="quake3-layout" style="height: 100%; display: flex; flex-direction: column; background: #000;">
             <div class="quake3-menu">
+                {{/* A logo, not the page heading: the home h1 is the About name */}}
                 <div class="quake3-logo">
-                    <h1>QUAKE III ARENA</h1>
+                    <div class="quake3-logo-text">QUAKE III ARENA</div>
                 </div>
                 <div class="quake3-menu-items">
                     <button class="quake3-menu-btn" onclick="startQuake3(this, 'singleplayer')">SINGLE PLAYER</button>
                     <button class="quake3-menu-btn" onclick="startQuake3(this, 'multiplayer')">MULTIPLAYER</button>
                 </div>
             </div>
-            <iframe class="quake3-iframe" style="display: none;" frameborder="0"></iframe>
+            {{/* Third-party game: it gets our origin as referrer only, plus what a
+            game needs (fullscreen, gamepad, sound). src is set when a mode is picked. */}}
+            <iframe class="quake3-iframe" style="display: none;" frameborder="0" title="Quake III Arena"
+                referrerpolicy="strict-origin-when-cross-origin" allowfullscreen
+                allow="fullscreen; gamepad; autoplay"></iframe>
 
-            <style>
-                .quake3-layout {
-                    width: 100%;
-                    height: 100%;
-                    overflow: hidden;
-                }
-
-                .quake3-menu {
-                    flex: 1;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 50px;
-                }
-
-                .quake3-logo h1 {
-                    font-family: 'Impact', 'Arial Black', sans-serif;
-                    font-size: 52px;
-                    font-weight: 900;
-                    letter-spacing: 6px;
-                    margin: 0;
-                    color: #ddd;
-                    text-align: center;
-                    text-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-                }
-
-                .quake3-menu-items {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 15px;
-                    align-items: center;
-                }
-
-                .quake3-menu-btn {
-                    background: transparent;
-                    border: none;
-                    color: #c00;
-                    font-family: 'Impact', 'Arial Black', sans-serif;
-                    font-size: 32px;
-                    font-weight: 700;
-                    padding: 10px 30px;
-                    cursor: pointer;
-                    letter-spacing: 3px;
-                    transition: all 0.1s;
-                    text-transform: uppercase;
-                }
-
-                .quake3-menu-btn:hover {
-                    color: #fff;
-                    text-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
-                    transform: scale(1.05);
-                }
-
-                .quake3-iframe {
-                    flex: 1;
-                    width: 100%;
-                    height: 100%;
-                    border: none;
-                }
-
-                @media (max-width: 600px) {
-                    .quake3-logo h1 {
-                        font-size: 32px;
-                    }
-
-                    .quake3-menu-btn {
-                        font-size: 24px;
-                    }
-                }
-            </style>
-
-            <script>
-                function startQuake3(btn, mode) {
-                    // Find the main container relative to the clicked button
-                    const container = btn.closest('.quake3-layout');
-                    if (!container) return;
-
-                    const menu = container.querySelector('.quake3-menu');
-                    const iframe = container.querySelector('.quake3-iframe');
-
-                    let url;
-                    if (mode === 'singleplayer') {
-                        url = 'https://thelongestyard.link/q3a-demo/';
-                    } else if (mode === 'multiplayer') {
-                        url = 'https://thelongestyard.link/q3a-demo/?server=ankushone';
-                    }
-
-                    // Hide menu and show iframe
-                    if (menu) menu.style.display = 'none';
-                    if (iframe) {
-                        iframe.src = url;
-                        iframe.style.display = 'block';
-                    }
-                }
-            </script>
+            {{/* Styles: assets/css/apps/quake.css. startQuake3() is defined after
+            #window-contents: a script inside a <template> never runs. */}}
         </div>
     </div>
+    </template>
 
     <!-- ITCH.IO CONTENT -->
+    <template id="tpl-itchio">
     {{ partial "components/embed-external.html" (dict
     "id" "itchio"
-    "icon" "🎮"
+    "icon" (partial "icons/ui/glyph.html" "gamepad")
     "title" "ankushkun.itch.io"
     "url" "https://ankushkun.itch.io/"
     "downloadLabel" (partial "icons/ui/external-link.html" .)
     ) }}
+    </template>
 
     <!-- TERMINAL CONTENT -->
+    <template id="tpl-terminal">
     {{ partial "apps/terminal/window.html" (dict
     "id" "terminal"
     "title" "Terminal"
     ) }}
+    </template>
 
     <!-- IRC CHAT CONTENT -->
+    <template id="tpl-irc-chat">
     {{ partial "apps/irc/window.html" (dict
     "id" "irc-chat"
     "title" "IRC Chat - mIRC v6.35"
     ) }}
+    </template>
 
     <!-- GUESTBOOK CONTENT -->
+    <template id="tpl-guestbook">
     {{ partial "apps/guestbook/plaza.html" (dict
     "id" "guestbook"
     "title" "Guestbook"
     ) }}
+    </template>
 
     <!-- PAINT CONTENT -->
+    <template id="tpl-paint">
     {{ partial "apps/paint/canvas.html" (dict
     "id" "paint"
     "title" "Paint"
     ) }}
+    </template>
+
+    <!-- ACTIVITY MONITOR CONTENT -->
+    <template id="tpl-activity">
+    {{ partial "apps/activity/window.html" (dict
+    "id" "activity"
+    "title" "Activity Monitor"
+    ) }}
+    </template>
+
+    <!-- DAILY PUZZLE CONTENT -->
+    <template id="tpl-daily-puzzle">
+    {{ partial "apps/puzzle/window.html" (dict
+    "id" "daily-puzzle"
+    "title" "Daily Puzzle"
+    ) }}
+    </template>
+
+    <!-- PASSPORT CONTENT -->
+    <template id="tpl-passport">
+    {{ partial "apps/passport/window.html" (dict
+    "id" "passport"
+    "title" "Passport"
+    ) }}
+    </template>
 
     <!-- MUSIC CONTENT -->
+    <template id="tpl-music">
     {{ partial "apps/music/player.html" (dict
     "id" "music"
     "title" "Music"
     ) }}
+    </template>
+
+    <!-- SOFTWARE UPDATE CONTENT -->
+    <template id="tpl-software-update">
+    {{ partial "apps/updates/window.html" (dict
+    "id" "software-update"
+    "title" "Software Update"
+    ) }}
+    </template>
+
+    <!-- SYSTEM PREFERENCES CONTENT -->
+    <template id="tpl-preferences">
+    {{ partial "apps/preferences/window.html" (dict
+    "id" "preferences"
+    "title" "System Preferences"
+    ) }}
+    </template>
 
     <!-- PORTAL CONTENT -->
+    <template id="tpl-portal">
     {{ partial "apps/terminal/window.html" (dict
     "id" "portal"
     "title" "Portal"
     ) }}
+    </template>
 
     <!-- FLASH GAMES -->
     <!-- Alien Hominid -->
+    <template id="tpl-flash-alien-hominid">
     {{ partial "apps/games/flash-player.html" (dict
     "id" "flash-alien-hominid"
     "title" "Alien Hominid"
     "swf" "/ruffle/games/alien_hominid.swf"
     ) }}
+    </template>
 
     <!-- Fly Guy -->
+    <template id="tpl-flash-flyguy">
     {{ partial "apps/games/flash-player.html" (dict
     "id" "flash-flyguy"
     "title" "Fly Guy"
     "swf" "/ruffle/games/flyguy.swf"
     ) }}
+    </template>
 
     <!-- Marvin Spectrum -->
+    <template id="tpl-flash-marvin-spectrum">
     {{ partial "apps/games/flash-player.html" (dict
     "id" "flash-marvin-spectrum"
     "title" "Marvin Spectrum"
     "swf" "/ruffle/games/marvin_spectrum.swf"
     ) }}
+    </template>
 
     <!-- Wasted Sky -->
+    <template id="tpl-flash-wasted-sky">
     {{ partial "apps/games/flash-player.html" (dict
     "id" "flash-wasted-sky"
     "title" "Wasted Sky"
     "swf" "/ruffle/games/wasted_sky.swf"
     ) }}
+    </template>
 </div>
+
+{{/* Used by the Quake III window's menu buttons (inline onclick in tpl-quake3). */}}
+<script>
+    function startQuake3(btn, mode) {
+        // Find the main container relative to the clicked button
+        const container = btn.closest('.quake3-layout');
+        if (!container) return;
+
+        const menu = container.querySelector('.quake3-menu');
+        const iframe = container.querySelector('.quake3-iframe');
+
+        let url;
+        if (mode === 'singleplayer') {
+            url = 'https://thelongestyard.link/q3a-demo/';
+        } else if (mode === 'multiplayer') {
+            url = 'https://thelongestyard.link/q3a-demo/?server=ankushone';
+        }
+
+        // Hide menu and show iframe
+        if (menu) menu.style.display = 'none';
+        if (iframe) {
+            iframe.src = url;
+            iframe.style.display = 'block';
+        }
+    }
+</script>
 {{ end }}

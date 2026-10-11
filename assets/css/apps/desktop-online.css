@@ -1,0 +1,108 @@
+/* ==========================================================================
+   People online, as a menubar status item
+   cursors.js creates the #online-count button (text "3 Online", label,
+   reactions popover); the shell moves it into .menubar-online
+   (setupOnlineInMenubar in mavericks.js) and adds data-count. Without JS the
+   slot stays hidden; if the shell never moves the button, the bottom-left
+   pill from mavericks.css / reactions.css is what shows.
+
+   Selectors carry two ids and two classes on purpose: reactions.css (loaded
+   after this file) styles #online-count as a floating pill and hides it on
+   compact layouts while a window covers the desktop. In the menubar it covers
+   nothing, so it stays visible and takes the menubar's look instead.
+   ========================================================================== */
+
+:root {
+    --online-item-hover: rgba(255, 255, 255, 0.15);
+    --online-item-glyph: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 14'%3E%3Ccircle cx='6.5' cy='4.2' r='2.9'/%3E%3Cpath d='M1 13.6c0-3.2 2.4-5.4 5.5-5.4s5.5 2.2 5.5 5.4z'/%3E%3Ccircle cx='12.6' cy='3.6' r='2.4'/%3E%3Cpath d='M10.7 7.9c.6-.2 1.2-.3 1.9-.3 2.7 0 4.6 1.9 4.6 4.6v1.4h-3.9c-.1-2.4-1-4.4-2.6-5.7z'/%3E%3C/svg%3E");
+}
+
+.menubar-online[hidden] {
+    display: none;
+}
+
+.menubar-online {
+    display: flex;
+    align-items: center;
+}
+
+.menubar .menubar-online#menubar-online > #online-count {
+    position: static;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 20px;
+    padding: 0 8px 0 7px;
+    color: inherit;
+    background: transparent;
+    font: inherit;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    border-radius: 4px;
+    z-index: auto;
+    visibility: visible;
+    transition: background 0.1s ease;
+}
+
+/* Nothing to show until cursors.js has counted */
+.menubar .menubar-online#menubar-online > #online-count:empty {
+    display: none;
+}
+
+.menubar .menubar-online#menubar-online > #online-count::before {
+    content: "";
+    flex: none;
+    width: 16px;
+    height: 13px;
+    background-color: currentColor;
+    -webkit-mask: var(--online-item-glyph) center / contain no-repeat;
+    mask: var(--online-item-glyph) center / contain no-repeat;
+    opacity: 0.95;
+}
+
+/* The menubar item is big enough to hit; drop the pill's enlarged hit area */
+.menubar .menubar-online#menubar-online > #online-count::after {
+    content: none;
+}
+
+.menubar .menubar-online#menubar-online > #online-count:hover,
+.menubar .menubar-online#menubar-online > #online-count[aria-expanded="true"] {
+    background: var(--online-item-hover);
+}
+
+.menubar .menubar-online#menubar-online > #online-count:focus-visible {
+    outline-offset: -2px;
+}
+
+/* Compact menubar: the glyph and the number. The full "3 Online" stays the
+   accessible name (cursors.js sets aria-label). */
+@media (max-width: 768px), (pointer: coarse) and (max-height: 500px) {
+    .menubar .menubar-online#menubar-online > #online-count {
+        gap: 4px;
+        padding: 0 6px;
+        font-size: 0;
+    }
+
+    .menubar .menubar-online#menubar-online > #online-count::after {
+        content: attr(data-count);
+        position: static;
+        inset: auto;
+        font-size: 11px;
+        line-height: 1;
+    }
+}
+
+@media (pointer: coarse) {
+    .menubar .menubar-online#menubar-online > #online-count {
+        height: var(--menubar-height);
+        min-width: 40px;
+        justify-content: center;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .menubar .menubar-online#menubar-online > #online-count {
+        transition: none;
+    }
+}

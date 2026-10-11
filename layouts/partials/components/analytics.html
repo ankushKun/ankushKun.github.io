@@ -1,9 +1,36 @@
+{{- /* Production builds only: `hugo server` sessions must not reach the live
+project. The stub is still defined on dev builds so posthog.capture() calls
+elsewhere stay harmless no-ops. */ -}}
 <script>
     !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="ki Ci init qi Hi pr Bi zi Di capture calculateEventProperties Qi register register_once register_for_session unregister unregister_for_session Ki getFeatureFlag getFeatureFlagPayload getFeatureFlagResult getAllFeatureFlags isFeatureEnabled reloadFeatureFlags updateFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey displaySurvey cancelPendingSurvey canRenderSurvey canRenderSurveyAsync Xi identify setPersonProperties unsetPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset shutdown setIdentity clearIdentity get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException addExceptionStep captureLog startExceptionAutocapture stopExceptionAutocapture loadToolbar get_property getSessionProperty Ji Gi createPersonProfile setInternalOrTestUser Yi Ai rn opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing Vi debug mr it getPageViewId captureTraceFeedback captureTraceMetric Oi".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
-    posthog.init('phc_nBvIMuMmaqQkAXL36Bi6eyTRga0A04klevYFyZf4cfc', {
-        api_host: 'https://p1.ankush.one',
-        ui_host: 'https://eu.posthog.com',
-        defaults: '2026-05-30',
-        person_profiles: 'identified_only',
-    })
+    {{- if hugo.IsProduction }}
+    // Loading the ~105 KB library is put off until the page has loaded and the
+    // browser is idle. The stub above queues any capture() calls made earlier.
+    (function () {
+        var host = location.hostname;
+        if (host === 'localhost' || host === '127.0.0.1' || host === '[::1]' || host === '') return;
+        // Honour Global Privacy Control and Do Not Track: the library is never
+        // loaded, so nothing is captured or sent.
+        if (navigator.globalPrivacyControl === true ||
+            navigator.doNotTrack === '1' || window.doNotTrack === '1') return;
+        function initPosthog() {
+            posthog.init('phc_nBvIMuMmaqQkAXL36Bi6eyTRga0A04klevYFyZf4cfc', {
+                api_host: 'https://p1.ankush.one',
+                ui_host: 'https://eu.posthog.com',
+                defaults: '2026-05-30',
+                person_profiles: 'identified_only',
+                // Cookieless: no identifier is stored on the device, so no banner.
+                persistence: 'memory',
+                disable_session_recording: true,
+                capture_exceptions: true,
+            });
+        }
+        function whenIdle() {
+            if (window.requestIdleCallback) requestIdleCallback(initPosthog, { timeout: 3000 });
+            else setTimeout(initPosthog, 1);
+        }
+        if (document.readyState === 'complete') whenIdle();
+        else window.addEventListener('load', whenIdle);
+    })();
+    {{- end }}
 </script>

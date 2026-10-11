@@ -9,13 +9,10 @@ Each section maps to a specific content partial.
 {{ $contentPartial := "" }}
 {{ $contentData := dict }}
 
-{{ if eq .Section "wins" }}
-{{ $contentPartial = "apps/wins/list.html" }}
-{{ $contentData = dict "id" "wins-page" "title" "Wins" "data" .Site.Data.wins }}
-
-{{ else if eq .Section "contact" }}
-{{ $contentPartial = "apps/contact/book.html" }}
-{{ $contentData = dict "id" "contact-page" "title" "Contacts" "data" .Site.Data.contact }}
+{{ if eq .Section "about" }}
+{{/* Same partial as the About window on the desktop */}}
+{{ $contentPartial = "apps/about/window.html" }}
+{{ $contentData = dict "id" "about-page" "title" "About Ankush" }}
 
 {{ else if eq .Section "schedule" }}
 {{ $contentPartial = "apps/contact/schedule.html" }}
@@ -32,6 +29,7 @@ Each section maps to a specific content partial.
 "pages" $allPages.ByDate.Reverse
 "prefix" "timeline"
 "standalone" true
+"intro" .Content
 }}
 
 {{ else if eq .Section "projects" }}
@@ -42,6 +40,7 @@ Each section maps to a specific content partial.
 "pages" .Pages.ByDate.Reverse
 "prefix" "project"
 "standalone" true
+"intro" .Content
 }}
 
 {{ else if eq .Section "blogs" }}
@@ -52,16 +51,22 @@ Each section maps to a specific content partial.
 "pages" .Pages.ByDate.Reverse
 "prefix" "post"
 "standalone" true
+"intro" .Content
+"feed" (.OutputFormats.Get "rss")
 }}
 
 {{ end }}
 
-{{/* Render the static window with the appropriate content */}}
+{{/* Render the static window with the appropriate content.
+The window title is the page's h1, except on /about/ where the sidebar name
+already is one. */}}
 {{ if $contentPartial }}
 {{ partial "os/window/static.html" (dict
 "title" .Title
 "content" $contentPartial
 "contentData" $contentData
+"page" .
+"h1" (ne .Section "about")
 ) }}
 {{ else }}
 {{/* Fallback for sections with raw content but no child pages */}}
@@ -73,13 +78,40 @@ Each section maps to a specific content partial.
 "title" .Title
 "rawContent" .Content
 "padding" "24px"
+"page" .
+"h1" (not (findRE `<h1[\s>]` .Content 1))
+) }}
+{{ else if in (slice "term" "taxonomy") .Kind }}
+{{/* Tag pages: /tags/ lists the tags, /tags/<tag>/ what carries it.
+Rows are real links (standalone) - there is no desktop window for these. */}}
+{{ $isTerm := eq .Kind "term" }}
+{{ $title := cond $isTerm (printf "#%s" .Data.Term) "Tags" }}
+{{ partial "os/window/static.html" (dict
+"title" $title
+"content" "apps/finder/list.html"
+"contentData" (dict
+    "id" "tags"
+    "icon" "tag"
+    "title" $title
+    "pages" (cond $isTerm .Pages.ByDate.Reverse .Pages.ByTitle)
+    "countLabel" (cond $isTerm "items" "tags")
+    "dateHeader" (cond $isTerm "Date" "Items")
+    "iconPartial" (cond $isTerm "icons/ui/document.html" "icons/ui/folder.html")
+    "iconColor" (cond $isTerm "" "#5a9ae0")
+    "standalone" true
+    "showKind" true
+)
+"page" .
+"h1" true
 ) }}
 {{ else }}
 {{/* Generic Finder-style list for undefined sections */}}
 {{ partial "os/window/static.html" (dict
 "title" .Title
 "content" "apps/finder/list.html"
-"contentData" (dict "pages" .Pages.ByDate.Reverse "section" .Section)
+"contentData" (dict "pages" .Pages.ByDate.Reverse "section" .Section "standalone" true)
+"page" .
+"h1" true
 ) }}
 {{ end }}
 {{ end }}

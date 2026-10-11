@@ -1,0 +1,156 @@
+/* ================================================
+   Menubar menus (File, Edit, View, Go, Window, Help) and context menus
+   Markup: layouts/partials/os/menubar-menus.html; the context menu is built
+   by showContextMenu() in assets/js/mavericks.js and reuses .apple-dropdown,
+   so both read exactly like the Apple menu.
+   ================================================ */
+
+:root {
+    /* The menus are dark glass in either appearance (see .apple-dropdown) */
+    --menu-text-disabled: rgba(255, 255, 255, 0.34);
+    --menu-text-secondary: rgba(255, 255, 255, 0.55);
+    --menu-highlight: var(--accent-fill);
+}
+
+/* ---------- Menubar menus ---------- */
+
+/* The trigger's ::before hit area stretches over its wrapper, so the wrapper
+   has to be the positioned box (as .apple-menu and .finder-menu are) */
+.menubar-menu {
+    position: relative;
+    flex: none;
+    font-weight: 400;
+}
+
+.menubar-menu .apple-dropdown {
+    min-width: 230px;
+}
+
+/* Phones keep the essentials in the Apple menu and have no File...Help */
+.menu-compact-only {
+    display: none !important;
+}
+
+@media (max-width: 768px), (pointer: coarse) and (max-height: 500px) {
+    /* Finger-height rows centre their label, links included */
+    .menu-compact-only:not([hidden]) {
+        display: flex !important;
+    }
+
+    .apple-dropdown a.dropdown-item:not([hidden]) {
+        display: flex;
+    }
+
+    .apple-dropdown .dropdown-divider.menu-compact-only:not([hidden]) {
+        display: block !important;
+    }
+
+    .menubar-menu {
+        display: none;
+    }
+}
+
+/* Items with a keyboard shortcut or a check mark */
+.apple-dropdown .dropdown-item[data-shortcut],
+.apple-dropdown .dropdown-item[role="menuitemcheckbox"] {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.apple-dropdown .dropdown-item[role="menuitemcheckbox"] {
+    position: relative;
+    padding-left: 26px;
+}
+
+.apple-dropdown .dropdown-item[role="menuitemcheckbox"][aria-checked="true"]::before {
+    content: "✓";
+    position: absolute;
+    left: 10px;
+    font-size: 12px;
+}
+
+.menu-shortcut {
+    margin-left: auto;
+    flex: none;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    color: var(--menu-text-secondary);
+}
+
+.dropdown-item:hover .menu-shortcut,
+.dropdown-item:focus-visible .menu-shortcut {
+    color: inherit;
+}
+
+/* Greyed out: there is nothing for the command to act on right now */
+.apple-dropdown .dropdown-item[aria-disabled="true"] {
+    color: var(--menu-text-disabled);
+    cursor: default;
+}
+
+.apple-dropdown .dropdown-item[aria-disabled="true"]:hover {
+    background: none;
+}
+
+.apple-dropdown .dropdown-item[aria-disabled="true"] .menu-shortcut {
+    color: var(--menu-text-disabled);
+}
+
+.apple-dropdown .dropdown-divider[hidden] {
+    display: none;
+}
+
+/* The Window menu's list of open windows */
+.menu-windows-list:empty {
+    display: none;
+}
+
+/* ---------- Context menu ---------- */
+
+.apple-dropdown.context-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    min-width: 200px;
+    max-width: min(320px, calc(100vw - 16px));
+    max-height: calc(100vh - var(--menubar-total) - 16px);
+    max-height: calc(100svh - var(--menubar-total) - 16px);
+    overflow-y: auto;
+    margin: 0;
+    /* Above windows and the Dock, below the menubar's own menus */
+    z-index: 10002;
+    transform: none;
+    transition: none;
+    font-family: var(--font-system);
+    outline: none;
+    -webkit-user-select: none;
+    user-select: none;
+    overscroll-behavior: contain;
+}
+
+.context-menu .dropdown-item {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.context-menu .dropdown-item:focus-visible {
+    background: var(--menu-highlight);
+    outline: none;
+}
+
+/* Finger-sized rows when the menu came from a long press */
+@media (pointer: coarse) {
+    .context-menu .dropdown-item {
+        padding-top: 10px;
+        padding-bottom: 10px;
+        font-size: 15px;
+    }
+}
+
+@media print {
+    .context-menu {
+        display: none !important;
+    }
+}

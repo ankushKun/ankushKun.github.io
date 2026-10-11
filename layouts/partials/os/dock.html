@@ -1,0 +1,12 @@
+{{/* The Dock.
+
+Only the shelf is rendered here; setupDock() in assets/js/mavericks.js fills it
+from the #app-registry block (every app with `dock: true` in data/apps.yaml, or
+with a desktop icon when the flag is absent), so the icon markup is not
+shipped twice in the HTML. The empty element is still worth sending: its
+presence is what reserves the Dock's height in the layout from first paint
+(assets/css/apps/dock.css, --dock-height).
+
+Without JavaScript nothing can be launched from it, so it stays hidden. */}}
+<nav class="dock" id="dock" aria-label="Dock" data-nosnippet hidden></nav>
+<noscript><style>:root { --dock-height: 0px !important; }</style></noscript>

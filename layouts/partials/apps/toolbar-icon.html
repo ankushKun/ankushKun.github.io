@@ -1,0 +1,6 @@
+{{/* Toolbar icon for an app window: the app's own icon from data/apps.yaml at
+chrome size (18px), the same art as its desktop icon.
+Usage: {{ partial "apps/toolbar-icon.html" "blogs" }} */}}
+{{- range first 1 (where hugo.Data.apps.apps "id" .) -}}
+{{ partial "os/app-icon.html" (dict "app" . "context" "chrome" "class" "app-toolbar-icon") }}
+{{- end -}}

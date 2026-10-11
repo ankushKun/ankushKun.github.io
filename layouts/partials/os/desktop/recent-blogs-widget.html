@@ -20,7 +20,11 @@
             onclick="event.preventDefault(); openContentWindow('{{ $prefix }}-{{ .File.UniqueID }}', '{{ .Title | safeJS }}', '{{ .Permalink }}');">
             <span class="widget-blog-type widget-type-{{ .Section }}">{{ $label }}</span>
             <span class="widget-blog-title">{{ .Title }}</span>
-            <span class="widget-blog-date">{{ .Date.Format "Jan 2" }}</span>
+            {{- /* "Jul 31" this year, "Jan 18, 2025" for older entries, "2019" when only the year is known */}}
+            {{ $dateText := .Date.Format "Jan 2" }}
+            {{ if eq .Params.date_precision "year" }}{{ $dateText = .Date.Format "2006" }}
+            {{ else if ne .Date.Year now.Year }}{{ $dateText = .Date.Format "Jan 2, 2006" }}{{ end }}
+            <time class="widget-blog-date" datetime="{{ .Date.Format "2006-01-02" }}">{{ $dateText }}</time>
         </a>
         {{ end }}
     </div>
