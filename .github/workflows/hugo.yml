@@ -6,19 +6,27 @@ on:
   push:
     branches: ["main"]
 
+  # Pull requests are built and checked, never deployed
+  pull_request:
+    branches: ["main"]
+
+  # Weekly external link check (Mondays 06:00 UTC); opens an issue, never deploys
+  schedule:
+    - cron: "0 6 * * 1"
+
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+# Read-only by default. Only the deploy job may publish to Pages (pages: write
+# + id-token: write); the build job and the lint job, which runs third-party
+# npm code, never hold those scopes.
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
 # However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
-  group: "pages"
+  group: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && 'pages' || format('checks-{0}-{1}', github.event_name, github.ref) }}
   cancel-in-progress: false
 
 # Default to bash
@@ -29,9 +37,15 @@ defaults:
 jobs:
   # Build job
   build:
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # configure-pages only reads the Pages settings (enablement is off)
+      pages: read
     env:
-      HUGO_VERSION: 0.128.0
+      # Keep in step with the local Hugo and [module.hugoVersion] in hugo.toml
+      HUGO_VERSION: 0.163.3
     steps:
       - name: Install Hugo CLI
         run: |
@@ -40,28 +54,146 @@ jobs:
         # run: sudo snap install dart-sass
       # - name: Install Dart Sass
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           submodules: recursive
+          # Nothing here pushes; keep the token out of .git/config
+          persist-credentials: false
+          # Full history: enableGitInfo needs it for real per-page lastmod /
+          # dateModified. A shallow clone stamps every page with the deploy date.
+          fetch-depth: 0
       - name: Setup Pages
         id: pages
-        uses: actions/configure-pages@v5
+        if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
       - name: Install Node.js dependencies
         run: "[[ -f package-lock.json || -f npm-shrinkwrap.json ]] && npm ci || true"
+      - name: Read deploy commit date
+        id: commit
+        run: echo "date=$(git log -1 --format=%cI)" >> "$GITHUB_OUTPUT"
+      - name: Generate changelog
+        # Software Update: rewrites data/changelog.json from git history (needs
+        # the full clone above). On any problem the script keeps the committed
+        # snapshot and exits 0, so this can never fail the deploy.
+        continue-on-error: true
+        run: node scripts/changelog.mjs
       - name: Build with Hugo
         env:
           HUGO_CACHEDIR: ${{ runner.temp }}/hugo_cache
           HUGO_ENVIRONMENT: production
+          # Read by baseof.html for "About This Site". With full history,
+          # .GitInfo is each page's own last commit, not the deploy commit.
           HUGO_PARAMS_GITCOMMIT: ${{ github.sha }}
-          HUGO_PARAMS_GITCOMMITSHORT: ${{ github.sha }}
+          HUGO_PARAMS_GITCOMMITDATE: ${{ steps.commit.outputs.date }}
+          BASE_URL: ${{ steps.pages.outputs.base_url }}
         run: |
           hugo \
+            --gc \
             --minify \
-            --baseURL "${{ steps.pages.outputs.base_url }}/"
+            --printPathWarnings \
+            --panicOnWarning \
+            --baseURL "${BASE_URL:-https://ankush.one}/" 2>&1 | tee "$RUNNER_TEMP/hugo.log"
+      - name: Check for Hugo warnings
+        # The build above runs with --panicOnWarning, so this normally finds
+        # nothing; it re-emits any WARN line as an annotation if that flag is
+        # ever removed.
+        run: |
+          grep -E '^WARN' "$RUNNER_TEMP/hugo.log" | sort -u | while read -r line; do
+            echo "::warning title=Hugo::${line}"
+          done || true
+      - name: Check structured data
+        # Every JSON-LD block and JSON output must parse; a template slip here
+        # is invisible in the browser but drops the page's rich results.
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, re, sys
+          bad = 0
+          pages = [p for p in pathlib.Path("public").rglob("*.html") if p.is_file()]
+          pat = re.compile(r'<script[^>]*type="?application/(?:ld\+)?json"?[^>]*>(.*?)</script>', re.S | re.I)
+          blocks = 0
+          for p in pages:
+              for m in pat.finditer(p.read_text(encoding="utf-8", errors="replace")):
+                  blocks += 1
+                  try:
+                      json.loads(m.group(1))
+                  except ValueError as e:
+                      bad += 1
+                      print(f"::error file={p}::invalid JSON in <script type=application/(ld+)json>: {e}")
+          for name in ("index.json", "site.webmanifest", "external-hosts.json", "feed.json"):
+              f = pathlib.Path("public") / name
+              if f.exists():
+                  try:
+                      json.loads(f.read_text(encoding="utf-8"))
+                  except ValueError as e:
+                      bad += 1
+                      print(f"::error file={f}::invalid JSON: {e}")
+          print(f"checked {blocks} JSON blocks in {len(pages)} pages, {bad} invalid")
+          sys.exit(1 if bad else 0)
+          PY
+      - name: Check llms.txt lists every blog post
+        # Advisory: warns, never fails the build.
+        run: |
+          [ -f public/llms.txt ] || { echo "no llms.txt, skipping"; exit 0; }
+          for dir in public/blogs/*/; do
+            slug=$(basename "$dir")
+            case "$slug" in page|tags|categories) continue ;; esac
+            [ -f "$dir/index.html" ] || continue
+            # Old slugs kept as redirect stubs (front-matter aliases) are not posts
+            grep -qi 'http-equiv="\?refresh' "$dir/index.html" && continue
+            grep -q "/blogs/$slug/" public/llms.txt || echo "::warning file=public/llms.txt::blog post '$slug' is not listed in llms.txt"
+          done
+      - name: Size budgets
+        # The search index is fetched by Spotlight, so its budget is enforced.
+        # Icon sizes are advisory and only raise warnings on the run.
+        run: |
+          size() { stat -c%s "$1" 2>/dev/null || echo 0; }
+          idx=$(size public/index.json)
+          echo "index.json: $idx bytes (budget 150000)"
+          [ "$idx" -lt 150000 ] || { echo "::error file=public/index.json::search index is $idx bytes, over the 150 KB budget"; exit 1; }
+          find public/games public/icons -type f \( -name '*.png' -o -name '*.webp' -o -name '*.jpg' \) -size +60k -print 2>/dev/null \
+            | while read -r f; do echo "::warning file=$f::icon is over the 60 KB budget ($(size "$f") bytes)"; done || true
+      - name: Check internal links
+        # Offline = internal links and anchors only, no network. Advisory.
+        continue-on-error: true
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          args: --offline --no-progress --root-dir "${{ github.workspace }}/public" "public/**/*.html"
+          fail: false
+      - name: Add IndexNow key file
+        # The key is public by design (search engines fetch it); it is only kept
+        # in secrets so this is a no-op until the owner sets one.
+        # Never blocks the deploy: a key that is not a plain IndexNow key
+        # (8-128 letters, digits or dashes) is skipped with a warning.
+        if: github.event_name != 'pull_request'
+        continue-on-error: true
+        env:
+          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
+        run: |
+          [ -n "$INDEXNOW_KEY" ] || { echo "INDEXNOW_KEY not set, skipping"; exit 0; }
+          [[ "$INDEXNOW_KEY" =~ ^[A-Za-z0-9-]{8,128}$ ]] || { echo "::warning::INDEXNOW_KEY is not a valid IndexNow key, skipping"; exit 0; }
+          printf '%s' "$INDEXNOW_KEY" > "public/${INDEXNOW_KEY}.txt"
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
         with:
           path: ./public
+
+  # Advisory lint: no-undef / no-unused-vars over assets/js (eslint.config.js).
+  # Its own job with a read-only token kept out of .git/config, because npx
+  # downloads ESLint and its dependencies at run time (there is no lockfile).
+  lint:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - name: Lint JavaScript
+        run: npx --yes eslint@10.11.0 assets/js
 
   # Deployment job
   deploy:
@@ -70,7 +202,115 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    permissions:
+      pages: write
+      id-token: write
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
+
+      # Post-deploy hooks. Each one is a no-op until its secrets exist and can
+      # never fail the deploy (see docs/cloudflare.md for the setup).
+      - name: Purge Cloudflare cache
+        continue-on-error: true
+        env:
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -z "$CLOUDFLARE_ZONE_ID" ] || [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "Cloudflare secrets not set, skipping purge"; exit 0
+          fi
+          curl -sS --max-time 30 -X POST \
+            "https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/purge_cache" \
+            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            --data '{"purge_everything":true}' || echo "::warning::Cloudflare purge request failed"
+      - name: Notify search engines (IndexNow)
+        # Skipped on the guestbook backup's redeploys (dispatched as
+        # github-actions[bot]): they change no indexable page, and IndexNow
+        # throttles keys that keep resubmitting unchanged URLs.
+        if: github.actor != 'github-actions[bot]'
+        continue-on-error: true
+        env:
+          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
+          SITE_HOST: ankush.one
+        run: |
+          [ -n "$INDEXNOW_KEY" ] || { echo "INDEXNOW_KEY not set, skipping"; exit 0; }
+          [[ "$INDEXNOW_KEY" =~ ^[A-Za-z0-9-]{8,128}$ ]] || { echo "::warning::INDEXNOW_KEY is not a valid IndexNow key, skipping"; exit 0; }
+          curl -sS --max-time 30 "https://${SITE_HOST}/sitemap.xml" -o sitemap.xml || { echo "::warning::could not fetch sitemap"; exit 0; }
+          python3 - <<'PY' > indexnow.json || exit 0
+          import json, os, re
+          host, key = os.environ["SITE_HOST"], os.environ["INDEXNOW_KEY"]
+          urls = re.findall(r"<loc>([^<]+)</loc>", open("sitemap.xml", encoding="utf-8").read())
+          urls = [u for u in urls if u.startswith(f"https://{host}/")][:10000]
+          print(json.dumps({"host": host, "key": key, "keyLocation": f"https://{host}/{key}.txt", "urlList": urls}))
+          PY
+          curl -sS --max-time 30 -X POST "https://api.indexnow.org/indexnow" \
+            -H "Content-Type: application/json; charset=utf-8" \
+            --data @indexnow.json -o /dev/null -w "IndexNow: HTTP %{http_code}\n" || echo "::warning::IndexNow request failed"
+
+  # Weekly external link check. Runs only on the schedule (or a manual run),
+  # reports through an issue and never touches the deployment. The guestbook
+  # backup workflow dispatches this file to redeploy, as github-actions[bot];
+  # those runs skip the link check.
+  links:
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.actor != 'github-actions[bot]')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    env:
+      HUGO_VERSION: 0.163.3
+    steps:
+      - name: Install Hugo CLI
+        run: |
+          wget -O ${{ runner.temp }}/hugo.deb https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-amd64.deb \
+          && sudo dpkg -i ${{ runner.temp }}/hugo.deb
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          submodules: recursive
+      - name: Build with Hugo
+        run: hugo --quiet
+      - name: Check external links
+        id: lychee
+        continue-on-error: true
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          # x.com and the App Store block bots; relays and analytics are not pages.
+          args: >-
+            --no-progress --max-concurrency 8 --timeout 30 --max-retries 2
+            --accept "200..=299,403,429"
+            --root-dir "${{ github.workspace }}/public"
+            --exclude "^https?://(www\.)?(x|twitter)\.com"
+            --exclude "^https?://apps\.apple\.com"
+            --exclude "^https?://(www\.)?linkedin\.com"
+            --exclude "^https?://(gun|p1)\.ankush\.one"
+            --exclude "^https?://web\.archive\.org"
+            "public/**/*.html"
+          output: ${{ runner.temp }}/lychee.md
+          fail: false
+      # One issue, refreshed each week while links stay broken, instead of a
+      # new one per run. Issue bodies are capped at 65,536 characters.
+      - name: Open or update the issue for broken links
+        if: steps.lychee.outputs.exit_code != '0' && steps.lychee.outputs.exit_code != ''
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          REPORT: ${{ runner.temp }}/lychee.md
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          body="${RUNNER_TEMP}/broken-links.md"
+          { echo "Last checked $(date -u +%Y-%m-%d) ([run](${RUN_URL}))."; echo; head -c 60000 "$REPORT"; } > "$body"
+          if [ "$(wc -c < "$REPORT")" -gt 60000 ]; then
+            printf '\n\n_Report truncated; the full list is in the summary of the run linked above._\n' >> "$body"
+          fi
+          existing=$(gh issue list --repo "$REPO" --state open --search 'in:title "Broken external links"' --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue edit "$existing" --repo "$REPO" --body-file "$body"
+          else
+            gh issue create --repo "$REPO" --title "Broken external links" --body-file "$body"
+          fi

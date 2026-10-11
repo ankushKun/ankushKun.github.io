@@ -1,0 +1,1218 @@
+{
+ "repo": "https://github.com/ankushKun/ankushKun.github.io",
+ "head": "f0c68f1",
+ "commits": 198,
+ "updates": [
+  {
+   "date": "2026-08-10",
+   "ts": 1786311109,
+   "build": 198,
+   "title": "Music, with Cover Flow",
+   "app": "music",
+   "notes": [
+    "Add iTunes-style Music app with Cover Flow and local square covers",
+    "Fix broken About links by moving ar.io projects to arweave.net",
+    "Open About Me with Construct as the current chapter",
+    "Nudge unsigned visitors to sign the guestbook on each visit"
+   ],
+   "log": [
+    [
+     "f0c68f1",
+     "Add iTunes-style Music app with Cover Flow and local square covers."
+    ],
+    [
+     "74c3311",
+     "Fix broken About links by moving ar.io projects to arweave.net."
+    ],
+    [
+     "ac3217f",
+     "Open About Me with Construct as the current chapter."
+    ],
+    [
+     "02d9c94",
+     "Nudge unsigned visitors to sign the guestbook on each visit."
+    ]
+   ]
+  },
+  {
+   "date": "2026-08-03",
+   "ts": 1785739103,
+   "build": 194,
+   "title": "Sync Construct blog OG posters and fix cover frame rendering",
+   "app": "blogs",
+   "notes": [
+    "Sync Construct blog OG posters and fix cover frame rendering"
+   ],
+   "log": [
+    [
+     "9305175",
+     "Sync Construct blog OG posters and fix cover frame rendering."
+    ]
+   ]
+  },
+  {
+   "date": "2026-08-01",
+   "ts": 1785592359,
+   "build": 193,
+   "title": "Cross-post Cloudflare agents blog and wire Construct OG images",
+   "app": "blogs",
+   "notes": [
+    "Cross-post Cloudflare agents blog and wire Construct OG images"
+   ],
+   "log": [
+    [
+     "64380ad",
+     "cross-post Cloudflare agents blog and wire Construct OG images"
+    ]
+   ]
+  },
+  {
+   "date": "2026-07-28",
+   "ts": 1785226915,
+   "build": 192,
+   "title": "Guestbook, Paint and a reworked desktop",
+   "app": "guestbook",
+   "notes": [
+    "Add Paint, a shared canvas everyone draws on together",
+    "Add the Guestbook, a signed and bound visitors' book with a paper page turn",
+    "Add reactions, viewer badges, a menubar status and a startup chime",
+    "Rework multiplayer cursors to be anchor-based and anonymous",
+    "Improve the desktop: minimize tray, sheets, deep links and chat scroll",
+    "Cross-post two blog posts from construct.computer, with attribution",
+    "Fix realtime bugs, the RSS feed and the Hugo build"
+   ],
+   "log": [
+    [
+     "5e302c6",
+     "fix related links and add attribution to construct.computer"
+    ],
+    [
+     "cf2f3e9",
+     "steal 2 construct blog posts"
+    ],
+    [
+     "63c12a8",
+     "fix rss.xml: replace site.Language.Locale with site.Language.Lang"
+    ],
+    [
+     "364802e",
+     "fix: replace hugo.Data with .Site.Data/ explicit data passing for Hugo v0.128.0 compat"
+    ],
+    [
+     "ec69356",
+     "fix build: replace deprecated .Site.Language.Locale with .Site.Language.Lang"
+    ],
+    [
+     "9014a99",
+     "Carry the gutter shadow onto the turning leaf"
+    ],
+    [
+     "6db6584",
+     "Pin the turning leaf's hinge to the spine"
+    ],
+    [
+     "c756ce8",
+     "Remove the end-of-turn flicker and centre the leaf's projection"
+    ],
+    [
+     "056cb2e",
+     "Rebuild the page turn so it reads as paper, not a rotating card"
+    ],
+    [
+     "4e17007",
+     "Make the guestbook page turn actually animate, and always leave a leaf to turn"
+    ],
+    [
+     "da8517d",
+     "Let the guestbook note wrap to two lines"
+    ],
+    [
+     "b9e6886",
+     "Regroup guestbook entry onto three ruled lines"
+    ],
+    [
+     "5f23e3d",
+     "Align guestbook entry columns and fix icon colour"
+    ],
+    [
+     "9e67b6f",
+     "Lay guestbook entries out in two columns"
+    ],
+    [
+     "dc4bccc",
+     "Stop the paint canvas being squished vertically"
+    ],
+    [
+     "3a7b018",
+     "Put guestbook entries on the ruled baseline grid; real icons"
+    ],
+    [
+     "26e7f2e",
+     "Fix invisible guestbook pages and match the desktop theme"
+    ],
+    [
+     "d7dce4e",
+     "Rebuild the guestbook as a signed, bound visitors' book"
+    ],
+    [
+     "2966790",
+     "Redraw Paint and Guestbook icons on-brand; fix Paint layout"
+    ],
+    [
+     "fc9b935",
+     "Fix clipped selection ring and tooltips in the Paint toolbar"
+    ],
+    [
+     "33b5b8d",
+     "Add shared Paint and a StreetPass-style Guestbook"
+    ],
+    [
+     "a7ce356",
+     "Add reactions, viewer badges, menubar status, startup chime; housekeeping"
+    ],
+    [
+     "7891767",
+     "Regenerate wallpaper placeholder for the new wallpaper"
+    ],
+    [
+     "a5e5243",
+     "Render multiplayer cursors anonymously"
+    ],
+    [
+     "1c05c72",
+     "Improve desktop UI/UX: minimize tray, sheets, deep links, chat scroll"
+    ],
+    [
+     "6083758",
+     "Fix realtime bugs and rework multiplayer cursors to be anchor-based"
+    ]
+   ]
+  },
+  {
+   "date": "2026-07-04",
+   "ts": 1783183431,
+   "build": 166,
+   "title": "Fix Hugo 0.163 build errors and route PostHog through p1.ankush.one",
+   "notes": [
+    "Fix Hugo 0.163 build errors and route PostHog through p1.ankush.one"
+   ],
+   "log": [
+    [
+     "c390871",
+     "Fix Hugo 0.163 build errors and route PostHog through p1.ankush.one."
+    ]
+   ]
+  },
+  {
+   "date": "2026-07-03",
+   "ts": 1783083110,
+   "build": 165,
+   "title": "A communal sticky note",
+   "notes": [
+    "Add live communal sticky note with Gun sync and fly-to-menubar animations",
+    "Reorganize Gun storage under ankush-one namespace on gun.ankush.one"
+   ],
+   "log": [
+    [
+     "6a0ae8a",
+     "Add live communal sticky note with Gun sync and fly-to-menubar animations."
+    ],
+    [
+     "551411c",
+     "Reorganize Gun storage under ankush-one namespace on gun.ankush.one."
+    ]
+   ]
+  },
+  {
+   "date": "2026-05-17",
+   "ts": 1778966959,
+   "build": 163,
+   "title": "Replace Tenor GIF search with Klipy",
+   "app": "irc-chat",
+   "notes": [
+    "Replace Tenor GIF search with Klipy"
+   ],
+   "log": [
+    [
+     "9d3cd1b",
+     "Replace Tenor GIF search with Klipy"
+    ]
+   ]
+  },
+  {
+   "date": "2026-05-14",
+   "ts": 1778754114,
+   "build": 162,
+   "title": "Mavericks UI polish",
+   "notes": [
+    "Update Gun relay endpoint",
+    "Polish Mavericks portfolio UI"
+   ],
+   "log": [
+    [
+     "9896d20",
+     "Update Gun relay endpoint"
+    ],
+    [
+     "9b2fe79",
+     "Polish Mavericks portfolio UI"
+    ]
+   ]
+  },
+  {
+   "date": "2026-02-25",
+   "ts": 1772011249,
+   "build": 160,
+   "title": "Resume update",
+   "app": "resume",
+   "notes": [
+    "Update the resume"
+   ],
+   "log": [
+    [
+     "e98fbb9",
+     "resume"
+    ]
+   ]
+  },
+  {
+   "date": "2026-02-19",
+   "ts": 1771444364,
+   "build": 159,
+   "title": "SEO, AI crawling and two new projects",
+   "app": "projects",
+   "notes": [
+    "Improve SEO and AI crawling: structured data, llms.txt, robots.txt and sitemap",
+    "Add the PumpMyClaw and PokePerps project pages"
+   ],
+   "log": [
+    [
+     "cbde789",
+     "improve SEO, SGO, and AI crawling: structured data, llms.txt, robots.txt, sitemap"
+    ],
+    [
+     "10f839b",
+     "ai optim"
+    ],
+    [
+     "558875b",
+     "add PumpMyClaw and PokePerps project pages"
+    ]
+   ]
+  },
+  {
+   "date": "2026-01-26",
+   "ts": 1769448098,
+   "build": 156,
+   "title": "Resume update",
+   "app": "resume",
+   "notes": [
+    "Update the resume"
+   ],
+   "log": [
+    [
+     "dfb5b2e",
+     "resume update"
+    ]
+   ]
+  },
+  {
+   "date": "2026-01-22",
+   "ts": 1769067296,
+   "build": 155,
+   "title": "Multiplayer cursors",
+   "notes": [
+    "Add multiplayer cursors"
+   ],
+   "log": [
+    [
+     "330cff7",
+     "cursors"
+    ]
+   ]
+  },
+  {
+   "date": "2026-01-19",
+   "ts": 1768812582,
+   "build": 154,
+   "title": "Pokemon scanner",
+   "app": "projects",
+   "notes": [
+    "Add the Pokemon scanner project page",
+    "Update the Pokemon scanner blog post"
+   ],
+   "log": [
+    [
+     "b75e14a",
+     "project"
+    ],
+    [
+     "20e8621",
+     "pokeon scanner blog"
+    ],
+    [
+     "4fae135",
+     "pokemon scanner blog"
+    ]
+   ]
+  },
+  {
+   "date": "2026-01-14",
+   "ts": 1768404778,
+   "build": 151,
+   "title": "Pokemon scanner blog post",
+   "app": "blogs",
+   "notes": [
+    "Add the Pokemon scanner blog post"
+   ],
+   "log": [
+    [
+     "12dce31",
+     "pokemon-scanner"
+    ]
+   ]
+  },
+  {
+   "date": "2026-01-11",
+   "ts": 1768124460,
+   "build": 150,
+   "title": "Breadcrumbs fix",
+   "notes": [
+    "Fix the breadcrumbs list"
+   ],
+   "log": [
+    [
+     "e73c1f6",
+     "breadcrumbs list fix"
+    ]
+   ]
+  },
+  {
+   "date": "2026-01-06",
+   "ts": 1767680068,
+   "build": 149,
+   "title": "WebAnimate",
+   "app": "projects",
+   "notes": [
+    "Add the WebAnimate project page",
+    "Update links"
+   ],
+   "log": [
+    [
+     "61ac26a",
+     "webanimate"
+    ],
+    [
+     "42ab0d3",
+     "links update"
+    ]
+   ]
+  },
+  {
+   "date": "2026-01-02",
+   "ts": 1767353516,
+   "build": 146,
+   "title": "Quake 3 Arena",
+   "app": "quake3",
+   "notes": [
+    "Add Quake 3 Arena, with multiplayer",
+    "Fix Open Graph images"
+   ],
+   "log": [
+    [
+     "1f8e034",
+     "quake 3 arena multiplayer"
+    ],
+    [
+     "443ce39",
+     "quake 3 arena multiplayer"
+    ],
+    [
+     "a13aca2",
+     "quake 3 arena"
+    ],
+    [
+     "a479920",
+     "og images fix"
+    ],
+    [
+     "5e60a38",
+     "ck"
+    ]
+   ]
+  },
+  {
+   "date": "2026-01-01",
+   "ts": 1767264554,
+   "build": 141,
+   "title": "CommentKit project page",
+   "app": "projects",
+   "notes": [
+    "Update the CommentKit project page"
+   ],
+   "log": [
+    [
+     "4b287a3",
+     "cloudflare update"
+    ],
+    [
+     "64a534e",
+     "commentkit proj"
+    ],
+    [
+     "c3c7470",
+     "commentkit proj"
+    ]
+   ]
+  },
+  {
+   "date": "2025-12-31",
+   "ts": 1767163208,
+   "build": 138,
+   "title": "IRC Chat and CommentKit",
+   "app": "irc-chat",
+   "notes": [
+    "More work on IRC Chat",
+    "Add the CommentKit project page and blog post"
+   ],
+   "log": [
+    [
+     "1326b6c",
+     "irc chat"
+    ],
+    [
+     "6481203",
+     "irc chat"
+    ],
+    [
+     "1518573",
+     "irc chat"
+    ],
+    [
+     "f1ea9f3",
+     "irc chat"
+    ],
+    [
+     "ad4fe4e",
+     "irc chat"
+    ],
+    [
+     "bb2141b",
+     "commentkit"
+    ],
+    [
+     "e2aa8ac",
+     "commentkit blog"
+    ],
+    [
+     "3ad5d46",
+     "commentkit blog"
+    ]
+   ]
+  },
+  {
+   "date": "2025-12-30",
+   "ts": 1767117316,
+   "build": 130,
+   "title": "IRC Chat",
+   "app": "irc-chat",
+   "notes": [
+    "Add IRC Chat",
+    "Restyle the scrollbars",
+    "Add CommentKit verification"
+   ],
+   "log": [
+    [
+     "e8a46c9",
+     "irc chat"
+    ],
+    [
+     "b926e95",
+     "irc chat"
+    ],
+    [
+     "5a131f2",
+     "scrollbars"
+    ],
+    [
+     "a7d6d01",
+     "irc chat"
+    ],
+    [
+     "885809c",
+     "irc chat"
+    ],
+    [
+     "524ab4b",
+     "irc chat"
+    ],
+    [
+     "4811042",
+     "irc chat"
+    ],
+    [
+     "a81e67a",
+     "irc chat"
+    ],
+    [
+     "8b869ff",
+     "irc chat"
+    ],
+    [
+     "d9a65bb",
+     "irc chat tnc"
+    ],
+    [
+     "0df968a",
+     "irc chat"
+    ],
+    [
+     "3b57784",
+     "irc chat"
+    ],
+    [
+     "75a3fbe",
+     "irc chat"
+    ],
+    [
+     "9577754",
+     "irc chat"
+    ],
+    [
+     "1ccc564",
+     "coommentkit"
+    ],
+    [
+     "915d53e",
+     "commentkit verify"
+    ],
+    [
+     "520452c",
+     "commentkit verify"
+    ]
+   ]
+  },
+  {
+   "date": "2025-12-25",
+   "ts": 1766682659,
+   "build": 113,
+   "title": "Terminal file uploads and an RSS feed",
+   "app": "terminal",
+   "notes": [
+    "Add file uploads to the Terminal",
+    "Improve the Terminal",
+    "Add an RSS feed",
+    "Update About Me"
+   ],
+   "log": [
+    [
+     "8da135c",
+     "file uploads to terminal"
+    ],
+    [
+     "19d7f3e",
+     "terminal improvements"
+    ],
+    [
+     "5d7e8a9",
+     "about update"
+    ],
+    [
+     "8a67b2e",
+     "rss feed"
+    ]
+   ]
+  },
+  {
+   "date": "2025-12-24",
+   "ts": 1766593062,
+   "build": 109,
+   "title": "DOOM, Flash games and search",
+   "app": "games",
+   "notes": [
+    "Add DOOM",
+    "Add four Flash games",
+    "Add search",
+    "Add the recent blogs widget",
+    "Add the DOOM-style renderer blog post"
+   ],
+   "log": [
+    [
+     "a0282de",
+     "recent widget"
+    ],
+    [
+     "90d05c3",
+     "recent widget"
+    ],
+    [
+     "2c33a03",
+     "recent widget"
+    ],
+    [
+     "fd87fb5",
+     "doom blog"
+    ],
+    [
+     "9642ddb",
+     "doom blog"
+    ],
+    [
+     "8f448e6",
+     "search"
+    ],
+    [
+     "bfaa6e9",
+     "search"
+    ],
+    [
+     "51883e7",
+     "flash games"
+    ],
+    [
+     "85cc2f7",
+     "better doom"
+    ],
+    [
+     "0016012",
+     "real doom"
+    ],
+    [
+     "87abcfd",
+     "checkpoint"
+    ],
+    [
+     "5870735",
+     "refactor"
+    ]
+   ]
+  },
+  {
+   "date": "2025-12-23",
+   "ts": 1766514013,
+   "build": 97,
+   "title": "Terminal",
+   "app": "terminal",
+   "notes": [
+    "Add the Terminal, running on the v86 emulator",
+    "Add easter eggs",
+    "Add the Mandelbrot blog post"
+   ],
+   "log": [
+    [
+     "4a37d7f",
+     "refactor"
+    ],
+    [
+     "8c507e1",
+     "partials revamp"
+    ],
+    [
+     "de5dc5a",
+     "v86:checkpoint"
+    ],
+    [
+     "da4e68b",
+     "v86:checkpoint"
+    ],
+    [
+     "1b401c8",
+     "v86:checkpoint"
+    ],
+    [
+     "c651961",
+     "v86:checkpoint"
+    ],
+    [
+     "f81f2ff",
+     "still alive working"
+    ],
+    [
+     "f508567",
+     "still alive working"
+    ],
+    [
+     "6bbd4aa",
+     "still alive working"
+    ],
+    [
+     "64a7723",
+     "fake terminal"
+    ],
+    [
+     "23c434e",
+     "easter eggs"
+    ],
+    [
+     "ebf49d0",
+     "cleanup"
+    ],
+    [
+     "b242578",
+     "code reduction"
+    ],
+    [
+     "975d69b",
+     "mandelbrot blog"
+    ],
+    [
+     "4eed744",
+     "mandelbrot blog"
+    ]
+   ]
+  },
+  {
+   "date": "2025-12-22",
+   "ts": 1766422982,
+   "build": 82,
+   "title": "Windows for projects, blogs, contact and search",
+   "notes": [
+    "Add windows for projects, blogs, contact and search",
+    "Add notifications",
+    "Add the timeline",
+    "Add a DOOM icon",
+    "Update Open Graph images"
+   ],
+   "log": [
+    [
+     "33c47c4",
+     "update og"
+    ],
+    [
+     "f27f5ea",
+     "update og"
+    ],
+    [
+     "2ffbdc4",
+     "checkpoint"
+    ],
+    [
+     "5fb0c82",
+     "checkpoint"
+    ],
+    [
+     "590afc1",
+     "checkpoint"
+    ],
+    [
+     "768579d",
+     "checkpoint"
+    ],
+    [
+     "507bbd0",
+     "patches"
+    ],
+    [
+     "4807974",
+     "patches"
+    ],
+    [
+     "acb566f",
+     "patches"
+    ],
+    [
+     "d6381e8",
+     "dismissable notif"
+    ],
+    [
+     "c300434",
+     "notification"
+    ],
+    [
+     "b7b8649",
+     "timeline"
+    ],
+    [
+     "ec01abf",
+     "projects content"
+    ],
+    [
+     "3417614",
+     "checkpoint"
+    ],
+    [
+     "176752c",
+     "checkpoint:search"
+    ],
+    [
+     "27f14bd",
+     "checkpoint:embed"
+    ],
+    [
+     "ab3ba9d",
+     "checkpoint: contact"
+    ],
+    [
+     "806199c",
+     "checkpoint: blogs"
+    ],
+    [
+     "73fbc9a",
+     "checkpoint: projects"
+    ],
+    [
+     "684dce6",
+     "font"
+    ],
+    [
+     "418fa29",
+     "checkpoint"
+    ],
+    [
+     "8cb2566",
+     "doom icon"
+    ],
+    [
+     "7fdaa7d",
+     "checkpoint"
+    ],
+    [
+     "ec6fa27",
+     "checkpoint"
+    ],
+    [
+     "9d43ae1",
+     "timeline"
+    ],
+    [
+     "9d77956",
+     "checkpoint"
+    ],
+    [
+     "3bb87ed",
+     "deep linking false"
+    ],
+    [
+     "5ed6a03",
+     "desktop icons"
+    ],
+    [
+     "a235395",
+     "yadc13k"
+    ],
+    [
+     "43de4bd",
+     "loader"
+    ]
+   ]
+  },
+  {
+   "date": "2025-12-21",
+   "ts": 1766329102,
+   "build": 52,
+   "title": "The desktop",
+   "notes": [
+    "Rebuild the site as an OS X Mavericks-style desktop",
+    "Serve the wallpaper as WebP"
+   ],
+   "log": [
+    [
+     "30eb5c8",
+     "webp"
+    ],
+    [
+     "ffc926c",
+     "checkpoint"
+    ],
+    [
+     "938a6a7",
+     "checkpoint"
+    ],
+    [
+     "1891a67",
+     "checkpoint"
+    ],
+    [
+     "a92d3ff",
+     "checkpoint"
+    ],
+    [
+     "e12331a",
+     "checkpoint"
+    ],
+    [
+     "2c8ca5c",
+     "checkpoint"
+    ],
+    [
+     "82c04f4",
+     "checkpoint"
+    ],
+    [
+     "19cae5c",
+     "gitignore"
+    ],
+    [
+     "e0dbaed",
+     "os"
+    ]
+   ]
+  },
+  {
+   "date": "2025-12-20",
+   "ts": 1766234720,
+   "build": 42,
+   "title": "Blog",
+   "app": "blogs",
+   "notes": [
+    "Add a blog",
+    "SEO work"
+   ],
+   "log": [
+    [
+     "392471d",
+     "seo"
+    ],
+    [
+     "4e689a1",
+     "blog"
+    ],
+    [
+     "59f6a05",
+     "blog"
+    ]
+   ]
+  },
+  {
+   "date": "2025-12-17",
+   "ts": 1765985460,
+   "build": 39,
+   "title": "Analytics",
+   "notes": [
+    "Add PostHog analytics",
+    "Fix the home page"
+   ],
+   "log": [
+    [
+     "4a5348c",
+     "feat: analytics"
+    ],
+    [
+     "c57dcb9",
+     "fix: home"
+    ]
+   ]
+  },
+  {
+   "date": "2025-12-15",
+   "ts": 1765818341,
+   "build": 37,
+   "title": "create-magicblock and pixels.earth",
+   "app": "projects",
+   "notes": [
+    "Add the create-magicblock and pixels.earth project pages",
+    "Update the resume"
+   ],
+   "log": [
+    [
+     "8e45955",
+     "fix:resume"
+    ],
+    [
+     "b61fc65",
+     "resume"
+    ],
+    [
+     "28399b0",
+     "create-magicblock"
+    ],
+    [
+     "c2c1c24",
+     "pixels.earth"
+    ]
+   ]
+  },
+  {
+   "date": "2025-12-03",
+   "ts": 1764765230,
+   "build": 32,
+   "title": "Schedule a call",
+   "app": "book-a-call",
+   "notes": [
+    "Add call scheduling through cal.com"
+   ],
+   "log": [
+    [
+     "bbaecbd",
+     "cal.com"
+    ],
+    [
+     "d41d168",
+     "cal"
+    ]
+   ]
+  },
+  {
+   "date": "2025-11-25",
+   "ts": 1764078286,
+   "build": 30,
+   "title": "Resume update",
+   "app": "resume",
+   "notes": [
+    "Update the resume"
+   ],
+   "log": [
+    [
+     "105be68",
+     "skip dart"
+    ],
+    [
+     "7dc734c",
+     "new resume"
+    ],
+    [
+     "cf48d08",
+     "new resume"
+    ]
+   ]
+  },
+  {
+   "date": "2025-11-21",
+   "ts": 1763722418,
+   "build": 27,
+   "title": "x402bay",
+   "app": "projects",
+   "notes": [
+    "Add the x402bay project page",
+    "Update project summaries",
+    "Update the resume"
+   ],
+   "log": [
+    [
+     "16b9d2a",
+     "x402bay"
+    ],
+    [
+     "28a5877",
+     "projects summary"
+    ],
+    [
+     "9b418e9",
+     "projects update"
+    ],
+    [
+     "c74a8dc",
+     "new resume"
+    ]
+   ]
+  },
+  {
+   "date": "2025-10-28",
+   "ts": 1761643150,
+   "build": 22,
+   "title": "About Me update",
+   "app": "about",
+   "notes": [
+    "Update About Me"
+   ],
+   "log": [
+    [
+     "e110320",
+     "about me updates"
+    ]
+   ]
+  },
+  {
+   "date": "2025-10-27",
+   "ts": 1761568877,
+   "build": 21,
+   "title": "About Me update",
+   "app": "about",
+   "notes": [
+    "Update About Me"
+   ],
+   "log": [
+    [
+     "3c817b1",
+     "about me"
+    ]
+   ]
+  },
+  {
+   "date": "2024-12-23",
+   "ts": 1734974395,
+   "build": 12,
+   "title": "Power Editor",
+   "app": "projects",
+   "notes": [
+    "Add the Power Editor project page and timeline entry"
+   ],
+   "log": [
+    [
+     "94661f8",
+     "power editor"
+    ]
+   ]
+  },
+  {
+   "date": "2024-12-12",
+   "ts": 1733991660,
+   "build": 10,
+   "title": "ETHIndia",
+   "app": "timeline",
+   "notes": [
+    "Add ETHIndia to the timeline"
+   ],
+   "log": [
+    [
+     "89a8393",
+     "ethindia"
+    ]
+   ]
+  },
+  {
+   "date": "2024-11-17",
+   "ts": 1731858018,
+   "build": 8,
+   "title": "A new domain",
+   "notes": [
+    "Move the site from ankushKun.github.io to ankush.one"
+   ],
+   "log": [
+    [
+     "7716472",
+     "new domain"
+    ]
+   ]
+  },
+  {
+   "date": "2024-11-02",
+   "ts": 1730561185,
+   "build": 7,
+   "title": "The first version",
+   "notes": [
+    "First version of the site, with the full timeline"
+   ],
+   "log": [
+    [
+     "32a419a",
+     "Create hugo.yml"
+    ],
+    [
+     "d7bbde1",
+     "ready for push"
+    ],
+    [
+     "b3b8ec4",
+     "ready for push"
+    ],
+    [
+     "cd66a65",
+     "full timeline"
+    ],
+    [
+     "10748d4",
+     "ordered"
+    ],
+    [
+     "6240529",
+     "wip"
+    ],
+    [
+     "acd9058",
+     "init"
+    ]
+   ]
+  }
+ ]
+}
