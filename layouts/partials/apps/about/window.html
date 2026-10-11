@@ -3,8 +3,8 @@
     <div class="finder-window about-finder">
         <!-- Finder Toolbar -->
         <div class="finder-toolbar">
-            <span class="finder-title">👤 {{ .title }}</span>
-            <span class="finder-count">Software Engineer</span>
+            <span class="finder-title">{{ partial "icons/ui/glyph.html" "person" }} {{ .title }}</span>
+            <span class="finder-count">{{ site.Params.profile.jobTitle | default "Software Engineer" }}</span>
         </div>
 
         <!-- Two-column Finder layout -->
@@ -12,9 +12,11 @@
             <!-- Sidebar -->
             <div class="finder-sidebar">
                 <div class="sidebar-avatar">
-                    <img src="/pfp.png" alt="Ankush" onerror="this.parentElement.innerHTML='👨‍💻'" />
+                    <img src="/pfp-128.webp" alt="Ankush" width="128" height="128" loading="lazy" decoding="async"
+                        onerror="this.parentElement.innerHTML='👨‍💻'" />
                 </div>
-                <div class="sidebar-name">Ankush Singh</div>
+                {{/* The page heading on both pages that render this: home and /about/ */}}
+                <h1 class="sidebar-name">Ankush Singh</h1>
 
                 <div class="sidebar-section">
                     <div class="sidebar-label">SOCIALS</div>
@@ -47,6 +49,10 @@
                             <img src="/icons/reddit.svg" alt="Reddit" class="icon" />
                             <span class="connect-item-label">Reddit</span>
                         </a>
+                        <a class="connect-item" href="https://ankushkun.medium.com" target="_blank" rel="noopener">
+                            <img src="/icons/medium.svg" alt="Medium" class="icon" />
+                            <span class="connect-item-label">Medium</span>
+                        </a>
                         <a class="connect-item" href="https://discord.com/users/666578281142812673" target="_blank" rel="noopener">
                             <img src="/icons/discord.svg" alt="Discord" class="icon" />
                             <span class="connect-item-label">@ankushkun</span>
@@ -62,7 +68,7 @@
                             <span class="connect-item-label">Email</span>
                         </a>
                         <a class="connect-item" href="/schedule/"
-                            onclick="event.preventDefault(); window.openContentWindow('book-a-call', 'Schedule Call', '/schedule/');">
+                            onclick="if (document.getElementById('window-contents') &amp;&amp; window.openContentWindow) { event.preventDefault(); window.openContentWindow('book-a-call', 'Schedule Call', '/schedule/'); }">
                             <img src="/icons/meet.svg" alt="Meeting" class="icon" />
                             <span class="connect-item-label">Book Meeting</span>
                         </a>
@@ -74,79 +80,25 @@
             <div class="finder-main">
                 <!-- Info Sections -->
                 <div class="info-panel">
-                    <div class="info-header">Experience</div>
+                    <h2 class="info-header">Experience</h2>
+                    {{/* Roles come from hugo.toml [params.profile.experience] */}}
+                    {{ range site.Params.profile.experience }}
                     <div class="info-row">
-                        <span class="info-label">Co-founder and CTO</span>
-                        <a href="https://construct.computer" target="_blank" rel="noopener">Construct Computer</a>
+                        <span class="info-label">{{ .role }}</span>
+                        <a href="{{ .url }}" target="_blank" rel="noopener">{{ .org }}</a>
                     </div>
-                    <div class="info-row">
-                        <span class="info-label">Entrepreneur in Residence</span>
-                        <a href="https://forward.arweave.net/" target="_blank">Forward Research</a>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Devrel Engineer + Community Manager</span>
-                        <a href="https://arweaveindia.com" target="_blank">Arweave India</a>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Software Engineer Intern</span>
-                        <a href="https://www.pw.live/about-us" target="_blank">Physics Wallah</a>
-                    </div>
+                    {{ end }}
                 </div>
 
                 <div class="info-panel about-expanded">
-                    <div class="info-header">About</div>
-                    <p class="info-text">
-                        Right now I'm building my startup - <a href="https://construct.computer" target="_blank"
-                            rel="noopener">Construct Computer</a>. It's an AI workforce where the agents get their own
-                        cloud computers, so they can actually finish work instead of just talking about it. Think
-                        browser, terminal, files, memory, the whole desk - not another chat window.
-                    </p>
-                    <p class="info-text">
-                        That's the latest chapter. Before this I was deep in developer tools, on-chain infra,
-                        communities, and a ridiculous number of hackathons. I like building things that ship, breaking
-                        stuff for fun, and being the kind of nerd who will stay up all night to make something cool
-                        work.
-                    </p>
-                    <p class="info-text">
-                        I build developer tools that scale. As an <strong>Entrepreneur in Residence at Forward
-                            Research</strong>,
-                        I shipped 5+ production-ready developer tools used by 1K+ developers across the ecosystem —
-                        including <a href="https://betteridea.arweave.net" target="_blank" rel="noopener">BetterIDEa</a> (acquired),
-                        <a href="https://apm_betteridea.arweave.net" target="_blank" rel="noopener">AO Package Manager</a> (now part of AO
-                        core infra),
-                        and <a href="https://subspace.arweave.net" target="_blank" rel="noopener">Subspace</a>.
-                    </p>
-                    <p class="info-text">
-                        At <strong>Arweave India</strong>, I provided technical mentorship to 100+ developers,
-                        helping teams ship on-chain projects, and co-organized 4+ hacker houses to grow the builder
-                        community.
-                    </p>
-                    <p class="info-text">
-                        Earlier, at <strong>Physics Wallah</strong>, I built an interactive live-class system that
-                        processed 10K+ real-time chat messages for classes with 50K+ concurrent viewers.
-                    </p>
-                    <p class="info-text">
-                        My journey into tech started long before blockchain. I've always loved experimenting — from
-                        building robots and mini-satellites to making objects levitate with sound waves.
-                    </p>
-                    <p class="info-text">
-                        Since 2017, I've competed in 50+ hackathons across ecosystems like Ethereum, Solana,
-                        Arweave,
-                        and more — earning more than a dozen prizes. One of my favorite projects evolved into
-                        <a href="https://arlink.arweave.net" target="_blank" rel="noopener">Arlink</a> — Arweave's flagship deployment
-                        tool
-                        that raised a seed round at $2.5M valuation.
-                    </p>
-                    <p class="info-text">
-                        In 2023, I won the first Arweave India Hacker House. The story behind it is something I
-                        share
-                        in my <a href="https://www.youtube.com/watch?v=LWW4BCZPIUg" target="_blank">"TEDx" talk</a>.
-                    </p>
-                    <p class="info-text">
-                        Outside of coding, I love sharing ideas, experiments, and live builds on my
-                        <a href="https://youtube.com/@AnkushKun" target="_blank">YouTube channel</a>. You'll find
-                        everything from developer explainers to fun physics demos.
-                    </p>
+                    <h2 class="info-header">About</h2>
+                    {{/* The bio is the body of content/about/_index.md, so the
+                    window, /about/, its markdown twin and llms-full.txt share one
+                    source. Paragraphs and links get the classes and attributes the
+                    hand-written markup had. */}}
+                    {{ with site.GetPage "/about" }}
+                    {{ .Content | replaceRE `<p>` `<p class="info-text">` | replaceRE `<a href="(https?:)` `<a target="_blank" rel="noopener" href="$1` | safeHTML }}
+                    {{ end }}
                 </div>
             </div>
         </div>

@@ -10,7 +10,44 @@
     const FLY_MS = 320;
     const SYNCED_HOLD_MS = 3000;
     const LAST_EDIT_TICK_MS = 30_000;
+    const MAX_TEXT = 600;            // far more than 7 lines can show
+    const EMPTY_NODE_GRACE_MS = 4000;
+    const GLIDE_MS = 480;            // a correction of more than a nudge
+    const GLIDE_MIN_PX = 40;
+    const REVEAL_MS = 260;
+    const REVEAL_FALLBACK_MS = 2500; // relay slow or down: show it anyway
+    const CACHE_KEY = 'sticky_cache';
     const DEFAULTS = { x: 0.72, y: 0.12, text: '', textTs: 0, moveTs: 0 };
+
+    // The note is one node anyone can write to, so nothing a peer sends is
+    // used before it has been bounded.
+    const clamp01 = (v, fallback) =>
+        Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : fallback;
+    const cleanText = (v) => (typeof v === 'string' ? v.slice(0, MAX_TEXT) : '');
+    // A timestamp from the future would otherwise outrank every later edit.
+    const cleanTs = (v) => Math.min(Number(v) || 0, Date.now());
+
+    // Storage may be blocked entirely; the note must still work.
+    const store = {
+        get(key) {
+            try {
+                const s = window.SiteGun && window.SiteGun.store;
+                return s ? s.get(key) : localStorage.getItem(key);
+            } catch (e) { return null; }
+        },
+        set(key, value) {
+            try {
+                const s = window.SiteGun && window.SiteGun.store;
+                if (s) s.set(key, value); else localStorage.setItem(key, value);
+            } catch (e) { /* ignore */ }
+        },
+        remove(key) {
+            try {
+                const s = window.SiteGun && window.SiteGun.store;
+                if (s) s.remove(key); else localStorage.removeItem(key);
+            } catch (e) { /* ignore */ }
+        }
+    };
 
     const note = document.getElementById('desktop-sticky-note');
     const menubarToggle = document.getElementById('menubar-sticky-toggle');
@@ -39,8 +76,58 @@
     let statusMode = 'lastEdit';
     let initialized = false;
     let isOffline = false;
+    // True once the shared note has really arrived (or the relay answered and
+    // there is no note yet). Text is never published before that.
+    let loaded = false;
+    let loadGraceTimer = null;
+    let lastRemote = null;
 
     body.style.height = (MAX_LINES * LINE_HEIGHT) + 'px';
+
+    const reducedMotion = () =>
+        window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // The last note this browser saw, so a returning visitor gets it in the
+    // right place straight away instead of the default spot and then a jump.
+    // It is only ever a starting point: the relay's copy always wins.
+    function readCache() {
+        try {
+            const data = JSON.parse(store.get(CACHE_KEY) || 'null');
+            return data && typeof data === 'object' ? sanitize(data) : null;
+        } catch (e) { return null; }
+    }
+
+    let cacheTimer = null;
+    function saveCache() {
+        clearTimeout(cacheTimer);
+        cacheTimer = setTimeout(() => {
+            const { x, y, text, textTs, moveTs } = localState;
+            store.set(CACHE_KEY, JSON.stringify({ x, y, text, textTs, moveTs }));
+        }, 300);
+    }
+
+    // First visit: nothing cached, so the note stays invisible until the real
+    // one arrives (or the relay takes too long) and then fades in where it lives.
+    let awaiting = false;
+    let revealTimer = null;
+    function holdUntilLoaded() {
+        awaiting = true;
+        note.classList.add('is-awaiting');
+        revealTimer = setTimeout(reveal, REVEAL_FALLBACK_MS);
+    }
+
+    function reveal() {
+        if (!awaiting) return;
+        awaiting = false;
+        clearTimeout(revealTimer);
+        if (reducedMotion()) {
+            note.classList.remove('is-awaiting');
+            return;
+        }
+        note.classList.add('is-revealing');
+        note.classList.remove('is-awaiting');
+        setTimeout(() => note.classList.remove('is-revealing'), REVEAL_MS + 40);
+    }
 
     function waitSiteGun() {
         return new Promise((resolve, reject) => {
@@ -123,6 +210,14 @@
         if (!window.SiteGun.getConnection) return;
         window.SiteGun.getConnection().onChange((connected) => {
             isOffline = !connected;
+            clearTimeout(loadGraceTimer);
+            if (connected && !loaded) {
+                // A relay that is up but sends nothing has no note stored
+                // yet, so the first edit is allowed to create it.
+                loadGraceTimer = setTimeout(() => {
+                    if (!isOffline) loaded = true;
+                }, EMPTY_NODE_GRACE_MS);
+            }
             if (isNoteCollapsed()) return;
             if (!connected) {
                 clearStatusTimers();
@@ -147,7 +242,7 @@
     }
 
     function isNoteCollapsed() {
-        return isCollapsed || localStorage.getItem('sticky_minimized') === '1';
+        return isCollapsed || store.get('sticky_minimized') === '1';
     }
 
     function setCollapsed(collapsed) {
@@ -156,12 +251,12 @@
             note.classList.add('is-collapsed');
             note.setAttribute('hidden', '');
             showMenubarIcon();
-            localStorage.setItem('sticky_minimized', '1');
+            store.set('sticky_minimized', '1');
         } else {
             note.classList.remove('is-collapsed');
             note.removeAttribute('hidden');
             hideMenubarIcon();
-            localStorage.removeItem('sticky_minimized');
+            store.remove('sticky_minimized');
         }
     }
 
@@ -204,13 +299,56 @@
         note.style.top = top + 'px';
     }
 
+    /**
+     * The shared spot is a fraction of each visitor's own desktop, so on a
+     * narrower screen it can land on the desktop icons (on a tablet it hid
+     * whole icons). Shown here only: slide it left of the icons it would
+     * cover, and leave the shared position alone.
+     */
+    function clearOfIcons(left, top) {
+        const icons = document.querySelectorAll('.desktop-icon');
+        if (!icons.length) return left;
+        const origin = desktop.getBoundingClientRect();
+        const w = note.offsetWidth;
+        const h = note.offsetHeight;
+        let minLeft = Infinity;
+        icons.forEach((icon) => {
+            const r = icon.getBoundingClientRect();
+            if (!r.width || !r.height) return;
+            const x = r.left - origin.left;
+            const y = r.top - origin.top;
+            const hit = x < left + w && x + r.width > left && y < top + h && y + r.height > top;
+            if (hit) minLeft = Math.min(minLeft, x);
+        });
+        if (minLeft === Infinity) return left;
+        const moved = Math.round(minLeft - w - 12);
+        return moved >= 0 ? moved : left;
+    }
+
     function applyPosition(animate) {
         if (!desktop || isMobile() || isNoteCollapsed()) return;
-        const { left, top } = pixelsFromNormalized(localState.x, localState.y);
-        if (animate && !isDragging && !isAnimating) {
+        const spot = pixelsFromNormalized(localState.x, localState.y);
+        const top = spot.top;
+        const left = clearOfIcons(spot.left, top);
+        if (animate && !awaiting && !isDragging && !isAnimating && !reducedMotion()) {
+            // Someone dragging it live sends a stream of small steps, which a
+            // short linear tween keeps continuous; a bigger correction (the
+            // relay's copy differing from the cached spot, or a move made
+            // while this tab was away) glides and settles instead of snapping.
+            const fromLeft = parseFloat(note.style.left);
+            const fromTop = parseFloat(note.style.top);
+            const dist = Number.isFinite(fromLeft) && Number.isFinite(fromTop)
+                ? Math.hypot(left - fromLeft, top - fromTop) : 0;
+            const glide = dist > GLIDE_MIN_PX;
+            const ms = glide ? GLIDE_MS : REMOTE_MOVE_MS;
+            const ease = glide ? 'cubic-bezier(0.22, 1, 0.36, 1)' : 'linear';
+            note.style.transition = `left ${ms}ms ${ease}, top ${ms}ms ${ease}`;
             note.classList.add('is-sync-moving');
             clearTimeout(remoteMoveTimer);
-            remoteMoveTimer = setTimeout(() => note.classList.remove('is-sync-moving'), REMOTE_MOVE_MS + 30);
+            remoteMoveTimer = setTimeout(() => {
+                note.classList.remove('is-sync-moving');
+                note.style.transition = '';
+            }, ms + 30);
         }
         setPixelPosition(left, top);
     }
@@ -230,8 +368,19 @@
         body.style.height = (MAX_LINES * LINE_HEIGHT) + 'px';
 
         let trimmed = false;
-        while (val.length > 0 && body.scrollHeight > maxScroll) {
-            val = val.slice(0, -1);
+        if (val.length > 0 && body.scrollHeight > maxScroll) {
+            // Binary search for the longest prefix that fits. Each probe is a
+            // forced layout, so trimming one character at a time let a single
+            // oversized remote update lock the page up.
+            let lo = 0;
+            let hi = val.length - 1;
+            while (lo < hi) {
+                const mid = (lo + hi + 1) >> 1;
+                body.value = val.slice(0, mid);
+                if (body.scrollHeight > maxScroll) hi = mid - 1;
+                else lo = mid;
+            }
+            val = val.slice(0, lo);
             body.value = val;
             trimmed = true;
         }
@@ -286,42 +435,78 @@
         return { left: noteRect.left, top: 0, width: 14, height: 14 };
     }
 
+    /** Bounded copy of whatever a peer put on the shared node. */
+    function sanitize(data) {
+        return {
+            x: clamp01(data.x, DEFAULTS.x),
+            y: clamp01(data.y, DEFAULTS.y),
+            text: cleanText(data.text),
+            textTs: cleanTs(data.textTs),
+            moveTs: cleanTs(data.moveTs),
+        };
+    }
+
+    const hasPosition = (data) => Number.isFinite(data.x) && Number.isFinite(data.y);
+
     function applyRemote(data) {
         if (!data) return;
+        const clean = sanitize(data);
 
-        if (typeof data.x === 'number' && typeof data.y === 'number' &&
-            (data.moveTs || 0) > localState.moveTs) {
-            localState.x = data.x;
-            localState.y = data.y;
-            localState.moveTs = data.moveTs || localState.moveTs;
+        if (hasPosition(data) && clean.moveTs > localState.moveTs) {
+            localState.x = clean.x;
+            localState.y = clean.y;
+            localState.moveTs = clean.moveTs;
             if (!isNoteCollapsed() && !isDragging && !isAnimating) {
                 applyPosition(true);
             }
         }
 
         if (!isEditing && typeof data.text === 'string' &&
-            (data.textTs || 0) > localState.textTs) {
-            localState.text = data.text;
-            localState.textTs = data.textTs || 0;
+            clean.textTs > localState.textTs) {
+            localState.text = clean.text;
+            localState.textTs = clean.textTs;
             if (!isNoteCollapsed() && body.value !== localState.text) {
                 body.value = localState.text;
                 enforceLineLimit();
             }
             if (!isNoteCollapsed() && !isEditing) showLastEdit();
         }
+        saveCache();
     }
 
+    // Only the fields that changed are written. Publishing the whole state on
+    // every drag or blur re-sent this viewer's copy of the text and silently
+    // reverted whatever someone else had typed in the meantime.
     function putState(partial) {
         localState = { ...localState, ...partial };
-        if (ref) ref.put(localState);
+        if (ref) ref.put(partial);
+        saveCache();
+    }
+
+    /**
+     * Publish the text, unless the shared note has not arrived yet: until
+     * then this viewer's copy is just the empty default, and writing it (or
+     * anything typed on top of it) would replace the real note for everyone.
+     * A draft started before the note arrived is dropped when it does (see
+     * dropUnloadedDraft), so it cannot be published afterwards either.
+     */
+    function putText(text) {
+        if (!ref || !loaded) {
+            if (!isOffline) {
+                clearStatusTimers();
+                statusMode = 'unsynced';
+                setStatus('Not synced yet');
+            }
+            return;
+        }
+        putState({ text, textTs: Date.now() });
+        showSynced();
     }
 
     function scheduleTextPut() {
         clearTimeout(textTimer);
         textTimer = setTimeout(() => {
-            const text = enforceLineLimit();
-            putState({ text, textTs: Date.now() });
-            showSynced();
+            putText(enforceLineLimit());
         }, TEXT_DEBOUNCE_MS);
     }
 
@@ -457,8 +642,14 @@
             if (!canEdit()) return;
             clearTimeout(textTimer);
             const text = enforceLineLimit();
-            putState({ text, textTs: Date.now() });
-            showSynced();
+            if (text !== localState.text) {
+                putText(text);
+                return;
+            }
+            // Nothing was typed, so there is nothing to publish. Remote text
+            // is held back while the note has focus; catch up on it now.
+            if (lastRemote) applyRemote(lastRemote);
+            showLastEdit(true);
         });
 
         body.addEventListener('input', () => {
@@ -474,9 +665,10 @@
                 return;
             }
             e.preventDefault();
-            const paste = (e.clipboardData || window.clipboardData).getData('text');
             const start = body.selectionStart;
             const end = body.selectionEnd;
+            const room = Math.max(0, MAX_TEXT - (body.value.length - (end - start)));
+            const paste = (e.clipboardData || window.clipboardData).getData('text').slice(0, room);
             body.value = body.value.slice(0, start) + paste + body.value.slice(end);
             body.selectionStart = body.selectionEnd = start + paste.length;
             enforceLineLimit(true);
@@ -487,12 +679,16 @@
     function setupDrag() {
         if (!canEdit()) return;
 
-        let startX, startY, startLeft, startTop;
+        let startX, startY, startLeft, startTop, pointerId = null;
 
-        titlebar.addEventListener('mousedown', (e) => {
-            if (e.target.closest('.sticky-close') || isAnimating) return;
+        // Pointer events with capture, so a finger on a tablet can drag it
+        // as well as a mouse; touch-action stops the page panning instead.
+        titlebar.style.touchAction = 'none';
+        titlebar.addEventListener('pointerdown', (e) => {
+            if (e.button !== 0 || isDragging || e.target.closest('.sticky-close') || isAnimating) return;
 
             isDragging = true;
+            pointerId = e.pointerId;
             note.classList.add('is-dragging');
             note.classList.remove('is-sync-moving');
             startX = e.clientX;
@@ -500,12 +696,14 @@
             startLeft = note.offsetLeft;
             startTop = note.offsetTop;
 
-            document.addEventListener('mousemove', onDrag);
-            document.addEventListener('mouseup', stopDrag);
+            try { titlebar.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+            titlebar.addEventListener('pointermove', onDrag);
+            titlebar.addEventListener('pointerup', stopDrag);
+            titlebar.addEventListener('pointercancel', stopDrag);
         });
 
         function onDrag(e) {
-            if (!isDragging) return;
+            if (!isDragging || e.pointerId !== pointerId) return;
             const dx = e.clientX - startX;
             const dy = e.clientY - startY;
             const { maxLeft, maxTop } = bounds();
@@ -524,12 +722,15 @@
             }
         }
 
-        function stopDrag() {
-            if (!isDragging) return;
+        function stopDrag(e) {
+            if (!isDragging || (e && e.pointerId !== pointerId)) return;
             isDragging = false;
             note.classList.remove('is-dragging');
-            document.removeEventListener('mousemove', onDrag);
-            document.removeEventListener('mouseup', stopDrag);
+            titlebar.removeEventListener('pointermove', onDrag);
+            titlebar.removeEventListener('pointerup', stopDrag);
+            titlebar.removeEventListener('pointercancel', stopDrag);
+            try { titlebar.releasePointerCapture(pointerId); } catch (err) { /* ignore */ }
+            pointerId = null;
 
             const norm = normalizedFromPixels(note.offsetLeft, note.offsetTop);
             putState({ x: norm.x, y: norm.y, moveTs: Date.now() });
@@ -545,8 +746,14 @@
         }
     }
 
+    // Phones can read the note but not write on it; the placeholder says so
+    // instead of inviting a tap that does nothing.
+    const editPlaceholder = body.getAttribute('placeholder') || '';
+    const READ_ONLY_PLACEHOLDER = 'Open this site on a bigger screen to write here.';
+
     function initMobile() {
         body.readOnly = true;
+        body.setAttribute('placeholder', READ_ONLY_PLACEHOLDER);
         isCollapsed = false;
         note.classList.remove('is-collapsed');
         note.removeAttribute('hidden');
@@ -556,13 +763,22 @@
 
     function initDesktop() {
         body.readOnly = false;
-        isCollapsed = localStorage.getItem('sticky_minimized') === '1';
+        body.setAttribute('placeholder', editPlaceholder);
+        isCollapsed = store.get('sticky_minimized') === '1';
+        const cached = readCache();
+        if (cached) {
+            localState = cached;
+            body.value = cached.text;
+            enforceLineLimit();
+        } else if (!isCollapsed) {
+            holdUntilLoaded();
+        }
         applyMinimizedState();
         if (!isNoteCollapsed()) applyPosition(false);
         setupDrag();
     }
 
-    function syncAfterGunInit() {
+    function syncAfterGunInit(real) {
         initialized = true;
         if (isMobile()) {
             initMobile();
@@ -572,39 +788,85 @@
             setCollapsed(true);
         } else if (!isAnimating) {
             setCollapsed(false);
-            applyPosition(false);
+            // Already on screen at the cached spot: glide to the real one.
+            // Still held back: place it, then fade it in there.
+            applyPosition(!awaiting);
             showLastEdit(true);
         }
+        // An empty answer is often just the relay being slow: keep holding
+        // for the real note (the fallback timer still shows it eventually).
+        if (real) reveal();
     }
 
     function connectGun() {
         ref = window.SiteGun.paths.apps.sticky();
         watchConnection();
 
-        ref.once((data) => {
-            if (!data || typeof data.x !== 'number') {
-                // Gun also calls back with undefined when the relay is slow or
-                // unreachable. Writing DEFAULTS here would push text:'' to the
-                // SHARED node and blank the note for everyone, so seed local
-                // state only - the first real edit publishes.
-                localState = { ...DEFAULTS };
-            } else {
-                localState = {
-                    x: typeof data.x === 'number' ? data.x : DEFAULTS.x,
-                    y: typeof data.y === 'number' ? data.y : DEFAULTS.y,
-                    text: typeof data.text === 'string' ? data.text : '',
-                    textTs: data.textTs || 0,
-                    moveTs: data.moveTs || 0,
-                };
+        const isReal = (data) =>
+            !!data && (hasPosition(data) || typeof data.text === 'string');
+
+        function seed(data) {
+            localState = sanitize(data);
+            loaded = true;
+            saveCache();
+            if (!isEditing) {
                 body.value = localState.text;
                 enforceLineLimit();
+            } else {
+                dropUnloadedDraft(data);
             }
-            syncAfterGunInit();
+        }
+
+        // Anything typed before the shared note arrived (relay slow or down
+        // at page load) was written on top of the empty default, not on the
+        // real note. Publishing it would replace a note this visitor never
+        // saw, so the note wins and the draft is dropped.
+        function dropUnloadedDraft(data) {
+            if (typeof data.text !== 'string') return;
+            const clean = sanitize(data);
+            clearTimeout(textTimer);
+            localState.text = clean.text;
+            localState.textTs = clean.textTs;
+            if (body.value === clean.text) return;
+            body.value = clean.text;
+            enforceLineLimit();
+            if (!isNoteCollapsed() && !isOffline) {
+                clearStatusTimers();
+                statusMode = 'unsynced';
+                setStatus('Note loaded');
+            }
+        }
+
+        ref.once((data) => {
+            if (initialized) return;
+            // Gun also calls back with undefined when the relay is slow or
+            // unreachable. Nothing is written then (DEFAULTS would push text:''
+            // to the SHARED node and blank the note for everyone) and the local
+            // state is left as it is: the defaults, or the cached last-seen note
+            // this visitor is already looking at. `loaded` stays false, so
+            // putText() refuses to publish until the real note shows up.
+            if (isReal(data)) seed(data);
+            syncAfterGunInit(isReal(data));
         });
 
         ref.on((data) => {
-            if (!initialized) return;
+            if (!isReal(data)) return;
+            lastRemote = data;
+            if (!initialized) {
+                // The first real payload can arrive here before (or instead
+                // of) the once() above when the relay is slow.
+                seed(data);
+                syncAfterGunInit(true);
+                return;
+            }
+            if (!loaded) {
+                loaded = true;
+                if (isEditing) dropUnloadedDraft(data);
+            }
             applyRemote(data);
+            // First visit, relay slower than once(): it has just been placed
+            // (without a tween, while invisible), so now it can fade in.
+            if (awaiting) reveal();
         });
     }
 

@@ -1,0 +1,692 @@
+/* ==========================================================================
+   System Preferences (layouts/partials/apps/preferences/window.html,
+   assets/js/preferences.js). A Mavericks-style preferences window: a
+   toolbar with Back/Forward and Show All, a grid of panes, and forms with
+   right-aligned labels. Colours come from the shared tokens; the few local
+   ones (the swatch fills, the appearance previews) are declared here.
+   ========================================================================== */
+
+.sp-window {
+    /* The highlight swatches always show their own colour */
+    --sp-blue: #007AFF;
+    --sp-purple: #953D96;
+    --sp-pink: #E9428C;
+    --sp-red: #E0383E;
+    --sp-orange: #F7821B;
+    --sp-green: #4DA83A;
+    --sp-graphite: #80868E;
+    --sp-label-w: 150px;
+    --sp-well-bg: var(--surface);
+
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    background: var(--surface-sunken);
+    color: var(--text-color);
+    font-family: var(--font-system);
+    font-size: 13px;
+}
+
+/* ---------- Toolbar ---------- */
+
+.sp-toolbar {
+    flex: none;
+    display: grid;
+    /* Buttons on the left, the pane name centred over the whole window */
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 8px;
+    padding: 6px 10px 7px;
+    background: var(--toolbar-bg);
+    border-bottom: 1px solid var(--toolbar-border);
+}
+
+.sp-nav {
+    display: inline-flex;
+}
+
+.sp-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 22px;
+    padding: 0;
+    color: var(--btn-text);
+    background: var(--btn-bg);
+    border: 1px solid var(--btn-border);
+    border-radius: var(--btn-radius);
+    box-shadow: var(--btn-shadow);
+    cursor: pointer;
+}
+
+.sp-nav .sp-nav-btn:first-child {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.sp-nav .sp-nav-btn:last-child {
+    margin-left: -1px;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.sp-nav-btn:hover:not(:disabled) {
+    background: var(--btn-bg-hover);
+}
+
+.sp-nav-btn:active:not(:disabled) {
+    background: var(--btn-bg-active);
+    box-shadow: var(--btn-shadow-active);
+}
+
+.sp-nav-btn:disabled {
+    cursor: default;
+    color: var(--text-placeholder);
+}
+
+.sp-nav-btn:disabled svg {
+    opacity: 0.45;
+}
+
+.sp-showall {
+    width: 32px;
+}
+
+.sp-nav-btn:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 1px;
+    position: relative;
+    z-index: 1;
+}
+
+.window-content .sp-toolbar .sp-title {
+    grid-column: 3;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    line-height: 22px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--titlebar-text);
+    text-shadow: 0 1px 0 var(--emboss);
+}
+
+/* Mirrors the button group so the title sits in the true centre */
+.sp-toolbar::after {
+    content: '';
+    grid-column: 4;
+    width: calc(56px + 32px + 8px);
+}
+
+/* ---------- Body ---------- */
+
+.sp-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+}
+
+/* ---------- Show All ---------- */
+
+.sp-overview {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+}
+
+.sp-grid {
+    list-style: none;
+    margin: 0;
+    padding: 14px 18px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: 6px;
+    background: var(--hover-tint);
+    border-bottom: 1px solid var(--border);
+}
+
+/* Alternate bands, as the 10.9 window groups its rows */
+.sp-grid + .sp-grid {
+    background: transparent;
+}
+
+.sp-pane-btn {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 4px 6px;
+    font: inherit;
+    font-size: 11px;
+    color: var(--text-primary);
+    background: transparent;
+    border: 0;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.sp-pane-icon {
+    display: block;
+    width: 40px;
+    height: 40px;
+    filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.25));
+}
+
+.sp-pane-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.sp-pane-btn:hover {
+    background: var(--hover-tint);
+}
+
+.sp-pane-btn:active {
+    background: var(--press-tint);
+}
+
+.sp-pane-btn:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: -2px;
+}
+
+.sp-footnote {
+    margin: auto 0 0;
+    padding: 12px 18px 14px;
+    font-size: 11px;
+    color: var(--text-quiet);
+    text-align: center;
+}
+
+/* ---------- Panes: Mavericks forms ---------- */
+
+.sp-pane {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+}
+
+.sp-pane[hidden],
+.sp-overview[hidden] {
+    display: none;
+}
+
+.sp-form {
+    padding: 22px 28px 8px 12px;
+}
+
+.sp-row {
+    display: grid;
+    grid-template-columns: var(--sp-label-w) minmax(0, 1fr);
+    column-gap: 10px;
+    align-items: start;
+    padding: 9px 0;
+}
+
+/* --border-subtle (#EAEAEA) vanishes on the #ECECEC sheet in light; the
+   stronger line reads as 10.9's etched separator. Dark keeps its own. */
+.sp-row + .sp-row {
+    border-top: 1px solid var(--border-strong);
+}
+
+html[data-appearance="dark"] .sp-row + .sp-row {
+    border-top-color: var(--border-subtle);
+}
+
+.sp-label {
+    padding-top: 3px;
+    text-align: right;
+    color: var(--text-primary);
+}
+
+.sp-field {
+    min-width: 0;
+}
+
+.sp-help {
+    margin: 6px 0 0;
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--text-muted);
+}
+
+.sp-help-first {
+    margin: 3px 0 8px;
+}
+
+.sp-check,
+.sp-radio {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 0;
+    cursor: pointer;
+}
+
+.sp-check input,
+.sp-radio input {
+    margin: 0;
+    accent-color: var(--accent-blue);
+}
+
+.sp-check input:disabled + *,
+.sp-check:has(input:disabled) {
+    cursor: default;
+    color: var(--text-muted);
+}
+
+.sp-radios {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-top: 2px;
+}
+
+.sp-pane-foot {
+    margin-top: auto;
+    display: flex;
+    justify-content: flex-end;
+    padding: 10px 20px 16px;
+}
+
+/* ---------- Appearance tiles ---------- */
+
+.sp-tiles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+
+.sp-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 0;
+    font: inherit;
+    font-size: 11px;
+    color: var(--text-color);
+    background: none;
+    border: 0;
+    cursor: pointer;
+}
+
+.sp-tile-art {
+    position: relative;
+    display: block;
+    width: 76px;
+    height: 50px;
+    border-radius: 5px;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px var(--hairline-strong), 0 1px 2px rgba(0, 0, 0, 0.18);
+    background: linear-gradient(160deg, #6d4b9a 0%, #2b4d8f 100%);
+}
+
+.sp-tile[aria-checked="true"] .sp-tile-art {
+    box-shadow: 0 0 0 3px var(--accent-blue), 0 1px 2px rgba(0, 0, 0, 0.18);
+}
+
+.sp-tile[aria-checked="true"] .sp-tile-label {
+    font-weight: 700;
+}
+
+.sp-tile:focus-visible {
+    outline: none;
+}
+
+.sp-tile:focus-visible .sp-tile-art {
+    box-shadow: 0 0 0 3px var(--focus-ring), 0 0 0 5px color-mix(in srgb, var(--focus-ring) 35%, transparent);
+}
+
+.sp-mini-bar {
+    position: absolute;
+    inset: 0 0 auto;
+    height: 5px;
+    background: rgba(40, 44, 50, 0.85);
+}
+
+.sp-mini-win {
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    right: 12px;
+    bottom: 7px;
+    border-radius: 3px;
+    background: #F7F9FB;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+}
+
+.sp-mini-title {
+    display: block;
+    height: 7px;
+    background: linear-gradient(180deg, #E8ECF0 0%, #D4DAE0 100%);
+    border-bottom: 1px solid #B0B0B0;
+}
+
+.sp-tile-dark .sp-mini-win {
+    background: #1F2023;
+}
+
+.sp-tile-dark .sp-mini-title {
+    background: linear-gradient(180deg, #4B4D52 0%, #3B3D41 100%);
+    border-bottom-color: #141517;
+}
+
+/* Auto: half light, half dark */
+.sp-tile-auto .sp-mini-win {
+    background: linear-gradient(90deg, #F7F9FB 50%, #1F2023 50%);
+}
+
+.sp-tile-auto .sp-mini-title {
+    background: linear-gradient(90deg, #DDE2E7 50%, #44464B 50%);
+}
+
+/* ---------- Highlight swatches ---------- */
+
+.sp-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    padding-top: 3px;
+}
+
+.sp-swatch {
+    --sp-swatch: var(--sp-blue);
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid color-mix(in srgb, var(--sp-swatch) 70%, black);
+    background:
+        radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 55%),
+        var(--sp-swatch);
+    box-shadow: inset 0 -1px 2px rgba(0, 0, 0, 0.2), 0 1px 1px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+}
+
+.sp-swatch-purple { --sp-swatch: var(--sp-purple); }
+.sp-swatch-pink { --sp-swatch: var(--sp-pink); }
+.sp-swatch-red { --sp-swatch: var(--sp-red); }
+.sp-swatch-orange { --sp-swatch: var(--sp-orange); }
+.sp-swatch-green { --sp-swatch: var(--sp-green); }
+.sp-swatch-graphite { --sp-swatch: var(--sp-graphite); }
+
+.sp-swatch[aria-checked="true"] {
+    box-shadow: 0 0 0 2px var(--surface-sunken), 0 0 0 4px var(--sp-swatch);
+}
+
+.sp-swatch[aria-checked="true"]::after {
+    content: '';
+    display: block;
+    width: 6px;
+    height: 6px;
+    margin: auto;
+    border-radius: 50%;
+    background: #fff;
+}
+
+.sp-swatch:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 4px;
+}
+
+/* ---------- Desktop ---------- */
+
+.sp-pane-desktop {
+    padding: 16px 18px 18px;
+    gap: 14px;
+}
+
+.sp-current {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.sp-current-frame {
+    flex: none;
+    padding: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.sp-current-pic {
+    display: block;
+    width: 128px;
+    height: 80px;
+    background-size: cover;
+    background-position: center;
+}
+
+.sp-current-text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.sp-current-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.sp-current-kind {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.sp-desktop-split {
+    flex: 1 1 auto;
+    min-height: 220px;
+    display: grid;
+    grid-template-columns: 160px minmax(0, 1fr);
+    border: 1px solid var(--border-chrome);
+    background: var(--sp-well-bg);
+    box-shadow: inset 0 1px 2px var(--hairline);
+}
+
+.sp-sources {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 0;
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--border-strong);
+}
+
+.sp-source {
+    padding: 4px 14px;
+    font: inherit;
+    font-size: 12px;
+    text-align: left;
+    color: var(--text-color);
+    background: none;
+    border: 0;
+    cursor: pointer;
+}
+
+.sp-source[aria-selected="true"] {
+    color: var(--btn-primary-text);
+    font-weight: 700;
+    background: var(--btn-primary-bg);
+}
+
+.sp-source:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: -2px;
+}
+
+.sp-sets {
+    min-width: 0;
+    overflow: auto;
+}
+
+.sp-thumbs {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+    gap: 14px 12px;
+    padding: 14px;
+}
+
+.sp-thumbs[hidden] {
+    display: none;
+}
+
+.sp-thumb {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 0;
+    font: inherit;
+    font-size: 11px;
+    color: var(--text-color);
+    background: none;
+    border: 0;
+    cursor: pointer;
+}
+
+.sp-thumb img,
+.sp-thumb-color {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    height: auto;
+    object-fit: cover;
+    border-radius: 2px;
+    box-shadow: 0 0 0 1px var(--hairline-strong), 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.sp-thumb[aria-checked="true"] img,
+.sp-thumb[aria-checked="true"] .sp-thumb-color {
+    box-shadow: 0 0 0 3px var(--accent-blue), 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.sp-thumb[aria-checked="true"] .sp-thumb-name {
+    font-weight: 700;
+}
+
+.sp-thumb:focus-visible {
+    outline: none;
+}
+
+.sp-thumb:focus-visible img,
+.sp-thumb:focus-visible .sp-thumb-color {
+    box-shadow: 0 0 0 3px var(--focus-ring), 0 0 0 5px color-mix(in srgb, var(--focus-ring) 35%, transparent);
+}
+
+.sp-thumb-name {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ---------- Compact (phones, small windows) ---------- */
+
+@media (max-width: 768px), (pointer: coarse) and (max-height: 500px) {
+    .sp-form {
+        padding: 14px 16px 8px;
+    }
+
+    .sp-row {
+        grid-template-columns: minmax(0, 1fr);
+        row-gap: 8px;
+        padding: 12px 0;
+    }
+
+    .sp-label {
+        text-align: left;
+        padding-top: 0;
+        font-weight: 700;
+    }
+
+    .sp-pane-desktop {
+        padding: 14px;
+    }
+
+    .sp-desktop-split {
+        grid-template-columns: minmax(0, 1fr);
+        min-height: 0;
+    }
+
+    .sp-sources {
+        flex-direction: row;
+        gap: 6px;
+        padding: 8px;
+        border-right: 0;
+        border-bottom: 1px solid var(--border-strong);
+    }
+
+    .sp-source {
+        flex: 1;
+        text-align: center;
+        border-radius: 5px;
+        padding: 7px 8px;
+    }
+
+    .sp-thumbs {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        padding: 12px;
+    }
+
+    .sp-pane-btn,
+    .sp-check,
+    .sp-radio {
+        min-height: 44px;
+    }
+
+    .sp-swatches {
+        gap: 14px;
+    }
+
+    .sp-swatch {
+        width: 28px;
+        height: 28px;
+    }
+
+    .sp-nav-btn {
+        width: 36px;
+        height: 30px;
+    }
+
+    .sp-toolbar::after {
+        width: calc(72px + 36px + 8px);
+    }
+}
+
+/* ---------- Forced colours ---------- */
+
+@media (forced-colors: active) {
+
+    .sp-swatch,
+    .sp-tile-art,
+    .sp-thumb img,
+    .sp-thumb-color {
+        forced-color-adjust: none;
+    }
+
+    .sp-tile[aria-checked="true"] .sp-tile-art,
+    .sp-thumb[aria-checked="true"] img,
+    .sp-thumb[aria-checked="true"] .sp-thumb-color,
+    .sp-swatch[aria-checked="true"] {
+        outline: 3px solid Highlight;
+        outline-offset: 2px;
+    }
+
+    .sp-source[aria-selected="true"] {
+        forced-color-adjust: none;
+        background: Highlight;
+        color: HighlightText;
+    }
+}

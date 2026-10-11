@@ -25,19 +25,28 @@ Usage:
 
         <div class="games-content">
             <!-- Itch.io Link -->
-            <div class="itchio-banner" onclick="window.open('https://ankushkun.itch.io/', '_blank');">
+            <a class="itchio-banner" href="https://ankushkun.itch.io/" target="_blank" rel="noopener">
                 <span class="itchio-text">Check out my games on itch.io →</span>
-            </div>
+            </a>
 
             <div class="games-icon-grid">
                 {{ range $games }}
-                <button class="game-icon-item" type="button"
-                    onclick="window.openContentWindow('{{ .id }}', '{{ .title | safeJS }}', null);">
-                    <span class="game-icon-image">
-                        {{ partial "os/app-icon.html" (dict "app" . "context" "grid") }}
-                    </span>
-                    <span class="game-icon-label">{{ .label }}</span>
-                </button>
+                <div class="game-icon-cell">
+                    <button class="game-icon-item" type="button"
+                        onclick="window.openContentWindow('{{ .id }}', '{{ .title | safeJS }}', null);">
+                        <span class="game-icon-image">
+                            {{ partial "os/app-icon.html" (dict "app" . "context" "grid") }}
+                        </span>
+                        <span class="game-icon-label">{{ .label }}</span>
+                    </button>
+                    {{/* Optional per-game credit: `author` and `source` in data/apps.yaml */}}
+                    {{- $author := .author -}}
+                    {{- with .source }}
+                    <a class="game-icon-credit" href="{{ . }}" target="_blank" rel="noopener">{{ with $author }}by {{ . }}{{ else }}Source{{ end }}</a>
+                    {{- else }}{{ with $author }}
+                    <span class="game-icon-credit">by {{ . }}</span>
+                    {{- end }}{{ end }}
+                </div>
                 {{ end }}
             </div>
         </div>

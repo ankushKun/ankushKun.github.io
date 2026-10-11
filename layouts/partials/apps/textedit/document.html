@@ -1,0 +1,69 @@
+{{/*
+TextEdit document - a page body shown as a rich-text document, with the
+format bar and ruler of TextEdit in OS X Mavericks.
+
+Usage: {{ partial "apps/textedit/document.html" (dict "page" .) }}
+
+Front matter read from the page:
+  heading   the document's own heading (default: the page title)
+  lastmod   shown as "Last updated ..." - set it by hand whenever the text
+            changes (hugo.toml [frontmatter] makes it win over the git date)
+
+The format bar is two radio groups and no script: the window body is injected
+with innerHTML by the desktop shell, where an inline script would never run.
+assets/css/apps/textedit.css switches typeface and size with :has(:checked).
+The group names carry the page id so two documents open side by side keep
+their own settings.
+*/}}
+{{- $page := .page -}}
+{{- $id := $page.Section | default ($page.RelPermalink | urlize) -}}
+{{- with $page.File }}{{ $id = .UniqueID }}{{ end -}}
+<div class="textedit">
+    <div class="textedit-formatbar">
+        <fieldset class="textedit-seg textedit-seg-font">
+            <legend class="textedit-sr">Typeface</legend>
+            <label class="textedit-seg-item textedit-face-sans">
+                <input type="radio" name="textedit-face-{{ $id }}" value="sans" checked>
+                <span>Sans</span>
+            </label>
+            <label class="textedit-seg-item textedit-face-serif">
+                <input type="radio" name="textedit-face-{{ $id }}" value="serif">
+                <span>Serif</span>
+            </label>
+            <label class="textedit-seg-item textedit-face-mono">
+                <input type="radio" name="textedit-face-{{ $id }}" value="mono">
+                <span>Mono</span>
+            </label>
+        </fieldset>
+        <fieldset class="textedit-seg textedit-seg-size">
+            <legend class="textedit-sr">Text size</legend>
+            <label class="textedit-seg-item textedit-size-s">
+                <input type="radio" name="textedit-size-{{ $id }}" value="s">
+                <span aria-hidden="true">A</span><span class="textedit-sr">Small</span>
+            </label>
+            <label class="textedit-seg-item textedit-size-m">
+                <input type="radio" name="textedit-size-{{ $id }}" value="m" checked>
+                <span aria-hidden="true">A</span><span class="textedit-sr">Medium</span>
+            </label>
+            <label class="textedit-seg-item textedit-size-l">
+                <input type="radio" name="textedit-size-{{ $id }}" value="l">
+                <span aria-hidden="true">A</span><span class="textedit-sr">Large</span>
+            </label>
+        </fieldset>
+    </div>
+    {{/* Decoration only: inch marks that start at the text's left margin */}}
+    <div class="textedit-ruler" aria-hidden="true">
+        <div class="textedit-ruler-scale">
+            {{- range seq 0 11 }}<span>{{ . }}</span>{{ end -}}
+        </div>
+    </div>
+    <div class="textedit-scroll">
+        <article class="textedit-page">
+            <h1 class="textedit-heading">{{ $page.Params.heading | default $page.Title }}</h1>
+            {{- if not $page.Lastmod.IsZero }}
+            <p class="textedit-dateline">Last updated <time datetime="{{ $page.Lastmod.Format "2006-01-02" }}">{{ $page.Lastmod.Format "January 2, 2006" }}</time></p>
+            {{- end }}
+            {{ $page.Content }}
+        </article>
+    </div>
+</div>

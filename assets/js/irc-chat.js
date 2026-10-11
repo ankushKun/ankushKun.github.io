@@ -9,8 +9,111 @@
     const PRESENCE_TIMEOUT = 10000;
     const FLOOD_WINDOW_MS = 10000;
     const FLOOD_MAX_MESSAGES = 8;
+    const MAX_TEXT = 500;
+    const MAX_NICK = 10;
+    const CLOCK_SKEW_MS = 5000;          // how far ahead a peer's timestamp may be
+    const LEGACY_EVENT_TTL = 5 * 60 * 1000;
+    const LEAVE_GRACE_MS = 90000;        // silent timeout -> "left the room" delay
+    const TYPING_TTL_MS = 4000;
+    const MAX_ONLINE = 300;              // presence records shown; new ids are ignored once full
     const KLIPY_API_KEY = "zIUfW4jTZIuTIhNTSM66eooPq7WjjcKRnLyLoLd3ikyo15Q4kX2nfwMd0n0CmP96";
     const KLIPY_API_BASE = "https://api.klipy.com/v2";
+    // Every media_formats.*.url (and gif.url) Klipy returns lives on this host.
+    const GIF_HOSTS = ['static.klipy.com'];
+    const MAX_GIF_BYTES = 12 * 1024 * 1024;
+
+    // Verbose logging: localStorage.setItem('irc_debug', '1') and reopen IRC.
+    let DEBUG = false;
+    try { DEBUG = localStorage.getItem('irc_debug') === '1'; } catch (e) { /* ignore */ }
+    function debugLog() {
+        if (DEBUG) console.log.apply(console, arguments);
+    }
+
+    // Storage that never throws. With site data blocked, touching
+    // localStorage raises SecurityError, which used to abort initIRC and
+    // leave the window on "This app failed to load". Values fall back to
+    // memory so a session still works until the page is closed.
+    const memStore = {};
+    const ircStore = {
+        get(key) {
+            try {
+                const v = localStorage.getItem(key);
+                if (v != null) return v;
+            } catch (e) { /* storage blocked */ }
+            return key in memStore ? memStore[key] : null;
+        },
+        set(key, value) {
+            memStore[key] = String(value);
+            try { localStorage.setItem(key, String(value)); } catch (e) { /* kept in memory only */ }
+        },
+        remove(key) {
+            delete memStore[key];
+            try { localStorage.removeItem(key); } catch (e) { /* ignore */ }
+        }
+    };
+
+    // GIF messages carry a bare URL written by an untrusted peer. Only https
+    // URLs on the Klipy media host are ever rendered or sent.
+    function isAllowedGifUrl(u) {
+        if (typeof u !== 'string' || u.length > MAX_TEXT) return false;
+        let url;
+        try { url = new URL(u); } catch (e) { return false; }
+        return url.protocol === 'https:' &&
+            !url.username && !url.password && !url.port &&
+            GIF_HOSTS.includes(url.hostname);
+    }
+
+    // GIF search goes through the site Worker (<meta name="link-proxy">) when
+    // one is configured, so the Klipy key can live there as a secret. With no
+    // proxy configured this is the direct Klipy call it always was.
+    function gifEndpoint(path, params, direct) {
+        const meta = document.querySelector('meta[name="link-proxy"]');
+        const proxy = meta ? (meta.getAttribute('content') || '').trim().replace(/\/+$/, '') : '';
+        const query = new URLSearchParams(params);
+        if (!direct && /^https:\/\//.test(proxy)) return `${proxy}/gif/${path}?${query}`;
+        query.set('key', KLIPY_API_KEY);
+        return `${KLIPY_API_BASE}/${path}?${query}`;
+    }
+
+    function clampTime(t) {
+        const now = Date.now();
+        const n = Number(t);
+        if (!isFinite(n) || n <= 0) return now;
+        return Math.min(n, now + CLOCK_SKEW_MS);
+    }
+
+    function isJoinLeaveText(text) {
+        return text === 'entered the room' || text === 'left the room';
+    }
+
+    // Normalise a peer-written message row. Anything not shaped like a message
+    // is dropped; strings are capped so one row cannot stall the renderer.
+    function sanitizeMessage(m) {
+        if (!m || typeof m.nick !== 'string' || typeof m.text !== 'string') return null;
+        const nick = m.nick.slice(0, MAX_NICK);
+        const text = m.text.slice(0, MAX_TEXT);
+        if (!nick || !text) return null;
+        return {
+            nick: nick,
+            text: text,
+            uuid: typeof m.uuid === 'string' ? m.uuid.slice(0, 64) : null,
+            time: clampTime(m.time),
+            action: m.action === true,
+            type: m.type === 'system' || m.type === 'gif' ? m.type : 'msg'
+        };
+    }
+
+    function sanitizePresence(p) {
+        if (!p || typeof p.nick !== 'string' || !p.nick || !p.lastSeen) return null;
+        const now = Date.now();
+        return {
+            nick: p.nick.slice(0, MAX_NICK),
+            uuid: typeof p.uuid === 'string' ? p.uuid.slice(0, 64) : null,
+            status: 'online',
+            lastSeen: clampTime(p.lastSeen),
+            typingUntil: Math.min(Number(p.typingUntil) || 0, now + TYPING_TTL_MS + CLOCK_SKEW_MS)
+        };
+    }
 
     // Generate a UUID v4
     function generateUUID() {
@@ -21,22 +124,21 @@
         });
     }
 
-    // Generate deterministic color from UUID
+    // Deterministic nick colour from a UUID. Only the hue comes from the
+    // hash: lightness and chroma are the --irc-nick-l / --irc-nick-c tokens
+    // in irc.css (OKLCH, so every hue is equally light), which the dark
+    // appearance raises, so each nick keeps 4.5:1 on either background and
+    // follows a live appearance switch without re-rendering.
     function uuidToColor(uuid) {
-        if (!uuid) return '#2980b9';
-
-        // Use the UUID to generate a hash
-        let hash = 0;
-        for (let i = 0; i < uuid.length; i++) {
-            hash = uuid.charCodeAt(i) + ((hash << 5) - hash);
+        let hue = 230;
+        if (uuid) {
+            let hash = 0;
+            for (let i = 0; i < uuid.length; i++) {
+                hash = uuid.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            hue = Math.abs(hash % 360);
         }
-
-        // Generate HSL color with good saturation and lightness for readability
-        const hue = Math.abs(hash % 360);
-        const saturation = 60 + (Math.abs(hash >> 8) % 20); // 60-80%
-        const lightness = 35 + (Math.abs(hash >> 16) % 15); // 35-50% (dark enough to read)
-
-        return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+        return `oklch(var(--irc-nick-l, 0.5) var(--irc-nick-c, 0.12) ${hue})`;
     }
 
     // Text replacement commands (emoticons)
@@ -242,7 +344,7 @@
 
         omggifLoadPromise = loadScript(CDN.omggif).then(() => {
             omggifLoaded = true;
-            console.log('[NSFW] omggif loaded, available:', typeof window.GifReader);
+            debugLog('[NSFW] omggif loaded, available:', typeof window.GifReader);
         }).catch((e) => {
             omggifLoadPromise = null;
             throw e;
@@ -251,7 +353,17 @@
         return omggifLoadPromise;
     }
 
-    // Extract key frames from GIF (first, middle, last)
+    // Disposal method 2 ("restore to background"): the frame's own rect is
+    // wiped before the next frame is drawn.
+    function clearDisposedFrame(pixels, canvasWidth, frameInfo) {
+        if (!frameInfo || frameInfo.disposal !== 2) return;
+        for (let y = frameInfo.y; y < frameInfo.y + frameInfo.height; y++) {
+            const start = (y * canvasWidth + frameInfo.x) * 4;
+            pixels.fill(0, start, start + frameInfo.width * 4);
+        }
+    }
+
+    // Extract key frames from GIF (sampled at even intervals)
     async function extractGifFrames(gifUrl) {
         try {
             await loadOmggif();
@@ -262,8 +374,11 @@
             }
 
             // Fetch the GIF data
-            const response = await fetch(gifUrl);
+            const response = await fetch(gifUrl, { referrerPolicy: 'no-referrer' });
+            if (!response.ok) return [];
+            if (Number(response.headers.get('content-length')) > MAX_GIF_BYTES) return [];
             const arrayBuffer = await response.arrayBuffer();
+            if (arrayBuffer.byteLength > MAX_GIF_BYTES) return [];
             const uint8Array = new Uint8Array(arrayBuffer);
 
             // Parse GIF using omggif
@@ -279,7 +394,7 @@
             const interval = Math.max(1, Math.floor(numFrames / maxFramesToCheck));
             const framesToCheck = Math.min(maxFramesToCheck, numFrames);
 
-            console.log(`[NSFW] GIF has ${numFrames} frames, checking ${framesToCheck} frames at interval ${interval}`);
+            debugLog(`[NSFW] GIF has ${numFrames} frames, checking ${framesToCheck} frames at interval ${interval}`);
 
             // Create canvas to render frames
             const canvas = document.createElement('canvas');
@@ -298,11 +413,22 @@
                 }
             }
 
-            for (const idx of indices) {
-                // Decode frame
-                const frameInfo = reader.frameInfo(idx);
-                const pixels = new Uint8ClampedArray(reader.width * reader.height * 4);
+            // GIF frames are usually deltas over the previous frame, so decode
+            // every frame in order into ONE buffer and snapshot the sampled
+            // ones. A fresh buffer per sample gave the classifier fragments.
+            const pixels = new Uint8ClampedArray(reader.width * reader.height * 4);
+            const lastIdx = indices[indices.length - 1];
+
+            for (let idx = 0; idx <= lastIdx; idx++) {
                 reader.decodeAndBlitFrameRGBA(idx, pixels);
+
+                const frameInfo = reader.frameInfo(idx);
+                const sampled = indices.includes(idx);
+
+                if (!sampled) {
+                    clearDisposedFrame(pixels, reader.width, frameInfo);
+                    continue;
+                }
 
                 // Create ImageData and draw to canvas
                 const imageData = new ImageData(pixels, reader.width, reader.height);
@@ -317,6 +443,7 @@
                 });
 
                 keyFrames.push({ img, frameNumber: idx + 1 });
+                clearDisposedFrame(pixels, reader.width, frameInfo);
             }
 
             return keyFrames;
@@ -347,14 +474,14 @@
                 if (window.tf) {
                     await window.tf.setBackend('webgl');
                     await window.tf.ready();
-                    console.log('[NSFW] TensorFlow backend set to:', window.tf.getBackend());
+                    debugLog('[NSFW] TensorFlow backend set to:', window.tf.getBackend());
                 }
 
                 // Load the self-hosted MobileNetV2Mid model as graph type
                 // Model files (model.json and shards) are served from /static/models/nsfwjs/
-                console.log('[NSFW] Loading model from /models/nsfwjs/ with type: graph');
+                debugLog('[NSFW] Loading model from /models/nsfwjs/ with type: graph');
                 nsfwModel = await window.nsfwjs.load('/models/nsfwjs/', { type: 'graph' });
-                console.log('[NSFW] Model loaded successfully!', nsfwModel);
+                debugLog('[NSFW] Model loaded successfully!', nsfwModel);
                 return nsfwModel;
             } catch (e) {
                 console.error('Failed to load NSFW model:', e);
@@ -427,11 +554,11 @@
     async function checkImageNSFW(imageUrl) {
         // Check cache first
         if (nsfwCache.has(imageUrl)) {
-            console.log('[NSFW] Using cached result for:', imageUrl);
+            debugLog('[NSFW] Using cached result for:', imageUrl);
             return nsfwCache.get(imageUrl);
         }
 
-        console.log('[NSFW] Checking image:', imageUrl);
+        debugLog('[NSFW] Checking image:', imageUrl);
 
         try {
             const model = await loadNSFWModel();
@@ -440,7 +567,7 @@
             const isGif = imageUrl.toLowerCase().match(/\.gif(\?|$)/);
 
             if (isGif) {
-                console.log('[NSFW] Detected GIF, extracting key frames...');
+                debugLog('[NSFW] Detected GIF, extracting key frames...');
 
                 // Try to extract and check key frames (first, middle, last)
                 const keyFrames = await extractGifFrames(imageUrl);
@@ -451,11 +578,11 @@
                     keyFrames.reverse();
 
                     for (const { img, frameNumber } of keyFrames) {
-                        console.log(`[NSFW] Classifying frame ${frameNumber}...`);
+                        debugLog(`[NSFW] Classifying frame ${frameNumber}...`);
                         const predictions = await model.classify(img);
                         const evaluation = evaluatePredictions(predictions);
 
-                        console.log(`[NSFW] Frame ${frameNumber}:`, evaluation.isNSFW ? '🚫 BLOCKED' : '✅ SAFE', {
+                        debugLog(`[NSFW] Frame ${frameNumber}:`, evaluation.isNSFW ? '🚫 BLOCKED' : '✅ SAFE', {
                             drawing: `${(evaluation.scores.drawing * 100).toFixed(1)}%`,
                             hentai: `${(evaluation.scores.hentai * 100).toFixed(1)}%`,
                             neutral: `${(evaluation.scores.neutral * 100).toFixed(1)}%`,
@@ -466,7 +593,7 @@
 
                         // If any frame is NSFW, block the entire GIF
                         if (evaluation.isNSFW) {
-                            console.log(`[NSFW] GIF BLOCKED due to frame ${frameNumber}`, {
+                            debugLog(`[NSFW] GIF BLOCKED due to frame ${frameNumber}`, {
                                 reason: evaluation.reason,
                                 violations: evaluation.violations
                             });
@@ -481,12 +608,12 @@
                     }
 
                     // All frames passed
-                    console.log('[NSFW] All frames safe ✅');
+                    debugLog('[NSFW] All frames safe ✅');
                     const result = { isNSFW: false, predictions: [], reason: null };
                     nsfwCache.set(imageUrl, result);
                     return result;
                 } else {
-                    console.log('[NSFW] Frame extraction failed, falling back to single-frame check');
+                    debugLog('[NSFW] Frame extraction failed, falling back to single-frame check');
                     // Fall through to single image check
                 }
             }
@@ -498,12 +625,12 @@
             const result = await new Promise((resolve, reject) => {
                 img.onload = async () => {
                     try {
-                        console.log('[NSFW] Image loaded, classifying...');
+                        debugLog('[NSFW] Image loaded, classifying...');
                         const predictions = await model.classify(img);
                         const evaluation = evaluatePredictions(predictions);
 
-                        console.log('[NSFW] Predictions:', predictions);
-                        console.log('[NSFW] Decision:', evaluation.isNSFW ? '🚫 BLOCKED' : '✅ SAFE', {
+                        debugLog('[NSFW] Predictions:', predictions);
+                        debugLog('[NSFW] Decision:', evaluation.isNSFW ? '🚫 BLOCKED' : '✅ SAFE', {
                             drawing: `${(evaluation.scores.drawing * 100).toFixed(1)}%`,
                             hentai: `${(evaluation.scores.hentai * 100).toFixed(1)}%`,
                             neutral: `${(evaluation.scores.neutral * 100).toFixed(1)}%`,
@@ -525,24 +652,23 @@
                 };
 
                 img.onerror = () => {
-                    console.warn('[NSFW] Image failed to load (CORS or network issue), allowing by default');
-                    // If image fails to load (CORS issues, etc.), allow it
-                    // Better to allow some potential NSFW than block all GIFs
-                    resolve({ isNSFW: false, predictions: [], reason: null });
+                    // Could not be loaded for classification (CORS, network).
+                    // That is "unverified", not "safe" - the caller decides.
+                    debugLog('[NSFW] Image failed to load, result is unverified');
+                    resolve({ isNSFW: false, unverified: true, predictions: [], reason: null });
                 };
 
+                img.referrerPolicy = 'no-referrer';
                 img.src = imageUrl;
             });
 
-            // Cache the result
-            nsfwCache.set(imageUrl, result);
+            // Cache real verdicts only, so a transient failure can be retried
+            if (!result.unverified) nsfwCache.set(imageUrl, result);
             return result;
         } catch (e) {
             console.error('[NSFW] Check failed:', e);
-            // If NSFW check fails, allow the image (fail open)
-            const result = { isNSFW: false, predictions: [], reason: null };
-            nsfwCache.set(imageUrl, result);
-            return result;
+            // Model or decode failure: unverified, and deliberately not cached
+            return { isNSFW: false, unverified: true, predictions: [], reason: null };
         }
     }
 
@@ -567,22 +693,38 @@
             gifSearch: root.querySelector('.irc-gif-search'),
             gifClose: root.querySelector('.irc-gif-close'),
             gifResults: root.querySelector('.irc-gif-results'),
+            gifBlur: root.querySelector('.irc-gif-blur-toggle input'),
+            charCount: root.querySelector('.irc-char-count'),
             termsInput: root.querySelector('.irc-nick-dialog input[type="checkbox"]')
         };
+
+        // Every document/window listener below is registered with this signal
+        // and released in ircCleanup - they close over this window's DOM, which
+        // is discarded on close and rebuilt on the next open.
+        const lifecycle = new AbortController();
+        const signal = lifecycle.signal;
 
         let chat, presence;
         let myNick = '';
         let myUUID = '';
         let seen = new Set();
         let allMessages = []; // Track all messages with {key, time} for cleanup
+        let legacyEvents = []; // Stored join/leave rows from older clients, pruned separately
         let online = {}; // Maps uuid -> {nick, uuid, status, lastSeen}
+        let rosterTimer = 0; // pending scheduleRoster() rebuild
+        let inRoom = {}; // Maps uuid -> nick for everyone whose join has been shown
+        const pendingLeaves = {}; // uuid -> timeout id for a silent (timed out) leave
+        let presenceSettled = false; // false while the initial presence snapshot streams in
+        const recvTimes = {}; // uuid -> send times of live messages (receive-side flood control)
+        let myTypingUntil = 0;
+        let lastTypingSent = 0;
+        let typingEl = null;
+        let logPinned = true; // was the log at the bottom before the last resize?
         let uuidCache = {}; // Maps nick -> uuid (persists even when offline)
         let hasLeft = false;
-        let lastSystemMsg = {}; // Track last system message per user to collapse duplicates
+        let sentFirstMessage = false;
         let joinTime = 0; // Track when user joined to avoid notifying for old messages
         let lastCursorPos = 0; // Track last known cursor position
-        const nsfwQueue = []; // Queue for NSFW checks
-        let isProcessingQueue = false; // Flag for queue processing
         let unreadCount = 0;      // messages that arrived while scrolled up
         let unreadMentions = 0;   // mentions that arrived while backgrounded
         let baseWindowTitle = '';
@@ -613,6 +755,10 @@
             timers.clear();
             timeouts.forEach(clearTimeout);
             timeouts.clear();
+            rosterTimer = 0;
+            Object.keys(pendingLeaves).forEach((uuid) => { delete pendingLeaves[uuid]; });
+            Object.keys(recvTimes).forEach((uuid) => { delete recvTimes[uuid]; });
+            presenceSettled = false;
             subscriptions.forEach((ev) => {
                 try { ev.off(); } catch (e) { /* ignore */ }
             });
@@ -633,7 +779,21 @@
 
         // Cleanup old messages from Gun.js to keep database size manageable
         function cleanupOldMessages() {
-            if (!chat || allMessages.length <= MAX_MESSAGES) return;
+            if (!chat) return;
+
+            // Join/leave rows are no longer written (they are derived from
+            // presence), but older clients left some behind. They are never
+            // shown, so expire them on their own clock instead of letting
+            // them count against - and evict - real conversation.
+            const expiry = Date.now() - LEGACY_EVENT_TTL;
+            legacyEvents = legacyEvents.filter((ev) => {
+                if (ev.time > expiry) return true;
+                chat.get(ev.key).put(null);
+                seen.delete(ev.key);
+                return false;
+            });
+
+            if (allMessages.length <= MAX_MESSAGES) return;
 
             // Sort messages by timestamp (oldest first)
             allMessages.sort((a, b) => (a.time || 0) - (b.time || 0));
@@ -642,7 +802,7 @@
             const deleteCount = allMessages.length - MAX_MESSAGES;
             const messagesToDelete = allMessages.slice(0, deleteCount);
 
-            console.log(`[IRC] Cleaning up ${deleteCount} old messages from Gun.js`);
+            debugLog(`[IRC] Cleaning up ${deleteCount} old messages from Gun.js`);
 
             // Delete old messages from Gun.js
             messagesToDelete.forEach(msg => {
@@ -652,36 +812,6 @@
 
             // Update allMessages array
             allMessages = allMessages.slice(deleteCount);
-        }
-
-        async function processNSFWQueue() {
-            if (isProcessingQueue) return;
-            if (nsfwQueue.length === 0) return;
-
-            isProcessingQueue = true;
-
-            try {
-                // Sort queue by timestamp descending (newest first)
-                nsfwQueue.sort((a, b) => b.timestamp - a.timestamp);
-
-                // Process items one by one
-                while (nsfwQueue.length > 0) {
-                    const item = nsfwQueue.shift(); // Take the highest priority item
-                    const { url, onSuccess, onFailure } = item;
-
-                    try {
-                        const result = await checkImageNSFW(url);
-                        onSuccess(result);
-                    } catch (e) {
-                        onFailure(e);
-                    }
-
-                    // Small delay to allow UI updates and prevent freezing
-                    await new Promise(r => setTimeout(r, 50));
-                }
-            } finally {
-                isProcessingQueue = false;
-            }
         }
 
         // Jump-to-latest pill. Auto-scrolling on every message used to drag the
@@ -702,10 +832,28 @@
             unreadPill.addEventListener('mousedown', (e) => e.stopPropagation());
             col.appendChild(unreadPill);
 
+            // "<nick> is typing…" line, floated over the bottom of the log so
+            // it never shifts the messages.
+            typingEl = document.createElement('div');
+            typingEl.className = 'irc-typing';
+            typingEl.hidden = true;
+            col.appendChild(typingEl);
+
             els.log.addEventListener('scroll', () => {
-                if (isPinnedToBottom()) clearUnread();
+                logPinned = isPinnedToBottom();
+                if (logPinned) clearUnread();
             }, { passive: true });
         })();
+
+        // Keep the newest message in view when the log itself changes size:
+        // on-screen keyboard, window resize/zoom, the input growing a line.
+        let logResizeObserver = null;
+        if (window.ResizeObserver) {
+            logResizeObserver = new ResizeObserver(() => {
+                if (logPinned) scrollToBottom();
+            });
+            logResizeObserver.observe(els.log);
+        }
 
         // Clear the mention badge as soon as the window is looked at
         root.addEventListener('mousedown', () => {
@@ -714,13 +862,28 @@
                 updateWindowBadge();
             }
         });
-        document.addEventListener('visibilitychange', () => updateWindowBadge());
+        document.addEventListener('visibilitychange', () => updateWindowBadge(), { signal });
 
         // Events
         els.nickBtn.addEventListener('click', join);
         els.logoutBtn.addEventListener('click', logout);
         els.gifBtn.addEventListener('click', toggleGifPicker);
         els.gifClose.addEventListener('click', closeGifPicker);
+
+        // "Blur GIFs in chat" - a click-to-reveal preference. Nothing is
+        // downloaded or classified on the receiving side.
+        let blurGifs = false;
+        try { blurGifs = localStorage.getItem('irc_blur_gifs') === '1'; } catch (e) { /* ignore */ }
+        if (els.gifBlur) {
+            els.gifBlur.checked = blurGifs;
+            els.gifBlur.addEventListener('change', () => {
+                blurGifs = els.gifBlur.checked;
+                try { localStorage.setItem('irc_blur_gifs', blurGifs ? '1' : '0'); } catch (e) { /* ignore */ }
+                els.log.querySelectorAll('.irc-gif-container').forEach((c) => {
+                    if (blurGifs) blurGif(c); else revealGif(c);
+                });
+            });
+        }
 
         // Terms checkbox handler
         els.termsInput.addEventListener('change', () => {
@@ -740,12 +903,23 @@
             }
         });
 
+        // The user list is a drawer on phones and always visible on desktop;
+        // aria-expanded on the "Online" button says which.
+        function syncOnlineHeader() {
+            const usersCol = els.users.parentElement;
+            const expanded = window.innerWidth > 768 || usersCol.classList.contains('mobile-visible');
+            els.onlineHeader.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+        }
+        syncOnlineHeader();
+
         // Mobile: Toggle user list when clicking "Online" header
         els.onlineHeader.addEventListener('click', () => {
             if (window.innerWidth <= 768) {
                 els.users.parentElement.classList.toggle('mobile-visible');
+                syncOnlineHeader();
             }
         });
+        els.onlineHeader.addEventListener('mousedown', e => e.stopPropagation());
 
         // Mobile: Close user list when clicking outside of it
         document.addEventListener('click', (e) => {
@@ -755,9 +929,10 @@
                     !usersCol.contains(e.target) &&
                     !els.onlineHeader.contains(e.target)) {
                     usersCol.classList.remove('mobile-visible');
+                    syncOnlineHeader();
                 }
             }
-        });
+        }, { signal });
 
         // Mobile: Close GIF picker when clicking outside (only on mobile)
         document.addEventListener('click', (e) => {
@@ -768,7 +943,7 @@
                     closeGifPicker();
                 }
             }
-        });
+        }, { signal });
 
 
         // Update timestamps when switching between mobile and desktop
@@ -776,6 +951,7 @@
         window.addEventListener('resize', () => {
             clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(() => {
+                syncOnlineHeader();
                 // Refresh all timestamps
                 els.log.querySelectorAll('.irc-msg-time').forEach(timeEl => {
                     const timestamp = parseInt(timeEl.dataset.timestamp);
@@ -784,7 +960,7 @@
                     }
                 });
             }, 250); // Debounce for 250ms
-        });
+        }, { signal });
 
         // Play notification sound (Discord-like)
         // Reuses one AudioContext: browsers cap concurrent contexts (~6 in Chrome),
@@ -845,11 +1021,15 @@
 
         async function searchGifs(query) {
             try {
-                const endpoint = query
-                    ? `${KLIPY_API_BASE}/search?q=${encodeURIComponent(query)}&key=${KLIPY_API_KEY}&client_key=irc-chat&limit=20`
-                    : `${KLIPY_API_BASE}/featured?key=${KLIPY_API_KEY}&client_key=irc-chat&limit=20`;
+                const endpointFor = (direct) => query
+                    ? gifEndpoint('search', { q: query, client_key: 'irc-chat', limit: 20 }, direct)
+                    : gifEndpoint('featured', { client_key: 'irc-chat', limit: 20 }, direct);
 
-                const response = await fetch(endpoint);
+                let response = await fetch(endpointFor(false));
+                // 503 = the Worker is deployed but has no Klipy secret yet:
+                // use the direct call until it does.
+                if (response.status === 503) response = await fetch(endpointFor(true));
+                if (!response.ok) throw new Error('GIF search returned ' + response.status);
                 const data = await response.json();
 
                 els.gifResults.innerHTML = '';
@@ -859,30 +1039,41 @@
                         const previewUrl = getGifFormatUrl(gif, 'tinygif') || getGifFormatUrl(gif, 'nanogif') || gif.url;
                         const gifUrl = getGifFormatUrl(gif, 'gif') || getGifFormatUrl(gif, 'mediumgif') || gif.url;
 
-                        if (!previewUrl || !gifUrl) return;
+                        // Anything off the Klipy media host could not be
+                        // rendered by the other side anyway.
+                        if (!isAllowedGifUrl(previewUrl) || !isAllowedGifUrl(gifUrl)) return;
 
                         const gifItem = document.createElement('div');
                         gifItem.className = 'irc-gif-item';
+                        gifItem.tabIndex = 0;
+                        gifItem.setAttribute('role', 'button');
 
                         const img = document.createElement('img');
+                        img.referrerPolicy = 'no-referrer';
                         img.src = previewUrl;
                         img.alt = gif.content_description || gif.title || 'GIF';
 
                         gifItem.appendChild(img);
                         gifItem.onclick = () => sendGif(gifUrl);
+                        gifItem.onkeydown = (e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                sendGif(gifUrl);
+                            }
+                        };
 
                         els.gifResults.appendChild(gifItem);
                     });
 
                     if (!els.gifResults.children.length) {
-                        els.gifResults.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #999;">No GIFs found</div>';
+                        els.gifResults.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: var(--text-tertiary);">No GIFs found</div>';
                     }
                 } else {
-                    els.gifResults.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #999;">No GIFs found</div>';
+                    els.gifResults.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: var(--text-tertiary);">No GIFs found</div>';
                 }
             } catch (e) {
                 console.error('Failed to fetch GIFs:', e);
-                els.gifResults.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #e74c3c;">Failed to load GIFs</div>';
+                els.gifResults.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: var(--danger-text);">Failed to load GIFs</div>';
             }
         }
 
@@ -892,10 +1083,11 @@
 
         async function sendGif(gifUrl) {
             if (!chat || !myNick) return;
+            if (!isAllowedGifUrl(gifUrl)) return;
 
             // Show loading state
             const loadingMsg = document.createElement('div');
-            loadingMsg.style.cssText = 'grid-column: 1/-1; text-align: center; padding: 20px; color: #5a9;';
+            loadingMsg.style.cssText = 'grid-column: 1/-1; text-align: center; padding: 20px; color: var(--text-tertiary);';
             loadingMsg.textContent = 'Checking GIF...';
             els.gifResults.innerHTML = '';
             els.gifResults.appendChild(loadingMsg);
@@ -906,7 +1098,7 @@
 
                 if (result.isNSFW) {
                     // Show error message
-                    els.gifResults.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: #e74c3c;">
+                    els.gifResults.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: var(--danger-text);">
                         <strong>GIF Blocked</strong><br>
                         This GIF was flagged as potentially inappropriate (${result.reason}).<br>
                         Please choose a different GIF.
@@ -920,14 +1112,23 @@
                     return;
                 }
 
-                // GIF is safe, send it
+                // The check could not run (model or GIF failed to load). Do
+                // not treat that as "safe": the sender decides explicitly.
+                if (result.unverified) {
+                    const ok = await confirmSheet('Could not check this GIF',
+                        'The content check did not run, so this GIF is unverified. Send it anyway?',
+                        { confirmLabel: 'Send' });
+                    if (!ok) {
+                        searchGifs(els.gifSearch.value.trim());
+                        return;
+                    }
+                }
+
                 publishMessage(gifUrl, 'gif');
                 closeGifPicker();
             } catch (e) {
                 console.error('Error checking GIF:', e);
-                // If check fails, allow the GIF (fail open)
-                publishMessage(gifUrl, 'gif');
-                closeGifPicker();
+                els.gifResults.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: var(--danger-text);">Could not send GIF</div>';
             }
         }
 
@@ -1161,15 +1362,8 @@
         function handleInputKey(e) {
             e.stopPropagation(); // Critical for typing to work!
 
-            // Handle Tab key in message input
-            if (e.key === 'Tab' && e.target === els.msgInput) {
-                e.preventDefault();
-                insertTextAtCursor('\t');
-                // Update colors and cursor position after tab insertion
-                lastCursorPos = getCursorPosition();
-                updateInputColors();
-                return;
-            }
+            // Tab is deliberately left alone: it must move focus out of the
+            // message box (it used to insert a tab character and trap focus).
 
             if (e.key === 'Enter') {
                 if (e.target === els.nickInput) {
@@ -1192,7 +1386,9 @@
             e.stopPropagation();
 
             // Get plain text from clipboard
-            const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+            // Capped: nothing longer than MAX_TEXT can be sent anyway, and a
+            // multi-megabyte paste would stall the mention colouring.
+            const text = (e.clipboardData || window.clipboardData).getData('text/plain').slice(0, MAX_TEXT);
 
             if (text) {
                 // Insert text at cursor position
@@ -1200,6 +1396,7 @@
                 // Update colors and cursor position after paste
                 lastCursorPos = getCursorPosition();
                 updateInputColors();
+                updateCharCount();
             }
         });
 
@@ -1207,7 +1404,53 @@
         els.msgInput.addEventListener('input', () => {
             updateInputColors();
             lastCursorPos = getCursorPosition();
+            updateCharCount();
+            noteTyping();
         });
+
+        // Length counter, shown only once the limit is in sight
+        function updateCharCount() {
+            if (!els.charCount) return;
+            const len = getInputText().trim().length;
+            els.charCount.hidden = len < MAX_TEXT - 100;
+            els.charCount.textContent = `${len}/${MAX_TEXT}`;
+            els.charCount.classList.toggle('over', len > MAX_TEXT);
+        }
+
+        // Typing indicator, carried on the presence record other clients
+        // already subscribe to. Throttled so typing costs one write per 2.5s.
+        function noteTyping() {
+            if (!myNick || !presence) return;
+            const now = Date.now();
+            const text = getInputText();
+            if (!text.trim() || text.startsWith('/')) return;
+            if (now - lastTypingSent < 2500) return;
+            lastTypingSent = now;
+            myTypingUntil = now + TYPING_TTL_MS;
+            announce();
+        }
+
+        function stopTyping() {
+            if (!myTypingUntil) return;
+            myTypingUntil = 0;
+            lastTypingSent = 0;
+            announce();
+        }
+
+        function updateTyping() {
+            if (!typingEl) return;
+            const now = Date.now();
+            const names = Object.keys(online)
+                .filter(uuid => uuid !== myUUID && online[uuid].typingUntil > now)
+                .map(uuid => online[uuid].nick);
+            typingEl.hidden = names.length === 0;
+            if (!names.length) return;
+            typingEl.textContent = names.length === 1
+                ? `${names[0]} is typing…`
+                : names.length <= 3
+                    ? `${names.join(', ')} are typing…`
+                    : 'Several people are typing…';
+        }
 
         // Track cursor position on click, keyup, and selection change
         els.msgInput.addEventListener('click', () => {
@@ -1226,16 +1469,43 @@
         els.logoutBtn.addEventListener('mousedown', e => e.stopPropagation());
         els.gifBtn.addEventListener('mousedown', e => e.stopPropagation());
 
+        // The login footer's markup says "Server Status: Online" whatever the
+        // relays are doing. Report the real connection state instead.
+        const loginStatus = root.querySelector('.irc-login-footer span');
+        if (loginStatus) {
+            let offLoginStatus = null;
+            let relayUp = false;
+            let gaveUpWaiting = false;
+            const showLoginStatus = () => {
+                loginStatus.textContent = 'Server Status: ' +
+                    (relayUp ? 'Online' : (gaveUpWaiting ? 'Offline' : 'Connecting…'));
+            };
+            showLoginStatus();
+            // A first connection takes a moment; only call it offline after that.
+            const loginStatusTimer = setTimeout(() => { gaveUpWaiting = true; showLoginStatus(); }, 4000);
+            loadGun().then(() => {
+                if (signal.aborted || !window.SiteGun.getConnection) return;
+                offLoginStatus = window.SiteGun.getConnection().onChange((connected) => {
+                    relayUp = connected;
+                    showLoginStatus();
+                });
+            }).catch(() => { gaveUpWaiting = true; showLoginStatus(); });
+            signal.addEventListener('abort', () => {
+                clearTimeout(loginStatusTimer);
+                if (offLoginStatus) offLoginStatus();
+            });
+        }
+
         // Load saved nick and auto-join if present
-        let savedNick = localStorage.getItem('irc_nick');
-        const termsAccepted = localStorage.getItem('irc_tos_accepted');
+        let savedNick = ircStore.get('irc_nick');
+        const termsAccepted = ircStore.get('irc_tos_accepted');
 
         // Replace spaces with underscores in saved nickname
         if (savedNick) {
             const sanitizedNick = savedNick.replace(/ /g, '_');
             if (sanitizedNick !== savedNick) {
                 // Update localStorage with sanitized version
-                localStorage.setItem('irc_nick', sanitizedNick);
+                ircStore.set('irc_nick', sanitizedNick);
                 savedNick = sanitizedNick;
             }
         }
@@ -1271,14 +1541,14 @@
             }
 
             // Save nick and terms acceptance
-            localStorage.setItem('irc_nick', nick);
-            localStorage.setItem('irc_tos_accepted', 'true');
+            ircStore.set('irc_nick', nick);
+            ircStore.set('irc_tos_accepted', 'true');
 
             // Get or generate UUID
-            let uuid = localStorage.getItem('irc_uuid');
+            let uuid = ircStore.get('irc_uuid');
             if (!uuid) {
                 uuid = generateUUID();
-                localStorage.setItem('irc_uuid', uuid);
+                ircStore.set('irc_uuid', uuid);
             }
 
             myNick = nick;
@@ -1288,6 +1558,7 @@
             els.inputNick.textContent = myNick + '>';
             els.inputNick.style.color = uuidToColor(myUUID); // Apply user's color
             els.msgInput.setAttribute('contenteditable', 'true');
+            els.msgInput.setAttribute('aria-disabled', 'false');
             els.msgInput.setAttribute('data-placeholder', 'Write to #general (Shift+Enter for newline)');
             els.msgInput.focus();
             els.logoutBtn.style.display = 'flex'; // Show logout button
@@ -1298,10 +1569,10 @@
         function logout() {
             if (!myNick) return;
 
-            // Broadcast leave message
+            // Leaving is signalled by clearing our presence record; other
+            // clients derive "left the room" from that.
             if (chat && presence && !hasLeft) {
                 hasLeft = true;
-                publishMessage('left the room', 'system');
                 presence.get(myUUID).put(null);
             }
 
@@ -1310,19 +1581,25 @@
             teardownConnection();
 
             // Clear localStorage
-            localStorage.removeItem('irc_nick');
-            localStorage.removeItem('irc_tos_accepted');
+            ircStore.remove('irc_nick');
+            ircStore.remove('irc_tos_accepted');
 
             // Reset UI
             myNick = '';
             seen.clear();
             allMessages = [];
+            legacyEvents = [];
             online = {};
+            inRoom = {};
             uuidCache = {};
             hasLeft = false;
-            lastSystemMsg = {};
             joinTime = 0;
             lastCursorPos = 0;
+            myTypingUntil = 0;
+            lastTypingSent = 0;
+            unreadMentions = 0;
+            updateWindowBadge();
+            updateTyping();
 
             els.log.innerHTML = '';
             els.users.innerHTML = '';
@@ -1331,10 +1608,12 @@
             els.termsInput.checked = false;
             els.nickBtn.disabled = true;
             els.msgInput.setAttribute('contenteditable', 'false');
+            els.msgInput.setAttribute('aria-disabled', 'true');
             els.msgInput.textContent = '';
+            updateCharCount();
             els.msgInput.setAttribute('data-placeholder', 'Type a message (Shift+Enter for newline)...');
             els.inputNick.textContent = 'guest>';
-            els.inputNick.style.color = '#333'; // Reset to default color
+            els.inputNick.style.color = ''; // Back to the stylesheet colour (either appearance)
             els.status.textContent = 'Connecting...';
             els.logoutBtn.style.display = 'none'; // Hide logout button
             els.gifBtn.disabled = true; // Disable GIF button
@@ -1350,6 +1629,10 @@
 
             joinTime = Date.now();
             els.log.innerHTML = '';
+            // History streams in as a burst; keep screen readers from reading
+            // all of it out as if it had just been said.
+            els.log.setAttribute('aria-busy', 'true');
+            trackTimeout(setTimeout(() => els.log.removeAttribute('aria-busy'), 3000));
 
             const snapshot = await scanPresence(presence);
             if (nickTakenByOther(snapshot, myNick, myUUID)) {
@@ -1364,10 +1647,22 @@
                 trackSubscription(ev);
                 if (!data) return;
 
-                const m = parseGunData(data);
-                if (!m || !m.nick || !m.text) return;
+                const m = sanitizeMessage(parseGunData(data));
+                if (!m) return;
 
-                if (m.uuid && m.nick) {
+                const isSysMsg = m.type === 'system';
+
+                // Join/leave rows written by older clients: never shown (they
+                // are derived from presence now), only tracked for expiry.
+                if (isSysMsg && isJoinLeaveText(m.text)) {
+                    if (!seen.has(key)) {
+                        seen.add(key);
+                        legacyEvents.push({ key: key, time: m.time });
+                    }
+                    return;
+                }
+
+                if (m.uuid && !isSysMsg) {
                     uuidCache[m.nick] = m.uuid;
                 }
 
@@ -1379,14 +1674,12 @@
 
                 allMessages.push({
                     key: key,
-                    time: m.time || Date.now()
+                    time: m.time
                 });
 
-                const isSysMsg = m.type === 'system';
-                const isJoinLeave = isSysMsg && (m.text.includes('entered the room') || m.text.includes('left the room'));
-                const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
-
-                if (isJoinLeave && m.time && m.time < fiveMinutesAgo) {
+                // Receive-side flood control for live traffic. Like the send
+                // limit this is courtesy, not security: uuids are unsigned.
+                if (m.time >= joinTime && m.uuid !== myUUID && isPeerFlooding(m.uuid || m.nick, m.time)) {
                     return;
                 }
 
@@ -1396,14 +1689,18 @@
             announce();
             trackInterval(setInterval(announce, 5000));
 
-            trackTimeout(setTimeout(() => {
-                publishMessage('entered the room', 'system');
-            }, 500));
+            // Our own join is shown locally; nothing is written to the
+            // messages node for it.
+            inRoom[myUUID] = myNick;
+            addMsg(myNick, 'entered the room', true, false, Date.now(), myUUID);
+
+            // Everyone already in the room arrives in the first presence
+            // burst - those are not joins.
+            trackTimeout(setTimeout(() => { presenceSettled = true; }, 2500));
 
             onBeforeUnload = () => {
                 if (myNick && presence && !hasLeft) {
                     hasLeft = true;
-                    publishMessage('left the room', 'system');
                     presence.get(myUUID).put(null);
                 }
             };
@@ -1412,28 +1709,43 @@
             presence.map().on(function (data, uuid, _msg, ev) {
                 trackSubscription(ev);
                 if (!data) {
+                    // An explicit leave (logout, window or tab closed)
                     if (online[uuid]) {
                         delete online[uuid];
                         updateUsers();
+                        noteLeft(uuid);
                     }
                     return;
                 }
 
-                const p = parseGunData(data);
-                if (p && p.nick && p.lastSeen) {
-                    if (Date.now() - p.lastSeen > PRESENCE_TIMEOUT) return;
+                const p = sanitizePresence(parseGunData(data));
+                if (p) {
+                    const age = Date.now() - p.lastSeen;
+                    if (age > PRESENCE_TIMEOUT) {
+                        // Abandoned record (tab killed without a clean leave)
+                        if (age > STALE_PURGE_MS) presence.get(uuid).put(null);
+                        return;
+                    }
+                    delete stalePresence[uuid];
 
                     if (p.uuid) {
                         uuidCache[p.nick] = p.uuid;
                     }
 
+                    // A flood of fake ids must not grow the list without
+                    // limit; people already listed keep refreshing.
+                    if (!online[uuid] && uuid !== myUUID &&
+                        Object.keys(online).length >= MAX_ONLINE) return;
+
                     online[uuid] = p;
-                    updateUsers();
+                    scheduleRoster();
+                    if (uuid !== myUUID) noteJoined(uuid, p.nick);
                 }
             });
 
             trackInterval(setInterval(cleanStale, 10000));
             trackInterval(setInterval(cleanupOldMessages, 30000));
+            trackInterval(setInterval(updateTyping, 1000));
 
             trackInterval(setInterval(() => {
                 els.log.querySelectorAll('.irc-msg-time').forEach(timeEl => {
@@ -1474,8 +1786,42 @@
                 nick: myNick,
                 uuid: myUUID,
                 status: 'online',
-                lastSeen: Date.now()
+                lastSeen: Date.now(),
+                typingUntil: myTypingUntil > Date.now() ? myTypingUntil : 0
             });
+        }
+
+        // Join/leave lines are derived here from the presence subscription
+        // instead of being stored as messages, where every open/close of the
+        // window used to push real conversation out of the 110-row history.
+        const STALE_PURGE_MS = 10 * 60 * 1000;
+        const stalePresence = {}; // uuid -> lastSeen of records that timed out
+
+        function cancelPendingLeave(uuid) {
+            if (!pendingLeaves[uuid]) return;
+            clearTimeout(pendingLeaves[uuid]);
+            timeouts.delete(pendingLeaves[uuid]);
+            delete pendingLeaves[uuid];
+        }
+
+        function noteJoined(uuid, nick) {
+            cancelPendingLeave(uuid);
+            const known = inRoom[uuid];
+            inRoom[uuid] = nick;
+            if (!presenceSettled) return;
+            if (known === undefined) {
+                addMsg(nick, 'entered the room', true, false, Date.now(), uuid);
+            } else if (known !== nick) {
+                addMsg('', `@${known} is now known as @${nick}`, true);
+            }
+        }
+
+        function noteLeft(uuid) {
+            cancelPendingLeave(uuid);
+            const nick = inRoom[uuid];
+            if (nick === undefined || uuid === myUUID) return;
+            delete inRoom[uuid];
+            if (presenceSettled) addMsg(nick, 'left the room', true, false, Date.now(), uuid);
         }
 
         function cleanStale() {
@@ -1484,13 +1830,63 @@
 
             Object.keys(online).forEach(uuid => {
                 if (now - online[uuid].lastSeen > PRESENCE_TIMEOUT) {
-                    if (presence) presence.get(uuid).put(null);
+                    // A missed heartbeat is not a leave: background tabs are
+                    // timer-throttled and come back. Drop them from the list
+                    // now, but only say "left" if they stay gone, and leave
+                    // the record alone so nobody mistakes this for a clean exit.
+                    stalePresence[uuid] = online[uuid].lastSeen;
                     delete online[uuid];
                     changed = true;
+                    if (uuid !== myUUID && !pendingLeaves[uuid]) {
+                        pendingLeaves[uuid] = trackTimeout(setTimeout(() => {
+                            timeouts.delete(pendingLeaves[uuid]);
+                            delete pendingLeaves[uuid];
+                            noteLeft(uuid);
+                        }, LEAVE_GRACE_MS));
+                    }
                 }
             });
 
-            if (changed) updateUsers();
+            // Purge records that have been dead long enough to be abandoned
+            Object.keys(stalePresence).forEach(uuid => {
+                if (now - stalePresence[uuid] > STALE_PURGE_MS) {
+                    if (presence) presence.get(uuid).put(null);
+                    delete stalePresence[uuid];
+                }
+            });
+
+            if (changed) {
+                updateUsers();
+                updateTyping();
+            }
+        }
+
+        // Counts by the time each message was sent, not when it reached us.
+        // A reconnect or a laptop waking up delivers minutes of honest
+        // conversation in one batch; counting arrivals hid all but the first
+        // ten of those, for good, because the row is already in `seen`.
+        function isPeerFlooding(id, sentAt) {
+            const times = recvTimes[id] || (recvTimes[id] = []);
+            times.push(sentAt);
+            if (times.length > 200) times.shift();
+            let inWindow = 0;
+            for (let i = 0; i < times.length; i++) {
+                if (times[i] <= sentAt && sentAt - times[i] < FLOOD_WINDOW_MS) inWindow++;
+            }
+            // A little slack over the send limit for clock jitter
+            return inWindow > FLOOD_MAX_MESSAGES + 2;
+        }
+
+        // Presence records arrive in bursts (initial snapshot, heartbeats);
+        // rebuild the list and typing line once per burst, not per record.
+        function scheduleRoster() {
+            if (rosterTimer) return;
+            rosterTimer = trackTimeout(setTimeout(() => {
+                timeouts.delete(rosterTimer);
+                rosterTimer = 0;
+                updateUsers();
+                updateTyping();
+            }, 100));
         }
 
         function updateUsers() {
@@ -1548,6 +1944,11 @@
                     return;
                 }
                 sendTimes.push(Date.now());
+                // First message of this chat window (shell analytics hook)
+                if (!sentFirstMessage) {
+                    sentFirstMessage = true;
+                    if (window.track) window.track('irc_first_message');
+                }
             }
 
             const isAction = forceAction;
@@ -1560,12 +1961,83 @@
                 action: isAction,
                 type: type
             });
+            // The desktop's unread dot on the IRC icon (mavericks.js, setupIrcUnreadDot)
+            if (type !== 'system' && window.SiteGun.paths.apps.ircLatest) {
+                window.SiteGun.paths.apps.ircLatest(IRC_CHANNEL).put(Date.now());
+            }
+        }
+
+        // /nick <name>: rename in place. Unlike logging out and back in this
+        // keeps the terms acceptance, the uuid (so the colour) and the session.
+        function changeNick(requested) {
+            const nick = requested.trim().replace(/ /g, '_').slice(0, MAX_NICK);
+            if (!nick) {
+                addMsg('', 'Usage: /nick newname', true);
+                return;
+            }
+            if (nick === myNick) return;
+            if (nickTakenByOther(online, nick, myUUID)) {
+                addMsg('', `"${nick}" is already in use.`, true);
+                return;
+            }
+            const old = myNick;
+            myNick = nick;
+            inRoom[myUUID] = nick;
+            ircStore.set('irc_nick', nick);
+            els.inputNick.textContent = myNick + '>';
+            announce();
+            setConnectionStatus();
+            addMsg('', `@${old} is now known as @${nick}`, true);
+        }
+
+        // /notify: opt in to (or out of) desktop notifications for mentions.
+        // Permission is only ever requested from this explicit command.
+        function toggleNotifications() {
+            if (!('Notification' in window)) {
+                addMsg('', 'This browser does not support notifications.', true);
+                return;
+            }
+            let enabled = false;
+            try { enabled = localStorage.getItem('irc_notify') === '1'; } catch (e) { /* ignore */ }
+            if (enabled) {
+                try { localStorage.setItem('irc_notify', '0'); } catch (e) { /* ignore */ }
+                addMsg('', 'Mention notifications turned off.', true);
+                return;
+            }
+            const granted = (permission) => {
+                if (permission === 'granted') {
+                    try { localStorage.setItem('irc_notify', '1'); } catch (e) { /* ignore */ }
+                    addMsg('', 'Mention notifications turned on. /notify again to turn them off.', true);
+                } else {
+                    addMsg('', 'Notifications are blocked for this site in your browser settings.', true);
+                }
+            };
+            if (Notification.permission === 'default') {
+                try {
+                    const req = Notification.requestPermission(granted);
+                    if (req && typeof req.then === 'function') req.then(granted, () => granted('denied'));
+                } catch (e) {
+                    granted('denied');
+                }
+            } else {
+                granted(Notification.permission);
+            }
         }
 
         function send() {
             const text = getInputText().trim();
             if (!text) return;
+
+            if (text.length > MAX_TEXT) {
+                // Keep the draft so it can be shortened rather than retyped
+                addMsg('', `Message too long (${text.length}/${MAX_TEXT} characters).`, true);
+                updateCharCount();
+                return;
+            }
+
             setInputText('');
+            updateCharCount();
+            stopTyping();
 
             // Check for help command
             if (text === '/help' || text === '/commands') {
@@ -1573,6 +2045,9 @@
                 const textReplacements = Object.keys(TEXT_REPLACEMENTS).sort().map(c => `/${c}`).join(', ');
 
                 const helpText = `### Available Commands
+**Chat:**
+\`/me does something, /nick newname, /clear, /notify\`
+
 **Actions:**
 \`${actionCmds}\`
 
@@ -1589,6 +2064,29 @@
                 const parts = text.slice(1).split(' ');
                 const command = parts[0].toLowerCase();
                 const target = parts.slice(1).join(' ').trim();
+
+                if (command === 'me') {
+                    if (target) publishMessage(target, 'msg', true);
+                    else addMsg('', 'Usage: /me does something', true);
+                    return;
+                }
+
+                if (command === 'nick') {
+                    changeNick(target);
+                    return;
+                }
+
+                if (command === 'clear') {
+                    // Local only - the history is still there for everyone else
+                    els.log.innerHTML = '';
+                    clearUnread();
+                    return;
+                }
+
+                if (command === 'notify') {
+                    toggleNotifications();
+                    return;
+                }
 
                 // Check for text replacement commands
                 if (TEXT_REPLACEMENTS[command]) {
@@ -1614,6 +2112,13 @@
 
                     // Send as action message
                     publishMessage(actionText, 'msg', true);
+                    return;
+                }
+
+                // A bare /word that is not a command is almost always a typo;
+                // anything else starting with a slash (a path, say) is sent.
+                if (/^[a-z0-9]+$/.test(command)) {
+                    addMsg('', `Unknown command /${command}. Try /help`, true);
                     return;
                 }
             }
@@ -1807,7 +2312,7 @@
 
                     // If last message is same user doing same action, skip this duplicate
                     if (lastNick === currentNick && lastMsg?.textContent?.trim() === fullText?.trim()) {
-                        console.log(`[IRC] Skipping duplicate ${text} for ${nick}`);
+                        debugLog(`[IRC] Skipping duplicate ${text} for ${nick}`);
                         return;
                     }
                 }
@@ -1882,63 +2387,46 @@
             textEl.className = 'irc-msg-text';
 
             // Handle GIF messages
-            if (isGif) {
+            if (isGif && !isAllowedGifUrl(text)) {
+                // A "GIF" that is not an https URL on the Klipy media host is
+                // some peer trying to make every reader's browser fetch an
+                // arbitrary address. Never load it, never link it.
+                const blocked = document.createElement('span');
+                blocked.className = 'irc-msg-blocked';
+                blocked.textContent = '[blocked link]';
+                textEl.appendChild(blocked);
+            } else if (isGif) {
                 const gifContainer = document.createElement('div');
                 gifContainer.className = 'irc-gif-container';
 
+                // A real link (not window.open on untrusted text): opens in a
+                // new tab, never in a proxied desktop window.
+                const gifLink = document.createElement('a');
+                gifLink.className = 'irc-gif-link';
+                gifLink.href = text;
+                gifLink.target = '_blank';
+                gifLink.rel = 'noopener noreferrer';
+                gifLink.dataset.open = 'tab';
+                gifLink.title = 'Open GIF in a new tab';
+                gifLink.addEventListener('click', (e) => e.stopPropagation());
+
                 const gifImg = document.createElement('img');
+                gifImg.referrerPolicy = 'no-referrer';
                 gifImg.src = text;
                 gifImg.className = 'irc-msg-gif';
-                gifImg.alt = 'GIF';
+                gifImg.alt = 'GIF from ' + nick;
                 gifImg.loading = 'lazy';
                 // Only chase the bottom if the reader is already there
                 gifImg.onload = () => { if (isPinnedToBottom(true)) scrollToBottom(); };
 
-                gifContainer.appendChild(gifImg);
+                gifLink.appendChild(gifImg);
+                gifContainer.appendChild(gifLink);
                 textEl.appendChild(gifContainer);
 
-                // Check if GIF is NSFW (second layer of protection)
-                // Check if GIF is NSFW (second layer of protection)
-                // Add to queue with timestamp for prioritization
-                nsfwQueue.push({
-                    url: text,
-                    timestamp: timestamp || Date.now(),
-                    onSuccess: (result) => {
-                        if (result.isNSFW) {
-                            // Blur the GIF
-                            gifContainer.classList.add('nsfw-blurred');
-
-                            // Add overlay
-                            const overlay = document.createElement('div');
-                            overlay.className = 'irc-gif-nsfw-overlay';
-                            overlay.innerHTML = `
-                                <strong>Blocked content</strong>
-                                <small>Click to reveal</small>
-                            `;
-
-                            // Click to reveal
-                            overlay.onclick = (e) => {
-                                e.stopPropagation();
-                                gifContainer.classList.remove('nsfw-blurred');
-                                overlay.remove();
-                                // After revealing, allow opening in new tab
-                                gifImg.onclick = () => window.open(text, '_blank');
-                            };
-
-                            gifContainer.appendChild(overlay);
-                        } else {
-                            // Safe GIF - allow opening in new tab
-                            gifImg.onclick = () => window.open(text, '_blank');
-                        }
-                    },
-                    onFailure: (e) => {
-                        // If check fails, allow the GIF
-                        gifImg.onclick = () => window.open(text, '_blank');
-                    }
-                });
-
-                // Trigger queue processing
-                processNSFWQueue();
+                // No receiver-side classification: the URL is pinned to the
+                // Klipy media host, and readers who want more can keep GIFs
+                // blurred until clicked (GIF picker > "Blur GIFs in chat").
+                if (blurGifs) blurGif(gifContainer);
             } else {
                 // Determine the full text to display
                 // fullText is now calculated at top of function
@@ -1951,10 +2439,13 @@
             row.appendChild(nickEl);
             row.appendChild(textEl);
 
-            // Add delete button for non-system messages (or all messages as requested)
-            // Allowing deletion of any message, but visually only easy to click on hover
-            if (!isSystem && key) {
+            // Delete button on your own messages only. This is a UI courtesy,
+            // not access control: rows are unsigned, so a peer writing to the
+            // relay directly can still overwrite any key.
+            if (!isSystem && key && userUuid && userUuid === myUUID) {
                 const delBtn = document.createElement('button');
+                delBtn.type = 'button';
+                delBtn.setAttribute('aria-label', 'Delete message');
                 delBtn.className = 'irc-delete-btn';
                 delBtn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
                 delBtn.title = 'Delete message';
@@ -2028,6 +2519,55 @@
             if (mentionsMe && isNewMessage) {
                 unreadMentions++;
                 updateWindowBadge();
+                notifyMention(nick, isGif ? 'sent a GIF' : text);
+            }
+        }
+
+        function blurGif(container) {
+            if (container.classList.contains('nsfw-blurred')) return;
+            container.classList.add('nsfw-blurred');
+            const link = container.querySelector('.irc-gif-link');
+            if (link) link.tabIndex = -1;
+
+            const overlay = document.createElement('button');
+            overlay.type = 'button';
+            overlay.className = 'irc-gif-nsfw-overlay';
+            overlay.innerHTML = '<strong>GIF hidden</strong><small>Click to reveal</small>';
+            overlay.addEventListener('click', (e) => {
+                e.stopPropagation();
+                revealGif(container);
+            });
+            overlay.addEventListener('mousedown', (e) => e.stopPropagation());
+            container.appendChild(overlay);
+        }
+
+        function revealGif(container) {
+            container.classList.remove('nsfw-blurred');
+            const link = container.querySelector('.irc-gif-link');
+            if (link) link.removeAttribute('tabindex');
+            const overlay = container.querySelector('.irc-gif-nsfw-overlay');
+            if (overlay) overlay.remove();
+        }
+
+        // Desktop notification for a mention, only after an explicit /notify
+        // opt-in and only while the tab is in the background.
+        function notifyMention(fromNick, body) {
+            if (document.visibilityState === 'visible') return;
+            if (!('Notification' in window) || Notification.permission !== 'granted') return;
+            try {
+                if (localStorage.getItem('irc_notify') !== '1') return;
+                const n = new Notification(`${fromNick} mentioned you in #${IRC_CHANNEL}`, {
+                    body: String(body).slice(0, 140),
+                    tag: 'irc-mention',
+                    icon: '/pfp.png'
+                });
+                n.onclick = () => {
+                    window.focus();
+                    n.close();
+                };
+            } catch (e) {
+                // Constructor throws on some mobile browsers - the beep and
+                // title prefix still fire.
             }
         }
 
@@ -2077,12 +2617,25 @@
                 titleEl.textContent = `${baseWindowTitle} (${unreadMentions})`;
             }
 
+            updateTabTitle();
+
             const chip = document.querySelector(`.menubar-min-chip[data-tray-for="irc-chat"] .menubar-min-label`);
             if (chip && baseWindowTitle) {
                 chip.textContent = unreadMentions > 0
                     ? `${baseWindowTitle} (${unreadMentions})`
                     : baseWindowTitle;
             }
+        }
+
+        // "(n) " mention prefix on the browser tab while it is in the
+        // background. The shell owns document.title, so this only ever adds or
+        // strips its own prefix around whatever the title currently is.
+        function updateTabTitle() {
+            const current = document.title.replace(/^\(\d+\) /, '');
+            const next = unreadMentions > 0 && document.visibilityState !== 'visible'
+                ? `(${unreadMentions}) ${current}`
+                : current;
+            if (next !== document.title) document.title = next;
         }
 
         function updateMsg(key, m) {
@@ -2152,7 +2705,7 @@
                         textEl.style.color = '';
                         textEl.style.fontStyle = '';
                     } else {
-                        textEl.style.color = '#7f8c8d'; // Grey for deleted/system
+                        textEl.style.color = 'var(--text-tertiary)'; // Grey for deleted/system, themed
                         textEl.style.fontStyle = 'italic';
                     }
                 }
@@ -2189,7 +2742,14 @@
                 closeGifPicker();
             }
 
-            if (els.prompt.classList.contains('hidden') && e.target.tagName !== 'INPUT') {
+            // Clicking empty chat space focuses the message box. Not for
+            // keyboard-activated controls (detail 0), other controls, or while
+            // text in the log is selected - each of those lost its focus or
+            // its selection to the message box before.
+            if (els.prompt.classList.contains('hidden') &&
+                e.detail !== 0 &&
+                !e.target.closest('input, button, a, label') &&
+                !String(window.getSelection()).trim()) {
                 els.msgInput.focus();
             }
         };
@@ -2201,10 +2761,15 @@
         win.ircCleanup = function () {
             if (myNick && presence && chat && !hasLeft) {
                 hasLeft = true;
-                publishMessage('left the room', 'system');
                 presence.get(myUUID).put(null);
             }
             teardownConnection();
+            // Document/window listeners, which teardownConnection does not own
+            lifecycle.abort();
+            clearTimeout(resizeTimeout);
+            if (logResizeObserver) logResizeObserver.disconnect();
+            unreadMentions = 0;
+            updateTabTitle();
         };
     }
 

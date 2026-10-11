@@ -33,60 +33,135 @@ Usage:
 {{ end }}
 {{ $years = sort $years "value" "desc" }}
 
-<div id="content-{{ .id }}" data-permalink="/{{ .id }}/">
+<div id="content-{{ .id }}" data-permalink="/{{ strings.TrimSuffix "-page" .id }}/">
     <div class="projects-window" id="projects-container-{{ .id }}">
         <div class="projects-toolbar">
             <div class="projects-title">
-                <span class="projects-icon">📁</span>
+                {{ partial "apps/toolbar-icon.html" "projects" }}
                 <span>{{ .title }}</span>
             </div>
             <div class="projects-controls">
+                <div class="blogs-search projects-search">
+                    <span class="search-icon" aria-hidden="true">{{ partial "icons/ui/glyph.html" "search" }}</span>
+                    <input type="text" class="search-input" placeholder="Search" aria-label="Search projects">
+                </div>
                 <span class="projects-count">{{ len $pages }} projects</span>
             </div>
         </div>
 
+        {{/* Tag chips: every tag used by a project in this list, most used first */}}
+        {{ $tagCounts := dict }}
+        {{ range $pages }}{{ range .Params.tags }}
+        {{ $tagCounts = merge $tagCounts (dict (lower .) (add 1 (index $tagCounts (lower .) | default 0))) }}
+        {{ end }}{{ end }}
+        {{ $tagList := slice }}
+        {{ range $tag, $n := $tagCounts }}{{ $tagList = $tagList | append (dict "tag" $tag "n" $n) }}{{ end }}
+        {{ with sort $tagList "n" "desc" }}
+        <div class="filter-chips projects-chips" role="group" aria-label="Filter by tag">
+            {{ range . }}
+            <button type="button" class="filter-chip projects-chip" data-tag="{{ .tag }}" aria-pressed="false">{{ .tag }}</button>
+            {{ end }}
+        </div>
+        {{ end }}
+
         <div class="projects-content" id="projects-scroll-{{ .id }}">
-            {{/* All years in a single scrollable list */}}
-            {{ range $i, $year := $years }}
-            <div class="projects-year-section" data-year="{{ $year }}" id="year-section-{{ $.id }}-{{ $year }}">
-                <div class="projects-year-header">{{ $year }}</div>
+            {{ with .intro }}<div class="section-intro">{{ . }}</div>{{ end }}
+            {{ $standalone := .standalone }}
+            {{/* Pinned row: `featured = true` projects, newest first. They are
+            listed again under their year, so this row hides while a search or
+            tag filter is active and is left out of the count. */}}
+            {{ with where $pages "Params.featured" true }}
+            <div class="projects-year-section projects-featured">
+                <h2 class="projects-year-header">Featured</h2>
                 <div class="projects-grid">
-                    {{ $projects := index $yearData $year }}
-                    {{ $standalone := $.standalone }}
-                    {{ range $projects }}
-                    {{ if $standalone }}
-                    <a href="{{ .RelPermalink }}" class="project-card finder-row project-link" tabindex="0">
-                        <div class="project-card-icon">
-                            {{ partial "icons/ui/folder.html" (dict "color" "#5A8CBB" "size" 48) }}
-                            <span class="project-card-date">{{ .Date.Format " Jan " }}</span>
-                        </div>
-                        <div class="project-card-content">
-                            <div class="project-card-title">{{ .Title }}</div>
-                            {{ with .Summary }}
-                            <div class="project-card-summary">{{ . | plainify | truncate 100 }}</div>
-                            {{ end }}
-                        </div>
-                    </a>
-                    {{ else }}
-                    <div class="project-card finder-row" data-window="{{ $prefix }}-{{ .File.UniqueID }}"
-                        data-title="{{ .Title }}" data-permalink="{{ .Permalink }}" tabindex="0">
-                        <div class="project-card-icon">
-                            {{ partial "icons/ui/folder.html" (dict "color" "#5A8CBB" "size" 48) }}
-                            <span class="project-card-date">{{ .Date.Format " Jan " }}</span>
-                        </div>
-                        <div class="project-card-content">
-                            <div class="project-card-title">{{ .Title }}</div>
-                            {{ with .Summary }}
-                            <div class="project-card-summary">{{ . | plainify | truncate 100 }}</div>
-                            {{ end }}
-                        </div>
-                    </div>
-                    {{ end }}
+                    {{ range . }}
+                    {{ partial "apps/projects/card.html" (dict "page" . "prefix" $prefix "standalone" $standalone "showYear" true) }}
                     {{ end }}
                 </div>
             </div>
             {{ end }}
+            {{/* All years in a single scrollable list */}}
+            {{ range $i, $year := $years }}
+            <div class="projects-year-section" data-year="{{ $year }}" id="year-section-{{ $.id }}-{{ $year }}">
+                <h2 class="projects-year-header">{{ $year }}</h2>
+                <div class="projects-grid">
+                    {{ range index $yearData $year }}
+                    {{ partial "apps/projects/card.html" (dict "page" . "prefix" $prefix "standalone" $standalone) }}
+                    {{ end }}
+                </div>
+            </div>
+            {{ end }}
+            <div class="window-empty projects-empty" hidden>
+                <div class="window-empty-title">No projects found</div>
+                <div class="window-empty-text">Nothing matches that search.</div>
+            </div>
         </div>
     </div>
 </div>
-{{/* Styles moved to assets/css/partials.css */}}
+{{/* Styles: assets/css/partials.css, assets/css/apps/projects-filter.css */}}
+
+<script>
+    (function () {
+        // Delegated, id-free: the same markup is cloned into desktop windows.
+        // A card shows when it matches the search box (title, summary or tags)
+        // and carries every active tag chip.
+        function applyFilter(container) {
+            const input = container.querySelector('.search-input');
+            const query = input ? input.value.trim().toLowerCase() : '';
+            const activeTags = Array.from(container.querySelectorAll('.projects-chip[aria-pressed="true"]'))
+                .map(chip => chip.dataset.tag);
+            const filtering = !!query || activeTags.length > 0;
+            const countEl = container.querySelector('.projects-count');
+            const emptyEl = container.querySelector('.projects-empty');
+
+            let visibleCount = 0;
+
+            container.querySelectorAll('.projects-year-section').forEach(section => {
+                if (section.classList.contains('projects-featured')) {
+                    section.hidden = filtering;
+                    return;
+                }
+
+                let visibleInYear = 0;
+                section.querySelectorAll('.project-card').forEach(card => {
+                    const titleEl = card.querySelector('.project-card-title');
+                    const summaryEl = card.querySelector('.project-card-summary');
+                    const title = titleEl ? titleEl.textContent.toLowerCase() : '';
+                    const summary = summaryEl ? summaryEl.textContent.toLowerCase() : '';
+                    const tags = (card.dataset.tags || '').split(' ').filter(Boolean);
+
+                    const matchesQuery = !query || title.includes(query) || summary.includes(query) ||
+                        tags.some(tag => tag.includes(query));
+                    const matchesTags = activeTags.every(tag => tags.includes(tag));
+
+                    card.hidden = !(matchesQuery && matchesTags);
+                    if (!card.hidden) visibleInYear++;
+                });
+
+                section.hidden = visibleInYear === 0;
+                visibleCount += visibleInYear;
+            });
+
+            if (countEl) {
+                countEl.textContent = `${visibleCount} project${visibleCount !== 1 ? 's' : ''}`;
+            }
+            if (emptyEl) emptyEl.hidden = visibleCount > 0;
+        }
+
+        document.addEventListener('input', (e) => {
+            if (e.target.classList && e.target.classList.contains('search-input')) {
+                const container = e.target.closest('.projects-window');
+                if (container) applyFilter(container);
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            const chip = e.target.closest && e.target.closest('.projects-chip');
+            if (!chip) return;
+            const container = chip.closest('.projects-window');
+            if (!container) return;
+            chip.setAttribute('aria-pressed', chip.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+            applyFilter(container);
+        });
+    })();
+</script>

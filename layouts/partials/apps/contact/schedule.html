@@ -6,17 +6,21 @@ Used on /schedule route page
 <div class="external-window" style="height: 100%; display: flex; flex-direction: column;">
     <div class="window-toolbar">
         <div class="url-bar">
-            <span class="url-icon">🔒</span>
+            <span class="url-icon" aria-hidden="true">{{ partial "icons/ui/glyph.html" "lock" }}</span>
             <span class="url-text">https://cal.com/ankushkun/call</span>
         </div>
-        <a href="https://cal.com/ankushkun/call" target="_blank" class="open-external" title="Open in new tab">{{
+        <a href="https://cal.com/ankushkun/call" target="_blank" rel="noopener" class="open-external" title="Open in new tab"
+            aria-label="Open in new tab">{{
             partial "icons/ui/external-link.html" . }}</a>
     </div>
     <div class="window-iframe-container" style="flex: 1; position: relative;">
-        <div class="window-loader">
-            <div class="spinner"></div>
+        <div class="window-loader" role="status" aria-label="Loading">
+            <div class="spinner mac-spinner"></div>
         </div>
-        <iframe src="https://cal.com/ankushkun/call" frameborder="0"
+        {{/* No sandbox: the booking flow needs its own cookies and popups.
+        The embed only gets our origin as referrer, never the page URL. */}}
+        <iframe src="https://cal.com/ankushkun/call" title="Schedule a call with Ankush on Cal.com" frameborder="0"
+            referrerpolicy="strict-origin-when-cross-origin"
             onload="this.previousElementSibling.style.display='none'" style="width: 100%; height: 100%;"></iframe>
     </div>
 </div>

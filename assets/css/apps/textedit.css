@@ -1,0 +1,366 @@
+/* ================================================
+   TextEdit documents (/uses/, a draft for now)
+   Markup: layouts/partials/apps/textedit/document.html
+   A format bar, a ruler and a sheet of rich text, after TextEdit in
+   OS X Mavericks. There is no script: the format bar is two radio groups
+   and the document reacts with :has(:checked).
+   ================================================ */
+
+:root {
+    --te-paper: #FFFFFF;
+    --te-ruler-bg: linear-gradient(180deg, #FCFDFE 0%, #EDF0F3 100%);
+    --te-ruler-tick: rgba(28, 32, 36, 0.42);
+    /* Laid over the shared pressed-button fill, so the selected cell follows
+       whatever the button tokens are in either appearance. */
+    --te-seg-on-tint: linear-gradient(180deg, rgba(0, 0, 0, 0.24) 0%, rgba(0, 0, 0, 0.14) 100%);
+    --te-seg-on-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.32);
+    --te-seg-divider: rgba(0, 0, 0, 0.22);
+    --te-rule: rgba(28, 32, 36, 0.12);
+    /* Left and right margin of the sheet; the ruler's zero sits on it */
+    --te-margin: 40px;
+}
+
+html[data-appearance="dark"] {
+    --te-paper: #1E2125;
+    --te-ruler-bg: linear-gradient(180deg, #33383E 0%, #2A2E33 100%);
+    --te-ruler-tick: rgba(255, 255, 255, 0.45);
+    --te-seg-on-tint: linear-gradient(180deg, rgba(0, 0, 0, 0.42) 0%, rgba(0, 0, 0, 0.3) 100%);
+    --te-seg-on-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6);
+    --te-seg-divider: rgba(255, 255, 255, 0.16);
+    --te-rule: rgba(255, 255, 255, 0.14);
+}
+
+.textedit {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    height: 100%;
+    min-height: 0;
+    background: var(--te-paper);
+}
+
+/* Screen-reader text (legends, the names of the three sizes) */
+.textedit-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* --- Format bar --- */
+.textedit-formatbar {
+    flex: none;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    padding: 5px 10px;
+    background: var(--toolbar-bg);
+    border-bottom: 1px solid var(--toolbar-border);
+    user-select: none;
+}
+
+/* Segmented control: one bordered capsule, cells split by hairlines */
+.textedit-seg {
+    position: relative;
+    display: inline-flex;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--btn-border);
+    border-radius: var(--btn-radius);
+    background: var(--btn-bg);
+    box-shadow: var(--btn-shadow);
+}
+
+.textedit-seg-item {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    height: 20px;
+    padding: 0 10px;
+    font-family: var(--font-system);
+    font-size: 11px;
+    line-height: 1;
+    color: var(--btn-text);
+    cursor: default;
+}
+
+.textedit-seg-item + .textedit-seg-item {
+    border-left: 1px solid var(--te-seg-divider);
+}
+
+.textedit-seg-item:first-of-type {
+    border-radius: calc(var(--btn-radius) - 1px) 0 0 calc(var(--btn-radius) - 1px);
+}
+
+.textedit-seg-item:last-of-type {
+    border-radius: 0 calc(var(--btn-radius) - 1px) calc(var(--btn-radius) - 1px) 0;
+}
+
+/* The radio itself covers its cell, invisibly, so it stays focusable and
+   takes the click or tap anywhere in the cell. */
+.textedit-seg-item input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: inherit;
+}
+
+.textedit-seg-item:hover {
+    background: var(--btn-bg-hover);
+}
+
+.textedit-seg-item:has(input:checked) {
+    background: var(--te-seg-on-tint), var(--btn-bg-active);
+    box-shadow: var(--te-seg-on-shadow);
+}
+
+.textedit-seg-item:has(input:focus-visible) {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 1px;
+    z-index: 1;
+}
+
+/* Each typeface cell is set in the face it selects */
+.textedit-face-sans span {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.textedit-face-serif span {
+    font-family: Georgia, "Times New Roman", Times, serif;
+    font-size: 12px;
+}
+
+.textedit-face-mono span {
+    font-family: var(--font-mono);
+}
+
+/* Three A's, small to large */
+.textedit-seg-size .textedit-seg-item {
+    padding: 0 8px;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: 600;
+}
+
+.textedit-size-s {
+    font-size: 9px;
+}
+
+.textedit-size-m {
+    font-size: 12px;
+}
+
+.textedit-size-l {
+    font-size: 15px;
+}
+
+/* --- Ruler --- */
+.textedit-ruler {
+    flex: none;
+    height: 20px;
+    padding: 0 var(--te-margin);
+    background: var(--te-ruler-bg);
+    border-bottom: 1px solid var(--toolbar-border);
+    overflow: hidden;
+    user-select: none;
+}
+
+/* Inch, half-inch and eighth-inch marks along the bottom edge, drawn from
+   the left margin of the text. Each number sits to the right of its inch. */
+.textedit-ruler-scale {
+    display: flex;
+    height: 100%;
+    background-image:
+        repeating-linear-gradient(90deg, var(--te-ruler-tick) 0 1px, transparent 1px 96px),
+        repeating-linear-gradient(90deg, var(--te-ruler-tick) 0 1px, transparent 1px 48px),
+        repeating-linear-gradient(90deg, var(--te-ruler-tick) 0 1px, transparent 1px 12px);
+    background-size: 100% 100%, 100% 7px, 100% 3px;
+    background-position: left bottom;
+    background-repeat: no-repeat;
+}
+
+.textedit-ruler-scale span {
+    flex: none;
+    width: 96px;
+    padding: 2px 0 0 4px;
+    font-family: var(--font-system);
+    font-size: 9px;
+    line-height: 1;
+    color: var(--text-tertiary);
+}
+
+/* --- The sheet --- */
+.textedit-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    background: var(--te-paper);
+}
+
+.textedit-page {
+    --te-face: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --te-size: 15px;
+    box-sizing: content-box;
+    max-width: 44em;
+    padding: 30px var(--te-margin) 48px;
+    font-family: var(--te-face);
+    font-size: var(--te-size);
+    line-height: 1.6;
+    color: var(--text-color);
+    overflow-wrap: break-word;
+}
+
+.textedit:has(.textedit-face-serif input:checked) .textedit-page {
+    --te-face: Georgia, "Times New Roman", Times, serif;
+}
+
+.textedit:has(.textedit-face-mono input:checked) .textedit-page {
+    --te-face: var(--font-mono);
+}
+
+.textedit:has(.textedit-size-s input:checked) .textedit-page {
+    --te-size: 13px;
+}
+
+.textedit:has(.textedit-size-l input:checked) .textedit-page {
+    --te-size: 18px;
+}
+
+/* Sizes are in em so the whole document follows the size control. These
+   override the px-based prose defaults of .window-content. */
+.window-content .textedit-page h1.textedit-heading {
+    margin: 0 0 4px;
+    font-size: 1.75em;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+}
+
+.window-content .textedit-page .textedit-dateline {
+    margin: 0 0 1.6em;
+    padding-bottom: 1em;
+    border-bottom: 1px solid var(--te-rule);
+    font-size: 0.8em;
+    color: var(--text-tertiary);
+}
+
+.window-content .textedit-page h2 {
+    margin: 1.7em 0 0.5em;
+    font-size: 1.2em;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--text-primary);
+}
+
+.window-content .textedit-page h3 {
+    margin: 1.4em 0 0.4em;
+    font-size: 1em;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.window-content .textedit-page :is(p, li) {
+    line-height: 1.6;
+    color: var(--text-color);
+}
+
+.window-content .textedit-page p {
+    margin: 0 0 0.9em;
+}
+
+.window-content .textedit-page :is(ul, ol) {
+    margin: 0 0 0.9em;
+    padding-left: 1.5em;
+}
+
+.window-content .textedit-page li {
+    margin-bottom: 0.3em;
+}
+
+/* Told apart by more than colour */
+.window-content .textedit-page a:not([class]) {
+    color: var(--link);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+}
+
+.window-content .textedit-page a:focus-visible {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+.window-content .textedit-page > :last-child {
+    margin-bottom: 0;
+}
+
+/* --- Compact mode: phones and short touch screens --- */
+@media (max-width: 768px), (pointer: coarse) and (max-height: 500px) {
+    :root {
+        --te-margin: 18px;
+    }
+
+    .textedit-formatbar {
+        padding: 6px 8px;
+    }
+
+    .textedit-page {
+        padding-top: 22px;
+        padding-bottom: 36px;
+    }
+}
+
+/* Finger-sized cells on touch screens */
+@media (pointer: coarse) {
+    .textedit-seg-item {
+        min-width: 44px;
+        height: 32px;
+        font-size: 13px;
+    }
+
+    .textedit-face-serif span {
+        font-size: 14px;
+    }
+
+    .textedit-size-s {
+        font-size: 11px;
+    }
+
+    .textedit-size-m {
+        font-size: 14px;
+    }
+
+    .textedit-size-l {
+        font-size: 17px;
+    }
+}
+
+@media (forced-colors: active) {
+    .textedit-seg-item:has(input:checked) {
+        background: Highlight;
+        color: HighlightText;
+    }
+}
+
+@media print {
+
+    .textedit-formatbar,
+    .textedit-ruler {
+        display: none;
+    }
+}

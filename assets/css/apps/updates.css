@@ -1,0 +1,408 @@
+/* ================================================
+   Software Update
+   Markup: layouts/partials/apps/updates/window.html (shell),
+           assets/js/software-update.js (rows),
+           layouts/partials/apps/updates/menu-item.html (Apple menu item)
+   Laid out after the App Store's Updates pane in OS X Mavericks: a plain
+   list of updates, each with its icon, what changed and an Open button.
+   Colours come from the shared tokens, so both appearances are covered.
+   ================================================ */
+
+:root {
+    /* The "new" marker and the Apple menu badge */
+    --su-new: var(--accent-fill);
+    --su-new-tint: var(--accent-blue-subtle);
+    --su-badge: var(--error);
+}
+
+/* ---------- Apple menu ---------- */
+
+/* Beats shell-a11y.css's `a.dropdown-item { display: block }` */
+a.dropdown-item.su-menu-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    /* The dropdown is shrink-to-fit with a 200px floor: an unbreakable row
+       widens the whole menu instead of wrapping "Software Update…" */
+    white-space: nowrap;
+}
+
+.su-menu-badge {
+    flex: none;
+    padding: 1px 7px;
+    border-radius: 9px;
+    font-size: 11px;
+    line-height: 1.4;
+    white-space: nowrap;
+    /* A tint of the item's own text colour: reads on the dark menu and on
+       the highlighted row alike */
+    background: color-mix(in srgb, currentColor 24%, transparent);
+}
+
+.su-menu-badge[hidden] {
+    display: none;
+}
+
+/* A dot on the Apple logo while there is something new */
+.menu-trigger.has-update::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    right: 3px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--su-badge);
+    box-shadow: 0 0 0 1px var(--hairline-strong);
+    pointer-events: none;
+}
+
+/* ---------- Window ---------- */
+
+.su-window {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    background: var(--surface);
+    font-family: var(--font-system);
+}
+
+.su-toolbar .app-toolbar-title {
+    flex-wrap: wrap;
+    row-gap: 0;
+}
+
+.window-content a.su-build {
+    flex: none;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+}
+
+.window-content .su-build code,
+.window-content .su-commit code {
+    padding: 1px 5px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    background: var(--code-bg);
+}
+
+.su-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+}
+
+.su-scroll:focus {
+    outline: none;
+}
+
+.su-scroll:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: -2px;
+}
+
+.su-loading {
+    display: grid;
+    place-items: center;
+    min-height: 100%;
+    padding: 32px;
+    box-sizing: border-box;
+}
+
+/* ---------- Up to date ---------- */
+
+.su-uptodate {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.su-uptodate-icon {
+    flex: none;
+    width: 48px;
+    height: 48px;
+}
+
+.su-uptodate-icon .app-icon,
+.su-icon .app-icon {
+    --app-icon-size: 48px;
+}
+
+.su-uptodate-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.su-uptodate-text {
+    margin-top: 2px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+/* ---------- Sections ---------- */
+
+.window-content .su-section-title {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    margin: 0;
+    padding: 5px 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--text-secondary);
+    background: var(--surface-alt);
+    border-bottom: 1px solid var(--border);
+}
+
+.su-section + .su-section .su-section-title,
+.su-uptodate + .su-section .su-section-title {
+    border-top: 0;
+}
+
+/* ---------- One update ---------- */
+
+.su-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.su-row.is-new {
+    background: var(--su-new-tint);
+}
+
+.su-icon {
+    flex: none;
+    width: 48px;
+    height: 48px;
+}
+
+.su-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.window-content .su-title {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 2px 8px;
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.35;
+    color: var(--text-primary);
+    overflow-wrap: anywhere;
+}
+
+.su-title:focus {
+    outline: none;
+}
+
+.su-new {
+    flex: none;
+    padding: 0 6px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1.6;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--text-inverse);
+    background: var(--su-new);
+}
+
+.su-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 6px;
+    margin-top: 1px;
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+.su-meta > * + *::before {
+    content: "·";
+    margin-right: 6px;
+}
+
+.window-content .su-notes {
+    margin: 7px 0 0;
+    padding-left: 16px;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.su-notes[hidden] {
+    display: none;
+}
+
+.window-content .su-notes li {
+    margin: 0 0 2px;
+    color: var(--text-body);
+    overflow-wrap: anywhere;
+}
+
+.su-more {
+    margin: 4px 0 0;
+    padding: 2px 0;
+    font: inherit;
+    font-size: 12px;
+    color: var(--link);
+    background: none;
+    border: 0;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.su-more:hover {
+    text-decoration: underline;
+}
+
+.su-details {
+    margin-top: 8px;
+    padding: 8px 10px;
+    background: var(--surface-alt);
+    border: 1px solid var(--border-subtle);
+    border-radius: 5px;
+}
+
+.su-row.is-new .su-details {
+    background: var(--surface);
+}
+
+.su-log-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-tertiary);
+}
+
+.window-content .su-log {
+    margin: 5px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.window-content .su-log li {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 0 0 3px;
+    color: var(--text-secondary);
+}
+
+.window-content .su-log li:last-child {
+    margin-bottom: 0;
+}
+
+.su-commit {
+    flex: none;
+}
+
+.su-log-subject {
+    min-width: 0;
+    font-family: var(--font-mono);
+    overflow-wrap: anywhere;
+}
+
+.su-action {
+    flex: none;
+    padding-top: 1px;
+}
+
+.su-open {
+    min-width: 54px;
+    border-radius: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.su-older {
+    display: flex;
+    justify-content: center;
+    padding: 16px 20px 20px;
+}
+
+.window-content .su-statusbar a {
+    color: var(--text-secondary);
+}
+
+/* ---------- Compact (phones, short landscape) ---------- */
+
+@media (max-width: 768px), (pointer: coarse) and (max-height: 500px) {
+    .su-row {
+        gap: 10px;
+        padding: 12px 14px;
+    }
+
+    .su-icon,
+    .su-uptodate-icon {
+        width: 36px;
+        height: 36px;
+    }
+
+    .su-icon .app-icon,
+    .su-uptodate-icon .app-icon {
+        --app-icon-size: 36px;
+    }
+
+    .window-content .su-section-title,
+    .su-uptodate {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .window-content .su-title {
+        font-size: 14px;
+    }
+
+    .window-content .su-notes {
+        font-size: 13px;
+    }
+
+    /* Finger-sized targets */
+    .su-more {
+        min-height: 32px;
+        font-size: 13px;
+    }
+
+    .su-open {
+        min-height: 30px;
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .su-older-btn {
+        min-height: 36px;
+    }
+
+    .su-toolbar .su-build {
+        display: none;
+    }
+}
+
+/* The Open button drops under the text when the window is very narrow */
+@media (max-width: 360px) {
+    .su-row {
+        flex-wrap: wrap;
+    }
+
+    .su-action {
+        flex-basis: 100%;
+        padding-left: 46px;
+    }
+}

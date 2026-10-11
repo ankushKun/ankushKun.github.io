@@ -1,0 +1,39 @@
+{{/* Paint - which day's canvas is open. There is one canvas per UTC day;
+paint.js fills in the title, date and prompt and enables the arrows. */}}
+<div class="paint-daybar">
+    <div class="paint-daynav" role="group" aria-label="Browse days">
+        <button type="button" class="paint-nav paint-prev" aria-label="Previous day" data-tip="Previous day"
+            data-tip-align="start" disabled>
+            <svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true">
+                <path d="M7.5 2 3.5 6l4 4" fill="none" stroke="currentColor" stroke-width="1.8"
+                    stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+        </button>
+        <button type="button" class="paint-nav paint-next" aria-label="Next day" data-tip="Next day"
+            data-tip-align="start" disabled>
+            <svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true">
+                <path d="M4.5 2l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8"
+                    stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+        </button>
+    </div>
+
+    <div class="paint-day" aria-live="polite">
+        <span class="paint-day-head">
+            <strong class="paint-day-title">Today</strong>
+            <span class="paint-day-date" hidden></span>
+        </span>
+        <span class="paint-day-prompt"></span>
+    </div>
+
+    <button type="button" class="paint-btn paint-gallery-toggle" aria-pressed="false"
+        data-tip="Every day's canvas" data-tip-align="end">
+        <svg viewBox="0 0 14 14" width="12" height="12" aria-hidden="true">
+            <rect x="1" y="1" width="5" height="5" rx="1" fill="currentColor" />
+            <rect x="8" y="1" width="5" height="5" rx="1" fill="currentColor" />
+            <rect x="1" y="8" width="5" height="5" rx="1" fill="currentColor" />
+            <rect x="8" y="8" width="5" height="5" rx="1" fill="currentColor" />
+        </svg>
+        Gallery
+    </button>
+</div>

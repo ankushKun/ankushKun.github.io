@@ -1,0 +1,11 @@
+{{/* Paint - gallery of days. Takes the place of the stage while open; paint.js
+builds one thumbnail button per day and replays that day's strokes into it. */}}
+<div class="paint-gallery" hidden>
+    <p class="paint-gallery-note" role="status" hidden>Offline — past canvases appear here when the connection returns.</p>
+    <ul class="paint-gallery-grid" role="list" aria-label="Canvases by day"></ul>
+    <div class="paint-gallery-pager" hidden>
+        <button type="button" class="paint-btn paint-gallery-newer" disabled>Newer</button>
+        <span class="paint-gallery-page" aria-live="polite"></span>
+        <button type="button" class="paint-btn paint-gallery-older">Earlier</button>
+    </div>
+</div>

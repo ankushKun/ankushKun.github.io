@@ -1,0 +1,593 @@
+/* ================================================
+   Resume (/resume/ and the Resume window)
+   Markup: layouts/partials/apps/resume/page.html, data: data/resume.yaml
+   A document open in Preview, OS X Mavericks: zoom buttons and a Download
+   PDF button in the toolbar, one sheet of paper on the grey desk. There is
+   no script: zoom is a radio group read with :has(:checked), and the sheet
+   is set in em so a zoom step reflows the text instead of scaling it.
+   ================================================ */
+
+:root {
+    /* The grey Preview puts behind a page */
+    --rs-desk: #A3A8AE;
+    --rs-paper: #FFFFFF;
+    --rs-sheet-shadow: 0 1px 2px rgba(0, 0, 0, 0.22), 0 8px 24px rgba(0, 0, 0, 0.2);
+    --rs-rule: rgba(28, 32, 36, 0.16);
+    /* Laid over the shared pressed-button fill for the selected zoom cell */
+    --rs-seg-on-tint: linear-gradient(180deg, rgba(0, 0, 0, 0.24) 0%, rgba(0, 0, 0, 0.14) 100%);
+    --rs-seg-on-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.32);
+    --rs-seg-divider: rgba(0, 0, 0, 0.22);
+    /* Ink on the white sheet: fixed, because the paper never changes colour.
+       Print swaps these for black whatever the appearance. */
+    --rs-ink: #1C2024;
+    --rs-ink-body: #2C3338;
+    --rs-ink-soft: #525D66;
+    --rs-ink-link: var(--link);
+}
+
+/* Dark appearance: as in Preview, only the desk and the chrome go dark. The
+   sheet is paper, so it stays white and keeps its own dark ink (fixed values,
+   not the themed text tokens, which turn pale in the dark appearance). */
+html[data-appearance="dark"] {
+    --rs-desk: #1B1D20;
+    --rs-paper: #FFFFFF;
+    --rs-sheet-shadow: 0 1px 2px rgba(0, 0, 0, 0.6), 0 8px 24px rgba(0, 0, 0, 0.5);
+    --rs-rule: rgba(28, 32, 36, 0.16);
+    --rs-seg-on-tint: linear-gradient(180deg, rgba(0, 0, 0, 0.42) 0%, rgba(0, 0, 0, 0.3) 100%);
+    --rs-seg-on-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6);
+    --rs-seg-divider: rgba(255, 255, 255, 0.16);
+    --rs-ink: #1C2024;
+    --rs-ink-body: #2C3338;
+    --rs-ink-soft: #525D66;
+    --rs-ink-link: #0060DF;
+}
+
+.resume {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    height: 100%;
+    min-height: 0;
+    background: var(--rs-desk);
+}
+
+/* Screen-reader text (the zoom legend and cell names, "Read more about ...") */
+.resume-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* --- Toolbar --- */
+.resume-toolbar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 38px;
+    padding: 4px 12px;
+    box-sizing: border-box;
+    background: var(--toolbar-bg);
+    border-bottom: 1px solid var(--toolbar-border);
+    user-select: none;
+}
+
+/* Segmented control: one bordered capsule, cells split by hairlines */
+.resume-zoom {
+    position: relative;
+    display: inline-flex;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--btn-border);
+    border-radius: var(--btn-radius);
+    background: var(--btn-bg);
+    box-shadow: var(--btn-shadow);
+}
+
+.resume-zoom-item {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 22px;
+    padding: 0 9px;
+    font-family: var(--font-system);
+    font-size: 11px;
+    line-height: 1;
+    white-space: nowrap;
+    color: var(--btn-text);
+    cursor: default;
+}
+
+.resume-zoom-item + .resume-zoom-item {
+    border-left: 1px solid var(--rs-seg-divider);
+}
+
+.resume-zoom-item:first-of-type {
+    border-radius: calc(var(--btn-radius) - 1px) 0 0 calc(var(--btn-radius) - 1px);
+}
+
+.resume-zoom-item:last-of-type {
+    border-radius: 0 calc(var(--btn-radius) - 1px) calc(var(--btn-radius) - 1px) 0;
+}
+
+/* The radio covers its cell, invisibly, so it stays focusable and takes the
+   click or tap anywhere in the cell */
+.resume-zoom-item input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: inherit;
+}
+
+.resume-zoom-item:hover {
+    background: var(--btn-bg-hover);
+}
+
+.resume-zoom-item:has(input:checked) {
+    background: var(--rs-seg-on-tint), var(--btn-bg-active);
+    box-shadow: var(--rs-seg-on-shadow);
+}
+
+.resume-zoom-item:has(input:focus-visible) {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 1px;
+    z-index: 1;
+}
+
+.resume-zoom-glyph {
+    display: block;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+}
+
+.resume-download {
+    flex: none;
+}
+
+.resume-download .ui-glyph {
+    flex: none;
+    width: 13px;
+    height: 13px;
+}
+
+.resume-download:focus-visible {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
+}
+
+/* --- Desk and sheet --- */
+.resume-desk {
+    flex: 1;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 28px 28px 40px;
+    background: var(--rs-desk);
+    -webkit-overflow-scrolling: touch;
+}
+
+.resume-sheet {
+    --rs-size: 14px;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 50em;
+    margin: 0 auto;
+    padding: 3.2em 3.6em 3.4em;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: var(--rs-size);
+    line-height: 1.45;
+    color: var(--rs-ink-body);
+    background: var(--rs-paper);
+    box-shadow: var(--rs-sheet-shadow);
+    overflow-wrap: break-word;
+}
+
+.resume:has(.resume-zoom-out input:checked) .resume-sheet {
+    --rs-size: 12px;
+}
+
+.resume:has(.resume-zoom-in input:checked) .resume-sheet {
+    --rs-size: 16.5px;
+}
+
+/* Everything below is in em so it follows the zoom. The .window-content
+   prefix outranks the px-based prose defaults windows give h1-h3, p and ul. */
+.resume-sheet :is(h1, h2, h3, p, ul, dl, dd) {
+    margin: 0;
+    padding: 0;
+}
+
+.window-content .resume-sheet a,
+.resume-sheet a {
+    color: var(--rs-ink-link);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.15em;
+}
+
+.resume-sheet a:hover {
+    text-decoration-thickness: 2px;
+}
+
+.resume-sheet a:focus-visible {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+/* Name and contact line, centred as on the PDF */
+.resume-head {
+    text-align: center;
+}
+
+.window-content .resume-sheet h1.resume-name,
+.resume-name {
+    font-size: 2.15em;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--rs-ink);
+}
+
+.resume-contact {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.15em 0;
+    margin-top: 0.45em;
+    list-style: none;
+    font-size: 0.9em;
+    color: var(--rs-ink-soft);
+}
+
+/* The bullet hangs after an item, so a wrapped line never starts with one.
+   The item before the print-only link is the last one on screen. */
+.resume-contact li:not(:last-child)::after {
+    content: "\2022" / "";
+    margin: 0 0.55em;
+    color: var(--rs-ink-soft);
+}
+
+.resume-contact li:has(+ .resume-print-only:last-child)::after {
+    content: none;
+}
+
+.resume-headline {
+    font-weight: 600;
+    color: var(--rs-ink);
+}
+
+/* On paper the portfolio link points back at this site; on screen it would
+   point at the page you are already on */
+.resume-print-only {
+    display: none;
+}
+
+/* Section titles: centred between two hairlines */
+.window-content .resume-sheet h2.resume-section-title,
+.resume-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.8em;
+    margin: 1.7em 0 0.9em;
+    font-size: 1.08em;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+    color: var(--rs-ink);
+}
+
+.resume-section-title::before,
+.resume-section-title::after {
+    content: "";
+    flex: 1;
+    border-top: 1px solid var(--rs-rule);
+}
+
+.resume-entry + .resume-entry {
+    margin-top: 0.85em;
+}
+
+.resume-entry-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 1em;
+}
+
+.window-content .resume-sheet h3.resume-entry-title,
+.resume-entry-title {
+    flex: 1 1 22em;
+    min-width: 0;
+    font-size: 1em;
+    font-weight: 400;
+    line-height: 1.4;
+    color: var(--rs-ink);
+}
+
+.resume-org {
+    font-weight: 700;
+}
+
+.resume-role {
+    color: var(--rs-ink-body);
+}
+
+.resume-dates,
+.resume-more {
+    flex: none;
+    margin-left: auto;
+    font-size: 0.9em;
+    white-space: nowrap;
+    color: var(--rs-ink-soft);
+    font-variant-numeric: tabular-nums;
+}
+
+.window-content .resume-sheet ul.resume-points,
+.resume-points {
+    margin-top: 0.3em;
+    padding-left: 1.35em;
+    list-style: disc;
+}
+
+.window-content .resume-sheet .resume-points li,
+.resume-points li {
+    margin: 0 0 0.2em;
+    font-size: 1em;
+    line-height: 1.45;
+    color: var(--rs-ink-body);
+}
+
+.resume-points li::marker {
+    color: var(--rs-ink-soft);
+}
+
+.window-content .resume-sheet .resume-points li.resume-tech,
+.resume-tech {
+    color: var(--rs-ink-soft);
+}
+
+.resume-tech-label {
+    font-weight: 600;
+}
+
+/* Skills & Interests: label column, then the items separated by dots */
+.resume-skills {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 0.3em 1.1em;
+}
+
+.resume-skill {
+    display: contents;
+}
+
+.resume-skills dt {
+    font-weight: 700;
+    color: var(--rs-ink);
+}
+
+.resume-skills dd {
+    color: var(--rs-ink-body);
+}
+
+/* Items are separated by real spaces, so a line can only break between two
+   of them; the dot hangs after an item and never starts a line */
+.resume-skills dd span {
+    white-space: nowrap;
+}
+
+.resume-skills dd span:not(:last-child)::after {
+    content: "\00B7" / "";
+    margin-left: 0.4em;
+    margin-right: 0.15em;
+    color: var(--rs-ink-soft);
+}
+
+.window-content .resume-sheet p.resume-education,
+.resume-education {
+    font-size: 1em;
+    line-height: 1.45;
+    color: var(--rs-ink-body);
+}
+
+/* The generic `.window-content p / li / h3` colours (0,1,1) outrank the
+   single-class rules above and painted the themed (pale, in the dark
+   appearance) body colour onto the white sheet. Restate the ink with the
+   sheet as scope so the paper's own colours always win. */
+.resume-sheet :is(.resume-headline, .resume-entry-title) {
+    color: var(--rs-ink);
+}
+
+.resume-sheet :is(.resume-contact li, .resume-tech, .resume-more) {
+    color: var(--rs-ink-soft);
+}
+
+.resume-sheet :is(.resume-dates, .resume-points li) {
+    color: var(--rs-ink-body);
+}
+
+/* --- Compact mode: phones and short touch screens --- */
+@media (max-width: 768px), (pointer: coarse) and (max-height: 500px) {
+    .resume-toolbar {
+        padding: 6px 8px;
+    }
+
+    .resume-desk {
+        padding: 10px 8px calc(24px + var(--sab));
+    }
+
+    .resume-sheet {
+        --rs-size: 13.5px;
+        padding: 1.9em 1.4em 2.2em;
+    }
+
+    .resume:has(.resume-zoom-out input:checked) .resume-sheet {
+        --rs-size: 12px;
+    }
+
+    .resume:has(.resume-zoom-in input:checked) .resume-sheet {
+        --rs-size: 16px;
+    }
+
+    .window-content .resume-sheet h1.resume-name,
+    .resume-name {
+        font-size: 1.8em;
+    }
+
+    /* The headline gets a line of its own above the links */
+    .resume-contact .resume-headline {
+        flex-basis: 100%;
+    }
+
+    .resume-contact li.resume-headline::after {
+        content: none;
+    }
+
+    .resume-skills {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0;
+    }
+
+    .resume-skills dd + dt {
+        margin-top: 0.5em;
+    }
+}
+
+/* Finger-sized cells on touch screens */
+@media (pointer: coarse) {
+    .resume-zoom-item {
+        min-width: 44px;
+        height: 32px;
+        font-size: 13px;
+    }
+
+    .resume-zoom-glyph {
+        width: 18px;
+        height: 18px;
+    }
+}
+
+@media (forced-colors: active) {
+    .resume-zoom-item:has(input:checked) {
+        background: Highlight;
+        color: HighlightText;
+    }
+
+    .resume-sheet {
+        border: 1px solid CanvasText;
+    }
+}
+
+/* --- Print: the sheet alone, on its own letter-size page ---
+   assets/css/apps/print.css already drops the desktop chrome and unfixes
+   the window stack (on /resume/ and for the active Resume window). This
+   gives the sheet a named page and prints it black on white in either
+   appearance, at one size whatever the zoom. Printing /resume/ is how a new
+   static/resume.pdf can be made from data/resume.yaml. */
+@media print {
+    @page resume {
+        size: letter;
+        margin: 0.45in 0.55in;
+    }
+
+    /* A change of named page forces a page break, which would leave a blank
+       page for the empty containers around the sheet. So when the resume is
+       what gets printed (on /resume/, or the active Resume window on the
+       desktop), the whole document is on the resume page. */
+    body:has(.static-window .resume-sheet),
+    body:has(.window:not(.inactive) .resume-sheet) {
+        page: resume;
+    }
+
+    .resume-toolbar,
+    .static-window:has(.resume) .window-pathbar {
+        display: none !important;
+    }
+
+    .resume,
+    .resume-desk {
+        display: block !important;
+        height: auto !important;
+        min-height: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        background: none !important;
+    }
+
+    .resume .resume-sheet {
+        --rs-size: 9pt !important;
+        --rs-ink: #000;
+        --rs-ink-body: #1a1a1a;
+        --rs-ink-soft: #444;
+        --rs-ink-link: #1a1a1a;
+        --rs-rule: #bbb;
+        page: resume;
+        max-width: none;
+        padding: 0;
+        line-height: 1.32;
+        background: #fff;
+        box-shadow: none;
+        border: 0;
+    }
+
+    /* Tighter than on screen: the whole resume fits on one page, as the PDF does */
+    .window-content .resume-sheet h2.resume-section-title,
+    .resume-section-title {
+        margin: 1.05em 0 0.55em;
+    }
+
+    .resume-entry + .resume-entry {
+        margin-top: 0.55em;
+    }
+
+    .window-content .resume-sheet ul.resume-points,
+    .resume-points {
+        margin-top: 0.15em;
+    }
+
+    .window-content .resume-sheet .resume-points li,
+    .resume-points li {
+        margin-bottom: 0.05em;
+        line-height: 1.32;
+    }
+
+    .resume-print-only {
+        display: block;
+    }
+
+    .resume-contact li:has(+ .resume-print-only:last-child)::after {
+        content: "\2022" / "";
+    }
+
+    .resume-sheet a,
+    .window-content .resume-sheet a {
+        text-decoration: none;
+    }
+
+    .resume-entry {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .resume-skills {
+        grid-template-columns: max-content 1fr !important;
+        gap: 0.2em 1.1em !important;
+    }
+}

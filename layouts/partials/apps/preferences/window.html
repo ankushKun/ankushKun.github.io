@@ -1,0 +1,178 @@
+{{/* System Preferences - the visitor's own settings for this site:
+desktop picture, appearance and highlight colour, sound effects, motion and
+contrast. Markup only; assets/js/preferences.js wires it to window.SitePrefs
+(layouts/partials/os/prefs-bootstrap.html). Everything is kept in this
+browser's localStorage ("site-prefs-v1"); nothing is sent anywhere. */}}
+{{- $id := .id -}}
+{{- $wp := hugo.Data.wallpapers -}}
+<div id="content-{{ $id }}" class="window-content" data-preferences-window="true">
+    <div class="sp-window" data-view="overview">
+        <div class="sp-toolbar">
+            <div class="sp-nav" role="group" aria-label="History">
+                <button type="button" class="sp-nav-btn sp-back" aria-label="Back" disabled>
+                    <svg viewBox="0 0 10 12" width="8" height="10" aria-hidden="true" focusable="false"><path d="M7.5 1 2.5 6l5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                </button>
+                <button type="button" class="sp-nav-btn sp-forward" aria-label="Forward" disabled>
+                    <svg viewBox="0 0 10 12" width="8" height="10" aria-hidden="true" focusable="false"><path d="M2.5 1l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                </button>
+            </div>
+            <button type="button" class="sp-nav-btn sp-showall" aria-label="Show All Preferences" data-tip="Show All">
+                <svg viewBox="0 0 14 14" width="12" height="12" aria-hidden="true" focusable="false"><g fill="currentColor"><rect x="0" y="0" width="3.4" height="3.4" rx="0.8" /><rect x="5.3" y="0" width="3.4" height="3.4" rx="0.8" /><rect x="10.6" y="0" width="3.4" height="3.4" rx="0.8" /><rect x="0" y="5.3" width="3.4" height="3.4" rx="0.8" /><rect x="5.3" y="5.3" width="3.4" height="3.4" rx="0.8" /><rect x="10.6" y="5.3" width="3.4" height="3.4" rx="0.8" /><rect x="0" y="10.6" width="3.4" height="3.4" rx="0.8" /><rect x="5.3" y="10.6" width="3.4" height="3.4" rx="0.8" /><rect x="10.6" y="10.6" width="3.4" height="3.4" rx="0.8" /></g></svg>
+            </button>
+            <h2 class="sp-title" aria-live="polite">System Preferences</h2>
+        </div>
+
+        <div class="sp-body">
+            {{/* ---------- Show All ---------- */}}
+            <section class="sp-overview" data-view-panel="overview" aria-label="All preferences">
+                <ul class="sp-grid">
+                    <li><button type="button" class="sp-pane-btn" data-open-pane="appearance">
+                        <span class="sp-pane-icon" aria-hidden="true">{{ partial "apps/preferences/pane-icon.html" "appearance" }}</span>
+                        <span class="sp-pane-label">General</span>
+                    </button></li>
+                    <li><button type="button" class="sp-pane-btn" data-open-pane="desktop">
+                        <span class="sp-pane-icon" aria-hidden="true">{{ partial "apps/preferences/pane-icon.html" "desktop" }}</span>
+                        <span class="sp-pane-label">Desktop</span>
+                    </button></li>
+                </ul>
+                <ul class="sp-grid">
+                    <li><button type="button" class="sp-pane-btn" data-open-pane="sound">
+                        <span class="sp-pane-icon" aria-hidden="true">{{ partial "apps/preferences/pane-icon.html" "sound" }}</span>
+                        <span class="sp-pane-label">Sound</span>
+                    </button></li>
+                    <li><button type="button" class="sp-pane-btn" data-open-pane="accessibility">
+                        <span class="sp-pane-icon" aria-hidden="true">{{ partial "apps/preferences/pane-icon.html" "accessibility" }}</span>
+                        <span class="sp-pane-label">Accessibility</span>
+                    </button></li>
+                </ul>
+                <p class="sp-footnote">Your choices are saved in this browser only.</p>
+            </section>
+
+            {{/* ---------- General ---------- */}}
+            <section class="sp-pane" data-view-panel="appearance" data-title="General" hidden>
+                <div class="sp-form">
+                    <div class="sp-row">
+                        <span class="sp-label" id="sp-appearance-label">Appearance:</span>
+                        <div class="sp-field">
+                            <div class="sp-tiles" role="radiogroup" aria-labelledby="sp-appearance-label" data-pref="appearance">
+                                {{- range slice (dict "v" "light" "l" "Light") (dict "v" "dark" "l" "Dark") (dict "v" "auto" "l" "Auto") }}
+                                <button type="button" class="sp-tile" role="radio" aria-checked="false" data-value="{{ .v }}">
+                                    <span class="sp-tile-art sp-tile-{{ .v }}" aria-hidden="true">
+                                        <span class="sp-mini-bar"></span>
+                                        <span class="sp-mini-win"><span class="sp-mini-title"></span></span>
+                                    </span>
+                                    <span class="sp-tile-label">{{ .l }}</span>
+                                </button>
+                                {{- end }}
+                            </div>
+                            <p class="sp-help">Auto follows your device's light or dark setting.</p>
+                        </div>
+                    </div>
+
+                    <div class="sp-row">
+                        <span class="sp-label" id="sp-accent-label">Highlight colour:</span>
+                        <div class="sp-field">
+                            <div class="sp-swatches" role="radiogroup" aria-labelledby="sp-accent-label" data-pref="accent">
+                                {{- range slice "blue" "purple" "pink" "red" "orange" "green" "graphite" }}
+                                <button type="button" class="sp-swatch sp-swatch-{{ . }}" role="radio" aria-checked="false"
+                                    data-value="{{ . }}" aria-label="{{ . | title }}" data-tip="{{ . | title }}"></button>
+                                {{- end }}
+                            </div>
+                            <p class="sp-help">Used for selections, buttons, links and focus rings.</p>
+                        </div>
+                    </div>
+
+                    <div class="sp-row">
+                        <span class="sp-label" id="sp-chrome-label">Menu bar:</span>
+                        <div class="sp-field">
+                            <div class="sp-radios" role="radiogroup" aria-labelledby="sp-chrome-label" data-pref="chrome">
+                                <label class="sp-radio"><input type="radio" name="sp-chrome" value="modern"> Dark, with a translucent glass</label>
+                                <label class="sp-radio"><input type="radio" name="sp-chrome" value="mavericks"> Classic 10.9: light bar, gel buttons</label>
+                            </div>
+                            <p class="sp-help">In the dark appearance the menu bar stays dark either way.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="sp-pane-foot">
+                    <button type="button" class="mac-btn small sp-restore">Restore Defaults</button>
+                </div>
+            </section>
+
+            {{/* ---------- Desktop ---------- */}}
+            <section class="sp-pane sp-pane-desktop" data-view-panel="desktop" data-title="Desktop" hidden>
+                <div class="sp-current">
+                    <span class="sp-current-frame" aria-hidden="true"><span class="sp-current-pic"></span></span>
+                    <div class="sp-current-text">
+                        <span class="sp-current-name"></span>
+                        <span class="sp-current-kind"></span>
+                    </div>
+                </div>
+                <div class="sp-desktop-split">
+                    <div class="sp-sources" role="tablist" aria-label="Collections" aria-orientation="vertical">
+                        <button type="button" class="sp-source" role="tab" id="sp-src-pictures" aria-controls="sp-set-pictures" aria-selected="true" data-source="pictures">Desktop Pictures</button>
+                        <button type="button" class="sp-source" role="tab" id="sp-src-colors" aria-controls="sp-set-colors" aria-selected="false" tabindex="-1" data-source="colors">Solid Colours</button>
+                    </div>
+                    <div class="sp-sets">
+                        <div class="sp-thumbs" role="radiogroup" id="sp-set-pictures" aria-labelledby="sp-src-pictures" data-pref="wallpaper" data-set="pictures">
+                            {{- range $wp.wallpapers }}{{ if .src }}
+                            <button type="button" class="sp-thumb" role="radio" aria-checked="false" data-value="{{ .id }}" aria-label="{{ .name }}">
+                                <img src="/wallpapers/thumbs/{{ .id }}.webp" alt="" width="160" height="100" loading="lazy" decoding="async" style="background-color: {{ .color | safeCSS }}">
+                                <span class="sp-thumb-name">{{ .name }}</span>
+                            </button>
+                            {{- end }}{{ end }}
+                        </div>
+                        <div class="sp-thumbs" role="radiogroup" id="sp-set-colors" aria-labelledby="sp-src-colors" data-pref="wallpaper" data-set="colors" hidden>
+                            {{- range $wp.wallpapers }}{{ if not .src }}
+                            <button type="button" class="sp-thumb" role="radio" aria-checked="false" data-value="{{ .id }}" aria-label="{{ .name }}">
+                                <span class="sp-thumb-color" style="background-color: {{ .color | safeCSS }}"></span>
+                                <span class="sp-thumb-name">{{ .name }}</span>
+                            </button>
+                            {{- end }}{{ end }}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {{/* ---------- Sound ---------- */}}
+            <section class="sp-pane" data-view-panel="sound" data-title="Sound" hidden>
+                <div class="sp-form">
+                    <div class="sp-row">
+                        <span class="sp-label">Sound Effects:</span>
+                        <div class="sp-field">
+                            <label class="sp-check"><input type="checkbox" class="sp-ui-sounds"> Play user interface sound effects</label>
+                            <p class="sp-help">The startup chord, notification chime and error sound. The speaker in the menu bar
+                                toggles the same setting.</p>
+                        </div>
+                    </div>
+                    <div class="sp-row">
+                        <span class="sp-label">Music:</span>
+                        <div class="sp-field">
+                            <p class="sp-help sp-help-first">Music has its own volume, track and pause controls.</p>
+                            <button type="button" class="mac-btn small sp-open-music">Open Music</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {{/* ---------- Accessibility ---------- */}}
+            <section class="sp-pane" data-view-panel="accessibility" data-title="Accessibility" hidden>
+                <div class="sp-form">
+                    <div class="sp-row">
+                        <span class="sp-label">Motion:</span>
+                        <div class="sp-field">
+                            <label class="sp-check"><input type="checkbox" class="sp-motion" data-pref-toggle="motion" data-on="reduce" data-off="auto"> Reduce motion</label>
+                            <p class="sp-help sp-motion-help">Windows open and close without animating, and decorative movement stops.</p>
+                        </div>
+                    </div>
+                    <div class="sp-row">
+                        <span class="sp-label">Display:</span>
+                        <div class="sp-field">
+                            <label class="sp-check"><input type="checkbox" class="sp-contrast" data-pref-toggle="contrast" data-on="more" data-off="auto"> Increase contrast</label>
+                            <p class="sp-help sp-contrast-help">Darker secondary text and borders, and solid panels instead of translucent ones.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>

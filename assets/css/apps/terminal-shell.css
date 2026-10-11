@@ -1,0 +1,119 @@
+/* ================================================
+   Terminal shell (assets/js/terminal-shell.js): the Terminal window's
+   default view, an xterm.js screen over the v86 containers.
+
+   Colours follow Terminal.app's "Basic" profile: black on white, and white
+   on near-black in dark appearance. xterm.js reads the --term-* tokens below
+   into its theme (it draws on a canvas, so it cannot inherit CSS colours).
+   ================================================ */
+
+:root {
+    --term-bg: #ffffff;
+    --term-fg: #000000;
+    --term-cursor: #7f7f7f;
+    --term-selection: #b4d5fe;
+    --term-black: #000000;
+    --term-red: #c23621;
+    --term-green: #1f9a1e;
+    --term-yellow: #8f8f1f;
+    --term-blue: #3a24c4;
+    --term-magenta: #b02fb0;
+    --term-cyan: #1d8a96;
+    --term-white: #cbcccd;
+    --term-bright-black: #818383;
+    --term-keys-bg: #e8e8e8;
+}
+
+html[data-appearance="dark"] {
+    --term-bg: #1e1e1e;
+    --term-fg: #e6e6e6;
+    --term-cursor: #a0a0a0;
+    --term-selection: #3b5b8c;
+    --term-black: #4d4d4d;
+    --term-red: #f0624a;
+    --term-green: #4fd14e;
+    --term-yellow: #d6d64a;
+    --term-blue: #8b7bff;
+    --term-magenta: #e872e8;
+    --term-cyan: #4fd0dc;
+    --term-white: #e6e6e6;
+    --term-bright-black: #8e9090;
+    --term-keys-bg: #2a2a2a;
+}
+
+.terminal-shell {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    background: var(--term-bg);
+}
+
+.terminal-shell[hidden] {
+    display: none;
+}
+
+.terminal-shell-screen {
+    flex: 1;
+    min-height: 0;
+    padding: 4px 0 4px 6px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.terminal-shell-screen .xterm {
+    height: 100%;
+}
+
+.terminal-shell-screen .xterm-viewport {
+    background-color: var(--term-bg) !important;
+}
+
+/* The key row: Tab, arrows and ^C for touch keyboards that have none */
+.terminal-shell-keys {
+    display: none;
+    flex: none;
+    gap: 5px;
+    padding: 6px 8px calc(6px + var(--sab, 0px));
+    overflow-x: auto;
+    background: var(--term-keys-bg);
+    border-top: 1px solid var(--border);
+    scrollbar-width: none;
+}
+
+.terminal-shell-keys::-webkit-scrollbar {
+    display: none;
+}
+
+@media (pointer: coarse) {
+    .terminal-shell-keys {
+        display: flex;
+    }
+}
+
+.terminal-shell-key {
+    /* The eight keys share the row; it scrolls only on very narrow screens */
+    flex: 1 0 auto;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 6px;
+    border: 1px solid var(--btn-border);
+    border-radius: var(--btn-radius, 4px);
+    background: var(--btn-bg);
+    box-shadow: var(--btn-shadow);
+    color: var(--btn-text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    touch-action: manipulation;
+}
+
+.terminal-shell-key:active {
+    background: var(--btn-bg-active);
+    box-shadow: var(--btn-shadow-active);
+}
+
+.terminal-shell-key:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 1px;
+}

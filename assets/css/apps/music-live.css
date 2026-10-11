@@ -1,0 +1,205 @@
+/* Music window: listen along. The share toggle and "N listening" count sit in
+   the status bar; one row per track other visitors are playing sits just
+   above it. Colours come from the Music window's own --mu-* properties (set
+   on .mu-app in partials.css), so these follow whatever that window does. */
+
+.mu-app {
+    --mu-live-line: color-mix(in srgb, var(--mu-ink) 24%, transparent);
+    --mu-live-line-soft: color-mix(in srgb, var(--mu-ink) 10%, transparent);
+    --mu-live-ring: color-mix(in srgb, var(--mu-accent) 70%, transparent);
+}
+
+/* ----- Status bar: toggle | song count | listeners ----- */
+
+.mu-statusbar {
+    container-type: inline-size;
+    container-name: mu-status;
+}
+
+.mu-status-row {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    padding: 0 8px;
+}
+
+/* A narrow window has no room for all three: the listener count takes the
+   song count's place while there is one, unless an error is being shown */
+@container mu-status (max-width: 520px) {
+    .mu-status-row {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .mu-status-text {
+        justify-self: end;
+        min-width: 0;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .mu-status-row.has-live .mu-status-text,
+    .mu-app.has-error .mu-status-row.has-live .mu-live-count,
+    .mu-status-row:not(.has-live) .mu-live-count {
+        display: none;
+    }
+
+    .mu-app.has-error .mu-status-row.has-live .mu-status-text {
+        display: inline;
+    }
+}
+
+.mu-share {
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+    max-width: 100%;
+    height: 100%;
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.mu-share span {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.mu-share-toggle {
+    flex: none;
+    width: 12px;
+    height: 12px;
+    margin: 0;
+    accent-color: var(--mu-accent);
+    cursor: pointer;
+}
+
+.mu-share-toggle:focus-visible {
+    outline: 2px solid var(--mu-live-ring);
+    outline-offset: 1px;
+}
+
+.mu-status-text {
+    white-space: nowrap;
+}
+
+.mu-live-count {
+    justify-self: end;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* ----- Listening now rows ----- */
+
+.mu-live {
+    flex: 0 0 auto;
+    background: var(--mu-row-alt);
+    border-top: 1px solid var(--mu-live-line);
+}
+
+.mu-live[hidden] {
+    display: none;
+}
+
+.mu-live-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 30px;
+    padding: 3px 10px 3px 12px;
+}
+
+.mu-live-row + .mu-live-row {
+    border-top: 1px solid var(--mu-live-line-soft);
+}
+
+.mu-live-row.is-joined {
+    background: var(--mu-row-sel);
+}
+
+.mu-live-dot {
+    flex: none;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--mu-accent);
+    animation: mu-live-pulse 2.4s ease-out infinite;
+}
+
+@keyframes mu-live-pulse {
+    0% {
+        box-shadow: 0 0 0 0 color-mix(in srgb, var(--mu-accent) 55%, transparent);
+    }
+
+    70%,
+    100% {
+        box-shadow: 0 0 0 6px color-mix(in srgb, var(--mu-accent) 0%, transparent);
+    }
+}
+
+.mu-live-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 11px;
+    color: var(--mu-muted);
+}
+
+.mu-live-title {
+    font-weight: 600;
+    color: var(--mu-ink);
+}
+
+.mu-live-btn {
+    flex: none;
+}
+
+.mu-live-btn:focus-visible {
+    outline: 2px solid var(--mu-live-ring);
+    outline-offset: 1px;
+}
+
+/* ----- Touch: finger-sized toggle and buttons ----- */
+
+@media (pointer: coarse) {
+    .mu-app {
+        --mu-status-h: 36px;
+    }
+
+    .mu-statusbar {
+        font-size: 11px;
+    }
+
+    .mu-share-toggle {
+        width: 16px;
+        height: 16px;
+    }
+
+    .mu-live-row {
+        min-height: 44px;
+    }
+
+    .mu-live-btn.mac-btn.small {
+        min-height: 32px;
+        padding: 4px 14px;
+        font-size: 12px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mu-live-dot {
+        animation: none;
+    }
+}

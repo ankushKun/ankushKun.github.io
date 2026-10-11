@@ -1,0 +1,59 @@
+{{/*
+Structured data for /resume/: a ProfilePage whose mainEntity is the site's
+Person (layouts/partials/seo/person.html, same @id) with what the resume adds,
+from data/resume.yaml:
+
+- hasOccupation  the current jobTitle from [params.profile] (the resume's
+                 headline only as a fallback), with every skill listed on it
+- alumniOf       past roles as OrganizationRole (role, years, organisation),
+                 plus the school from Education
+- hasCredential  the degree
+
+Called from the <head> in baseof.html in place of the plain Person block.
+Usage: {{ partial "apps/resume/jsonld.html" . }}
+*/}}
+{{- $page := . -}}
+{{- $r := hugo.Data.resume -}}
+{{- $person := partial "seo/person.html" $page -}}
+
+{{- /* The occupation is named after the sitewide jobTitle, not the PDF's older
+headline, so this Person node (same @id as every other page) agrees with the
+rest of the site. */ -}}
+{{- with site.Params.profile.jobTitle | default $r.headline -}}
+{{- $occupation := dict "@type" "Occupation" "name" . -}}
+{{- $skills := slice -}}
+{{- range $r.skills }}{{ range .items }}{{ $skills = $skills | append . }}{{ end }}{{ end -}}
+{{- with $skills | uniq }}{{ $occupation = merge $occupation (dict "skills" .) }}{{ end -}}
+{{- $person = merge $person (dict "hasOccupation" $occupation) -}}
+{{- end -}}
+
+{{- $alumniOf := slice -}}
+{{- range $job := $r.experience -}}
+{{- $role := dict "@type" "OrganizationRole" "roleName" $job.role "alumniOf" (dict "@type" "Organization" "name" $job.org) -}}
+{{- with $job.start }}{{ $role = merge $role (dict "startDate" (string .)) }}{{ end -}}
+{{- with $job.end }}{{ $role = merge $role (dict "endDate" (string .)) }}{{ end -}}
+{{- $alumniOf = $alumniOf | append $role -}}
+{{- end -}}
+{{- $credentials := slice -}}
+{{- range $r.education -}}
+{{- $school := dict "@type" "CollegeOrUniversity" "name" .school -}}
+{{- $alumniOf = $alumniOf | append $school -}}
+{{- $name := .degree -}}
+{{- with .field }}{{ $name = printf "%s, %s" $name . }}{{ end -}}
+{{- $credentials = $credentials | append (dict "@type" "EducationalOccupationalCredential" "credentialCategory" "degree" "name" $name "recognizedBy" $school) -}}
+{{- end -}}
+{{- with $alumniOf }}{{ $person = merge $person (dict "alumniOf" .) }}{{ end -}}
+{{- with $credentials }}{{ $person = merge $person (dict "hasCredential" .) }}{{ end -}}
+
+{{- $node := dict
+    "@context" "https://schema.org"
+    "@type" "ProfilePage"
+    "@id" (printf "%s#profile" $page.Permalink)
+    "url" $page.Permalink
+    "name" (printf "%s, %s" ($r.name | default $person.name) $page.Title)
+    "isPartOf" (dict "@id" (printf "%s#website" site.BaseURL))
+    "mainEntity" $person
+-}}
+{{- with $page.Description }}{{ $node = merge $node (dict "description" .) }}{{ end -}}
+{{- with $r.pdf }}{{ $node = merge $node (dict "associatedMedia" (dict "@type" "MediaObject" "contentUrl" (absURL .) "encodingFormat" "application/pdf" "name" (printf "%s (PDF)" $page.Title))) }}{{ end }}
+    <script type="application/ld+json">{{ $node | jsonify | safeJS }}</script>

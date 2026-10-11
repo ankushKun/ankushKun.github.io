@@ -3,6 +3,8 @@
 <div id="content-{{ $id }}" class="window-content" data-paint-window="true">
     <div class="paint-window">
 
+        {{ partial "apps/paint/daybar.html" . }}
+
         <div class="paint-toolbar">
             <div class="paint-tools" role="radiogroup" aria-label="Tool">
                 <button type="button" class="paint-tool is-selected" data-tool="pencil" data-tip="Pencil"
@@ -36,8 +38,20 @@
 
             <div class="paint-palette" role="radiogroup" aria-label="Colour"></div>
 
+            {{/* Shown instead of the tools while a past day is open (paint-daily.css) */}}
+            <span class="paint-readonly">
+                <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
+                    <rect x="3" y="7" width="10" height="7" rx="1.5" fill="currentColor" />
+                    <path d="M5.2 7V5a2.8 2.8 0 0 1 5.6 0v2" fill="none" stroke="currentColor" stroke-width="1.5" />
+                </svg>
+                Read-only
+            </span>
+
             <div class="paint-toolbar-end">
-                <button type="button" class="paint-clear" data-tip="Erase the whole canvas" data-tip-align="end">Clear</button>
+                <button type="button" class="paint-btn paint-undo" data-tip="Undo your last stroke (⌘Z)" data-tip-align="end" disabled>Undo</button>
+                <button type="button" class="paint-btn paint-save" data-tip="Download this canvas as a PNG" data-tip-align="end">Save</button>
+                <button type="button" class="paint-clear" data-tip="Remove everything you drew today" data-tip-align="end" disabled>Clear Mine</button>
+                <button type="button" class="paint-btn paint-today">Back to Today</button>
             </div>
         </div>
 
@@ -47,7 +61,11 @@
         <div class="paint-stage">
             <canvas class="paint-canvas" width="960" height="600"></canvas>
             <div class="paint-loading">Loading canvas…</div>
+            <div class="paint-offline" role="status" hidden>Offline — strokes stay on this screen and are sent when the connection returns.</div>
+            <div class="paint-empty" role="status" hidden></div>
         </div>
+
+        {{ partial "apps/paint/gallery.html" . }}
 
         <div class="paint-statusbar">
             <span class="paint-hint">Everyone here draws on the same canvas — be kind to each other's work.</span>
