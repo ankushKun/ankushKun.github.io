@@ -4,9 +4,11 @@ draft = false
 title = "All our Agents get computers, we pay for almost none"
 description = "Construct is an AI employee with a real Linux computer per user. Don't get excited - we are not paying for all of them. How we run that on Cloudflare Durable Objects, Sandboxes, and R2."
 summary = "Every Construct agent gets a real Linux computer. We pay for almost none of them. How we run that on Cloudflare Durable Objects, Sandboxes, and R2."
-tags = ["engineering", "cloudflare", "durable-objects", "infrastructure", "construct"]
-og_image = "/media/cloudflare-agents-og.jpg"
+tags = ["ai-agents", "cloudflare", "construct"]
+og_image = "/media/construct/running-ai-agents-on-cloudflare-not-vms.jpg"
 author = 'Ankush'
+canonical = "https://construct.computer/blog/running-ai-agents-on-cloudflare-not-vms/"
+related = ["/projects/2026.construct-computer"]
 +++
 
 Construct is an AI employee. You hand it a job. It goes and does the job, without you having to babysit it.

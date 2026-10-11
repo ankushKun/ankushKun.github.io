@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 504" width="760" height="504" role="img" aria-labelledby="t d" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif">
+  <title id="t">What AI adoption changed across 22,000 developers</title>
+  <desc id="d">Percentage change between each organization's lowest and highest AI adoption. Tasks completed per developer rose 33.7 percent and epics completed rose 66 percent. Against that, bugs per developer rose 54 percent, median time to first review 156.6 percent, incidents per pull request 242.7 percent, median review time 441.5 percent, and code churn 861 percent.</desc>
+  <rect width="760" height="504" fill="#ffffff"/>
+  <text x="28" y="40" font-size="19" font-weight="600" fill="#4e4646">Two years of telemetry, one lopsided ledger</text>
+  <text x="28" y="63" font-size="13.5" fill="#8a9aa2">Change between an organization's lowest and highest AI adoption</text>
+  <circle cx="33" cy="88" r="5" fill="#01b4c8"/>
+  <text x="45" y="92" font-size="13" fill="#4e4646">What teams got</text>
+  <circle cx="175.39999999999998" cy="88" r="5" fill="#eb6834"/>
+  <text x="187.39999999999998" y="92" font-size="13" fill="#4e4646">What it cost</text>
+  <line x1="232" y1="114" x2="232" y2="412" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="232" y="434" font-size="12" fill="#8a9aa2" text-anchor="middle">+0%</text>
+  <line x1="332" y1="114" x2="332" y2="412" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="332" y="434" font-size="12" fill="#8a9aa2" text-anchor="middle">+200%</text>
+  <line x1="432" y1="114" x2="432" y2="412" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="432" y="434" font-size="12" fill="#8a9aa2" text-anchor="middle">+400%</text>
+  <line x1="532" y1="114" x2="532" y2="412" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="532" y="434" font-size="12" fill="#8a9aa2" text-anchor="middle">+600%</text>
+  <line x1="632" y1="114" x2="632" y2="412" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="632" y="434" font-size="12" fill="#8a9aa2" text-anchor="middle">+800%</text>
+  <text x="218" y="150" font-size="14" fill="#4e4646" text-anchor="end">Tasks completed, per dev</text>
+  <path d="M 232 134 H 244.85 a 4 4 0 0 1 4 4 V 152 a 4 4 0 0 1 -4 4 H 232 Z" fill="#01b4c8"/>
+  <text x="258.85" y="150" font-size="14" font-weight="600" fill="#4e4646">+33.7%</text>
+  <text x="218" y="192" font-size="14" fill="#4e4646" text-anchor="end">Bugs, per dev</text>
+  <path d="M 232 176 H 255 a 4 4 0 0 1 4 4 V 194 a 4 4 0 0 1 -4 4 H 232 Z" fill="#eb6834"/>
+  <text x="269" y="192" font-size="14" font-weight="600" fill="#4e4646">+54%</text>
+  <text x="218" y="234" font-size="14" fill="#4e4646" text-anchor="end">Epics completed, per dev</text>
+  <path d="M 232 218 H 261 a 4 4 0 0 1 4 4 V 236 a 4 4 0 0 1 -4 4 H 232 Z" fill="#01b4c8"/>
+  <text x="275" y="234" font-size="14" font-weight="600" fill="#4e4646">+66%</text>
+  <text x="218" y="276" font-size="14" fill="#4e4646" text-anchor="end">Time to first review</text>
+  <path d="M 232 260 H 306.3 a 4 4 0 0 1 4 4 V 278 a 4 4 0 0 1 -4 4 H 232 Z" fill="#eb6834"/>
+  <text x="320.3" y="276" font-size="14" font-weight="600" fill="#4e4646">+156.6%</text>
+  <text x="218" y="318" font-size="14" fill="#4e4646" text-anchor="end">Incidents per pull request</text>
+  <path d="M 232 302 H 349.35 a 4 4 0 0 1 4 4 V 320 a 4 4 0 0 1 -4 4 H 232 Z" fill="#eb6834"/>
+  <text x="363.35" y="318" font-size="14" font-weight="600" fill="#4e4646">+242.7%</text>
+  <text x="218" y="360" font-size="14" fill="#4e4646" text-anchor="end">Median review time</text>
+  <path d="M 232 344 H 448.75 a 4 4 0 0 1 4 4 V 362 a 4 4 0 0 1 -4 4 H 232 Z" fill="#eb6834"/>
+  <text x="462.75" y="360" font-size="14" font-weight="600" fill="#4e4646">+441.5%</text>
+  <text x="218" y="402" font-size="14" fill="#4e4646" text-anchor="end">Code churn</text>
+  <path d="M 232 386 H 658.5 a 4 4 0 0 1 4 4 V 404 a 4 4 0 0 1 -4 4 H 232 Z" fill="#eb6834"/>
+  <text x="672.5" y="402" font-size="14" font-weight="600" fill="#4e4646">+861%</text>
+  <text x="28" y="478" font-size="12" fill="#8a9aa2">Faros AI, The Acceleration Whiplash, 2026. 22,000 developers, 4,000 teams.</text>
+</svg>
