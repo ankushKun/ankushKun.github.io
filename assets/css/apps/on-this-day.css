@@ -1,0 +1,287 @@
+/* ==========================================================================
+   Guestbook: "On This Day" button and popover (assets/js/on-this-day.js)
+   ========================================================================== */
+
+:root {
+    /* Ink for the small signatures: the book's own navy, lighter in dark mode */
+    --otd-ink: #1c2a4a;
+    --otd-me: var(--accent-blue-subtle);
+}
+
+html[data-appearance="dark"] {
+    --otd-ink: #c9d6f2;
+    --otd-me: color-mix(in srgb, var(--accent-blue) 16%, transparent);
+}
+
+/* The popover is placed against the desk */
+.gb-desk.has-otd {
+    position: relative;
+}
+
+/* ---------- Toolbar button ---------- */
+
+.otd-btn {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    /* The toolbar's 12px gap is too wide between two related buttons */
+    margin-right: -4px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.otd-btn[hidden] {
+    display: none;
+}
+
+.otd-btn-icon {
+    flex: none;
+    display: block;
+}
+
+.otd-badge {
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    box-sizing: border-box;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 16px;
+    text-align: center;
+    color: var(--accent-fill-text);
+    background: var(--accent-fill);
+    border-radius: 8px;
+}
+
+.otd-badge:empty {
+    display: none;
+}
+
+/* ---------- Popover ---------- */
+
+.otd-pop {
+    position: absolute;
+    z-index: 15;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    min-height: 0;
+    font-family: var(--font-system);
+    color: var(--text-primary);
+    background: var(--surface-overlay);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg);
+    outline: none;
+    animation: otd-pop-in 0.14s ease-out;
+}
+
+.otd-pop[hidden] {
+    display: none;
+}
+
+@keyframes otd-pop-in {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+}
+
+/* The beak, pointing at the button */
+.otd-arrow {
+    position: absolute;
+    top: -7px;
+    width: 12px;
+    height: 12px;
+    margin-left: -6px;
+    background: inherit;
+    border-top: 1px solid var(--border-strong);
+    border-left: 1px solid var(--border-strong);
+    transform: rotate(45deg);
+    pointer-events: none;
+}
+
+.otd-head {
+    position: relative;
+    flex: none;
+    padding: 12px 16px 10px;
+    text-align: center;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+/* (.otd-pop prefix on text: outranks .window-content h2/h3/p) */
+.otd-pop .otd-title {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.3;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.otd-pop .otd-date {
+    margin: 2px 0 0;
+    font-size: 11px;
+    line-height: 1.4;
+    color: var(--text-secondary);
+}
+
+.otd-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 4px 0 8px;
+}
+
+.otd-group + .otd-group,
+.otd-empty + .otd-group {
+    border-top: 1px solid var(--border-subtle);
+}
+
+.otd-pop .otd-group-title {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 0;
+    padding: 9px 16px 3px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+}
+
+.otd-group-sub {
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+/* (.otd-pop prefix: outranks the window's own list indent) */
+.otd-pop .otd-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.otd-entry {
+    display: grid;
+    grid-template-columns: 76px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 16px;
+}
+
+.otd-entry.is-me {
+    background: var(--otd-me);
+}
+
+.otd-sig {
+    height: 30px;
+    color: var(--otd-ink);
+}
+
+.otd-sig svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.otd-meta {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.otd-name,
+.otd-from {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.otd-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.otd-from {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.otd-when {
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    color: var(--text-tertiary);
+}
+
+.otd-pop .otd-more {
+    margin: 2px 16px 4px;
+    font-size: 11px;
+    line-height: 1.4;
+    color: var(--text-tertiary);
+}
+
+.otd-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 16px 12px;
+    text-align: center;
+}
+
+.otd-pop .otd-empty-text {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--text-secondary);
+}
+
+/* ---------- Phones ---------- */
+
+@media (max-width: 768px), (pointer: coarse) and (max-height: 500px) {
+    /* Icon and count only, so the toolbar keeps room for the book's own controls */
+    .otd-btn {
+        min-width: 44px;
+        min-height: 36px;
+        justify-content: center;
+        padding: 4px 10px;
+    }
+
+    .otd-btn-label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+
+    .otd-entry {
+        grid-template-columns: 64px minmax(0, 1fr) auto;
+        padding: 7px 14px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .otd-pop {
+        animation: none;
+    }
+}
+
+@media print {
+    .otd-btn,
+    .otd-pop {
+        display: none !important;
+    }
+}

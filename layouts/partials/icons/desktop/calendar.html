@@ -40,11 +40,11 @@
         <line x1="9" y1="25.5" x2="55" y2="25.5" stroke="rgba(0,0,0,0.12)" stroke-width="0.5" />
 
         <!-- Month (dynamic via JS; Hugo fills build-time default) -->
-        <text id="timeline-desktop-cal-month" x="32" y="20.5" text-anchor="middle" fill="#fff"
+        <text data-cal-part="month" x="32" y="20.5" text-anchor="middle" fill="#fff"
             font-family="Lucida Grande, Geneva, Helvetica Neue, Helvetica, Arial, sans-serif" font-size="10"
             font-weight="700" letter-spacing="0.08em" style="text-rendering: geometricPrecision">{{ upper (now.Format "Jan") }}</text>
         <!-- Day numeral -->
-        <text id="timeline-desktop-cal-day" x="32" y="49" text-anchor="middle" fill="#2c2c2c"
+        <text data-cal-part="day" x="32" y="49" text-anchor="middle" fill="#2c2c2c"
             font-family="Lucida Grande, Geneva, Helvetica Neue, Helvetica, Arial, sans-serif" font-size="24"
             font-weight="600" style="text-rendering: geometricPrecision">{{ now.Format "2" }}</text>
 

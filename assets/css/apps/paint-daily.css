@@ -1,0 +1,474 @@
+/* ==========================================================================
+   Paint - one canvas per day: the day bar, read-only days and the gallery
+   ========================================================================== */
+
+.paint-window {
+    /* The drawing surface is paper, not chrome: it stays white in dark mode,
+       exactly as the saved PNG is. */
+    --paint-paper: #fff;
+    --paint-paper-edge: rgba(0, 0, 0, 0.22);
+    --paint-well-shadow: rgba(0, 0, 0, 0.08);
+}
+
+html[data-appearance="dark"] .paint-window {
+    --paint-paper-edge: rgba(0, 0, 0, 0.6);
+    --paint-well-shadow: rgba(0, 0, 0, 0.35);
+}
+
+/* ---- Day bar ----
+   Sits above the tools: first which day, then what to draw with. */
+
+.paint-daybar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 44px;
+    padding: 5px 12px;
+    box-sizing: border-box;
+    background: var(--toolbar-bg);
+    border-bottom: 1px solid var(--toolbar-border);
+    /* Above the tools toolbar, so the arrows' tooltips are not cut by it. */
+    position: relative;
+    z-index: 3;
+}
+
+/* Previous / next as one segmented control */
+.paint-daynav {
+    flex: none;
+    display: flex;
+}
+
+.paint-nav {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 24px;
+    padding: 0;
+    color: var(--btn-text);
+    background: var(--btn-bg);
+    border: 1px solid var(--btn-border);
+    box-shadow: var(--btn-shadow);
+    cursor: pointer;
+}
+
+.paint-prev {
+    border-radius: var(--btn-radius) 0 0 var(--btn-radius);
+}
+
+.paint-next {
+    margin-left: -1px;
+    border-radius: 0 var(--btn-radius) var(--btn-radius) 0;
+}
+
+.paint-nav:hover:not(:disabled) {
+    background: var(--btn-bg-hover);
+}
+
+.paint-nav:active:not(:disabled) {
+    background: var(--btn-bg-active);
+    box-shadow: var(--btn-shadow-active);
+}
+
+/* Dim the arrow, not the button: a faded half would break the control. */
+.paint-nav:disabled {
+    cursor: default;
+}
+
+.paint-nav:disabled svg {
+    opacity: 0.3;
+}
+
+.paint-day {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    text-align: center;
+    line-height: 1.3;
+}
+
+.paint-day-head {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    color: var(--text-primary);
+}
+
+.paint-day-title {
+    font-weight: 600;
+}
+
+.paint-day-date {
+    margin-left: 6px;
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+.paint-day-date[hidden] {
+    display: none;
+}
+
+.paint-day-prompt {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.paint-gallery-toggle {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.paint-gallery-toggle[aria-pressed="true"],
+.paint-gallery-toggle[aria-pressed="true"]:hover:not(:disabled) {
+    background: var(--btn-bg-active);
+    box-shadow: var(--btn-shadow-active);
+}
+
+:is(.paint-nav, .paint-btn, .paint-clear, .paint-tile):focus-visible {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
+}
+
+.paint-nav:focus-visible {
+    /* Over its neighbour, so the ring is not half hidden */
+    position: relative;
+    z-index: 1;
+}
+
+/* ---- Read-only days ---- */
+
+.paint-readonly,
+.paint-today {
+    display: none;
+}
+
+.paint-window.is-readonly :is(.paint-tools, .paint-sizes, .paint-sep, .paint-palette, .paint-undo, .paint-clear) {
+    display: none;
+}
+
+.paint-window.is-readonly .paint-readonly {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.paint-window.is-readonly .paint-today {
+    display: inline-block;
+}
+
+.paint-window.is-readonly .paint-canvas {
+    cursor: default;
+}
+
+/* Drawing offline is not possible on a past day; .paint-empty speaks instead. */
+.paint-window.is-readonly .paint-offline {
+    display: none;
+}
+
+.paint-empty {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 2;
+    max-width: calc(100% - 32px);
+    padding: 6px 14px;
+    font-size: 12px;
+    line-height: 1.35;
+    text-align: center;
+    color: var(--text-secondary);
+    background: var(--window-bg-solid);
+    border: 1px solid var(--toolbar-border);
+    border-radius: 13px;
+    box-shadow: var(--shadow-md);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+.paint-empty[hidden] {
+    display: none;
+}
+
+/* ---- Gallery ----
+   Takes the stage's place. .paint-stage is display:flex, which would
+   otherwise beat the hidden attribute. */
+
+.paint-stage[hidden],
+.paint-gallery[hidden],
+.paint-window.is-gallery .paint-toolbar {
+    display: none;
+}
+
+.paint-gallery {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 18px 16px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    background: var(--gray-150);
+    box-shadow: inset 0 1px 3px var(--paint-well-shadow);
+}
+
+.window-content .paint-gallery-note {
+    margin: 0 0 14px;
+    font-size: 12px;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.paint-gallery-note[hidden] {
+    display: none;
+}
+
+.window-content .paint-gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(172px, 1fr));
+    gap: 14px 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.window-content .paint-gallery-grid > li {
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+    list-style: none;
+}
+
+.window-content .paint-gallery-grid > li::before,
+.window-content .paint-gallery-grid > li::marker {
+    content: none;
+}
+
+.paint-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    padding: 8px 8px 7px;
+    font-family: inherit;
+    text-align: center;
+    color: var(--text-primary);
+    background: transparent;
+    border: 0;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.paint-tile:hover {
+    background: var(--accent-blue-subtle);
+}
+
+.paint-tile-canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 8 / 5;
+    margin-bottom: 8px;
+    background: var(--paint-paper);
+    border-radius: 2px;
+    box-shadow: 0 0 0 1px var(--paint-paper-edge), var(--shadow-md);
+}
+
+.paint-tile-title {
+    max-width: 100%;
+    padding: 1px 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
+    border-radius: 9px;
+}
+
+/* The open day, marked the way Finder marks a selected icon's name */
+.paint-tile[aria-current="true"] .paint-tile-title {
+    color: var(--accent-fill-text);
+    background: var(--accent-fill);
+}
+
+.paint-tile-prompt {
+    display: -webkit-box;
+    max-width: 100%;
+    margin-top: 2px;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    font-size: 11px;
+    line-height: 1.35;
+    color: var(--text-tertiary);
+}
+
+.paint-gallery-pager {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 18px;
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+.paint-gallery-pager[hidden] {
+    display: none;
+}
+
+/* ---- Compact (phones, short landscape) ---- */
+
+@media (max-width: 768px), (pointer: coarse) and (max-height: 500px) {
+    .paint-daybar {
+        gap: 8px;
+        padding: 5px 8px;
+    }
+
+    .paint-gallery {
+        padding: 12px 8px;
+    }
+
+    .window-content .paint-gallery-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 8px 4px;
+    }
+}
+
+@media (pointer: coarse) {
+    .paint-nav {
+        width: 42px;
+        height: 36px;
+    }
+
+    .paint-gallery-toggle,
+    .paint-today,
+    .paint-gallery-pager .paint-btn {
+        min-height: 36px;
+    }
+}
+
+@media (max-width: 420px) {
+    /* The arrows, the day, its prompt and Gallery on one row of a phone:
+       "Today" says enough, and a past day's title already is its date. */
+    .paint-day-date {
+        display: none;
+    }
+
+    .paint-day-prompt {
+        white-space: normal;
+    }
+}
+
+/* ---- Landscape phones ----
+   A wrapped toolbar row under the day bar left the canvas about 160px wide.
+   On short touch screens the tools become a column on the left, the way
+   MacPaint kept its palette, and the canvas gets the full height. */
+@media (pointer: coarse) and (max-height: 500px) {
+    .paint-window {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr) auto;
+    }
+
+    .paint-daybar {
+        grid-column: 1 / -1;
+        grid-row: 1;
+    }
+
+    .paint-toolbar {
+        grid-column: 1;
+        grid-row: 2;
+        flex-direction: column;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 6px;
+        width: 180px;
+        box-sizing: border-box;
+        padding: 6px;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        border-bottom: 0;
+        border-right: 1px solid var(--toolbar-border);
+    }
+
+    .paint-stage {
+        grid-column: 2;
+        grid-row: 2;
+        padding: 8px;
+    }
+
+    .paint-gallery {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+
+    .paint-statusbar {
+        grid-column: 1 / -1;
+        grid-row: 3;
+    }
+
+    .paint-sep {
+        display: none;
+    }
+
+    .paint-tool,
+    .paint-size {
+        min-width: 36px;
+        min-height: 36px;
+    }
+
+    .paint-palette {
+        justify-content: center;
+    }
+
+    .paint-swatch {
+        width: 30px;
+        height: 30px;
+        min-width: 30px;
+        min-height: 30px;
+    }
+
+    .paint-toolbar-end {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 4px;
+        margin-left: 0;
+    }
+
+    .paint-toolbar-end :is(.paint-btn, .paint-clear) {
+        padding: 5px 7px;
+        font-size: 11px;
+    }
+
+    /* The offline notice gets a band of its own under the canvas instead
+       of covering the middle of it. */
+    .paint-window:has(.paint-offline:not([hidden])) .paint-stage {
+        padding-bottom: 30px;
+    }
+
+    /* .paint-stage: paint-extras.css loads later and sets the desktop spot */
+    .paint-stage .paint-offline {
+        top: auto;
+        bottom: 5px;
+        max-width: calc(100% - 16px);
+        padding: 3px 10px;
+        overflow: hidden;
+        font-size: 11px;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+}

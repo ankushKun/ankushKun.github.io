@@ -1,0 +1,133 @@
+{{/* Daily Puzzle - one Minesweeper field per UTC day, the same for everyone,
+with a shared leaderboard. Behaviour: assets/js/daily-puzzle.js (lazy).
+Styles: assets/css/apps/puzzle.css.
+
+The field itself is built by the script (81 cells from the day's seed); this
+partial is the fixed furniture around it. */}}
+{{- $id := .id -}}
+<div id="content-{{ $id }}" class="window-content" data-puzzle-window="true">
+    <div class="dp-window">
+
+        <div class="app-toolbar dp-toolbar">
+            <div class="app-toolbar-title">
+                {{ with (index (where hugo.Data.apps.apps "id" $id) 0) }}
+                {{ partial "os/app-icon.html" (dict "app" . "context" "chrome") }}
+                {{ end }}
+                <span>Daily Puzzle</span>
+            </div>
+            <time class="app-toolbar-count dp-date"></time>
+        </div>
+
+        <div class="dp-body">
+            <section class="dp-play" aria-label="Today's puzzle">
+                <div class="dp-console">
+                    <div class="dp-hud">
+                        <div class="dp-led dp-led-mines" role="img" aria-label="Mines left: 12">012</div>
+                        <button type="button" class="dp-mode" aria-pressed="false" disabled
+                            data-tip="When on, a tap plants a flag instead of opening a square">
+                            <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
+                                <path class="dp-glyph-pole" d="M5 2.2h1.3v11.6H5z" />
+                                <path class="dp-glyph-base" d="M2.6 12.6h6.1v1.5H2.6z" />
+                                <path class="dp-glyph-flag" d="M6.3 2.4l6.6 2.9-6.6 2.9z" />
+                            </svg>
+                            <span>Flag Mode</span>
+                        </button>
+                        <div class="dp-led-slot">
+                            <div class="dp-led dp-led-time" role="img" aria-label="Time: 0 seconds">000</div>
+                            <span class="dp-penalty" aria-hidden="true"></span>
+                        </div>
+                    </div>
+
+                    <div class="dp-field">
+                        <div class="dp-board" role="grid" aria-label="Minefield"></div>
+                        <div class="dp-cover">
+                            <div class="dp-cover-card">
+                                <h2 class="dp-cover-title">Today&rsquo;s Minefield</h2>
+                                <p class="dp-cover-text"></p>
+                                <button type="button" class="mac-btn primary dp-cover-btn">Start the Clock</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dp-live" role="status" aria-live="polite"></div>
+            </section>
+
+            <aside class="dp-side" aria-label="Results and leaderboard">
+                <div class="dp-result" hidden>
+                    <div class="dp-result-head">
+                        <span class="dp-result-label">Solved</span>
+                        <span class="dp-result-time">0:00.0</span>
+                    </div>
+                    <p class="dp-result-detail"></p>
+
+                    <form class="dp-name-form" autocomplete="off">
+                        <label class="dp-name-label" for="dp-name-{{ $id }}">Put your time on the leaderboard</label>
+                        <div class="dp-name-row">
+                            <input type="text" id="dp-name-{{ $id }}" class="dp-name-input" maxlength="20"
+                                placeholder="Your name" autocapitalize="words" autocorrect="off" spellcheck="false"
+                                enterkeyhint="send" aria-describedby="dp-name-note-{{ $id }}">
+                            <button type="submit" class="mac-btn primary dp-name-submit">Post Time</button>
+                        </div>
+                        <p class="dp-note" id="dp-name-note-{{ $id }}">Your name and time are shown to everyone. Later
+                            puzzles post under the same name.</p>
+                    </form>
+
+                    <div class="dp-posted" hidden>
+                        <p class="dp-posted-line">On the leaderboard as <strong class="dp-posted-name"></strong></p>
+                        <p class="dp-note dp-posted-state" role="status"></p>
+                    </div>
+
+                    <div class="dp-result-actions">
+                        <button type="button" class="mac-btn small dp-copy">Copy Result</button>
+                        <button type="button" class="mac-btn small dp-rename">Change Name</button>
+                    </div>
+                </div>
+
+                <dl class="dp-stats">
+                    <div class="dp-stat">
+                        <dd class="dp-stat-streak">0</dd>
+                        <dt>Day streak</dt>
+                    </div>
+                    <div class="dp-stat">
+                        <dd class="dp-stat-best">0</dd>
+                        <dt>Best streak</dt>
+                    </div>
+                    <div class="dp-stat">
+                        <dd class="dp-stat-solved">0</dd>
+                        <dt>Solved</dt>
+                    </div>
+                    <div class="dp-stat">
+                        <dd class="dp-stat-fastest">&ndash;</dd>
+                        <dt>Fastest</dt>
+                    </div>
+                </dl>
+
+                <section class="dp-leaderboard">
+                    <div class="dp-section-head">
+                        <h3 class="dp-scores-title">Today&rsquo;s Fastest</h3>
+                        <span class="dp-scores-count"></span>
+                    </div>
+                    <ol class="dp-scores" hidden></ol>
+                    <p class="dp-scores-empty">The leaderboard is loading&hellip;</p>
+                </section>
+
+                <section class="dp-howto">
+                    <div class="dp-section-head">
+                        <h3>How to Play</h3>
+                    </div>
+                    <ul>
+                        <li>A number counts the mines in the squares touching it.</li>
+                        <li>Click or tap a square to open it. Right-click or press and hold to flag a mine.</li>
+                        <li>Click a number whose mines are all flagged to open the rest around it.</li>
+                        <li>Keyboard: arrow keys move, Enter opens, F flags.</li>
+                    </ul>
+                </section>
+            </aside>
+        </div>
+
+        <div class="app-statusbar dp-statusbar">
+            <span class="dp-next"></span>
+            <span class="dp-status" data-state="wait">Connecting&hellip;</span>
+        </div>
+    </div>
+</div>

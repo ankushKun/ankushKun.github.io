@@ -1,0 +1,215 @@
+/* Music window additions: repeat, retry, '#' and link columns, keyboard rows,
+   Cover Flow swipe. Base Music styles live in partials.css. */
+
+/* ----- Repeat (shares the .mu-shuffle look) ----- */
+
+.mu-repeat {
+    position: relative;
+}
+
+.mu-repeat-one {
+    position: absolute;
+    right: -3px;
+    bottom: -3px;
+    font-size: 8px;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
+}
+
+.mu-repeat-one[hidden] {
+    display: none;
+}
+
+.mu-shuffle:focus-visible,
+.mu-retry:focus-visible {
+    outline: 2px solid rgba(0, 122, 255, 0.7);
+    outline-offset: 1px;
+}
+
+/* ----- Playback error + Retry ----- */
+
+.mu-retry {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    padding: 0 2px;
+    font: inherit;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 16px;
+    /* Sits on the light LCD in either appearance */
+    color: #0066d6;
+    text-decoration: underline;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.mu-retry[hidden] {
+    display: none;
+}
+
+.mu-app.has-error .mu-lcd-sub {
+    color: #a3261c;
+}
+
+.mu-mb-retry {
+    align-self: flex-start;
+    font-size: 11px;
+    color: #6cb4ff;
+}
+
+/* ----- Songs table: '#' and YouTube link columns ----- */
+
+.mu-col-index {
+    width: 36px;
+    text-align: right !important;
+}
+
+.mu-col-link {
+    width: 28px;
+    cursor: default !important;
+}
+
+.mu-table .mu-cell-index {
+    font-variant-numeric: tabular-nums;
+    color: var(--mu-muted);
+    text-align: right;
+    /* Two digits always fit; never "1…" for track 10 */
+    padding-left: 4px;
+    text-overflow: clip;
+}
+
+.mu-table .mu-cell-link {
+    text-align: center;
+    padding-left: 2px;
+    padding-right: 2px;
+    overflow: visible;
+}
+
+.mu-yt-link {
+    display: inline-block;
+    min-width: 18px;
+    color: var(--mu-muted);
+    text-decoration: none;
+    border-radius: 3px;
+    opacity: 0;
+}
+
+.mu-table tbody tr:hover .mu-yt-link,
+.mu-table tbody tr:focus .mu-yt-link,
+.mu-table tbody tr.is-playing .mu-yt-link,
+.mu-yt-link:focus {
+    opacity: 1;
+}
+
+/* Colour only, prefixed so it outranks the generic `.window-content a` link
+   colour, which painted the glyph accent blue on the blue playing row. */
+.mu-table a.mu-yt-link {
+    color: var(--mu-muted);
+}
+
+.mu-table a.mu-yt-link:hover {
+    color: var(--mu-accent);
+}
+
+@media (hover: none) {
+    .mu-yt-link {
+        opacity: 1;
+    }
+}
+
+/* ----- Touch: finger-sized rows, links and sliders ----- */
+
+@media (pointer: coarse) {
+    .mu-table tbody td {
+        height: 40px;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+
+    .mu-col-link {
+        width: 44px;
+    }
+
+    .mu-table .mu-cell-link {
+        padding: 0;
+    }
+
+    .mu-yt-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 40px;
+    }
+
+    /* The LCD is 48px tall, so these cannot be a full 40px without pushing
+       the title out: a 32px box that overhangs its 16px slot */
+    .mu-shuffle {
+        width: 32px;
+        height: 32px;
+        margin: -8px 0;
+    }
+
+    /* Same 4px bar, with transparent padding above and below to grab */
+    .mu-app-range,
+    .mu-lcd .mu-app-range {
+        box-sizing: content-box;
+        padding: 14px 0;
+        margin: -14px 0;
+        background-clip: content-box;
+    }
+}
+
+/* .window-content table { margin: 16px 0 } left a white band above the
+   header row and below the last song */
+.window-content .mu-table {
+    margin: 0;
+}
+
+/* ----- Phones on their side: Cover Flow beside the list, not above it ----- */
+
+/* Stacked, Cover Flow's minimum height left the song list a 32px slot */
+@media (pointer: coarse) and (max-height: 500px) {
+    .mu-sidebar {
+        display: none;
+    }
+
+    .mu-main {
+        flex-direction: row;
+    }
+
+    .mu-coverflow {
+        flex: 0 0 38%;
+        min-height: 0;
+        max-height: none;
+        border-bottom: 0;
+        border-right: 1px solid #000;
+    }
+
+    .mu-table-wrap {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+}
+
+/* ----- Keyboard focus ----- */
+
+.mu-table tbody tr:focus {
+    outline: none;
+}
+
+.mu-table tbody tr:focus-visible,
+.mu-yt-link:focus-visible,
+.mu-table thead th:focus-visible {
+    outline: 2px solid rgba(0, 122, 255, 0.7);
+    outline-offset: -2px;
+}
+
+/* ----- Cover Flow swipe: horizontal drags browse, vertical still scrolls ----- */
+
+.mu-coverflow {
+    touch-action: pan-y;
+    -webkit-user-select: none;
+    user-select: none;
+}

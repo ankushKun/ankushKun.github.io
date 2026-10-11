@@ -1,0 +1,75 @@
+/* ==========================================================================
+   Guestbook - public-contact disclosure and the "here is your entry" flash
+   ========================================================================== */
+
+/* Sits between the legend and the contact inputs: the email and handles are
+   printed beside the signature for every visitor, and this says so. */
+.gb-contact-note {
+    margin: 2px 0 2px;
+    font-size: 11px;
+    line-height: 1.4;
+    color: var(--text-secondary, #5b6168);
+}
+
+/* "Keep my email private", under the email field and indented to line up with
+   the inputs (22px icon + 8px gap). Only rendered when the owner's key is set. */
+.gb-private {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin: 5px 0 2px 30px;
+    font-size: 11px;
+    line-height: 1.4;
+    color: var(--text-secondary, #5b6168);
+    cursor: pointer;
+}
+
+.gb-private[hidden] {
+    display: none;
+}
+
+.gb-private input {
+    flex: none;
+    margin: 2px 0 0;
+}
+
+/* The card scrolls when the window is short, and the disclosure text plus the
+   private option make it taller than the default window. Keep Cancel / Sign
+   pinned to the bottom of the card so they never scroll out of reach. The
+   negative offsets cover the card's own 17px / 13px padding. */
+.gb-card-actions {
+    position: sticky;
+    bottom: -13px;
+    margin: 0 -17px -13px;
+    padding: 9px 17px 13px;
+    background: var(--window-bg-solid, #f5f5f7);
+    border-radius: 0 0 6px 6px;
+}
+
+/* Shown on your own entry right after signing, once the book has turned to
+   the page it landed on. */
+.gb-entry.is-revealed {
+    border-radius: 3px;
+    animation: gbEntryReveal 2.4s ease-out both;
+}
+
+@keyframes gbEntryReveal {
+    0%,
+    35% {
+        background-color: rgba(255, 214, 102, 0.55);
+        box-shadow: 0 0 0 4px rgba(255, 214, 102, 0.55);
+    }
+
+    100% {
+        background-color: rgba(255, 214, 102, 0);
+        box-shadow: 0 0 0 4px rgba(255, 214, 102, 0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .gb-entry.is-revealed {
+        animation: none;
+        background-color: rgba(255, 214, 102, 0.4);
+        box-shadow: 0 0 0 4px rgba(255, 214, 102, 0.4);
+    }
+}

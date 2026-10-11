@@ -1,0 +1,125 @@
+{{/* Activity Monitor - live GitHub activity on top, and the Mavericks-style
+bottom pane with what the site is doing right now: music, visitors, the relay
+and the build that is being served.
+
+Everything dynamic is filled in by assets/js/activity-monitor.js, which is only
+fetched when the window is opened. Styles: assets/css/apps/activity.css. */}}
+{{- $id := .id -}}
+{{- $ghUser := "" -}}
+{{- $ghUrl := "" -}}
+{{- range hugo.Data.contact.socials -}}
+{{- if eq .platform "GitHub" -}}{{- $ghUser = .handle -}}{{- $ghUrl = .url -}}{{- end -}}
+{{- end -}}
+{{- $posts := len (where site.RegularPages "Section" "blogs") -}}
+{{- $projects := len (where site.RegularPages "Section" "projects") -}}
+<div id="content-{{ $id }}" class="window-content" data-activity-window="true">
+    <div class="am-app" data-github-user="{{ $ghUser }}" data-built="{{ now.UTC.Format "2006-01-02T15:04:05Z" }}"
+        data-repo="https://github.com/ankushKun/ankushKun.github.io">
+
+        <div class="app-toolbar am-toolbar">
+            <div class="app-toolbar-title am-title">
+                <span>GitHub Activity</span>
+                {{ with $ghUrl -}}
+                <a class="am-profile" href="{{ . }}" target="_blank" rel="noopener" data-open="tab">@{{ $ghUser }}</a>
+                {{- end }}
+            </div>
+            <div class="am-toolbar-end">
+                <span class="app-toolbar-count am-updated" role="status" aria-live="polite"></span>
+                <button type="button" class="mac-btn small am-refresh" data-tip="Check GitHub again"
+                    data-tip-align="end">
+                    <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+                        <path d="M13.2 8a5.2 5.2 0 1 1-1.6-3.75M13.4 2.2v3.1h-3.1" fill="none" stroke="currentColor"
+                            stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <span>Refresh</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="am-table-wrap">
+            <table class="am-table" role="table">
+                <caption class="am-sr">Recent public GitHub activity{{ with $ghUser }} by {{ . }}{{ end }}</caption>
+                <thead role="rowgroup">
+                    <tr role="row">
+                        <th scope="col" role="columnheader" class="am-col-what">Activity</th>
+                        <th scope="col" role="columnheader" class="am-col-repo">Repository</th>
+                        <th scope="col" role="columnheader" class="am-col-when">When</th>
+                    </tr>
+                </thead>
+                <tbody class="am-rows" role="rowgroup"></tbody>
+            </table>
+            <div class="am-state" hidden></div>
+        </div>
+
+        <div class="am-pane">
+            <section class="am-cell am-live" aria-label="Right now">
+                <button type="button" class="am-now" aria-label="Open Music">
+                    <span class="am-now-art" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="16" height="16">
+                            <path fill="currentColor"
+                                d="M9 17.5a2.5 2.5 0 1 1-1.5-2.29V6.2l10-2.2v10.5a2.5 2.5 0 1 1-1.5-2.29V7.1l-7 1.54z" />
+                        </svg>
+                        <img alt="" hidden>
+                    </span>
+                    <span class="am-now-text">
+                        <span class="am-now-label">Music</span>
+                        <span class="am-now-title">Nothing playing</span>
+                    </span>
+                    <span class="am-now-bar" hidden><span></span></span>
+                </button>
+                <dl class="am-stats">
+                    <div class="am-stat">
+                        <dt>Visitors online</dt>
+                        <dd class="am-online">–</dd>
+                    </div>
+                    <div class="am-stat">
+                        <dt>Realtime relay</dt>
+                        <dd class="am-relay"><span class="am-dot" aria-hidden="true"></span><span
+                                class="am-relay-text">Offline</span></dd>
+                    </div>
+                    <div class="am-stat">
+                        <dt>Open windows</dt>
+                        <dd class="am-windows">–</dd>
+                    </div>
+                    <div class="am-stat">
+                        <dt>This visit</dt>
+                        <dd class="am-uptime">–</dd>
+                    </div>
+                </dl>
+            </section>
+
+            <section class="am-cell am-graph" aria-label="GitHub activity graph">
+                <h3 class="am-cell-title">Events per day</h3>
+                <div class="am-bars" role="img" aria-label="No activity loaded yet"></div>
+                <div class="am-axis" aria-hidden="true"><span class="am-axis-from"></span><span>Today</span></div>
+                <p class="am-graph-sum"></p>
+            </section>
+
+            <section class="am-cell am-build" aria-label="This build">
+                <h3 class="am-cell-title">This build</h3>
+                <dl class="am-stats">
+                    <div class="am-stat am-commit-row" hidden>
+                        <dt>Commit</dt>
+                        <dd><a class="am-commit" target="_blank" rel="noopener" data-open="tab"></a></dd>
+                    </div>
+                    <div class="am-stat">
+                        <dt>Built</dt>
+                        <dd class="am-built">–</dd>
+                    </div>
+                    <div class="am-stat">
+                        <dt>Generator</dt>
+                        <dd>Hugo {{ hugo.Version }}</dd>
+                    </div>
+                    <div class="am-stat">
+                        <dt>Blog posts</dt>
+                        <dd>{{ $posts }}</dd>
+                    </div>
+                    <div class="am-stat">
+                        <dt>Projects</dt>
+                        <dd>{{ $projects }}</dd>
+                    </div>
+                </dl>
+            </section>
+        </div>
+    </div>
+</div>

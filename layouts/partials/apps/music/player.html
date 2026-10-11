@@ -44,6 +44,13 @@
                             <div class="mu-lcd-title">No songs</div>
                             <div class="mu-lcd-sub">Add a mix to start listening</div>
                         </div>
+                        <button type="button" class="mu-retry mu-lcd-retry" hidden>Retry</button>
+                        <button type="button" class="mu-shuffle mu-repeat is-on" aria-label="Repeat all" disabled>
+                            <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true">
+                                <path fill="currentColor" d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/>
+                            </svg>
+                            <span class="mu-repeat-one" aria-hidden="true" hidden>1</span>
+                        </button>
                         <button type="button" class="mu-shuffle" aria-label="Shuffle off" aria-pressed="false" disabled>
                             <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true">
                                 <path fill="currentColor" d="M10.59 9.17 5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/>
@@ -84,7 +91,7 @@
                 <div class="mu-coverflow" tabindex="0" role="listbox" aria-label="Cover Flow" hidden>
                     <div class="mu-coverflow-stage" aria-hidden="true"></div>
                     <div class="mu-coverflow-floor" aria-hidden="true"></div>
-                    <div class="mu-coverflow-caption">
+                    <div class="mu-coverflow-caption" aria-live="polite" aria-atomic="true">
                         <div class="mu-coverflow-title"></div>
                         <div class="mu-coverflow-artist"></div>
                     </div>
@@ -95,9 +102,11 @@
                         <thead>
                             <tr>
                                 <th class="mu-col-status" scope="col" aria-label="Playing"></th>
-                                <th class="mu-col-name is-sorted" scope="col" data-sort="title" tabindex="0" role="columnheader" aria-sort="none">Name</th>
+                                <th class="mu-col-index is-sorted" scope="col" data-sort="index" tabindex="0" role="columnheader" aria-sort="ascending" aria-label="Mix order">#</th>
+                                <th class="mu-col-name" scope="col" data-sort="title" tabindex="0" role="columnheader" aria-sort="none">Name</th>
                                 <th class="mu-col-time" scope="col" data-sort="duration" tabindex="0" role="columnheader" aria-sort="none">Time</th>
                                 <th class="mu-col-artist" scope="col" data-sort="artist" tabindex="0" role="columnheader" aria-sort="none">Artist</th>
+                                <th class="mu-col-link" scope="col" aria-label="Open on YouTube"></th>
                             </tr>
                         </thead>
                         <tbody class="mu-table-body"></tbody>
@@ -110,8 +119,18 @@
             </div>
         </div>
 
+        {{/* Listen along: one row per track other visitors are playing (filled by music-player.js) */}}
+        <div class="mu-live" role="region" aria-label="Listening now" hidden></div>
+
         <div class="mu-statusbar" aria-live="polite">
-            <span class="mu-status-text">0 songs</span>
+            <div class="mu-status-row">
+                <label class="mu-share" title="Other visitors can see which song you are on and listen along. Anonymous, and only while this is ticked.">
+                    <input type="checkbox" class="mu-share-toggle">
+                    <span>Share what I’m playing</span>
+                </label>
+                <span class="mu-status-text">0 songs</span>
+                <span class="mu-live-count"></span>
+            </div>
         </div>
     </div>
 </div>

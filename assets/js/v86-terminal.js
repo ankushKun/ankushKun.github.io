@@ -8,15 +8,22 @@
  * State is per-window: Terminal and Portal each get their own emulator
  * instance, keyed by window id, so opening or closing one never touches
  * the other.
+ *
+ * The Terminal window opens on a JS shell first (assets/js/terminal-shell.js,
+ * see setupV86Terminal) and boots Linux only when the visitor types `linux`.
  */
 
 (function () {
     'use strict';
 
     // ============================================================
-    // BOOT PROFILES - Easy switching between different images
-    // Change ACTIVE_PROFILE to switch boot images
+    // BOOT PROFILES - one per window: Terminal boots DEFAULT_PROFILE,
+    // Portal boots 'stillalive'. Only images listed here are deployed.
     // ============================================================
+
+    // Verbose logging is off in production; flip to true when debugging.
+    const DEBUG = false;
+    const log = DEBUG ? console.log.bind(console) : function () { };
 
     const BOOT_PROFILES = {
         // Still Alive - Musical demo (floppy boot, lightweight)
@@ -26,29 +33,6 @@
             path: '/v86/floppy/stillalive.img',
             memory: 32 * 1024 * 1024,      // 32 MB
             vgaMemory: 8 * 1024 * 1024,    // 8 MB
-        },
-
-        // Linux 4 - Minimal Linux ISO
-        linux4: {
-            name: 'Linux 4 (ISO)',
-            type: 'cdrom',
-            path: '/v86/images/linux4.iso',
-            memory: 64 * 1024 * 1024,      // 64 MB
-            vgaMemory: 8 * 1024 * 1024,    // 8 MB
-        },
-
-        // NodeOS - Linux kernel bzImage (v4.8.5)
-        // Uses VGA output (not serial) - matches official v86 demo
-        nodeos: {
-            name: 'NodeOS Kernel',
-            type: 'bzimage',
-            path: '/v86/images/nodeos-kernel.bin',
-            memory: 128 * 1024 * 1024,     // 128 MB
-            vgaMemory: 8 * 1024 * 1024,    // 8 MB
-            // Official v86 cmdline - uses VGA, not serial console
-            cmdline: 'tsc=reliable mitigations=off random.trust_cpu=on',
-            // Use VGA output (not serial)
-            vga: true,
         },
 
         // Buildroot - Minimal Linux kernel v5.6.15 with busybox
@@ -88,7 +72,20 @@
     // instance so Terminal and Portal can run side by side.
     const instances = new Map();
 
+    // Save toggles are remembered across visits (Terminal window only).
+    const PREF_AUTOSAVE = 'v86-autosave';
+    const PREF_SAVE_ON_CLOSE = 'v86-save-on-close';
+
+    function readPref(key) {
+        try { return localStorage.getItem(key) === '1'; } catch (e) { return false; }
+    }
+
+    function writePref(key, enabled) {
+        try { localStorage.setItem(key, enabled ? '1' : '0'); } catch (e) { /* ignore */ }
+    }
+
     function createInstance(terminalId) {
+        const persisted = terminalId === PERSISTED_WINDOW_ID;
         return {
             id: terminalId,
             emulator: null,
@@ -103,8 +100,12 @@
             resizeObserver: null,
             loaderOverlay: null,
             autoSaveInterval: null,
-            autoSaveEnabled: false,    // Can be toggled via toolbar
-            saveOnCloseEnabled: false, // Save state when window/tab closes
+            autoSaveEnabled: persisted && readPref(PREF_AUTOSAVE),         // Can be toggled via toolbar
+            saveOnCloseEnabled: persisted && readPref(PREF_SAVE_ON_CLOSE), // Save state when window/tab closes
+            saving: null,              // In-flight save promise (saves never overlap)
+            failed: false,             // Setup or a download failed; error panel is showing
+            started: false,            // Emulator has booted at least once
+            pausedByShell: false,      // Stopped via pauseV86() (window minimized)
             saveStatusTimeout: null,
             originalWindowTitle: null,
             // Teardown callbacks for every document/window listener and observer
@@ -239,7 +240,7 @@
             // Add a newline at the end to show the prompt properly
             term.write('\r\n');
 
-            console.log(`Restored ${terminalData.lines.length} lines of terminal history`);
+            log(`Restored ${terminalData.lines.length} lines of terminal history`);
             return true;
         } catch (e) {
             console.warn('Could not restore terminal buffer:', e);
@@ -247,16 +248,24 @@
         }
     }
 
-    // Save emulator state to IndexedDB
-    async function saveEmulatorState(inst) {
+    // Save emulator state to IndexedDB. A snapshot is the whole guest RAM, so
+    // overlapping requests (interval + tab hidden + close) share one write.
+    function saveEmulatorState(inst) {
+        if (!inst) return Promise.resolve(false);
+        if (inst.saving) return inst.saving;
+        inst.saving = writeEmulatorState(inst).finally(() => { inst.saving = null; });
+        return inst.saving;
+    }
+
+    async function writeEmulatorState(inst) {
         if (!inst || !inst.emulator || !inst.loaded) {
-            console.log('Cannot save state: emulator not ready');
+            log('Cannot save state: emulator not ready');
             return false;
         }
 
         try {
             showSaveStatus(inst, '[saving state...]');
-            console.log('Saving v86 state...');
+            log('Saving v86 state...');
             const state = await inst.emulator.save_state();
             const db = await openStateDB();
 
@@ -280,7 +289,7 @@
 
                 const request = store.put(record);
                 request.onsuccess = () => {
-                    console.log(`State saved (${formatBytes(state.byteLength)})`);
+                    log(`State saved (${formatBytes(state.byteLength)})`);
                     showSaveStatus(inst, `[saved state (${formatBytes(state.byteLength)})]`, true);
                     resolve(true);
                 };
@@ -326,7 +335,7 @@
                 const request = store.delete(terminalId || PERSISTED_WINDOW_ID);
 
                 request.onsuccess = () => {
-                    console.log('Saved state cleared');
+                    log('Saved state cleared');
                     resolve(true);
                 };
                 request.onerror = () => reject(request.error);
@@ -344,9 +353,9 @@
         }
 
         try {
-            console.log('Restoring saved state...');
+            log('Restoring saved state...');
             await inst.emulator.restore_state(savedState.state);
-            console.log('State restored successfully!');
+            log('State restored successfully!');
 
             // Restore display mode
             if (savedState.displayMode && savedState.displayMode !== inst.displayMode) {
@@ -374,12 +383,12 @@
 
         // Only persist the main Terminal window, not Portal or others
         if (inst.id !== PERSISTED_WINDOW_ID) {
-            console.log('Auto-save not available for this window type');
+            log('Auto-save not available for this window type');
             return;
         }
 
         if (!inst.autoSaveEnabled) {
-            console.log('Auto-save disabled');
+            log('Auto-save disabled');
             return;
         }
 
@@ -389,22 +398,7 @@
             }
         }, AUTO_SAVE_INTERVAL_MS);
 
-        // Save state when tab becomes hidden or before unload.
-        // Bound per instance so teardown removes exactly these handlers.
-        inst.onVisibilityChange = () => {
-            if (document.hidden && inst.emulator && inst.loaded && inst.autoSaveEnabled) {
-                saveEmulatorState(inst).catch(console.error);
-            }
-        };
-        inst.onBeforeUnload = () => {
-            if (inst.emulator && inst.loaded && inst.saveOnCloseEnabled) {
-                saveEmulatorState(inst).catch(console.error);
-            }
-        };
-        document.addEventListener('visibilitychange', inst.onVisibilityChange);
-        window.addEventListener('beforeunload', inst.onBeforeUnload);
-
-        console.log(`Auto-save enabled (every ${AUTO_SAVE_INTERVAL_MS / 1000}s)`);
+        log(`Auto-save enabled (every ${AUTO_SAVE_INTERVAL_MS / 1000}s)`);
     }
 
     // Stop auto-save interval
@@ -413,25 +407,37 @@
             clearInterval(inst.autoSaveInterval);
             inst.autoSaveInterval = null;
         }
-        if (inst.onVisibilityChange) {
-            document.removeEventListener('visibilitychange', inst.onVisibilityChange);
-            inst.onVisibilityChange = null;
-        }
-        if (inst.onBeforeUnload) {
-            window.removeEventListener('beforeunload', inst.onBeforeUnload);
-            inst.onBeforeUnload = null;
-        }
+    }
+
+    // Save when the tab is hidden or the page is going away, if either toggle
+    // is on. The write is an async IndexedDB transaction, which a beforeunload
+    // handler cannot reliably finish; visibilitychange fires early enough
+    // (tab switch, app switch, close on mobile) and pagehide covers the rest.
+    function setupLifecycleSave(inst) {
+        if (inst.id !== PERSISTED_WINDOW_ID) return;
+
+        const saveIfEnabled = () => {
+            if (inst.emulator && inst.loaded && (inst.autoSaveEnabled || inst.saveOnCloseEnabled)) {
+                saveEmulatorState(inst).catch(console.error);
+            }
+        };
+
+        addTrackedListener(inst, document, 'visibilitychange', () => {
+            if (document.hidden) saveIfEnabled();
+        });
+        addTrackedListener(inst, window, 'pagehide', saveIfEnabled);
     }
 
     // Toggle auto-save
     function setAutoSaveEnabled(inst, enabled) {
         inst.autoSaveEnabled = enabled;
+        writePref(PREF_AUTOSAVE, enabled);
         if (enabled) {
             startAutoSave(inst);
         } else {
             stopAutoSave(inst);
         }
-        console.log(`Auto-save ${enabled ? 'enabled' : 'disabled'}`);
+        log(`Auto-save ${enabled ? 'enabled' : 'disabled'}`);
     }
 
     // ============================================================
@@ -452,12 +458,19 @@
         const dropdownBtn = document.createElement('button');
         dropdownBtn.className = 'v86-dropdown-btn';
         dropdownBtn.innerHTML = '▼';
-        dropdownBtn.title = 'State management options';
+        dropdownBtn.title = 'Linux options';
+        dropdownBtn.setAttribute('aria-label', 'Linux options');
+        dropdownBtn.setAttribute('aria-expanded', 'false');
+
+        // Started from the shell: offer the way back to it first
+        const fromShell = !!(window.TerminalShell && window.TerminalShell.get(inst.id));
 
         // Create toolbar/dropdown menu
         const toolbar = document.createElement('div');
         toolbar.className = 'v86-toolbar';
         toolbar.innerHTML = `
+            ${fromShell ? `<button class="v86-toolbar-btn" data-action="quit" title="Stop Linux and go back to the shell">Quit Linux</button>
+            <div class="v86-toolbar-divider"></div>` : ''}
             <div class="v86-toolbar-row">
                 <button class="v86-toolbar-btn" data-action="save" title="Save state now">💾 Save</button>
                 <button class="v86-toolbar-btn" data-action="load" title="Load saved state">📂 Load</button>
@@ -473,7 +486,8 @@
                 <input type="checkbox" data-toggle="save-on-close" ${inst.saveOnCloseEnabled ? 'checked' : ''}>
                 <span>Save on close</span>
             </label>
-            <label class="v86-toolbar-label">upload files by<br/>dropping them on<br/> the terminal window</label>
+            <div class="v86-toolbar-label">upload files by<br/>dropping them on<br/> the terminal window<br/>(they appear in /mnt/)</div>
+            <div class="v86-toolbar-label">network: HTTP only, fetched<br/>by your browser (CORS applies)<br/>run <code>udhcpc</code> to enable</div>
         `;
 
         // Toggle dropdown visibility
@@ -483,12 +497,14 @@
             isOpen = !isOpen;
             toolbar.classList.toggle('open', isOpen);
             dropdownBtn.classList.toggle('open', isOpen);
+            dropdownBtn.setAttribute('aria-expanded', String(isOpen));
         }
 
         function closeDropdown() {
             isOpen = false;
             toolbar.classList.remove('open');
             dropdownBtn.classList.remove('open');
+            dropdownBtn.setAttribute('aria-expanded', 'false');
         }
 
         dropdownBtn.addEventListener('click', toggleDropdown);
@@ -501,6 +517,15 @@
         });
 
         // Add event listeners for toolbar actions
+        const quitBtn = toolbar.querySelector('[data-action="quit"]');
+        if (quitBtn) {
+            quitBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                closeDropdown();
+                quitLinux(inst.id);
+            });
+        }
+
         toolbar.querySelector('[data-action="save"]').addEventListener('click', async (e) => {
             e.stopPropagation();
             if (inst.emulator && inst.loaded) {
@@ -512,8 +537,8 @@
             e.stopPropagation();
             const savedState = await loadEmulatorState(inst.id);
             if (savedState) {
-                await restoreFromSavedState(inst, savedState);
-                showSaveStatus(inst, 'state loaded ✓', true);
+                const restored = await restoreFromSavedState(inst, savedState);
+                showSaveStatus(inst, restored ? 'state loaded ✓' : 'could not load state', true);
             } else {
                 showSaveStatus(inst, 'no saved state', true);
             }
@@ -531,21 +556,12 @@
                 // Prevent saving during the restart
                 inst.saveOnCloseEnabled = false;
 
+                // Reboot in place: the window (and the shell behind it) stays
                 const termId = inst.id;
-                const win = inst.windowElement;
-                if (win) {
-                    const closeBtn = win.querySelector('.traffic-light.close');
-                    if (closeBtn) {
-                        closeBtn.click();
-                    }
-
-                    // Reopen the terminal window after the close animation
-                    setTimeout(() => {
-                        if (window.openContentWindow) {
-                            window.openContentWindow(termId, 'Terminal', null);
-                        }
-                    }, 300);
-                }
+                const container = inst.windowElement && inst.windowElement.querySelector('.v86-terminal-container');
+                await destroyEmulator(termId);
+                if (container) resetVmMarkup(container);
+                bootV86(termId);
             }
         });
 
@@ -557,7 +573,8 @@
         toolbar.querySelector('[data-toggle="save-on-close"]').addEventListener('change', (e) => {
             e.stopPropagation();
             inst.saveOnCloseEnabled = e.target.checked;
-            console.log(`Save on close ${inst.saveOnCloseEnabled ? 'enabled' : 'disabled'}`);
+            writePref(PREF_SAVE_ON_CLOSE, inst.saveOnCloseEnabled);
+            log(`Save on close ${inst.saveOnCloseEnabled ? 'enabled' : 'disabled'}`);
         });
 
         // Prevent toolbar interactions from affecting the terminal
@@ -567,6 +584,12 @@
         // Add button and toolbar to title bar
         titleBar.appendChild(dropdownBtn);
         titleBar.appendChild(toolbar);
+
+        // Removed on teardown so a retry in the same window does not stack them
+        inst.cleanups.push(() => {
+            dropdownBtn.remove();
+            toolbar.remove();
+        });
 
         return toolbar;
     }
@@ -642,6 +665,74 @@
         }, 300);
     }
 
+    // No download progress and no boot for this long counts as a failed load.
+    // v86 retries failed requests silently and reports nothing for a 404.
+    const LOAD_STALL_MS = 30000;
+
+    function discardEmulator(emulator) {
+        if (!emulator) return;
+        try {
+            // destroy() stops the CPU and releases the audio context, keyboard,
+            // mouse, screen and network adapters; stop() alone leaks them.
+            const done = emulator.destroy ? emulator.destroy() : emulator.stop();
+            if (done && done.catch) done.catch(() => { /* ignore */ });
+        } catch (e) { /* ignore */ }
+    }
+
+    // Swap the loader for an error panel with a Retry button. Shown when a
+    // library, the BIOS or the boot image cannot be fetched, or v86 fails to start.
+    function showLoadError(inst, container, detail) {
+        if (!inst || inst.failed || instances.get(inst.id) !== inst) return;
+
+        inst.failed = true;
+        inst.loaded = false;
+        stopAutoSave(inst);
+        discardEmulator(inst.emulator);
+        inst.emulator = null;
+
+        const overlay = inst.loaderOverlay || createLoaderOverlay(container);
+        inst.loaderOverlay = overlay;
+        overlay.classList.remove('hidden');
+        overlay.innerHTML = `
+            <div class="v86-loader-content v86-loader-error" role="alert">
+                <div class="v86-loader-title">Could not start the emulator</div>
+                <div class="v86-loader-status"></div>
+                <div class="v86-loader-size">Check your connection and try again.</div>
+                <button type="button" class="v86-loader-retry">Retry</button>
+            </div>
+        `;
+        overlay.querySelector('.v86-loader-status').textContent = detail || 'A required file failed to load.';
+
+        overlay.querySelector('.v86-loader-retry').addEventListener('click', async () => {
+            const id = inst.id;
+            if (instances.get(id) !== inst) return;
+
+            await destroyEmulator(id);
+            resetVmMarkup(container);
+            bootV86(id);
+        });
+
+        // Booted from the shell: the shell still works without the network
+        if (window.TerminalShell && window.TerminalShell.get(inst.id)) {
+            const back = document.createElement('button');
+            back.type = 'button';
+            back.className = 'v86-loader-retry';
+            back.textContent = 'Back to Shell';
+            back.addEventListener('click', () => quitLinux(inst.id));
+            overlay.querySelector('.v86-loader-retry').after(back);
+        }
+    }
+
+    // Put the window markup back to its pre-boot state before booting again
+    function resetVmMarkup(container) {
+        const xterm = container.querySelector('.v86-xterm');
+        if (xterm) xterm.innerHTML = '';
+        const serial = container.querySelector('.v86-serial-container');
+        if (serial) serial.style.display = 'none';
+        const screen = container.querySelector('.v86-screen-container');
+        if (screen) screen.style.display = '';
+    }
+
     // Load v86 library dynamically (shared across instances)
     let v86ScriptPromise = null;
     function loadV86Script() {
@@ -713,7 +804,7 @@
     function setDisplayMode(inst, mode) {
         if (mode === inst.displayMode) return;
 
-        console.log(`[${inst.id}] Switching to ${mode} mode`);
+        log(`[${inst.id}] Switching to ${mode} mode`);
         inst.displayMode = mode;
 
         const screenContainer = inst.screenContainer;
@@ -737,20 +828,185 @@
         }
     }
 
-    // Setup v86 terminal with VGA and Serial support
+    // ============================================================
+    // Shell first, Linux on demand (Terminal window only)
+    // ============================================================
+    // The Terminal opens on the instant JS shell (assets/js/terminal-shell.js),
+    // which reads the site as files, and boots Linux only when asked with
+    // `linux`. Portal still boots its demo straight away.
+
+    let shellScriptPromise = null;
+    function loadShellScript() {
+        if (window.TerminalShell) return Promise.resolve();
+        if (shellScriptPromise) return shellScriptPromise;
+        const src = window.TERMINAL_SHELL_URL;
+        if (!src) return Promise.reject(new Error('Missing URL for the terminal shell'));
+
+        shellScriptPromise = new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = src;
+            script.onload = resolve;
+            script.onerror = () => {
+                shellScriptPromise = null;
+                reject(new Error('Failed to load the terminal shell'));
+            };
+            document.head.appendChild(script);
+        });
+        return shellScriptPromise;
+    }
+
+    // Whether a Linux session was saved, without creating the database on a
+    // first visit just to look.
+    async function hasSavedLinux(terminalId) {
+        try {
+            if (indexedDB.databases) {
+                const dbs = await indexedDB.databases();
+                if (!dbs.some(d => d.name === DB_NAME)) return false;
+            }
+            const saved = await loadEmulatorState(terminalId);
+            return !!(saved && saved.state);
+        } catch (e) {
+            return false;
+        }
+    }
+
     async function setupV86Terminal(terminalId) {
+        if (terminalId !== PERSISTED_WINDOW_ID) return bootV86(terminalId);
+
+        const windowElement = document.querySelector(`[data-window-id="${terminalId}"]`);
+        const container = windowElement && windowElement.querySelector('.v86-terminal-container');
+        if (!container) return bootV86(terminalId);
+
+        try {
+            await Promise.all([loadXterm(), loadShellScript()]);
+        } catch (e) {
+            // No shell (or no xterm): fall back to booting Linux as before
+            console.warn('Terminal shell unavailable, booting Linux instead:', e);
+            return bootV86(terminalId);
+        }
+
+        // Closed while the scripts were loading, or already running
+        if (!windowElement.isConnected || windowElement.classList.contains('closing')) return;
+        if (window.TerminalShell.get(terminalId) || instances.has(terminalId)) return;
+
+        const screen = container.querySelector('.v86-screen-container');
+        if (screen) screen.style.display = 'none';
+
+        const shell = window.TerminalShell.start(terminalId, container, {
+            onLinux: () => startLinux(terminalId),
+            hasSavedLinux: () => hasSavedLinux(terminalId)
+        });
+
+        // The window took focus when it opened; hand it to the prompt
+        const active = document.activeElement;
+        if (!active || active === document.body || windowElement.contains(active)) shell.term.focus();
+    }
+
+    // `linux` in the shell: the shell steps aside and the VM boots in its place
+    function startLinux(terminalId) {
+        if (instances.has(terminalId)) return;
+        const windowElement = document.querySelector(`[data-window-id="${terminalId}"]`);
+        if (!windowElement || !windowElement.isConnected) return;
+        if (window.TerminalShell) window.TerminalShell.hide(terminalId);
+        const container = windowElement.querySelector('.v86-terminal-container');
+        if (container) resetVmMarkup(container);
+        bootV86(terminalId);
+    }
+
+    // "Quit Linux" (title bar menu, or the error panel): stop the VM, saving
+    // first if Save on close is on, and bring the shell back
+    async function quitLinux(terminalId) {
+        const inst = getInstance(terminalId);
+        const windowElement = (inst && inst.windowElement) || document.querySelector(`[data-window-id="${terminalId}"]`);
+        const originalTitle = inst && inst.originalWindowTitle;
+
+        await destroyEmulator(terminalId);
+
+        if (!windowElement || !windowElement.isConnected) return;
+        if (originalTitle) {
+            const titleElement = windowElement.querySelector('.window-title-text') || windowElement.querySelector('.window-title');
+            if (titleElement) titleElement.textContent = originalTitle;
+        }
+        const container = windowElement.querySelector('.v86-terminal-container');
+        if (container) {
+            resetVmMarkup(container);
+            const screen = container.querySelector('.v86-screen-container');
+            if (screen) screen.style.display = 'none';
+        }
+        if (!window.TerminalShell || !window.TerminalShell.show(terminalId, 'Linux has stopped. Type linux to boot it again.')) {
+            setupV86Terminal(terminalId);
+        }
+    }
+
+    // The site's pages as files inside the guest. The buildroot image mounts
+    // the 9p host share at /mnt, so files created at /site appear in
+    // /mnt/site. Same-origin fetches, a few at a time, once the VM is up;
+    // a page that fails to load is simply left out.
+    async function mountSiteFiles(inst) {
+        const emulator = inst.emulator;
+        const fs = emulator && emulator.fs9p;
+        if (!fs || typeof fs.SearchPath !== 'function' || typeof fs.CreateDirectory !== 'function') return;
+        if (!window.TerminalShell || !window.TerminalShell.siteFiles) return;
+
+        let files;
+        try {
+            files = await window.TerminalShell.siteFiles();
+        } catch (e) {
+            return;
+        }
+
+        const alive = () => inst.emulator === emulator && instances.get(inst.id) === inst;
+        const ensureDir = (path) => {
+            let parent = 0; // the share's root inode
+            let walked = '';
+            path.split('/').filter(Boolean).forEach((part) => {
+                walked += '/' + part;
+                const found = fs.SearchPath(walked);
+                parent = found.id !== -1 ? found.id : fs.CreateDirectory(part, parent);
+            });
+        };
+
+        if (!alive()) return;
+        ensureDir('/site');
+        // A restored session already has the files it was saved with
+        const queue = files.filter(f => fs.SearchPath('/site/' + f.path).id === -1);
+        let written = 0;
+
+        const worker = async () => {
+            while (queue.length && alive()) {
+                const file = queue.shift();
+                try {
+                    const res = await fetch(file.url, { credentials: 'same-origin' });
+                    if (!res.ok || !alive()) continue;
+                    const bytes = new Uint8Array(await res.arrayBuffer());
+                    if (!alive()) return;
+                    const full = '/site/' + file.path;
+                    ensureDir(full.slice(0, full.lastIndexOf('/')));
+                    if (fs.SearchPath(full).id === -1) {
+                        await emulator.create_file(full, bytes);
+                        written++;
+                    }
+                } catch (e) { /* leave this one out */ }
+            }
+        };
+        await Promise.all([worker(), worker(), worker(), worker()]);
+        log(`[${inst.id}] Mounted ${written} site files at /mnt/site`);
+    }
+
+    // Boot the v86 emulator in a window, with VGA and Serial support
+    async function bootV86(terminalId) {
         // Find the window element
         const windowElement = document.querySelector(`[data-window-id="${terminalId}"]`);
         if (!windowElement) {
-            console.log('v86 window not found, waiting...');
-            setTimeout(() => setupV86Terminal(terminalId), 100);
+            log('v86 window not found, waiting...');
+            setTimeout(() => bootV86(terminalId), 100);
             return;
         }
 
         // Find containers
         const contentContainer = windowElement.querySelector('.v86-terminal-container');
         if (!contentContainer) {
-            console.log('v86 terminal container not found');
+            log('v86 terminal container not found');
             return;
         }
 
@@ -759,13 +1015,13 @@
         const xtermContainer = serialContainer?.querySelector('.v86-xterm');
 
         if (!screenContainer) {
-            console.log('v86 screen container not found');
+            log('v86 screen container not found');
             return;
         }
 
         // Tear down only a previous instance of THIS window, never a sibling window's.
         if (instances.has(terminalId)) {
-            await destroyV86(terminalId);
+            await destroyEmulator(terminalId);
         }
 
         const inst = createInstance(terminalId);
@@ -775,17 +1031,17 @@
         const savedState = await loadEmulatorState(terminalId);
         if (savedState) {
             const savedTime = new Date(savedState.savedAt).toLocaleString();
-            console.log(`Found saved state from ${savedTime} (profile: ${savedState.profile})`);
+            log(`Found saved state from ${savedTime} (profile: ${savedState.profile})`);
         }
 
         try {
-            console.log('Loading xterm.js and v86...');
+            log('Loading xterm.js and v86...');
             await Promise.all([loadXterm(), loadV86Script()]);
 
             // The window may have been closed while the libraries were downloading.
             if (instances.get(terminalId) !== inst) return;
 
-            console.log('Initializing v86 emulator...');
+            log('Initializing v86 emulator...');
 
             // Determine profile based on ID
             let profileKey = DEFAULT_PROFILE;
@@ -799,7 +1055,7 @@
                 throw new Error(`Unknown boot profile: ${profileKey}`);
             }
 
-            console.log(`Booting: ${profile.name}`);
+            log(`Booting: ${profile.name}`);
 
             // Store profile and containers for input capture
             inst.profile = profile;
@@ -831,10 +1087,11 @@
                 bios: { url: V86_CORE.biosUrl },
                 vga_bios: { url: V86_CORE.vgaBiosUrl },
 
-                // public relay server for networking
+                // v86's built-in fetch backend: the guest's HTTP requests are made
+                // by this browser tab (so CORS applies), with no third-party
+                // relay and no virtual LAN shared with other visitors.
                 net_device: {
-                    relay_url: "wss://relay.widgetry.org/",
-                    // relay_url: "fetch",
+                    relay_url: "fetch",
                     type: "ne2k",
                 },
 
@@ -863,7 +1120,30 @@
                     break;
             }
 
-            inst.emulator = new V86(options);
+            const emulator = new V86(options);
+            inst.emulator = emulator;
+
+            // Surface failed or stalled downloads instead of sitting on the loader
+            let lastProgressAt = Date.now();
+            let stallTimer = setInterval(() => {
+                if (Date.now() - lastProgressAt > LOAD_STALL_MS) {
+                    showLoadError(inst, contentContainer, 'The download stalled.');
+                }
+            }, 5000);
+            const stopStallTimer = () => {
+                if (stallTimer) {
+                    clearInterval(stallTimer);
+                    stallTimer = null;
+                }
+            };
+            inst.cleanups.push(stopStallTimer);
+
+            emulator.add_listener("download-error", function (e) {
+                const name = e && e.file_name ? e.file_name.split('/').pop() : 'a required file';
+                const status = e && e.request && e.request.status;
+                showLoadError(inst, contentContainer,
+                    `Could not download ${name}` + (status ? ` (HTTP ${status})` : '') + '.');
+            });
 
             // Track if we've received serial output
             let serialOutputReceived = false;
@@ -873,14 +1153,15 @@
             inst.emulator.add_listener("serial0-output-byte", function () {
                 if (!serialOutputReceived && !profile.vga) {
                     serialOutputReceived = true;
-                    console.log('Serial output detected, switching to serial mode');
+                    log('Serial output detected, switching to serial mode');
                     setDisplayMode(inst, 'serial');
                 }
             });
 
             // Listen for emulator events
             inst.emulator.add_listener("emulator-ready", async function () {
-                console.log(`[${inst.id}] v86 emulator ready!`);
+                log(`[${inst.id}] v86 emulator ready!`);
+                if (inst.emulator !== emulator) return;
 
                 // Try to attach FitAddon to v86's xterm terminal
                 if (inst.emulator.serial_adapter && inst.emulator.serial_adapter.term) {
@@ -906,6 +1187,14 @@
                     }
                 }
 
+                // The Terminal's Linux gets the site at /mnt/site. A restore
+                // replaces the whole 9p filesystem, so files go in after it.
+                const mountSite = () => {
+                    if (terminalId === PERSISTED_WINDOW_ID && instances.get(terminalId) === inst) {
+                        mountSiteFiles(inst).catch(() => { /* optional extra */ });
+                    }
+                };
+
                 // Restore saved state if available
                 if (savedState) {
                     // Small delay to ensure emulator is fully initialized
@@ -913,14 +1202,35 @@
                         if (instances.get(terminalId) !== inst) return;
                         const restored = await restoreFromSavedState(inst, savedState);
                         if (restored) {
-                            console.log('Emulator restored from saved state!');
+                            log('Emulator restored from saved state!');
                         }
+                        mountSite();
                     }, 500);
+                } else {
+                    mountSite();
                 }
             });
 
             inst.emulator.add_listener("emulator-started", function () {
-                console.log(`[${inst.id}] v86 emulator started!`);
+                log(`[${inst.id}] v86 emulator started!`);
+                stopStallTimer();
+
+                // The window was closed, or the load was given up on, while the
+                // images were still downloading: do not leave this running.
+                if (instances.get(terminalId) !== inst || inst.failed) {
+                    discardEmulator(emulator);
+                    return;
+                }
+
+                inst.started = true;
+
+                // Minimized while booting: stay paused until the window is restored
+                if (inst.pausedByShell) {
+                    setTimeout(() => {
+                        if (inst.pausedByShell && inst.emulator === emulator) emulator.stop();
+                    }, 0);
+                }
+
                 // Hide loader when emulator starts
                 if (inst.loaderOverlay) {
                     hideLoaderOverlay(inst.loaderOverlay);
@@ -931,6 +1241,9 @@
             // Listen for download progress
             inst.emulator.add_listener("download-progress", function (e) {
                 const { file_name, loaded, total } = e;
+
+                lastProgressAt = Date.now();
+                if (inst.failed) return;
 
                 updateLoaderProgress(
                     inst.loaderOverlay,
@@ -947,15 +1260,17 @@
 
             // Start auto-save for state persistence
             startAutoSave(inst);
+            setupLifecycleSave(inst);
 
             // Setup drag-and-drop file upload
             setupFileDrop(inst, contentContainer);
 
             inst.loaded = true;
-            console.log(`[${inst.id}] v86 setup complete!`);
+            log(`[${inst.id}] v86 setup complete!`);
 
         } catch (error) {
             console.error('v86 loading error:', error);
+            showLoadError(inst, contentContainer, error && error.message ? `${error.message}.` : '');
         }
     }
 
@@ -973,21 +1288,22 @@
             <div class="v86-drop-content">
                 <div class="v86-drop-icon">📁</div>
                 <div class="v86-drop-text">Drop files to upload</div>
-                <div class="v86-drop-hint">Files will appear in /mnt/</div>
+                <div class="v86-drop-hint">Files will appear in /mnt/ inside the guest</div>
             </div>
         `;
         container.appendChild(dropOverlay);
+        inst.cleanups.push(() => dropOverlay.remove());
 
         let dragCounter = 0;
 
-        container.addEventListener('dragenter', (e) => {
+        addTrackedListener(inst, container, 'dragenter', (e) => {
             e.preventDefault();
             e.stopPropagation();
             dragCounter++;
             dropOverlay.classList.add('visible');
         });
 
-        container.addEventListener('dragleave', (e) => {
+        addTrackedListener(inst, container, 'dragleave', (e) => {
             e.preventDefault();
             e.stopPropagation();
             dragCounter--;
@@ -996,12 +1312,12 @@
             }
         });
 
-        container.addEventListener('dragover', (e) => {
+        addTrackedListener(inst, container, 'dragover', (e) => {
             e.preventDefault();
             e.stopPropagation();
         });
 
-        container.addEventListener('drop', async (e) => {
+        addTrackedListener(inst, container, 'drop', async (e) => {
             e.preventDefault();
             e.stopPropagation();
             dragCounter = 0;
@@ -1024,7 +1340,7 @@
                     const path = `/${file.name}`;
                     inst.emulator.create_file(path, uint8Array);
 
-                    console.log(`Uploaded file: ${file.name} (${file.size} bytes) to ${path}`);
+                    log(`Uploaded file: ${file.name} (${file.size} bytes) to ${path}`);
                     showSaveStatus(inst, `uploaded ${file.name} ✓`, true);
                 } catch (err) {
                     console.error(`Failed to upload ${file.name}:`, err);
@@ -1047,7 +1363,7 @@
             inst.screenContainer.classList.toggle('input-captured', enabled);
         }
 
-        console.log(`[${inst.id}] Input capture: ${enabled ? 'LOCKED' : 'UNLOCKED'}`);
+        log(`[${inst.id}] Input capture: ${enabled ? 'LOCKED' : 'UNLOCKED'}`);
     }
 
     // Setup VGA input capture handlers
@@ -1088,9 +1404,16 @@
         screenContainer.appendChild(hint);
     }
 
-    // Cleanup when a terminal window is closed. Scoped to one window id so
-    // closing Portal can never stop the Terminal's emulator (or vice versa).
+    // Cleanup when a terminal window is closed: the VM and the shell. Scoped to
+    // one window id so closing Portal can never stop the Terminal's emulator
+    // (or vice versa).
     async function destroyV86(terminalId) {
+        if (window.TerminalShell && terminalId) window.TerminalShell.destroy(terminalId);
+        await destroyEmulator(terminalId);
+    }
+
+    // Stop and release one window's emulator (the shell, if any, stays).
+    async function destroyEmulator(terminalId) {
         const inst = terminalId ? getInstance(terminalId) : null;
         if (!inst) return;
 
@@ -1104,7 +1427,7 @@
         if (inst.saveOnCloseEnabled && inst.emulator && inst.loaded && inst.id === PERSISTED_WINDOW_ID) {
             try {
                 await saveEmulatorState(inst);
-                console.log('State saved before closing');
+                log('State saved before closing');
             } catch (e) {
                 console.warn('Could not save state before closing:', e);
             }
@@ -1135,7 +1458,7 @@
         }
 
         if (inst.emulator) {
-            try { inst.emulator.stop(); } catch (e) { /* ignore */ }
+            discardEmulator(inst.emulator);
             inst.emulator = null;
         }
 
@@ -1147,9 +1470,36 @@
         inst.windowElement = null;
     }
 
+    // Pause / resume one window's emulator (the shell calls these when the
+    // window is minimized and restored). Only resumes what it paused itself.
+    function pauseV86(terminalId) {
+        const inst = getInstance(terminalId);
+        if (!inst || inst.failed || inst.pausedByShell) return false;
+        inst.pausedByShell = true;
+        // Still downloading: the "emulator-started" listener applies the pause
+        if (inst.emulator && inst.emulator.is_running()) {
+            inst.emulator.stop();
+        }
+        return true;
+    }
+
+    function resumeV86(terminalId) {
+        const inst = getInstance(terminalId);
+        if (!inst || !inst.pausedByShell) return false;
+        inst.pausedByShell = false;
+        // Before the first boot there is nothing to resume; autostart handles it.
+        // run() also cancels a stop that has not taken effect yet.
+        if (inst.emulator && inst.started && !inst.failed) {
+            inst.emulator.run();
+        }
+        return true;
+    }
+
     // Expose functions globally
     window.setupV86Terminal = setupV86Terminal;
     window.destroyV86 = destroyV86;
+    window.pauseV86 = pauseV86;
+    window.resumeV86 = resumeV86;
 
     // Expose state management functions (id-scoped; default to the Terminal window)
     window.saveV86State = (id) => {

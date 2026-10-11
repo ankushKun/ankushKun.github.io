@@ -1,7 +1,31 @@
 {{/* Guestbook - a bound visitors' book you leaf through and sign */}}
 {{- $id := .id -}}
+{{/* Moderation: ids in data/guestbook-hidden.yaml are never shown. */}}
+{{- $hidden := slice -}}
+{{- with index hugo.Data "guestbook-hidden" -}}
+{{- range .ids -}}{{- $hidden = $hidden | append (string .) -}}{{- end -}}
+{{- end -}}
+{{/* The daily snapshot (data/guestbook.json, written by scripts/guestbook.mjs)
+is published as its own file and fetched when the window opens, so the book
+has something to show before - or without - the relay. Kept out of the page
+itself so the home document does not grow with the book. */}}
+{{- $snapshot := "" -}}
+{{- with hugo.Data.guestbook -}}
+{{- $kept := slice -}}
+{{- range .entries -}}
+{{- if not (in $hidden (string .id)) -}}{{- $kept = $kept | append . -}}{{- end -}}
+{{- end -}}
+{{- if $kept -}}
+{{- $snapshot = (resources.FromString "data/guestbook-snapshot.json" (dict "entries" $kept | jsonify) | fingerprint).RelPermalink -}}
+{{- end -}}
+{{- end -}}
+{{/* Set = offer "keep my email private" (see data/guestbook-settings.yaml). */}}
+{{- $emailKey := "" -}}
+{{- with index hugo.Data "guestbook-settings" -}}{{- $emailKey = .privateEmailKey | default "" -}}{{- end -}}
 <div id="content-{{ $id }}" class="window-content" data-guestbook-window="true">
-    <div class="gb-desk">
+    <div class="gb-desk" data-hidden="{{ $hidden | jsonify }}"
+        {{- with $snapshot }} data-snapshot="{{ . }}"{{ end }}
+        {{- with $emailKey }} data-email-key="{{ . }}"{{ end }}>
 
         <div class="gb-toolbar">
             <div class="gb-toolbar-title">
@@ -53,7 +77,7 @@
                     <label class="gb-field gb-field-wide">
                         <span class="gb-label">Your name</span>
                         <input type="text" class="gb-input gb-f-name" maxlength="24" autocomplete="name"
-                            placeholder="how you'd sign it" required>
+                            placeholder="how you'd sign it" autocapitalize="words" enterkeyhint="next" required>
                     </label>
 
                     <label class="gb-field">
@@ -70,7 +94,11 @@
                 </div>
 
                 <fieldset class="gb-contact">
-                    <legend>Leave a way to reach you <i>all optional</i></legend>
+                    <legend>Ways to reach you <i>optional</i></legend>
+                    {{/* These are rendered as links beside the signature for
+                    every visitor, so the form has to say so before the fields. */}}
+                    <p class="gb-contact-note" id="gb-contact-note-{{ $id }}">Shown publicly next to your signature. Anyone
+                        who opens the book can see them, so leave these blank if you'd rather not share.</p>
                     <div class="gb-contact-row">
                         <span class="gb-contact-icon" aria-hidden="true">
                             <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor"
@@ -80,8 +108,18 @@
                             </svg>
                         </span>
                         <input type="email" class="gb-input gb-f-email" maxlength="60" autocomplete="email"
-                            placeholder="you@example.com" aria-label="Email">
+                            placeholder="you@example.com" aria-label="Email (shown publicly)"
+                            aria-describedby="gb-contact-note-{{ $id }}"
+                            autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="next">
                     </div>
+                    {{- if $emailKey }}
+                    {{/* Shown by guestbook.js only where the browser can encrypt. */}}
+                    <label class="gb-private" hidden>
+                        <input type="checkbox" class="gb-f-private">
+                        <span>Keep my email private: encrypted in your browser, readable only by Ankush,
+                            not shown in the book.</span>
+                    </label>
+                    {{- end }}
                     <div class="gb-contact-row">
                         <span class="gb-contact-icon" aria-hidden="true">
                             <svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor">
@@ -90,7 +128,8 @@
                             </svg>
                         </span>
                         <input type="text" class="gb-input gb-f-x" maxlength="20" autocomplete="off"
-                            placeholder="handle" aria-label="X handle">
+                            placeholder="handle" aria-label="X handle (shown publicly)"
+                            autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="next">
                     </div>
                     <div class="gb-contact-row">
                         <span class="gb-contact-icon" aria-hidden="true">
@@ -102,14 +141,15 @@
                             </svg>
                         </span>
                         <input type="text" class="gb-input gb-f-ig" maxlength="34" autocomplete="off"
-                            placeholder="handle" aria-label="Instagram handle">
+                            placeholder="handle" aria-label="Instagram handle (shown publicly)"
+                            autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="done">
                     </div>
                 </fieldset>
 
                 <p class="gb-error" role="alert" hidden></p>
 
                 <footer class="gb-card-actions">
-                    <span class="gb-card-note">Public. Anyone can read it.</span>
+                    <span class="gb-card-note">Public. Anyone can read all of it.</span>
                     <button type="button" class="gb-btn gb-cancel">Cancel</button>
                     <button type="submit" class="gb-btn primary gb-save">Sign it</button>
                 </footer>

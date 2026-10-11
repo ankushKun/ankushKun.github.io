@@ -24,6 +24,13 @@ Set "standalone" to false for desktop window (events open in window)
 {{ $month := .Date.Format "01" }}
 {{ $monthName := .Date.Format "January" }}
 {{ $day := .Date.Format "2" }}
+{{/* date_precision = "year": only the year is known, so no month or day.
+"00" sorts after every real month, i.e. at the bottom of the year. */}}
+{{ if eq .Params.date_precision "year" }}
+{{ $month = "00" }}
+{{ $monthName = printf "Sometime in %s" $year }}
+{{ $day = "" }}
+{{ end }}
 
 {{ if not (isset $yearData $year) }}
 {{ $yearData = merge $yearData (dict $year (dict)) }}
@@ -50,24 +57,41 @@ Set "standalone" to false for desktop window (events open in window)
 {{ end }}
 {{ $years = sort $years "value" "desc" }}
 
-<div id="content-{{ .id }}" data-permalink="/{{ .id }}/">
+<div id="content-{{ .id }}" data-permalink="/{{ strings.TrimSuffix "-page" .id }}/">
     <div class="timeline-window" id="timeline-container-{{ .id }}">
         <div class="timeline-toolbar">
             <div class="timeline-title">
-                <span class="timeline-icon">📅</span>
+                {{ partial "apps/toolbar-icon.html" "timeline" }}
                 <span>{{ .title }}</span>
             </div>
             <div class="timeline-controls">
-                <span class="timeline-count">{{ len $pages }} events</span>
-
+                {{/* Filter chips for the kinds that actually occur, in a fixed order */}}
+                {{ $present := dict }}
+                {{ range $pages }}{{ with partial "apps/timeline/event-type.html" . }}{{ $present = merge $present (dict . true) }}{{ end }}{{ end }}
+                {{ if $present }}
+                <div class="filter-chips" role="group" aria-label="Filter by type">
+                    <button type="button" class="filter-chip" data-filter="" aria-pressed="true">All</button>
+                    {{ range slice "hackathon" "work" "fellowship" "open-source" "speaking" "achievement" "project" "blog" }}
+                    {{ if index $present . }}
+                    <button type="button" class="filter-chip" data-filter="{{ . }}" aria-pressed="false">{{ . }}</button>
+                    {{ end }}
+                    {{ end }}
+                </div>
+                {{ end }}
+                <select class="timeline-year-jump" aria-label="Jump to year">
+                    <option value="">Year</option>
+                    {{ range $years }}<option value="{{ . }}">{{ . }}</option>{{ end }}
+                </select>
+                <span class="timeline-count" data-total="{{ len $pages }}">{{ len $pages }} events</span>
             </div>
         </div>
 
         <div class="timeline-content" id="timeline-scroll-{{ .id }}">
+            {{ with .intro }}<div class="section-intro">{{ . }}</div>{{ end }}
             {{/* All years in a single scrollable list */}}
             {{ range $i, $year := $years }}
             <div class="timeline-year-section" data-year="{{ $year }}" id="year-section-{{ $.id }}-{{ $year }}">
-                <div class="year-header">{{ $year }}</div>
+                <h2 class="year-header">{{ $year }}</h2>
                 <div class="months-list">
                     {{ $months := index $yearData $year }}
                     {{/* Get sorted months */}}
@@ -87,31 +111,29 @@ Set "standalone" to false for desktop window (events open in window)
                         </div>
                         <div class="events-list">
                             {{ range $monthData.events }}
-                            {{ $type := .page.Params.type }}
-                            {{ if and (not $type) (eq .page.Section "projects") }}
-                            {{ $type = "project" }}
-                            {{ else if and (not $type) (eq .page.Section "blogs") }}
-                            {{ $type = "blog" }}
-                            {{ end }}
-
-                            {{ if $standalone }}
-                            <a href="{{ .page.RelPermalink }}" class="event-item event-link" tabindex="0">
-                                <span class="event-date">{{ .day }}</span>
+                            {{ $type := partial "apps/timeline/event-type.html" .page }}
+                            {{/* Same window id as the Blogs and Projects apps use, so a
+                            page opened from here and from there is one window */}}
+                            {{ $winPrefix := $prefix }}
+                            {{ if eq .page.Section "blogs" }}{{ $winPrefix = "post" }}
+                            {{ else if eq .page.Section "projects" }}{{ $winPrefix = "project" }}{{ end }}
+                            {{/* Always a real link. In a desktop window the data-* attributes
+                            let mavericks.js open the page in a window on a plain click. */}}
+                            <a href="{{ .page.RelPermalink }}" class="event-item {{ if $standalone }}event-link{{ else }}finder-row{{ end }}"
+                                {{- with $type }} data-type="{{ . }}"{{ end }}
+                                {{- if not $standalone }} data-window="{{ $winPrefix }}-{{ .page.File.UniqueID }}"
+                                data-title="{{ .page.Title }}" data-permalink="{{ .page.Permalink }}"{{ end }}>
+                                <time class="event-date" datetime="{{ .page.Date.Format (cond (eq .day "") "2006" "2006-01-02") }}">{{ .day | default "–" }}</time>
                                 <span class="event-title">{{ .page.Title }}</span>
                                 {{ with $type }}
-                                <span class="event-type {{ . | lower }}">{{ . }}</span>
+                                <span class="event-type {{ . }}">{{ . }}</span>
                                 {{ end }}
+                                {{- /* On the /timeline/ page the one-line summary is part of
+                                the list, so the whole history reads as text at one URL */}}
+                                {{ if $standalone }}{{ with .page.Params.summary }}
+                                <span class="event-item-summary">{{ . | markdownify }}</span>
+                                {{ end }}{{ end }}
                             </a>
-                            {{ else }}
-                            <div class="event-item finder-row" data-window="{{ $prefix }}-{{ .page.File.UniqueID }}"
-                                data-title="{{ .page.Title }}" data-permalink="{{ .page.Permalink }}" tabindex="0">
-                                <span class="event-date">{{ .day }}</span>
-                                <span class="event-title">{{ .page.Title }}</span>
-                                {{ with $type }}
-                                <span class="event-type {{ . | lower }}">{{ . }}</span>
-                                {{ end }}
-                            </div>
-                            {{ end }}
                             {{ end }}
                         </div>
                     </div>
@@ -124,3 +146,54 @@ Set "standalone" to false for desktop window (events open in window)
 </div>
 
 {{/* Styles moved to assets/css/partials.css */}}
+
+<script>
+    (function () {
+        // Delegated and id-free: the desktop shell clones this markup into
+        // windows with innerHTML, so there may be several copies and none of
+        // them keeps listeners bound to its own elements.
+        if (window.__timelineFilterBound) return;
+        window.__timelineFilterBound = true;
+
+        document.addEventListener('click', (e) => {
+            const chip = e.target.closest && e.target.closest('.timeline-window .filter-chip');
+            if (!chip) return;
+            const container = chip.closest('.timeline-window');
+            const filter = chip.dataset.filter || '';
+
+            // CSS does the hiding from data-filter (see partials.css)
+            if (filter) container.dataset.filter = filter;
+            else delete container.dataset.filter;
+
+            container.querySelectorAll('.filter-chip').forEach(other => {
+                other.setAttribute('aria-pressed', other === chip ? 'true' : 'false');
+            });
+
+            const countEl = container.querySelector('.timeline-count');
+            if (countEl) {
+                const shown = filter
+                    ? container.querySelectorAll('.event-item[data-type="' + filter + '"]').length
+                    : Number(countEl.dataset.total);
+                countEl.textContent = shown + ' event' + (shown !== 1 ? 's' : '');
+            }
+        });
+
+        document.addEventListener('change', (e) => {
+            const jump = e.target;
+            if (!jump.classList || !jump.classList.contains('timeline-year-jump') || !jump.value) return;
+            const container = jump.closest('.timeline-window');
+            // Scoped lookup: the Projects app uses the same year-section ids
+            const section = container && container.querySelector('.timeline-year-section[data-year="' + jump.value + '"]');
+            if (section) {
+                // A type filter can hide the whole year: show everything again
+                // first, or the jump would silently do nothing
+                if (getComputedStyle(section).display === 'none') {
+                    const all = container.querySelector('.filter-chip[data-filter=""]');
+                    if (all) all.click();
+                }
+                section.scrollIntoView({ block: 'start' });
+            }
+            jump.value = '';
+        });
+    })();
+</script>

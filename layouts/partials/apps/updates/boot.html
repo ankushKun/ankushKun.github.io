@@ -1,0 +1,114 @@
+{{/* Software Update badge. Runs on every page, so it is small and touches
+nothing but localStorage: it compares the update times printed on the Apple
+menu item (apps/updates/menu-item.html) with the newest one this visitor has
+seen, badges the menu, and announces new updates once. The app itself is
+assets/js/software-update.js, loaded only when its window opens.
+
+localStorage "software-update-v1": {"seen": <commit time of the newest update
+this visitor has been shown>, "notified": <newest update already announced>} */}}
+<script>
+    (function () {
+        var item = document.getElementById('su-menu-item');
+        if (!item) return;
+        var stamps = (item.getAttribute('data-updates') || '').split(',').map(Number)
+            .filter(function (n) { return n > 0; });
+        if (!stamps.length) return;
+
+        var KEY = 'software-update-v1';
+        var latest = stamps[0];
+        var trigger = document.getElementById('apple-menu-trigger');
+        var badge = item.querySelector('.su-menu-badge');
+        var mem = null; // used when storage is blocked
+
+        function read() {
+            try {
+                var state = JSON.parse(localStorage.getItem(KEY));
+                if (state && typeof state === 'object') return state;
+            } catch (e) { /* storage blocked or not JSON */ }
+            return mem || {};
+        }
+        function write(state) {
+            mem = state;
+            try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* storage blocked */ }
+        }
+        function seen() { return Number(read().seen) || 0; }
+        function count() {
+            var since = seen();
+            return stamps.filter(function (t) { return t > since; }).length;
+        }
+        function paint() {
+            var n = count();
+            if (badge) {
+                badge.hidden = !n;
+                badge.textContent = n ? n + ' new' : '';
+            }
+            if (trigger) {
+                trigger.classList.toggle('has-update', n > 0);
+                trigger.setAttribute('aria-label', n ? 'Apple menu, ' + n + (n === 1 ? ' new update' : ' new updates') : 'Apple menu');
+            }
+        }
+
+        // First visit: everything already on the site is simply "the site"
+        if (!seen()) {
+            var first = read();
+            first.seen = latest;
+            write(first);
+        }
+        paint();
+
+        window.SoftwareUpdate = {
+            key: KEY,
+            count: count,
+            seen: seen,
+            /** The visitor has been shown everything up to `stamp` (default: all). */
+            markSeen: function (stamp) {
+                var state = read();
+                state.seen = Math.max(Number(state.seen) || 0, Number(stamp) || latest);
+                write(state);
+                paint();
+            }
+        };
+
+        // Caught up in another tab
+        window.addEventListener('storage', function (e) { if (e.key === KEY) paint(); });
+
+        // One notification per new update, on the desktop only
+        if (!count() || Number(read().notified) === latest || !document.getElementById('window-contents')) return;
+
+        function announce() {
+            var n = count();
+            if (!n || typeof window.showNotification !== 'function') return;
+
+            var app = null;
+            try {
+                app = JSON.parse(document.getElementById('app-registry').textContent)
+                    .filter(function (entry) { return entry.id === 'software-update'; })[0];
+            } catch (e) { /* no registry on the page */ }
+            var title = item.getAttribute('data-latest-title');
+
+            var state = read();
+            state.notified = latest;
+            write(state);
+
+            window.showNotification({
+                title: 'Software Update',
+                message: n === 1 && title
+                    ? 'New since your last visit: ' + title
+                    : n + (n === 1 ? ' update' : ' updates') + ' since your last visit',
+                iconHtml: app && app.iconHtml ? app.iconHtml.replace('app-icon-spotlight', 'app-icon-notification') : '',
+                duration: 12000,
+                onClick: function () {
+                    if (typeof window.openWindow !== 'function') return;
+                    window.openWindow('software-update', 'Software Update',
+                        { width: (app && app.width) || 720, height: (app && app.height) || 600 });
+                }
+            });
+            if (typeof window.track === 'function') window.track('software_update_notified', { count: n });
+        }
+
+        // After the boot screen has gone and the desktop has settled
+        function schedule() { setTimeout(announce, 5000); }
+        if (document.readyState === 'complete') schedule();
+        else window.addEventListener('load', schedule);
+    })();
+</script>

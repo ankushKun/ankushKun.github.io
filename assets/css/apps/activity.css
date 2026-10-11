@@ -1,0 +1,662 @@
+/* ================================================
+   Activity Monitor (layouts/partials/apps/activity/window.html,
+   assets/js/activity-monitor.js)
+   Process-table on top, the three-cell Mavericks bottom pane underneath.
+   ================================================ */
+
+/* Local tokens: the shared palette has no plain "list surface" colour. */
+:root {
+    --am-surface: #fff;
+    --am-row-alt: #f3f6fa;
+    --am-row-hover: var(--accent-blue-light);
+    --am-well-shadow: inset 0 1px 2px rgba(28, 32, 36, 0.12);
+    --am-pane-bg: linear-gradient(180deg, var(--gray-100) 0%, var(--gray-200) 100%);
+}
+
+html[data-appearance="dark"] {
+    --am-surface: #1d2125;
+    --am-row-alt: #23282d;
+    --am-row-hover: color-mix(in srgb, var(--accent-blue) 22%, transparent);
+    --am-well-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+    --am-pane-bg: linear-gradient(180deg, #2b3036 0%, #23272c 100%);
+}
+
+[data-activity-window] {
+    overflow: hidden;
+}
+
+.am-app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    font-family: var(--font-system);
+    color: var(--text-color);
+    container-type: inline-size;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.am-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+/* ---------- Toolbar ---------- */
+
+.am-title {
+    flex: 0 1 auto;
+}
+
+.am-title > span {
+    white-space: nowrap;
+}
+
+.am-profile {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--link);
+    text-decoration: none;
+}
+
+.am-profile:hover {
+    text-decoration: underline;
+}
+
+.am-toolbar-end {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.am-updated {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.am-refresh {
+    flex: none;
+}
+
+.am-refresh:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.am-refresh:disabled svg {
+    animation: spin 0.9s linear infinite;
+}
+
+/* ---------- Table ---------- */
+
+.am-table-wrap {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 120px;
+    overflow: auto;
+    background: var(--am-surface);
+}
+
+.am-app .am-table {
+    width: 100%;
+    margin: 0;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.am-app .am-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    text-align: left;
+    color: var(--text-secondary);
+    background: var(--toolbar-bg);
+    border-bottom: 1px solid var(--toolbar-border);
+    border-right: 1px solid var(--toolbar-border);
+    white-space: nowrap;
+}
+
+.am-app .am-table thead th:last-child {
+    border-right: 0;
+}
+
+.am-col-repo {
+    width: 38%;
+}
+
+.am-col-when {
+    width: 104px;
+}
+
+.am-app .am-table tbody tr:nth-child(even) {
+    background: var(--am-row-alt);
+}
+
+.am-app .am-table tbody tr:hover,
+.am-app .am-table tbody tr:focus-within {
+    background: var(--am-row-hover);
+}
+
+.am-app .am-table tbody td {
+    padding: 4px 10px;
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+    border-bottom: 0;
+}
+
+.am-kind {
+    display: inline-flex;
+    vertical-align: -3px;
+    margin-right: 7px;
+    color: var(--text-tertiary);
+}
+
+.am-kind-push {
+    color: var(--accent-text);
+}
+
+.am-kind-star {
+    color: var(--warning);
+}
+
+.am-kind-branch,
+.am-kind-tag {
+    color: var(--success);
+}
+
+.am-kind-remove {
+    color: var(--error);
+}
+
+.am-kind-pull,
+.am-kind-issue,
+.am-kind-comment,
+.am-kind-fork {
+    color: var(--info);
+}
+
+.am-app .am-table a {
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.am-app .am-table a.am-repo {
+    color: var(--link);
+}
+
+.am-app .am-table a:hover {
+    text-decoration: underline;
+}
+
+.am-cell-when {
+    color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums;
+}
+
+.am-state {
+    position: absolute;
+    inset: 0;
+    overflow: auto;
+    background: var(--am-surface);
+}
+
+.am-state[hidden],
+.am-app .am-table[hidden] {
+    display: none;
+}
+
+/* ---------- Bottom pane ---------- */
+
+.am-pane {
+    flex: none;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr);
+    background: var(--am-pane-bg);
+    border-top: 1px solid var(--toolbar-border);
+}
+
+.am-cell {
+    min-width: 0;
+    padding: 10px 12px 12px;
+    border-right: 1px solid var(--toolbar-border);
+}
+
+.am-cell:last-child {
+    border-right: 0;
+}
+
+.am-app .am-cell-title {
+    margin: 0 0 7px;
+    font-size: 10px;
+    line-height: 1.4;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+}
+
+.am-stats {
+    margin: 0;
+}
+
+.am-stat {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 2.5px 0;
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+.am-stat[hidden] {
+    display: none;
+}
+
+.am-stat dt {
+    flex: none;
+    color: var(--text-tertiary);
+}
+
+.am-stat dd {
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: right;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-primary);
+}
+
+.am-app .am-stat dd a {
+    font-family: var(--font-mono);
+    font-weight: 400;
+    color: var(--link);
+    text-decoration: none;
+}
+
+.am-app .am-stat dd a:hover {
+    text-decoration: underline;
+}
+
+.am-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-right: 5px;
+    border-radius: 50%;
+    background: var(--gray-400);
+    vertical-align: 0;
+}
+
+.am-relay.is-up .am-dot {
+    background: var(--success);
+}
+
+/* Now playing */
+.am-now {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    margin: 0 0 7px;
+    padding: 5px 7px 7px 5px;
+    font: inherit;
+    text-align: left;
+    color: inherit;
+    background: var(--am-surface);
+    border: 1px solid var(--gray-300);
+    border-radius: 5px;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.am-now:hover {
+    border-color: var(--gray-400);
+}
+
+.am-now-art {
+    position: relative;
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 3px;
+    color: var(--gray-500);
+    background: var(--gray-150);
+    overflow: hidden;
+}
+
+.am-now-art img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.am-now-art img[hidden] {
+    display: none;
+}
+
+.am-now-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.35;
+}
+
+.am-now-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+}
+
+.am-is-playing .am-now-label {
+    color: var(--link);
+}
+
+.am-now-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.am-now-bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background: var(--gray-200);
+}
+
+.am-now-bar[hidden] {
+    display: none;
+}
+
+.am-now-bar > span {
+    display: block;
+    width: 0;
+    height: 100%;
+    background: var(--accent-blue);
+    transition: width 0.25s linear;
+}
+
+/* Graph */
+.am-graph {
+    display: flex;
+    flex-direction: column;
+}
+
+.am-bars {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: stretch;
+    gap: 2px;
+    min-height: 62px;
+    padding: 6px 6px 0;
+    background: var(--am-surface);
+    border: 1px solid var(--gray-300);
+    border-radius: 4px;
+    box-shadow: var(--am-well-shadow);
+}
+
+.am-bar-slot {
+    flex: 1 1 0;
+    display: flex;
+    align-items: flex-end;
+    min-width: 0;
+}
+
+.am-bar {
+    display: block;
+    width: 100%;
+    max-width: 14px;
+    margin: 0 auto;
+    border-radius: 2px 2px 0 0;
+    background: var(--accent-blue);
+    transition: height 0.3s ease;
+}
+
+.am-bar.is-zero {
+    height: 2px;
+    border-radius: 0;
+    background: var(--gray-300);
+}
+
+.am-bar.is-unknown {
+    height: 0;
+    border-top: 2px dotted var(--gray-300);
+    border-radius: 0;
+    background: none;
+}
+
+.am-bar-slot:hover .am-bar:not(.is-zero):not(.is-unknown) {
+    background: var(--accent-blue-active);
+}
+
+.am-bar-slot:hover .am-bar.is-zero {
+    background: var(--gray-500);
+}
+
+.am-axis {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 3px;
+    font-size: 10px;
+    color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums;
+}
+
+.am-app .am-graph-sum {
+    margin: 4px 0 0;
+    min-height: 16px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--text-secondary);
+}
+
+.am-no-graph .am-axis {
+    visibility: hidden;
+}
+
+.am-bars-empty {
+    flex: 1 1 auto;
+    align-self: center;
+    padding-bottom: 6px;
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+/* ---------- Narrow window / phone ---------- */
+
+@container (max-width: 640px) {
+    .am-pane {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .am-graph {
+        grid-column: 1 / -1;
+        grid-row: 1;
+        border-right: 0;
+        border-bottom: 1px solid var(--toolbar-border);
+        padding-bottom: 8px;
+    }
+
+    .am-bars {
+        min-height: 54px;
+    }
+
+    .am-col-repo {
+        width: 40%;
+    }
+
+    .am-col-when {
+        width: 88px;
+    }
+
+    .am-app .am-table tbody td,
+    .am-app .am-table thead th {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    /* The status drops to its own line so a rate-limit note is never cut */
+    .am-toolbar {
+        flex-wrap: wrap;
+        row-gap: 2px;
+    }
+
+    .am-toolbar-end {
+        display: contents;
+    }
+
+    .am-updated {
+        order: 3;
+        flex: 1 0 100%;
+        padding-bottom: 2px;
+        white-space: normal;
+    }
+
+    .am-updated:empty {
+        display: none;
+    }
+}
+
+/* Touch: rows tall enough to tap, pane clears the home indicator */
+@media (pointer: coarse) {
+    .am-app .am-table tbody td {
+        padding-top: 11px;
+        padding-bottom: 11px;
+        font-size: 13px;
+    }
+
+    .am-now {
+        min-height: 44px;
+    }
+}
+
+/* Phone width: each event becomes a two-line row (what + when, repo below).
+   The explicit ARIA table roles in the markup keep it a table for assistive
+   technology once the display type changes. */
+@container (max-width: 420px) {
+    .am-app .am-table,
+    .am-app .am-table tbody {
+        display: block;
+    }
+
+    .am-app .am-table thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+    }
+
+    .am-app .am-table tbody tr {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas: "what when" "repo repo";
+        column-gap: 10px;
+        padding: 8px 12px 9px;
+    }
+
+    .am-app .am-table tbody td {
+        padding: 0;
+    }
+
+    .am-app .am-table .am-cell-what {
+        grid-area: what;
+        font-weight: 600;
+    }
+
+    .am-app .am-table .am-cell-when {
+        grid-area: when;
+        font-size: 11px;
+        align-self: center;
+    }
+
+    .am-app .am-table .am-cell-repo {
+        grid-area: repo;
+        padding-left: 21px;
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 768px), (pointer: coarse) and (max-height: 500px) {
+    .am-pane {
+        padding-bottom: var(--sab);
+    }
+}
+
+/* Not enough height for both halves: let the whole window scroll instead */
+@media (max-height: 560px) {
+    [data-activity-window] {
+        overflow: auto;
+    }
+
+    .am-app {
+        height: auto;
+        min-height: 100%;
+    }
+
+    .am-table-wrap {
+        flex: none;
+        max-height: none;
+        overflow: visible;
+    }
+
+    .am-app .am-table thead th {
+        position: static;
+    }
+
+    .am-state {
+        position: static;
+        min-height: 160px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .am-bar,
+    .am-now-bar > span {
+        transition: none;
+    }
+
+    .am-refresh:disabled svg {
+        animation: none;
+    }
+}

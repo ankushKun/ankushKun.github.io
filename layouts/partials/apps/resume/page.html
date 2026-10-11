@@ -1,0 +1,144 @@
+{{/*
+Resume - data/resume.yaml shown as a one-page document in Preview, OS X
+Mavericks: a toolbar with the zoom buttons and a Download PDF button, and a
+sheet of paper on the grey desk behind it.
+
+Usage: {{ partial "apps/resume/page.html" (dict "page" . "data" hugo.Data.resume) }}
+
+There is no script: the desktop shell injects the window body with innerHTML,
+where an inline script would never run. Zoom is a radio group and
+assets/css/apps/resume.css sizes the sheet with :has(:checked); the sheet is
+set in em, so it reflows instead of being scaled.
+
+`highlights` and `summary` are inline markdown (rendered with RenderString).
+The print stylesheet in resume.css gives the sheet its own letter-size page,
+so printing /resume/ (or the Resume window, through assets/css/apps/print.css)
+gives a clean one-page PDF.
+*/}}
+{{- $page := .page -}}
+{{- $r := .data -}}
+{{- $sep := " – " -}}
+<div class="resume">
+    <div class="resume-toolbar">
+        <fieldset class="resume-zoom">
+            <legend class="resume-sr">Zoom</legend>
+            <label class="resume-zoom-item resume-zoom-out" title="Zoom Out">
+                <input type="radio" name="resume-zoom" value="out">
+                <svg class="resume-zoom-glyph" viewBox="0 0 16 16" width="15" height="15" aria-hidden="true" focusable="false"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l4 4M4.5 6.5h4"/></svg>
+                <span class="resume-sr">Zoom Out</span>
+            </label>
+            <label class="resume-zoom-item resume-zoom-actual" title="Actual Size">
+                <input type="radio" name="resume-zoom" value="actual" checked>
+                <span>Actual Size</span>
+            </label>
+            <label class="resume-zoom-item resume-zoom-in" title="Zoom In">
+                <input type="radio" name="resume-zoom" value="in">
+                <svg class="resume-zoom-glyph" viewBox="0 0 16 16" width="15" height="15" aria-hidden="true" focusable="false"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l4 4M4.5 6.5h4M6.5 4.5v4"/></svg>
+                <span class="resume-sr">Zoom In</span>
+            </label>
+        </fieldset>
+        {{- with $r.pdf }}
+        <a class="mac-btn small resume-download" href="{{ . }}" download="{{ $r.pdfDownloadName | default "resume.pdf" }}">
+            {{- partial "icons/ui/glyph.html" "download" -}}
+            <span>Download PDF</span>
+        </a>
+        {{- end }}
+    </div>
+
+    <div class="resume-desk">
+        <article class="resume-sheet" aria-labelledby="resume-name">
+            <header class="resume-head">
+                <h1 class="resume-name" id="resume-name">{{ $r.name }}</h1>
+                <ul class="resume-contact">
+                    {{- with $r.headline }}
+                    <li class="resume-headline">{{ . }}</li>
+                    {{- end }}
+                    {{- range $r.contact }}
+                    <li{{ if .printOnly }} class="resume-print-only"{{ end }}><a href="{{ .url }}">{{ .label }}</a></li>
+                    {{- end }}
+                </ul>
+            </header>
+
+            {{- with $r.experience }}
+            <section class="resume-section" aria-labelledby="resume-experience">
+                <h2 class="resume-section-title" id="resume-experience">Experience</h2>
+                {{- range $job := . }}
+                <div class="resume-entry">
+                    <div class="resume-entry-head">
+                        <h3 class="resume-entry-title">
+                            <span class="resume-org">{{ $job.org }}</span>{{ $sep }}<span class="resume-role">{{ $job.role }}{{ with $job.team }} ({{ . }}){{ end }}</span>
+                        </h3>
+                        {{- with $job.start }}
+                        <p class="resume-dates"><time datetime="{{ . }}">{{ . }}</time>{{ $sep }}{{ with $job.end }}<time datetime="{{ . }}">{{ . }}</time>{{ else }}Present{{ end }}</p>
+                        {{- end }}
+                    </div>
+                    <ul class="resume-points">
+                        {{- range .highlights }}
+                        <li>{{ $page.RenderString . }}</li>
+                        {{- end }}
+                        {{- with .tech }}
+                        <li class="resume-tech"><span class="resume-tech-label">Tech used:</span> {{ delimit . ", " }}</li>
+                        {{- end }}
+                    </ul>
+                </div>
+                {{- end }}
+            </section>
+            {{- end }}
+
+            {{- with $r.projects }}
+            <section class="resume-section" aria-labelledby="resume-projects">
+                <h2 class="resume-section-title" id="resume-projects">Projects</h2>
+                {{- range $project := . }}
+                <div class="resume-entry">
+                    <div class="resume-entry-head">
+                        <h3 class="resume-entry-title">
+                            <span class="resume-org">{{ with $project.url }}<a href="{{ . }}">{{ $project.name }}</a>{{ else }}{{ $project.name }}{{ end }}</span>
+                            {{- with $project.summary }}{{ $sep }}<span class="resume-role">{{ $page.RenderString . }}</span>{{ end }}
+                        </h3>
+                        {{- with $project.more }}
+                        <p class="resume-more"><a href="{{ . }}">Read more<span class="resume-sr"> about {{ $project.name }}</span></a></p>
+                        {{- end }}
+                    </div>
+                    <ul class="resume-points">
+                        {{- range $project.highlights }}
+                        <li>{{ $page.RenderString . }}</li>
+                        {{- end }}
+                    </ul>
+                </div>
+                {{- end }}
+            </section>
+            {{- end }}
+
+            {{- if or $r.skills $r.interests }}
+            <section class="resume-section" aria-labelledby="resume-skills">
+                <h2 class="resume-section-title" id="resume-skills">Skills &amp; Interests</h2>
+                <dl class="resume-skills">
+                    {{- range $r.skills }}
+                    <div class="resume-skill">
+                        <dt>{{ .label }}</dt>
+                        <dd>{{ range $i, $item := .items }}{{ if $i }} {{ end }}<span>{{ $item }}</span>{{ end }}</dd>
+                    </div>
+                    {{- end }}
+                    {{- with $r.interests }}
+                    <div class="resume-skill">
+                        <dt>Interests</dt>
+                        <dd>{{ range $i, $item := . }}{{ if $i }} {{ end }}<span>{{ $item }}</span>{{ end }}</dd>
+                    </div>
+                    {{- end }}
+                </dl>
+            </section>
+            {{- end }}
+
+            {{- with $r.education }}
+            <section class="resume-section" aria-labelledby="resume-education">
+                <h2 class="resume-section-title" id="resume-education">Education</h2>
+                {{- range . }}
+                <p class="resume-education">
+                    <span class="resume-org">{{ .degree }}</span>{{ with .field }}{{ $sep }}{{ . }}{{ end }}{{ with .school }}{{ $sep }}{{ . }}{{ end }}{{ with .location }}, {{ . }}{{ end }}
+                </p>
+                {{- end }}
+            </section>
+            {{- end }}
+        </article>
+    </div>
+</div>

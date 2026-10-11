@@ -1,0 +1,40 @@
+{{/* Software Update - what changed on the site, and what is new since the
+visitor's last visit. Styles: assets/css/apps/updates.css. Script:
+assets/js/software-update.js (fetched when the window first opens). */}}
+{{- $id := .id -}}
+{{/* data/changelog.json is written from `git log` by scripts/changelog.mjs.
+It is published as its own file and fetched when the window opens, so the
+home document does not grow with the history. */}}
+{{- $src := "" -}}
+{{- $repo := "" -}}
+{{- with hugo.Data.changelog -}}
+{{- $repo = .repo | default "" -}}
+{{- if .updates -}}
+{{- $src = (resources.FromString "data/changelog.json" (. | jsonify) | fingerprint).RelPermalink -}}
+{{- end -}}
+{{- end -}}
+<div id="content-{{ $id }}" class="window-content" data-software-update-window="true">
+    <div class="su-window"{{ with $src }} data-src="{{ . }}"{{ end }}>
+
+        <div class="app-toolbar su-toolbar">
+            <div class="app-toolbar-title">
+                <span>Updates</span>
+                <span class="app-toolbar-count su-status" role="status">Checking for updates…</span>
+            </div>
+            <a class="su-build" target="_blank" rel="noopener" data-open="tab" hidden></a>
+        </div>
+
+        <div class="su-scroll" role="region" aria-label="Updates" tabindex="0">
+            <div class="su-loading">
+                <span class="mac-spinner" aria-hidden="true"></span>
+            </div>
+        </div>
+
+        <div class="app-statusbar su-statusbar">
+            <span class="su-total"></span>
+            {{- with $repo }}
+            <a class="su-source" href="{{ . }}/commits" target="_blank" rel="noopener" data-open="tab">Full history on GitHub</a>
+            {{- end }}
+        </div>
+    </div>
+</div>

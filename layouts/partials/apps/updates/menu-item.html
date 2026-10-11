@@ -1,0 +1,19 @@
+{{/* Apple menu > Software Update…  A real link, so it also works from pages
+without the desktop shell. data-updates carries the commit time (Unix seconds,
+newest first) of the most recent updates in data/changelog.json; the script in
+apps/updates/boot.html compares them with what this visitor has already seen
+and fills in the badge. */}}
+{{- $stamps := slice -}}
+{{- $latest := "" -}}
+{{- with hugo.Data.changelog -}}
+{{- range $i, $update := first 30 (.updates | default slice) -}}
+{{- if eq $i 0 -}}{{- $latest = $update.title | default "" -}}{{- end -}}
+{{- $stamps = $stamps | append (string (int $update.ts)) -}}
+{{- end -}}
+{{- end -}}
+<a class="dropdown-item su-menu-item" id="su-menu-item" role="menuitem" tabindex="-1" href="/?open=software-update"
+    data-menu-action="open-app" data-app="software-update" data-updates="{{ delimit $stamps "," }}"
+    data-latest-title="{{ $latest }}">
+    <span>Software Update…</span>
+    <span class="su-menu-badge" hidden></span>
+</a>

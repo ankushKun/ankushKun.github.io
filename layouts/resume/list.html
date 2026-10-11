@@ -1,0 +1,16 @@
+{{ define "main" }}
+{{/*
+/resume/: the resume as a Preview document, rendered from data/resume.yaml by
+layouts/partials/apps/resume/page.html.
+
+The desktop shell lifts .window-content out of this page into the Resume
+window (data/apps.yaml, contentPermalink /resume/), so the partial is the
+whole app: there is no script and no <template> in layouts/index.html.
+*/}}
+{{ partial "os/window/static.html" (dict
+"title" .Title
+"content" "apps/resume/page.html"
+"contentData" (dict "page" . "data" hugo.Data.resume)
+"page" .
+) }}
+{{ end }}

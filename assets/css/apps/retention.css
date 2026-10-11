@@ -1,0 +1,145 @@
+/* ==========================================================================
+   Retention - "new since your last visit" marks and achievement banners
+   (assets/js/retention.js)
+   ========================================================================== */
+
+:root {
+    /* Dock-style count badge */
+    --badge-red: linear-gradient(180deg, #ff6259 0%, #e0271d 100%);
+    --badge-red-border: rgba(120, 12, 6, 0.55);
+    /* Achievement banner kicker (gold that reads on the light toast) */
+    --ach-kicker: #8a5a00;
+}
+
+html[data-appearance="dark"] {
+    --ach-kicker: #e6b84f;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ---------- Recent Activity widget ---------- */
+
+/* The colour-cycling NEW text in the header is shown to everyone and lives in
+   mavericks.css. The per-visitor "new since last visit" signal is on the
+   items, as Mail's blue dot. */
+
+/* Mail's unread dot */
+.widget-new-dot {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent-blue);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+
+.widget-blog-item.is-new .widget-blog-title {
+    font-weight: 700;
+}
+
+/* ---------- "New" pill in the Blogs and Projects lists ---------- */
+
+.new-pill {
+    display: inline-block;
+    margin-left: 2px;
+    padding: 1px 6px;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1.4;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    vertical-align: 2px;
+    color: var(--accent-fill-text);
+    background: var(--accent-fill);
+    border-radius: 8px;
+}
+
+/* ---------- Count badge on a desktop icon ---------- */
+
+.desktop-icon {
+    position: relative;
+}
+
+.icon-count-badge {
+    position: absolute;
+    top: 3px;
+    /* The art is 64px wide, centred in the icon */
+    left: calc(50% + 14px);
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    box-sizing: border-box;
+    font-family: var(--font-system);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+    color: var(--text-inverse);
+    background: var(--badge-red);
+    border: 1px solid var(--badge-red-border);
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+    pointer-events: none;
+    animation: icon-badge-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes icon-badge-in {
+    from { transform: scale(0); }
+    to { transform: scale(1); }
+}
+
+/* ---------- Achievement banner (a shell notification with a medal) ---------- */
+
+.notification-achievement .notification-icon {
+    width: 36px;
+    height: 36px;
+}
+
+.ach-medal {
+    display: block;
+    width: 36px;
+    height: 36px;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.ach-medal svg {
+    display: block;
+}
+
+.notification.visible .ach-medal {
+    animation: ach-medal-in 0.7s 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes ach-medal-in {
+    from { transform: scale(0.3) rotate(-40deg); opacity: 0; }
+    to { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+.ach-kicker {
+    display: block;
+    margin-bottom: 1px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--ach-kicker);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .icon-count-badge,
+    .notification.visible .ach-medal {
+        animation: none;
+    }
+}

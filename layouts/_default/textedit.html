@@ -1,0 +1,17 @@
+{{ define "main" }}
+{{/*
+TextEdit document page. Any section or page opts in with `layout = "textedit"`
+in its front matter (content/uses/_index.md, a draft for now); the body
+is rendered as a rich-text document by layouts/partials/apps/textedit/document.html.
+
+The desktop shell lifts .window-content out of this page into a window for the
+matching data/apps.yaml entry (contentPermalink), so the partial is the whole
+app: there is no script and no <template> in layouts/index.html.
+*/}}
+{{ partial "os/window/static.html" (dict
+"title" .Title
+"content" "apps/textedit/document.html"
+"contentData" (dict "page" .)
+"page" .
+) }}
+{{ end }}

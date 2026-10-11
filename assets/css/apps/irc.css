@@ -1,0 +1,1422 @@
+/* ==========================================================================
+   IRC Chat window
+   Moved out of the inline <style> in layouts/partials/apps/irc/window.html so
+   it ships in the cached stylesheet instead of the home page HTML. Every
+   selector is an .irc-* class; markup lives in that partial, behaviour in
+   assets/js/irc-chat.js.
+   ========================================================================== */
+
+.irc-window {
+    /* Nick colours: irc-chat.js picks only the hue, these set OKLCH lightness
+       and chroma (4.5:1 or better for every hue on the white chat) */
+    --irc-nick-l: 0.5;
+    --irc-nick-c: 0.12;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #fff;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    color: #333;
+    border: 1px solid #bbb;
+    box-sizing: border-box;
+    position: relative;
+}
+
+/* Nick Prompt - Modern/Retro Hybrid */
+.irc-nick-prompt {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, #deebf7 0%, #a6c0fe 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: opacity 0.3s ease;
+}
+
+.irc-nick-prompt.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.irc-nick-dialog {
+    width: 480px;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    color: #333;
+    font-family: "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.irc-login-header {
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: center;
+}
+
+.irc-logo-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.irc-app-logo {
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+}
+
+.irc-brand-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+}
+
+.irc-brand-top {
+    font-size: 14px;
+    color: #000;
+    font-weight: 400;
+    margin-bottom: -2px;
+}
+
+.irc-brand-main {
+    font-size: 36px;
+    font-weight: 400;
+    color: #000;
+    letter-spacing: -1px;
+}
+
+.irc-brand-tagline {
+    font-size: 11px;
+    color: #3a4fa6;
+    font-style: italic;
+    margin-top: 4px;
+}
+
+.irc-login-body {
+    padding: 0 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Scoped to the dialog so the generic .window-content h2 rule
+   (mavericks.css, 0,1,1) cannot restyle it in one appearance only. */
+.irc-nick-dialog .irc-welcome-title {
+    font-size: 24px;
+    color: #0078d7;
+    font-weight: 400;
+    margin: 0 0 5px;
+}
+
+.irc-welcome-sub {
+    font-size: 14px;
+    color: #666;
+    margin: 0 0 25px;
+}
+
+.irc-input-container {
+    display: block;
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+.irc-input-label {
+    display: block;
+    font-size: 11px;
+    color: #333;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    margin-left: 2px;
+}
+
+.irc-input-wrapper {
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    padding: 8px 10px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+    transition: border-color 0.2s;
+}
+
+.irc-input-wrapper:focus-within {
+    border-color: #7289da;
+}
+
+.irc-nick-dialog input[type="text"] {
+    width: 100%;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    color: #333;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+}
+
+.irc-terms {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.irc-terms label {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+    transition: background 0.1s;
+}
+
+.irc-terms label:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.irc-terms input {
+    margin-top: 2px;
+}
+
+.irc-terms-text {
+    font-size: 11px;
+    color: #4a4a4a;
+    line-height: 1.4;
+}
+
+.irc-login-actions {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-top: 10px;
+}
+
+.irc-submit-btn {
+    padding: 6px 20px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: bold;
+    /* The shared Aqua gel, so it follows the highlight colour and keeps a
+       4.5:1 label (see --btn-primary-* in mavericks.css) */
+    color: var(--btn-primary-text);
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.3);
+    background: var(--btn-primary-bg);
+    border: 1px solid var(--btn-primary-border);
+    border-radius: 3px;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.4),
+        0 2px 2px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    display: inline-block;
+    text-align: center;
+    text-decoration: none;
+    transition: border-color 0.2s;
+}
+
+.irc-submit-btn:hover {
+    background: var(--btn-primary-bg-hover);
+}
+
+.irc-submit-btn:active {
+    background: var(--btn-primary-bg-active);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    transform: translateY(1px);
+}
+
+.irc-submit-btn:disabled {
+    background: #ccc;
+    border-color: #bbb;
+    box-shadow: none;
+    cursor: not-allowed;
+    color: #666;
+    text-shadow: none;
+}
+
+.irc-login-footer {
+    margin-top: 60px;
+    display: flex;
+    gap: 8px;
+    font-size: 11px;
+    color: #555;
+    padding-left: 40px;
+    /* Align mostly with body */
+}
+
+/* Same ink as the footer it divides: a pale bar vanished on the blue pane */
+.irc-login-footer .separator {
+    color: inherit;
+}
+
+.irc-login-footer span:not(.separator) {
+    cursor: pointer;
+}
+
+.irc-login-footer span:not(.separator):hover {
+    text-decoration: underline;
+    color: #0078d7;
+}
+
+/* Ensure inputs are typeable */
+.irc-nick-dialog input,
+.irc-msg-input {
+    user-select: text;
+    -webkit-user-select: text;
+}
+
+/* Header Row */
+.irc-header {
+    display: flex;
+    background: linear-gradient(to bottom, #eff6fd 0%, #d3e5f5 100%);
+    border-bottom: 1px solid #aebcd0;
+    flex-shrink: 0;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.irc-channel {
+    flex: 1;
+    padding: 6px 10px;
+    font-weight: 500;
+}
+
+.irc-status {
+    font-weight: normal;
+    color: #5c5c5c;
+}
+
+.irc-status.is-offline {
+    color: #c0392b;
+    font-weight: 600;
+}
+
+.irc-logout {
+    background: none;
+    border: none;
+    border-right: 1px solid #aebcd0;
+    color: #789;
+    cursor: pointer;
+    padding: 4px 8px;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    transition: color 0.2s;
+}
+
+.irc-logout:hover {
+    color: #e74c3c;
+}
+
+/* A <button> (it opens the user list drawer on phones); reset to the plain
+   header cell it has always looked like. */
+.irc-online-header {
+    width: 140px;
+    box-sizing: border-box;
+    margin: 0;
+    border: 0;
+    border-left: 1px solid #aebcd0;
+    border-radius: 0;
+    background: none;
+    padding: 6px 10px;
+    font: inherit;
+    text-align: center;
+    color: #666;
+    cursor: default;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+/* Body */
+.irc-body {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+.irc-chat-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    /* border-right removed to avoid double border with user-col */
+    overflow: hidden;
+    /* Anchor for the jump-to-latest pill */
+    position: relative;
+}
+
+.irc-unread-pill {
+    position: absolute;
+    left: 50%;
+    bottom: 10px;
+    transform: translateX(-50%);
+    z-index: 5;
+    padding: 4px 12px;
+    font-family: inherit;
+    font-size: 11px;
+    color: var(--accent-fill-text);
+    background: var(--accent-fill);
+    border: none;
+    border-radius: 11px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    animation: ircPillIn 0.18s ease;
+}
+
+.irc-unread-pill[hidden] {
+    display: none;
+}
+
+.irc-unread-pill:hover {
+    background: #3a7ee0;
+}
+
+@keyframes ircPillIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+.irc-log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 0;
+}
+
+.irc-users-col {
+    width: 140px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    background: #f8fbff;
+    border-left: 1px solid #dce4ec;
+}
+
+.irc-user-list {
+    padding: 6px 0;
+}
+
+.irc-user {
+    padding: 2px 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.irc-user:hover {
+    background: #eee;
+}
+
+.irc-user.me {
+    font-weight: 600;
+}
+
+/* Chat Messages */
+.irc-msg {
+    padding: 0px;
+    line-height: 1.2;
+    font-family: var(--font-mono);
+    word-wrap: break-word;
+    position: relative;
+    display: flex;
+}
+
+.irc-msg:hover {
+    background: #f9f9f9;
+}
+
+.irc-msg-time {
+    display: inline;
+    color: #6b6b6b;
+    font-family: inherit;
+}
+
+.irc-msg-nick {
+    display: inline;
+    font-weight: 500;
+    font-family: inherit;
+    margin-right: 8px;
+    display: flex;
+    /* Color is set dynamically via JS based on UUID */
+}
+
+.irc-nick-pipe,
+.irc-nick-angle {
+    padding-left: 2px;
+    font-style: normal !important;
+}
+
+.irc-nick-text {
+    white-space: pre;
+}
+
+.irc-msg-text {
+    display: inline;
+    word-break: break-word;
+    white-space: pre-wrap;
+    font-family: inherit;
+}
+
+.irc-msg-text code {
+    background: rgba(0, 0, 0, 0.05);
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: inherit;
+    font-size: 0.9em;
+    color: #e83e8c;
+}
+
+.irc-msg-text pre {
+    background: #f8f9fa !important;
+    padding: 8px !important;
+    border-radius: 4px !important;
+    overflow-x: auto !important;
+    font-family: inherit !important;
+    font-size: 0.9em !important;
+    margin: 4px 0 !important;
+    border: 1px solid #e9ecef !important;
+    color: #333 !important;
+    display: block !important;
+}
+
+.irc-msg-text pre code {
+    background: none !important;
+    padding: 0 !important;
+    color: inherit !important;
+    font-size: 100% !important;
+    display: inline !important;
+    border: none !important;
+}
+
+.irc-msg-text strong {
+    font-weight: 700;
+    color: #222;
+}
+
+.irc-msg-text em {
+    font-style: italic;
+}
+
+.irc-msg-text s {
+    text-decoration: line-through;
+    opacity: 0.6;
+}
+
+.irc-quote {
+    display: block !important;
+    margin: 4px 0 !important;
+    padding-left: 10px !important;
+    border-left: 3px solid #dfe2e5 !important;
+    color: #666 !important;
+    background: transparent !important;
+    opacity: 1 !important;
+    font-style: normal !important;
+}
+
+.irc-msg-text h1,
+.irc-msg-text h2,
+.irc-msg-text h3 {
+    margin: 8px 0 4px;
+    font-weight: 600;
+    line-height: 1.25;
+    color: #333;
+    font-style: normal;
+}
+
+.irc-msg-text h1 {
+    font-size: 1.4em;
+    border-bottom: 1px solid #eaecef;
+    padding-bottom: 0.3em;
+}
+
+.irc-msg-text h2 {
+    font-size: 1.2em;
+    border-bottom: 1px solid #eaecef;
+    padding-bottom: 0.3em;
+}
+
+.irc-msg-text h3 {
+    font-size: 1.1em;
+}
+
+.irc-msg.system .irc-msg-nick {
+    color: #6b6b6b;
+    font-style: italic;
+}
+
+.irc-msg.system .irc-msg-text {
+    color: #1e7d46;
+    font-weight: 500;
+    font-style: italic;
+}
+
+.irc-msg.leave .irc-msg-nick {
+    color: #6b6b6b;
+    font-style: italic;
+}
+
+.irc-msg.leave .irc-msg-text {
+    color: #c0392b;
+    font-weight: 500;
+    font-style: italic;
+}
+
+.irc-msg.action .irc-msg-text {
+    color: #7d3c98;
+    font-style: italic;
+}
+
+/* Footer / Input */
+.irc-footer {
+    display: flex;
+    border-top: 1px solid #aebcd0;
+    background: linear-gradient(to bottom, #f5f7fa 0%, #e1e6eb 100%);
+    flex-shrink: 0;
+    align-items: center;
+    padding: 4px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.irc-input-nick {
+    width: auto;
+    min-width: 60px;
+    max-width: 120px;
+    text-align: right;
+    padding: 6px;
+    padding-right: 8px;
+    margin-right: 0;
+    font-weight: 600;
+    color: #555;
+    box-sizing: border-box;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.irc-msg-input {
+    flex: 1;
+    border: 1px solid #a0b1c5;
+    border-radius: 3px;
+    background: #fff;
+    padding: 6px 8px;
+    font-size: 14px;
+    outline: none;
+    min-height: 20px;
+    max-height: 100px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+    margin-right: 4px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.irc-msg-input:focus {
+    border-color: #3d94f6;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1), 0 0 0 2px rgba(61, 148, 246, 0.1);
+}
+
+.irc-msg-input[contenteditable="false"] {
+    background: #f5f5f5;
+    cursor: not-allowed;
+}
+
+.irc-msg-input:empty:before {
+    content: attr(data-placeholder);
+    color: #999;
+    pointer-events: none;
+}
+
+.irc-gif-btn {
+    padding: 0 12px;
+    background: #f4f4f4;
+    color: #555;
+    border: 1px solid #a0b1c5;
+    border-radius: 3px;
+    margin-left: 2px;
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: inherit;
+    transition: background 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.irc-gif-btn:hover {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.irc-gif-btn:disabled {
+    background: #f9f9f9;
+    color: #ddd;
+    cursor: not-allowed;
+}
+
+/* Message length counter - appears near the 500 character limit */
+.irc-char-count {
+    flex-shrink: 0;
+    margin-right: 4px;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    color: #789;
+}
+
+.irc-char-count[hidden] {
+    display: none;
+}
+
+.irc-char-count.over {
+    color: #c0392b;
+    font-weight: 600;
+}
+
+/* "<nick> is typing…" - floats over the bottom edge of the log */
+.irc-typing {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    z-index: 4;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 1px 8px;
+    font-size: 11px;
+    font-style: italic;
+    color: #789;
+    background: rgba(255, 255, 255, 0.92);
+    border-top-right-radius: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+}
+
+.irc-typing[hidden] {
+    display: none;
+}
+
+/* Mentions */
+.irc-mention {
+    font-weight: 600;
+}
+
+/* Highlighted message (when you're mentioned) */
+.irc-msg.mentioned {
+    background: #fff3cd;
+    box-shadow: inset 3px 0 0 #ffc107;
+}
+
+.irc-msg.mentioned:hover {
+    background: #ffe9a6;
+}
+
+/* GIF Picker */
+.irc-gif-picker {
+    position: absolute;
+    bottom: 40px;
+    right: 10px;
+    width: 350px;
+    max-height: 400px;
+    background: white;
+    border: 1px solid #bbb;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+}
+
+.irc-gif-picker.hidden {
+    display: none;
+}
+
+.irc-gif-picker-header {
+    display: flex;
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+    gap: 6px;
+}
+
+.irc-gif-search {
+    flex: 1;
+    padding: 6px 8px;
+    border: 1px solid #ccc;
+    font-size: 13px;
+    outline: none;
+}
+
+.irc-gif-search:focus {
+    border-color: #5a9;
+}
+
+.irc-gif-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #999;
+    cursor: pointer;
+    padding: 0 8px;
+    line-height: 1;
+}
+
+.irc-gif-close:hover {
+    color: #e74c3c;
+}
+
+.irc-gif-results {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    max-height: 320px;
+}
+
+.irc-gif-item {
+    cursor: pointer;
+    overflow: hidden;
+    border-radius: 4px;
+    position: relative;
+    background: #f0f0f0;
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.irc-gif-item img {
+    width: 100%;
+    height: auto;
+    display: block;
+    transition: opacity 0.2s;
+}
+
+.irc-gif-item:hover img {
+    opacity: 0.85;
+}
+
+.irc-gif-attribution {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 4px 8px;
+    font-size: 10px;
+    color: #999;
+    border-top: 1px solid #ddd;
+    background: #f9f9f9;
+}
+
+.irc-gif-blur-toggle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #666;
+    cursor: pointer;
+}
+
+.irc-gif-blur-toggle input {
+    margin: 0;
+}
+
+/* GIF messages */
+.irc-msg-gif {
+    display: block;
+    max-width: 100%;
+    max-height: 250px;
+    border-radius: 4px;
+    padding: 0px !important;
+    margin: 0px !important;
+}
+
+/* The GIF is a real link to itself (new tab) */
+.irc-gif-link {
+    display: block;
+    cursor: pointer;
+}
+
+.irc-gif-container {
+    position: relative;
+    display: inline-block;
+    vertical-align: top;
+    max-width: 100%;
+    padding: 0px !important;
+    margin: 0px !important;
+    /* Align with message text: 24 chars for timestamp + | + username */
+}
+
+/* Room for the reveal overlay before the (lazy) image has a size */
+.irc-gif-container.nsfw-blurred {
+    min-width: 160px;
+    min-height: 70px;
+    overflow: hidden;
+    border-radius: 4px;
+}
+
+/* A type:'gif' row whose URL is not on the GIF host - shown, never loaded */
+.irc-msg-blocked {
+    color: #999;
+    font-style: italic;
+}
+
+.irc-gif-container.nsfw-blurred .irc-msg-gif {
+    filter: blur(30px);
+}
+
+.irc-gif-nsfw-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    border: 0;
+    font: inherit;
+    background: rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 8px;
+    text-align: center;
+    backdrop-filter: blur(2px);
+}
+
+.irc-gif-nsfw-overlay:hover {
+    background: rgba(0, 0, 0, 0.15);
+}
+
+.irc-gif-nsfw-overlay strong {
+    font-size: 13px;
+    margin-bottom: 4px;
+    color: #666;
+    font-weight: 500;
+}
+
+.irc-gif-nsfw-overlay small {
+    font-size: 11px;
+    opacity: 0.7;
+    color: #888;
+}
+
+/* Delete Button */
+.irc-delete-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 4px;
+    opacity: 0;
+    background: none;
+    border: none;
+    color: #ccc;
+    cursor: pointer;
+    padding: 4px;
+    margin-left: auto;
+    /* Push to the right */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s, color 0.1s;
+    border-radius: 4px;
+}
+
+.irc-msg:hover .irc-delete-btn {
+    opacity: 1;
+}
+
+.irc-delete-btn:hover {
+    color: #e74c3c;
+}
+
+/* ========== MOBILE RESPONSIVE STYLES ========== */
+@media (max-width: 768px) {
+
+    /* Nick Prompt - Mobile Optimized */
+    .irc-nick-dialog {
+        width: 90%;
+        max-width: 400px;
+        padding: 0 10px;
+    }
+
+    .irc-logo-container {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+
+    .irc-app-logo {
+        width: 50px;
+        height: 50px;
+    }
+
+    .irc-brand-main {
+        font-size: 24px;
+    }
+
+    .irc-login-body {
+        padding: 0 20px;
+    }
+
+    .irc-nick-dialog .irc-welcome-title {
+        font-size: 20px;
+    }
+
+    .irc-welcome-sub {
+        font-size: 13px;
+    }
+
+    .irc-login-footer {
+        padding-left: 20px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    /* Header - Make elements smaller */
+    .irc-header {
+        font-size: 12px;
+    }
+
+    .irc-channel {
+        padding: 4px 8px;
+        font-size: 12px;
+    }
+
+    /* Hide the online users column on mobile by default */
+    .irc-users-col {
+        display: none;
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 60%;
+        max-width: 200px;
+        z-index: 50;
+        box-shadow: -2px 0 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .irc-users-col.mobile-visible {
+        display: block;
+    }
+
+    .irc-online-header {
+        width: auto;
+        padding: 4px 8px;
+        font-size: 12px;
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+    }
+
+    .irc-online-header::after {
+        content: '▼';
+        font-size: 8px;
+        margin-left: 4px;
+        opacity: 0.6;
+    }
+
+    .irc-online-header:active {
+        background: rgba(0, 0, 0, 0.05);
+    }
+
+    /* Body - Take full width */
+    .irc-body {
+        position: relative;
+    }
+
+    .irc-chat-col {
+        width: 100%;
+    }
+
+    /* Messages - Adjust layout for smaller screens.
+       13px is the floor for chat text on phones (it used to drop to 10px). */
+    .irc-msg {
+        padding: 0;
+        font-size: 13px;
+        line-height: 1.3;
+    }
+
+    .irc-msg-time {
+        font-size: 13px;
+    }
+
+    .irc-msg-nick {
+        font-size: 13px;
+        margin-right: 4px;
+    }
+
+    .irc-msg-text {
+        font-size: 13px;
+    }
+
+    /* Reduce nickname padding on mobile to save space */
+    .irc-nick-angle {
+        padding-left: 1px;
+    }
+
+    /* Optimize GIF display for mobile */
+    .irc-gif-container {
+        margin-left: 0;
+    }
+
+    .irc-msg-gif {
+        max-height: 180px;
+    }
+
+    /* Footer - Adjust input area */
+    .irc-footer {
+        padding: 3px;
+    }
+
+    .irc-input-nick {
+        min-width: 50px;
+        max-width: 80px;
+        font-size: 12px;
+        padding: 4px;
+    }
+
+    .irc-msg-input {
+        font-size: 13px;
+        padding: 5px 6px;
+        min-height: 18px;
+        max-height: 80px;
+    }
+
+    /* A thumb-sized target with a readable label; the row grows to fit */
+    .irc-gif-btn {
+        min-width: 44px;
+        min-height: 36px;
+        padding: 0 8px;
+        font-size: 12px;
+    }
+
+    /* GIF Picker - Full width on mobile */
+    .irc-gif-picker {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        max-height: 60vh;
+        border-radius: 8px 8px 0 0;
+        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .irc-gif-results {
+        grid-template-columns: repeat(2, 1fr);
+        max-height: 50vh;
+    }
+
+    .irc-gif-search {
+        font-size: 14px;
+    }
+
+    /* GIF messages - Smaller on mobile */
+    .irc-msg-gif {
+        max-width: 200px;
+        max-height: 150px;
+    }
+
+    .irc-delete-btn {
+        opacity: 0;
+    }
+
+    .irc-msg:hover .irc-delete-btn,
+    .irc-delete-btn:active {
+        opacity: 1;
+    }
+}
+
+/* Extra small phones */
+@media (max-width: 480px) {
+    .irc-nick-dialog {
+        width: 95%;
+        padding: 0 5px;
+    }
+
+    .irc-brand-main {
+        font-size: 20px;
+    }
+
+    .irc-login-body {
+        padding: 0 15px;
+    }
+
+    .irc-input-nick {
+        min-width: 40px;
+        max-width: 70px;
+    }
+
+    .irc-gif-results {
+        grid-template-columns: 1fr;
+    }
+
+    .irc-msg-gif {
+        max-width: 180px;
+        max-height: 120px;
+    }
+}
+
+/* Landscape mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+    .irc-nick-dialog {
+        width: 70%;
+        max-width: 500px;
+    }
+
+    .irc-login-body {
+        padding: 0 30px;
+    }
+
+    .irc-gif-picker {
+        max-height: 70vh;
+    }
+
+    .irc-gif-results {
+        max-height: 60vh;
+    }
+}
+
+/* Touch devices: text fields below 16px make iOS zoom the page on focus.
+   Mirrors the site-wide rule; it has to live here, last, to beat the sizes
+   set above. */
+@media (pointer: coarse) {
+
+    .irc-msg-input,
+    .irc-nick-dialog input[type="text"],
+    .irc-gif-search {
+        font-size: 16px;
+    }
+}
+
+/* ==========================================================================
+   Dark appearance (html[data-appearance="dark"], see mavericks.css). The
+   light skin above is painted with literal colours, so the dark one restates
+   each surface here; !important only where the light rule has it.
+   ========================================================================== */
+html[data-appearance="dark"] .irc-window {
+    --irc-nick-l: 0.78;
+    --irc-nick-c: 0.12;
+    background: var(--surface);
+    color: var(--text-color);
+    border-color: var(--border-chrome);
+}
+
+html[data-appearance="dark"] .irc-nick-prompt {
+    background: radial-gradient(circle at center, #2c3a4f 0%, #1a2233 100%);
+}
+
+html[data-appearance="dark"] :is(.irc-nick-dialog, .irc-input-label, .irc-nick-dialog input[type="text"]) {
+    color: var(--text-color);
+}
+
+html[data-appearance="dark"] :is(.irc-brand-top, .irc-brand-main) {
+    color: var(--text-primary);
+}
+
+html[data-appearance="dark"] .irc-brand-tagline {
+    color: #A6B3EA;
+}
+
+html[data-appearance="dark"] .irc-welcome-title {
+    color: var(--link);
+}
+
+html[data-appearance="dark"] :is(.irc-welcome-sub, .irc-terms-text, .irc-login-footer, .irc-online-header, .irc-input-nick) {
+    color: var(--text-muted);
+}
+
+html[data-appearance="dark"] .irc-input-wrapper {
+    background: var(--surface-alt);
+    border-color: var(--border-strong);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+html[data-appearance="dark"] .irc-terms label:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+html[data-appearance="dark"] .irc-submit-btn:disabled {
+    background: var(--control);
+    border-color: var(--border-strong);
+    color: var(--text-quiet);
+}
+
+html[data-appearance="dark"] .irc-login-footer .separator {
+    color: inherit;
+}
+
+html[data-appearance="dark"] .irc-header {
+    background: linear-gradient(to bottom, #36404d 0%, #2b333e 100%);
+    border-bottom-color: var(--border-chrome);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+html[data-appearance="dark"] :is(.irc-status, .irc-logout, .irc-char-count, .irc-typing, .irc-msg-time) {
+    color: var(--text-quiet);
+}
+
+/* The status sits on the lighter header gradient */
+html[data-appearance="dark"] .irc-status {
+    color: var(--text-muted);
+}
+
+html[data-appearance="dark"] .irc-status.is-offline {
+    color: var(--danger-text);
+}
+
+html[data-appearance="dark"] :is(.irc-logout, .irc-online-header) {
+    border-color: var(--border-chrome);
+}
+
+html[data-appearance="dark"] .irc-users-col {
+    background: var(--surface-alt);
+    border-left-color: var(--border);
+}
+
+html[data-appearance="dark"] .irc-user:hover,
+html[data-appearance="dark"] .irc-online-header:active {
+    background: var(--hover-tint);
+}
+
+html[data-appearance="dark"] .irc-msg:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* Nick colours: the dark --irc-nick-l on .irc-window lightens them (no
+   filter needed). System and leave nicks are plain grey. */
+html[data-appearance="dark"] :is(.irc-msg.system, .irc-msg.leave) .irc-msg-nick {
+    color: var(--text-tertiary);
+}
+
+html[data-appearance="dark"] .irc-msg-text code {
+    background: rgba(255, 255, 255, 0.08);
+    color: #FF8FBF;
+}
+
+html[data-appearance="dark"] .irc-msg-text pre {
+    background: var(--code-bg) !important;
+    border-color: var(--border) !important;
+    color: var(--text-color) !important;
+}
+
+html[data-appearance="dark"] :is(.irc-msg-text strong, .irc-msg-text h3) {
+    color: var(--text-primary);
+}
+
+html[data-appearance="dark"] .irc-quote {
+    border-left-color: var(--border-strong) !important;
+    color: var(--text-muted) !important;
+}
+
+html[data-appearance="dark"] :is(.irc-msg-text h1, .irc-msg-text h2) {
+    border-bottom-color: var(--border);
+}
+
+html[data-appearance="dark"] .irc-msg.system .irc-msg-text {
+    color: #4CD27E;
+}
+
+html[data-appearance="dark"] .irc-msg.leave .irc-msg-text {
+    color: #FF7B6E;
+}
+
+html[data-appearance="dark"] .irc-msg.action .irc-msg-text {
+    color: #C99AE0;
+}
+
+html[data-appearance="dark"] .irc-footer {
+    background: linear-gradient(to bottom, #2f3237 0%, #272a2e 100%);
+    border-top-color: var(--border-chrome);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+html[data-appearance="dark"] .irc-input-nick {
+    text-shadow: none;
+}
+
+html[data-appearance="dark"] .irc-msg-input {
+    background: var(--surface-alt);
+    border-color: var(--border-strong);
+    color: var(--text-color);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+html[data-appearance="dark"] .irc-msg-input[contenteditable="false"] {
+    background: var(--surface-sunken);
+}
+
+html[data-appearance="dark"] .irc-msg-input:empty:before {
+    color: var(--text-placeholder);
+}
+
+html[data-appearance="dark"] .irc-gif-btn {
+    background: var(--control);
+    color: var(--text-secondary);
+    border-color: var(--border-strong);
+}
+
+html[data-appearance="dark"] .irc-gif-btn:hover {
+    background: var(--control-hover);
+    color: var(--text-primary);
+}
+
+html[data-appearance="dark"] .irc-gif-btn:disabled {
+    background: var(--surface-sunken);
+    color: var(--text-placeholder);
+}
+
+html[data-appearance="dark"] .irc-typing {
+    background: rgba(31, 32, 35, 0.92);
+}
+
+html[data-appearance="dark"] .irc-msg.mentioned {
+    background: #3B3420;
+    box-shadow: inset 3px 0 0 #E0A800;
+}
+
+html[data-appearance="dark"] .irc-msg.mentioned:hover {
+    background: #463D24;
+}
+
+html[data-appearance="dark"] .irc-gif-picker {
+    background: var(--surface-alt);
+    border-color: var(--border-chrome);
+}
+
+html[data-appearance="dark"] :is(.irc-gif-picker-header, .irc-gif-attribution) {
+    border-color: var(--border);
+}
+
+html[data-appearance="dark"] .irc-gif-search {
+    background: var(--surface);
+    color: var(--text-color);
+    border-color: var(--border-strong);
+}
+
+html[data-appearance="dark"] :is(.irc-gif-item, .irc-gif-attribution) {
+    background: var(--surface-sunken);
+}
+
+html[data-appearance="dark"] :is(.irc-gif-close, .irc-gif-attribution, .irc-msg-blocked, .irc-gif-blur-toggle, .irc-delete-btn) {
+    color: var(--text-quiet);
+}
+
+html[data-appearance="dark"] .irc-gif-nsfw-overlay {
+    background: rgba(0, 0, 0, 0.35);
+    color: var(--text-color);
+}
+
+html[data-appearance="dark"] .irc-gif-nsfw-overlay:hover {
+    background: rgba(0, 0, 0, 0.45);
+}
+
+html[data-appearance="dark"] :is(.irc-gif-nsfw-overlay strong, .irc-gif-nsfw-overlay small) {
+    color: var(--text-muted);
+}

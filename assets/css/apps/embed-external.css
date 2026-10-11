@@ -1,0 +1,8 @@
+/* Embedded iframe windows (components/embed-external.html) */
+
+/* Dark embeds (Doom): the spinner is tinted through `color` (see .mac-spinner
+   in mavericks.css); the default grey is invisible on black. */
+.window-iframe-dark .window-loader .spinner,
+.window-iframe-dark .window-loader .mac-spinner {
+    color: #fff;
+}

@@ -1,0 +1,105 @@
+{{/* Passport - the visitor's own passport booklet: a data page with their
+visit record and visa pages where each achievement is an entry stamp.
+Everything shown here is read from this browser's own storage by
+assets/js/passport.js (state kept by assets/js/retention.js); nothing is
+rendered at build time and nothing is sent anywhere.
+Styles: assets/css/apps/passport.css */}}
+{{- $id := .id -}}
+<div id="content-{{ $id }}" class="window-content" data-passport-window="true">
+    <div class="pp-window">
+        <div class="app-toolbar pp-toolbar" role="toolbar" aria-label="Passport">
+            <div class="pp-seg" role="radiogroup" aria-label="Show stamps">
+                <button type="button" class="pp-seg-btn" role="radio" aria-checked="true" data-filter="all">All</button>
+                <button type="button" class="pp-seg-btn" role="radio" aria-checked="false" tabindex="-1" data-filter="collected">Collected</button>
+                <button type="button" class="pp-seg-btn" role="radio" aria-checked="false" tabindex="-1" data-filter="remaining">Remaining</button>
+            </div>
+            <div class="pp-meter">
+                <span class="pp-summary" aria-live="polite"></span>
+                <span class="pp-bar" role="progressbar" aria-label="Stamps collected" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0"><span class="pp-bar-fill"></span></span>
+            </div>
+        </div>
+
+        <div class="pp-content">
+            <div class="pp-book">
+                <section class="pp-page pp-data" aria-labelledby="pp-doc-{{ $id }}">
+                    <div class="pp-watermark" aria-hidden="true"></div>
+                    <header class="pp-data-head">
+                        <span class="pp-crest-slot" aria-hidden="true"></span>
+                        <span class="pp-authority">
+                            <span class="pp-authority-name">Ankush.one</span>
+                            <span class="pp-authority-sub">Visitor's passport</span>
+                        </span>
+                        <h2 class="pp-doc" id="pp-doc-{{ $id }}">Passport</h2>
+                    </header>
+                    <div class="pp-data-body">
+                        <div class="pp-photo" aria-hidden="true"></div>
+                        <dl class="pp-fields">
+                            <div class="pp-field">
+                                <dt class="pp-label">Type</dt>
+                                <dd>P</dd>
+                            </div>
+                            <div class="pp-field">
+                                <dt class="pp-label">Code</dt>
+                                <dd>ONE</dd>
+                            </div>
+                            <div class="pp-field pp-field-no">
+                                <dt class="pp-label">Passport No.</dt>
+                                <dd class="pp-f-no">–</dd>
+                            </div>
+                            <div class="pp-field pp-field-wide">
+                                <dt class="pp-label">Holder</dt>
+                                <dd class="pp-f-holder">–</dd>
+                            </div>
+                            <div class="pp-field">
+                                <dt class="pp-label">Date of issue</dt>
+                                <dd class="pp-f-issued">–</dd>
+                            </div>
+                            <div class="pp-field pp-field-auth">
+                                <dt class="pp-label">Authority</dt>
+                                <dd>ANKUSH.ONE</dd>
+                            </div>
+                            <div class="pp-field">
+                                <dt class="pp-label">Days visited</dt>
+                                <dd class="pp-f-days">–</dd>
+                            </div>
+                            <div class="pp-field">
+                                <dt class="pp-label">Current streak</dt>
+                                <dd class="pp-f-streak">–</dd>
+                            </div>
+                            <div class="pp-field">
+                                <dt class="pp-label">Longest streak</dt>
+                                <dd class="pp-f-best">–</dd>
+                            </div>
+                            <div class="pp-field pp-field-wide pp-field-sign">
+                                <dt class="pp-label">Holder's signature</dt>
+                                <dd class="pp-sign-ink"></dd>
+                            </div>
+                        </dl>
+                        <div class="pp-ghost" aria-hidden="true"></div>
+                    </div>
+                    <div class="pp-mrz" aria-hidden="true"></div>
+                </section>
+                <div class="pp-visas"></div>
+            </div>
+
+            <div class="pp-foot">
+                <p class="pp-note">Kept in this browser only. Nothing in this passport is sent anywhere, and
+                    clearing your browser's site data clears it.</p>
+                <button type="button" class="mac-btn small pp-reset">Reset…</button>
+            </div>
+        </div>
+
+        <div class="pp-hud" role="dialog" aria-labelledby="pp-hud-title-{{ $id }}" tabindex="-1" hidden>
+            <span class="pp-hud-icon" aria-hidden="true"></span>
+            <div class="pp-hud-text">
+                <p class="pp-hud-title" id="pp-hud-title-{{ $id }}"></p>
+                <p class="pp-hud-desc"></p>
+                <div class="pp-hud-progress" hidden>
+                    <span class="pp-hud-bar" role="progressbar" aria-label="Progress" aria-valuemin="0"><span class="pp-hud-bar-fill"></span></span>
+                    <span class="pp-hud-count" aria-hidden="true"></span>
+                </div>
+                <p class="pp-hud-meta"></p>
+            </div>
+        </div>
+    </div>
+</div>

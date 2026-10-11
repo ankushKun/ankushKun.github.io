@@ -1,0 +1,1107 @@
+/* ==========================================================================
+   Passport - the visitor's passport booklet
+   (layouts/partials/apps/passport/window.html, assets/js/passport.js)
+
+   The chrome around it (toolbar, desk, footer) follows the appearance through
+   the shared tokens. The booklet itself is a material - navy leather, cream
+   security paper, rubber-stamp inks - and looks the same in light and dark,
+   so everything printed on it keeps dark ink in both.
+   ========================================================================== */
+
+.pp-window {
+    /* Materials: deliberately NOT flipped by html[data-appearance="dark"] */
+    --pp-leather: #1d2d52;
+    --pp-gilt: #d8b66c;
+    --pp-paper: #f5efdc;
+    --pp-visa-paper: #f3efe2;
+    --pp-ink: #1d2230;
+    --pp-ink-label: #4d483c;
+    --pp-pencil: #55504a;
+    --pp-pencil-soft: #625c54;
+    --pp-pencil-line: #9d9684;
+    --pp-print: #24506a;
+    --pp-guilloche-a: 46, 110, 124;
+    --pp-guilloche-b: 176, 86, 96;
+    --pp-fold: 110, 86, 40;
+    --pp-mrz-ink: #14161b;
+    --pp-sign-ink: #1c2a4a;
+    --pp-select: rgba(214, 176, 70, 0.42);
+    --pp-ink-red: #b3261e;
+    --pp-ink-blue: #1d4c9c;
+    --pp-ink-violet: #5e3796;
+    --pp-ink-green: #276a39;
+    --pp-hud-bg: rgba(32, 33, 36, 0.96);
+    --pp-hud-text: #f4f4f5;
+    --pp-hud-soft: #c8cacf;
+    --pp-type: "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --pp-stamp-font: "Avenir Next Condensed", "Arial Narrow", "Roboto Condensed", "Helvetica Neue", Arial, sans-serif;
+    --pp-ocr: "OCR B", "OCR-B", "OCRB", "OCR B Std", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+    --pp-script: "Snell Roundhand", "Savoye LET", "Apple Chancery", "Segoe Script", cursive;
+
+    position: relative;
+    container: pp / inline-size;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    color: var(--text-primary);
+}
+
+/* ---------- One unified toolbar: the titlebar's gradient runs on through it ---------- */
+
+.window[data-window-id="passport"] .window-titlebar {
+    border-bottom-color: transparent;
+    background-size: 100% calc(var(--window-titlebar-height) + 40px);
+    background-repeat: no-repeat;
+    background-position: top;
+}
+
+.app-toolbar.pp-toolbar {
+    height: 40px;
+    min-height: 40px;
+    padding: 0 12px 3px;
+    background-image: var(--window-titlebar);
+    background-size: 100% calc(var(--window-titlebar-height) + 40px);
+    background-repeat: no-repeat;
+    background-position: bottom;
+    border-bottom: 1px solid var(--border-chrome);
+}
+
+.window.inactive .app-toolbar.pp-toolbar {
+    background-image: var(--window-titlebar-inactive);
+}
+
+/* Aqua segmented control */
+.pp-seg {
+    display: inline-flex;
+    flex: none;
+    border-radius: 5px;
+    box-shadow: 0 1px 0 var(--emboss);
+}
+
+.pp-seg-btn {
+    position: relative;
+    height: 22px;
+    margin: 0 0 0 -1px;
+    padding: 0 13px;
+    font: 12px/20px var(--font-system);
+    color: var(--text-primary);
+    white-space: nowrap;
+    background: var(--header-bg);
+    border: 1px solid var(--border-chrome);
+    border-radius: 0;
+    cursor: default;
+}
+
+.pp-seg-btn:first-child {
+    margin-left: 0;
+    border-radius: 5px 0 0 5px;
+}
+
+.pp-seg-btn:last-child {
+    border-radius: 0 5px 5px 0;
+}
+
+.pp-seg-btn:hover {
+    background: var(--header-bg-hover);
+}
+
+.pp-seg-btn[aria-checked="true"] {
+    z-index: 1;
+    background: var(--header-bg-pressed);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.28);
+}
+
+/* Graphite: the pressed segment sinks well below its neighbours */
+html[data-appearance="dark"] .pp-seg-btn[aria-checked="true"] {
+    color: #fff;
+    background: linear-gradient(180deg, #1b1c1f 0%, #26272b 100%);
+    border-color: rgba(0, 0, 0, 0.55);
+    box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.7);
+}
+
+.pp-seg-btn:focus-visible {
+    z-index: 2;
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 1px;
+}
+
+/* "4 of 21 stamps · 55 points" and an Aqua progress bar */
+.pp-meter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.pp-summary {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-secondary);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pp-bar {
+    display: block;
+    flex: none;
+    width: 120px;
+    height: 10px;
+    overflow: hidden;
+    background: linear-gradient(180deg, var(--gray-200), var(--gray-50));
+    border: 1px solid var(--border-chrome);
+    border-radius: 5px;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18);
+}
+
+.pp-bar-fill {
+    display: block;
+    width: 0;
+    height: 100%;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.15) 48%, rgba(0, 0, 0, 0.06) 52%, rgba(255, 255, 255, 0.2) 100%),
+        var(--accent-blue);
+    border-radius: 4px;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.14);
+    transition: width 0.5s ease;
+}
+
+/* ---------- The desk ---------- */
+
+.pp-content {
+    flex: 1;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 24px 24px 20px;
+    background: radial-gradient(120% 60% at 50% 0%, var(--gray-50), var(--gray-150));
+}
+
+/* ---------- The booklet: navy grained leather, stitched ---------- */
+
+.pp-book {
+    position: relative;
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 10px;
+    background-color: var(--pp-leather);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .7 -.22'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E"),
+        radial-gradient(130% 90% at 30% 0%, rgba(255, 255, 255, 0.1), transparent 60%);
+    border-radius: 12px;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
+        inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+        0 1px 2px rgba(0, 0, 0, 0.25),
+        0 14px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* On the graphite desk the navy would sink into the dark: a light catches
+   the cover's top edge and a hairline rim keeps its outline */
+html[data-appearance="dark"] .pp-book {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .7 -.22'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E"),
+        radial-gradient(130% 90% at 30% 0%, rgba(255, 255, 255, 0.16), transparent 60%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.26),
+        inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+        0 0 0 1px rgba(255, 255, 255, 0.13),
+        0 1px 2px rgba(0, 0, 0, 0.5),
+        0 16px 36px rgba(0, 0, 0, 0.6);
+}
+
+/* Gilt stitching round the cover */
+.pp-book::before {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    border: 1px dashed rgba(216, 182, 108, 0.4);
+    border-radius: 9px;
+    pointer-events: none;
+}
+
+.pp-book ::selection {
+    color: inherit;
+    background: var(--pp-select);
+}
+
+/* Printed furniture is not text to copy; the values are */
+.pp-label,
+.pp-data-head,
+.pp-visa-head,
+.pp-pgno,
+.pp-mrz,
+.pp-cap {
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.pp-page {
+    position: relative;
+    overflow: hidden;
+    color: var(--pp-ink);
+    background-color: var(--pp-paper);
+    box-shadow: inset 0 0 0 1px rgba(var(--pp-fold), 0.2), inset 0 0 26px rgba(var(--pp-fold), 0.1);
+}
+
+/* ---------- The data page ---------- */
+
+.pp-data {
+    isolation: isolate;
+    padding: 16px 22px 0;
+    border-radius: 4px 4px 0 0;
+    background-image:
+        /* the fold into the next page */
+        linear-gradient(to top, rgba(var(--pp-fold), 0.14), transparent 12px),
+        /* guilloché */
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='14'%3E%3Cg fill='none' stroke-width='.7'%3E%3Cpath stroke='%232e6e7c' stroke-opacity='.17' d='M0 7c12-7 36-7 48 0s36 7 48 0'/%3E%3Cpath stroke='%23b05660' stroke-opacity='.13' d='M0 7c12 7 36 7 48 0s36-7 48 0'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: auto, 96px 14px;
+}
+
+/* The laminate's sheen: under the print (so ink keeps its contrast), over the paper */
+.pp-data::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+        linear-gradient(112deg, transparent 16%, rgba(255, 255, 255, 0.5) 30%, transparent 42%),
+        linear-gradient(112deg, transparent 54%, rgba(130, 205, 225, 0.12) 62%, rgba(232, 168, 216, 0.12) 70%, transparent 80%);
+    pointer-events: none;
+}
+
+.pp-watermark {
+    position: absolute;
+    top: 30px;
+    right: -40px;
+    width: 230px;
+    height: 230px;
+    pointer-events: none;
+}
+
+.pp-rosette {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.pp-rosette .pp-ro-a,
+.pp-rosette .pp-ro-b {
+    stroke-width: 0.6;
+}
+
+.pp-rosette .pp-ro-a {
+    stroke: rgba(var(--pp-guilloche-a), 0.2);
+}
+
+.pp-rosette .pp-ro-b {
+    stroke: rgba(var(--pp-guilloche-b), 0.16);
+}
+
+.pp-data-head {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(36, 80, 106, 0.28);
+}
+
+.pp-crest-slot {
+    display: flex;
+    flex: none;
+    color: var(--pp-print);
+}
+
+.pp-authority {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.2;
+}
+
+.pp-authority-name {
+    font: 700 13px var(--pp-type);
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--pp-print);
+}
+
+.pp-authority-sub {
+    font: 500 11px var(--pp-type);
+    letter-spacing: 0.6px;
+    font-variant-caps: all-small-caps;
+    color: var(--pp-ink-label);
+}
+
+.pp-window .pp-doc {
+    margin: 0 0 0 auto;
+    padding: 0;
+    font: 600 18px/1 var(--pp-type);
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    color: var(--pp-print);
+    border: 0;
+}
+
+.pp-data-body {
+    position: relative;
+    display: flex;
+    gap: 20px;
+    padding: 14px 0;
+}
+
+/* The visitor's emblem: a rosette drawn from their passport number */
+.pp-photo {
+    flex: none;
+    width: 100px;
+    height: 124px;
+    overflow: hidden;
+    background: linear-gradient(180deg, #e8eff1 0%, #d5e1e5 100%);
+    border-radius: 3px;
+    box-shadow: inset 0 0 0 1px rgba(36, 80, 106, 0.3), 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.pp-portrait {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.pp-portrait .pp-ro-a,
+.pp-portrait .pp-ro-b {
+    stroke-width: 0.75;
+}
+
+.pp-portrait .pp-ro-a {
+    stroke: rgba(var(--pp-guilloche-a), 0.85);
+}
+
+.pp-portrait .pp-ro-b {
+    stroke: rgba(var(--pp-guilloche-b), 0.7);
+}
+
+/* ... and its ghost, small and faint, as real data pages repeat the photo */
+.pp-ghost {
+    flex: none;
+    align-self: flex-end;
+    width: 46px;
+    height: 57px;
+    opacity: 0.28;
+}
+
+.pp-fields {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px 16px;
+    align-content: start;
+    margin: 0;
+}
+
+.pp-field {
+    min-width: 0;
+}
+
+.pp-field-wide {
+    grid-column: 1 / -1;
+}
+
+.pp-field-auth {
+    grid-column: span 2;
+}
+
+.pp-window .pp-label {
+    margin: 0;
+    font: 500 11px/1.2 var(--pp-type);
+    letter-spacing: 0.7px;
+    font-variant-caps: all-small-caps;
+    color: var(--pp-ink-label);
+}
+
+.pp-window .pp-field dd {
+    margin: 0;
+    overflow: hidden;
+    font: 600 14px/1.3 var(--pp-type);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--pp-ink);
+}
+
+.pp-window .pp-field dd.pp-f-no {
+    font-family: var(--pp-ocr);
+    font-weight: 400;
+    letter-spacing: 1.5px;
+}
+
+.pp-window .pp-field dd.is-unset {
+    font-weight: 500;
+    font-style: italic;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--pp-pencil);
+}
+
+.pp-window .pp-field dd.pp-sign-ink {
+    display: flex;
+    align-items: flex-end;
+    max-width: 280px;
+    height: 38px;
+    padding-bottom: 2px;
+    text-transform: none;
+    border-bottom: 1px solid rgba(29, 34, 48, 0.3);
+}
+
+.pp-sign-ink svg {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    height: 36px;
+}
+
+.pp-sign-name {
+    font: 400 24px/1 var(--pp-script);
+    color: var(--pp-sign-ink);
+}
+
+/* (wraps rather than clips if a narrow page cannot fit it on one line) */
+.pp-sign-btn {
+    min-width: 0;
+    max-width: 100%;
+    padding: 0 0 3px;
+    font: italic 12px/1.3 var(--font-system);
+    white-space: normal;
+    color: var(--pp-pencil);
+    text-align: left;
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+    background: none;
+    border: 0;
+    border-radius: 2px;
+    cursor: pointer;
+}
+
+.pp-sign-btn:hover {
+    color: var(--pp-ink);
+}
+
+.pp-sign-btn:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+/* Machine-readable zone: 44 OCR characters a line, sized to the page */
+.pp-mrz {
+    margin: 0 -22px;
+    padding: 10px 22px 12px;
+    container-type: inline-size;
+    color: var(--pp-mrz-ink);
+    font-family: var(--pp-ocr);
+    background: rgba(255, 255, 255, 0.28);
+    border-top: 1px solid rgba(36, 80, 106, 0.16);
+}
+
+/* About the size of the field values. On wide pages the pitch opens up a
+   little (as real OCR-B lines are set), so the 44 characters run most of the
+   way across the band without turning into spaced-out capitals */
+.pp-mrz-line {
+    display: block;
+    overflow: hidden;
+    font-size: clamp(8px, 3.7cqw, 15.5px);
+    letter-spacing: clamp(0px, calc(99.4cqw / 44 - 0.602em), 0.16em);
+    line-height: 1.55;
+    white-space: pre;
+}
+
+/* ---------- Visa pages ---------- */
+
+.pp-visa {
+    padding: 14px 22px 28px;
+    background-color: var(--pp-visa-paper);
+    background-image:
+        /* the fold from the page before */
+        linear-gradient(to bottom, rgba(var(--pp-fold), 0.2), transparent 16px),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='18'%3E%3Cg fill='none' stroke-width='.6'%3E%3Cpath stroke='%232e6e7c' stroke-opacity='.11' d='M0 9c15-9 45-9 60 0s45 9 60 0'/%3E%3Cpath stroke='%232e6e7c' stroke-opacity='.08' d='M0 9c15 9 45 9 60 0s45-9 60 0'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: auto, 120px 18px;
+}
+
+.pp-visa:last-child {
+    border-radius: 0 0 4px 4px;
+}
+
+/* The binding thread along each fold */
+.pp-visa::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 18%;
+    right: 18%;
+    border-top: 1.5px dashed rgba(70, 58, 40, 0.38);
+}
+
+.pp-visa-head {
+    padding: 4px 0 8px;
+    font: 600 11px/1 var(--pp-type);
+    letter-spacing: 8px;
+    text-align: center;
+    text-indent: 8px;
+    text-transform: uppercase;
+    color: var(--pp-print);
+    border-bottom: 1px solid rgba(36, 80, 106, 0.2);
+}
+
+.pp-pgno {
+    position: absolute;
+    right: 18px;
+    bottom: 9px;
+    font: 500 11px/1 var(--pp-type);
+    color: var(--pp-ink-label);
+}
+
+/* (.pp-window prefix: outranks the window's own list indent) */
+.pp-window .pp-stamps {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-auto-rows: 170px;
+    gap: 6px;
+    margin: 12px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.pp-cell {
+    display: flex;
+    min-width: 0;
+    margin: 0;
+}
+
+/* Every slot has the same geometry: the stamp centred on one line per row
+   (a fixed art box), the pencilled caption starting at one height below it */
+.pp-stamp {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 7px;
+    min-width: 0;
+    margin: 0;
+    padding: 18px 6px 4px;
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    border-radius: 10px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.pp-stamp:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: -2px;
+}
+
+.pp-art {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 88px;
+    line-height: 0;
+}
+
+/* Inked stamps are taller than the box and spill evenly above and below it */
+.pp-art svg {
+    display: block;
+    flex: none;
+    max-width: 100%;
+    height: auto;
+    overflow: visible;
+}
+
+/* Pointing at a stamp darkens the pencil or the ink a touch; nothing more */
+.pp-stamp.is-blank:hover .pp-art,
+.pp-stamp.is-blank[aria-expanded="true"] .pp-art {
+    color: var(--pp-pencil);
+}
+
+.pp-stamp.is-inked:hover .pp-art svg,
+.pp-stamp.is-inked[aria-expanded="true"] .pp-art svg {
+    filter: brightness(0.86) saturate(1.15);
+}
+
+.pp-art text {
+    font-family: var(--pp-stamp-font);
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.pp-art .pp-t-kicker {
+    font-weight: 600;
+    letter-spacing: 1.8px;
+}
+
+.pp-art .pp-t-date {
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+/* An inked impression: tilted a little, uneven ink, multiplied into the paper */
+.pp-stamp.is-inked .pp-art {
+    color: var(--pp-ink-c);
+    mix-blend-mode: multiply;
+    transform: translate(var(--dx, 0), var(--dy, 0)) rotate(var(--rot, 0deg));
+}
+
+/* (the mask sits on the impression, which overflows the art box) */
+.pp-stamp.is-inked .pp-art svg {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2.6 0 0 0 2.15'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2.6 0 0 0 2.15'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    -webkit-mask-size: 160px 160px;
+    mask-size: 160px 160px;
+    -webkit-mask-position: var(--grain-x, 0) var(--grain-y, 0);
+    mask-position: var(--grain-x, 0) var(--grain-y, 0);
+}
+
+.pp-stamp.is-inked .pp-shape-circle svg { width: 120px; }
+.pp-stamp.is-inked .pp-shape-oval svg { width: 144px; }
+.pp-stamp.is-inked .pp-shape-rect svg { width: 140px; }
+.pp-stamp.is-inked .pp-shape-octagon svg { width: 116px; }
+
+.pp-ink-red { --pp-ink-c: var(--pp-ink-red); }
+.pp-ink-blue { --pp-ink-c: var(--pp-ink-blue); }
+.pp-ink-violet { --pp-ink-c: var(--pp-ink-violet); }
+.pp-ink-green { --pp-ink-c: var(--pp-ink-green); }
+
+/* A blank slot: the stamp's outline dotted in pencil, the hint beneath */
+.pp-stamp.is-blank .pp-art {
+    color: var(--pp-pencil-line);
+}
+
+/* (.pp-under: the same outline, left under a newly inked stamp until it lands) */
+.pp-stamp .pp-under {
+    position: absolute;
+    z-index: 0;
+    top: 18px;
+    right: 6px;
+    left: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 88px;
+    line-height: 0;
+    color: var(--pp-pencil-line);
+    pointer-events: none;
+}
+
+.pp-stamp .pp-under svg {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+.pp-art.is-fresh {
+    position: relative;
+    z-index: 1;
+}
+
+.pp-art.is-fresh.is-landing + .pp-under {
+    animation: pp-under-out 0.16s ease-out calc(var(--delay, 0ms) + 0.1s) both;
+}
+
+@keyframes pp-under-out {
+    to { opacity: 0; }
+}
+
+.pp-stamp.is-blank .pp-shape-circle svg,
+.pp-stamp .pp-under.pp-shape-circle svg { width: 70px; }
+.pp-stamp.is-blank .pp-shape-oval svg,
+.pp-stamp .pp-under.pp-shape-oval svg { width: 88px; }
+.pp-stamp.is-blank .pp-shape-rect svg,
+.pp-stamp .pp-under.pp-shape-rect svg { width: 86px; }
+.pp-stamp.is-blank .pp-shape-octagon svg,
+.pp-stamp .pp-under.pp-shape-octagon svg { width: 68px; }
+
+.pp-stamp.is-blank .pp-edge,
+.pp-under .pp-edge {
+    stroke-width: 2.4;
+    stroke-dasharray: 0.1 6;
+    stroke-linecap: round;
+}
+
+.pp-stamp.is-blank .pp-edge-in,
+.pp-under .pp-edge-in {
+    display: none;
+}
+
+.pp-cap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    max-width: 100%;
+    text-align: center;
+    color: var(--pp-pencil);
+}
+
+/* Pencilled in lightly: the title, the hint a shade softer, the tally in
+   the OCR face like a figure written in the margin */
+.pp-cap-title {
+    font: 500 11px/1.25 var(--font-system);
+    color: var(--pp-pencil);
+}
+
+.pp-cap-hint {
+    font: 10px/1.3 var(--font-system);
+    color: var(--pp-pencil-soft);
+}
+
+.pp-cap-count {
+    margin-top: 2px;
+    font: 400 9.5px/1.3 var(--pp-ocr);
+    letter-spacing: -0.2px;
+    word-spacing: -1px;
+    color: var(--pp-pencil-soft);
+    font-variant-numeric: tabular-nums;
+}
+
+.pp-stamp.is-secret .pp-cap-title {
+    font-style: italic;
+}
+
+/* (scoped up so `.window-content p` cannot give it the themed text colour:
+   it sits on the cream page in both appearances) */
+.pp-window .pp-visas .pp-empty {
+    margin: 46px 12px 40px;
+    font: italic 12px/1.5 var(--font-system);
+    text-align: center;
+    color: var(--pp-pencil);
+}
+
+.pp-window .pp-visas > .pp-failed {
+    margin: 0;
+    padding: 30px 20px;
+    text-align: center;
+    color: var(--pp-pencil);
+    background: var(--pp-visa-paper);
+    border-radius: 0 0 4px 4px;
+}
+
+/* Newly stamped: lands with a small thunk the first time it is seen */
+.pp-art.is-fresh {
+    opacity: 0;
+}
+
+.pp-art.is-fresh.is-landing {
+    animation: pp-thunk 0.42s cubic-bezier(0.2, 0.9, 0.3, 1.2) var(--delay, 0ms) both;
+}
+
+@keyframes pp-thunk {
+    0% {
+        opacity: 0;
+        transform: translate(var(--dx, 0), calc(var(--dy, 0px) - 8px)) rotate(calc(var(--rot, 0deg) - 5deg)) scale(1.45);
+    }
+    55% {
+        opacity: 1;
+        transform: translate(var(--dx, 0), var(--dy, 0)) rotate(var(--rot, 0deg)) scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        transform: translate(var(--dx, 0), var(--dy, 0)) rotate(var(--rot, 0deg)) scale(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pp-art.is-fresh,
+    .pp-art.is-fresh.is-landing {
+        opacity: 1;
+        animation: none;
+    }
+
+    .pp-bar-fill {
+        transition: none;
+    }
+
+    .pp-stamp .pp-under {
+        display: none;
+    }
+}
+
+html[data-motion="reduce"] .pp-art.is-fresh,
+html[data-motion="reduce"] .pp-art.is-fresh.is-landing {
+    opacity: 1;
+    animation: none;
+}
+
+html[data-motion="reduce"] .pp-stamp .pp-under {
+    display: none;
+}
+
+/* ---------- The HUD that explains a stamp ---------- */
+
+.pp-hud {
+    position: absolute;
+    z-index: 20;
+    display: flex;
+    gap: 11px;
+    width: 260px;
+    max-width: calc(100% - 16px);
+    box-sizing: border-box;
+    padding: 12px 14px 12px 12px;
+    font: 12px/1.4 var(--font-system);
+    color: var(--pp-hud-text);
+    background: var(--pp-hud-bg);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 9px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    backdrop-filter: blur(14px) saturate(140%);
+    outline: none;
+}
+
+.pp-hud[hidden] {
+    display: none;
+}
+
+/* Shown at once: no inherited colour fades on the way in */
+.pp-hud,
+.pp-hud * {
+    transition: none;
+}
+
+.pp-hud::before {
+    content: "";
+    position: absolute;
+    left: calc(var(--arrow-x, 50%) - 8px);
+    border: 8px solid transparent;
+}
+
+.pp-hud[data-side="below"]::before {
+    top: -16px;
+    border-bottom-color: var(--pp-hud-bg);
+}
+
+.pp-hud[data-side="above"]::before {
+    bottom: -16px;
+    border-top-color: var(--pp-hud-bg);
+}
+
+.pp-hud-icon {
+    flex: none;
+    padding-top: 1px;
+    color: var(--pp-gilt);
+}
+
+.pp-hud-icon svg {
+    display: block;
+}
+
+.pp-hud-text {
+    min-width: 0;
+}
+
+.pp-window .pp-hud p {
+    margin: 0;
+}
+
+.pp-window .pp-hud .pp-hud-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--pp-hud-text);
+}
+
+.pp-window .pp-hud .pp-hud-desc {
+    margin-top: 2px;
+    color: var(--pp-hud-soft);
+}
+
+.pp-window .pp-hud .pp-hud-meta {
+    margin-top: 7px;
+    font-size: 11px;
+    color: var(--pp-hud-soft);
+}
+
+.pp-hud-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.pp-hud-progress[hidden] {
+    display: none;
+}
+
+.pp-hud-bar {
+    flex: 1;
+    height: 6px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.16);
+    border-radius: 3px;
+}
+
+.pp-hud-bar-fill {
+    display: block;
+    height: 100%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.35), transparent), var(--accent-blue);
+    border-radius: 3px;
+}
+
+.pp-hud-count {
+    flex: none;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    color: var(--pp-hud-soft);
+}
+
+/* ---------- Foot (on the desk, so it follows the appearance) ---------- */
+
+.pp-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    max-width: 700px;
+    margin: 16px auto 0;
+}
+
+.pp-window .pp-note {
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--text-tertiary);
+}
+
+.pp-reset {
+    flex: none;
+}
+
+/* ---------- Narrower windows and phones (sized by the window, not the screen) ---------- */
+
+@container pp (max-width: 660px) {
+    .pp-window .pp-stamps {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@container pp (max-width: 580px) {
+    .pp-fields {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .pp-field-no {
+        grid-column: 1 / -1;
+    }
+
+    .pp-field-auth {
+        grid-column: auto;
+    }
+
+    .pp-ghost {
+        display: none;
+    }
+
+    .pp-sign-more {
+        display: none;
+    }
+}
+
+@container pp (max-width: 520px) {
+    /* The toolbar takes two rows: the control, then the count */
+    .app-toolbar.pp-toolbar {
+        flex-wrap: wrap;
+        row-gap: 7px;
+        height: auto;
+        padding: 8px 12px 9px;
+        background-size: 100% 100%;
+    }
+
+    .pp-seg {
+        flex: 1 1 100%;
+    }
+
+    .pp-seg-btn {
+        flex: 1;
+        padding: 0 8px;
+    }
+
+    .pp-meter {
+        flex: 1 1 100%;
+    }
+
+    .pp-summary {
+        flex: 1;
+    }
+
+    .pp-bar {
+        width: 38%;
+    }
+
+    .pp-content {
+        padding: 16px 16px calc(18px + var(--sab, 0px));
+    }
+
+    .pp-book {
+        padding: 7px;
+        border-radius: 10px;
+    }
+
+    .pp-book::before {
+        inset: 3px;
+        border-radius: 8px;
+    }
+
+    .pp-data {
+        padding: 12px 14px 0;
+    }
+
+    .pp-window .pp-doc {
+        font-size: 15px;
+        letter-spacing: 3px;
+    }
+
+    .pp-authority-name {
+        font-size: 12px;
+        letter-spacing: 1.6px;
+    }
+
+    .pp-data-body {
+        gap: 14px;
+        padding: 12px 0;
+    }
+
+    .pp-photo {
+        width: 80px;
+        height: 100px;
+    }
+
+    .pp-window .pp-field dd {
+        font-size: 13px;
+    }
+
+    .pp-mrz {
+        margin: 0 -14px;
+        padding: 9px 14px 11px;
+    }
+
+    .pp-visa {
+        padding: 12px 10px 28px;
+    }
+
+    .pp-window .pp-stamps {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-auto-rows: 168px;
+        gap: 4px;
+    }
+
+    .pp-foot {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+}
