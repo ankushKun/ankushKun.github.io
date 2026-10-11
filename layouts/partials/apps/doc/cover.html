@@ -1,0 +1,21 @@
+{{- /*
+Cover of a document: an explicit `image`, or a blog post's social card
+(og_image). A project's og_image is usually the poster of the video embedded
+in its body, so it is not repeated above it. Shown after the links bar, so
+the page's resources are never pushed below a large picture.
+`cover = false` in front matter turns it off (a post that opens with its
+own hero, such as the playable DOOM demo).
+
+Usage: {{ partial "apps/doc/cover.html" (dict "page" . "kind" "blog") }}
+*/ -}}
+{{- $p := .page -}}
+{{- $cover := $p.Params.image -}}
+{{- if and (not $cover) (eq .kind "blog") }}{{ $cover = $p.Params.og_image }}{{ end -}}
+{{- if eq $p.Params.cover false }}{{ $cover = "" }}{{ end -}}
+{{- with $cover }}
+{{- $img := partial "seo/image.html" . }}
+<figure class="doc-cover">
+    <img src="{{ . }}" alt="" decoding="async" fetchpriority="high"
+        {{- if and $img.width $img.height }} width="{{ $img.width }}" height="{{ $img.height }}"{{ end }}>
+</figure>
+{{- end }}

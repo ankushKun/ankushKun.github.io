@@ -1,0 +1,32 @@
+{{- /*
+Markdown tables, wrapped so a wide table scrolls sideways inside the
+document instead of widening the page. The wrapper is a focusable region so
+the keyboard can scroll it; a long table also scrolls vertically inside it
+with the header row kept in view (assets/css/apps/doc.css). The outer frame
+does not scroll: it carries the border and the right-edge fade that
+assets/js/doc.js turns on while there is more table to the right.
+*/ -}}
+<div class="doc-table-frame">
+<div class="doc-table" role="region" tabindex="0" aria-label="Table">
+<table {{- range $k, $v := .Attributes }} {{ $k }}="{{ $v }}"{{ end }}>
+  <thead>
+    {{- range .THead }}
+    <tr>
+      {{- range . }}
+      <th{{ with .Alignment }} style="text-align: {{ . }}"{{ end }}>{{ .Text }}</th>
+      {{- end }}
+    </tr>
+    {{- end }}
+  </thead>
+  <tbody>
+    {{- range .TBody }}
+    <tr>
+      {{- range . }}
+      <td{{ with .Alignment }} style="text-align: {{ . }}"{{ end }}>{{ .Text }}</td>
+      {{- end }}
+    </tr>
+    {{- end }}
+  </tbody>
+</table>
+</div>
+</div>

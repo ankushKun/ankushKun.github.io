@@ -1,0 +1,2 @@
+{{- /* Plain-text twin of npm.html for llms-full.txt (text/plain cannot use the .md one); keep in step with npm.md */ -}}
+[npm: {{ .Get 0 }}](https://www.npmjs.com/package/{{ .Get 0 }})

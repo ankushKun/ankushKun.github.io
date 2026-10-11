@@ -1,0 +1,155 @@
+/* ==========================================================================
+   Reactions and "reading now" under a post or project
+   (layouts/partials/apps/blog/social.html, assets/js/post-social.js)
+   ========================================================================== */
+
+.post-social {
+    margin-top: 36px;
+}
+
+.post-social[hidden] {
+    display: none;
+}
+
+.ps-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.ps-react {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 46px;
+    height: 32px;
+    padding: 0 11px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--text-secondary);
+    background: var(--gray-50);
+    border: 1px solid var(--gray-300);
+    border-radius: 16px;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: background 0.12s ease, border-color 0.12s ease, transform 0.08s ease;
+}
+
+.ps-react:hover {
+    background: var(--gray-100);
+    border-color: var(--gray-400);
+}
+
+.ps-react:active {
+    transform: scale(0.94);
+}
+
+.ps-react:focus-visible {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
+}
+
+/* This visitor's own reaction */
+.ps-react.is-mine {
+    color: var(--link);
+    background: var(--accent-blue-light);
+    border-color: var(--accent-blue);
+}
+
+.ps-emoji {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.ps-count {
+    font-variant-numeric: tabular-nums;
+}
+
+.ps-count:empty {
+    display: none;
+}
+
+.ps-react.is-popping .ps-emoji {
+    animation: ps-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes ps-pop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.5) rotate(-8deg); }
+    100% { transform: scale(1); }
+}
+
+.post-social.is-offline .ps-react {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.post-social.is-offline .ps-react:active {
+    transform: none;
+}
+
+.ps-status {
+    margin: 8px 0 0;
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+.ps-status:empty {
+    display: none;
+}
+
+/* "3 reading now", beside the reading time / date badge */
+.ps-readers {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    color: var(--text-secondary);
+}
+
+.ps-readers[hidden] {
+    display: none;
+}
+
+.ps-readers::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 0 2px rgba(52, 199, 89, 0.22);
+}
+
+@media (pointer: coarse) {
+    .ps-react {
+        min-width: 56px;
+        height: 44px;
+        padding: 0 14px;
+        border-radius: 22px;
+    }
+
+    .ps-emoji {
+        font-size: 20px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ps-react {
+        transition: none;
+    }
+
+    .ps-react.is-popping .ps-emoji {
+        animation: none;
+    }
+}
+
+@media print {
+    .post-social,
+    .ps-readers {
+        display: none !important;
+    }
+}

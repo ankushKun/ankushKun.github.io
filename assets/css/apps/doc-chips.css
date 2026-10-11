@@ -1,0 +1,65 @@
+/* One tag chip everywhere.
+   The tag filters on the Blogs and Projects lists borrow the article footer's
+   chip (.doc a.doc-tag in doc.css): hairline pill, "#" prefix, 12px. The
+   pressed state keeps the graphite fill of the shared .filter-chip scope bar
+   (partials.css) so "selected" reads the same as before. Timeline's type
+   filter (all / hackathon / work ...) filters categories, not tags, and keeps
+   the plain scope-bar look on purpose.
+   Selectors carry 3+ classes so they win over partials.css without !important. */
+
+.filter-chips.blogs-chips,
+.filter-chips.projects-chips {
+    gap: 6px;
+}
+
+.blogs-chips > .filter-chip.blogs-chip,
+.projects-chips > .filter-chip.projects-chip {
+    padding: 1px 9px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface-alt);
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.6;
+    text-shadow: none;
+}
+
+.blogs-chips > .filter-chip.blogs-chip::before,
+.projects-chips > .filter-chip.projects-chip::before {
+    content: "#";
+    margin-right: 1px;
+    opacity: 0.55;
+}
+
+.blogs-chips > .filter-chip.blogs-chip:hover,
+.projects-chips > .filter-chip.projects-chip:hover {
+    border-color: var(--border-strong);
+    background: var(--surface-alt);
+    color: var(--link);
+}
+
+.blogs-chips > .filter-chip.blogs-chip[aria-pressed="true"],
+.projects-chips > .filter-chip.projects-chip[aria-pressed="true"] {
+    border-color: var(--gray-700);
+    background: var(--gray-600);
+    color: var(--text-inverse);
+}
+
+html[data-appearance="dark"] .blogs-chips > .filter-chip.blogs-chip[aria-pressed="true"],
+html[data-appearance="dark"] .projects-chips > .filter-chip.projects-chip[aria-pressed="true"] {
+    border-color: var(--gray-300);
+    background: var(--gray-400);
+}
+
+.blogs-chips > .filter-chip.blogs-chip[aria-pressed="true"]::before,
+.projects-chips > .filter-chip.projects-chip[aria-pressed="true"]::before {
+    opacity: 0.75;
+}
+
+@media (pointer: coarse) {
+    .blogs-chips > .filter-chip.blogs-chip,
+    .projects-chips > .filter-chip.projects-chip {
+        min-height: 32px;
+        padding: 0 12px;
+    }
+}

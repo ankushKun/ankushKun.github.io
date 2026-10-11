@@ -1,0 +1,29 @@
+{{- /*
+Table of contents for long documents: at least four H2 sections and a
+four-minute read. Rendered twice from Hugo's .TableOfContents (levels 2-3,
+hugo.toml [markup.tableOfContents]) and CSS shows one of them by the width
+of the document's container:
+  "side"   - a sticky column beside the text when the window is wide
+  "inline" - a "Contents" disclosure above the text otherwise
+assets/js/doc.js highlights the section being read.
+
+Usage: {{ partial "apps/doc/toc.html" (dict "page" . "variant" "side") }}
+Returns "" when the page is too short to need one.
+*/ -}}
+{{- $p := .page -}}
+{{- $h2 := 0 -}}
+{{- range $p.Fragments.HeadingsMap }}{{ if le .Level 2 }}{{ $h2 = add $h2 1 }}{{ end }}{{ end -}}
+{{- if and (ge $h2 4) (ge $p.ReadingTime 4) -}}
+{{- $list := $p.TableOfContents | replaceRE `<nav id="TableOfContents">\s*` "" | replaceRE `\s*</nav>\s*$` "" -}}
+{{- if eq .variant "side" }}
+<aside class="doc-toc doc-toc--side" aria-label="Contents">
+    <p class="doc-toc-title" aria-hidden="true">Contents</p>
+    <nav class="doc-toc-nav">{{ $list | safeHTML }}</nav>
+</aside>
+{{- else }}
+<details class="doc-toc doc-toc--inline">
+    <summary class="doc-toc-summary">Contents</summary>
+    <nav class="doc-toc-nav" aria-label="Contents">{{ $list | safeHTML }}</nav>
+</details>
+{{- end }}
+{{- end -}}

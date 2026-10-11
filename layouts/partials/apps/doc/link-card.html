@@ -1,0 +1,13 @@
+{{- /*
+Compact link card for a repository or package mentioned in running text
+(the github and npm shortcodes): icon, name, host and an arrow, the same
+component for both and correct in either appearance.
+
+Usage: {{ partial "apps/doc/link-card.html" (dict "url" "https://github.com/a/b" "name" "a/b" "host" "github.com" "icon" "github") }}
+*/ -}}
+<a href="{{ .url }}" target="_blank" rel="noopener" class="doc-linkcard">
+    <span class="doc-linkcard-icon">{{ partial "apps/doc/glyph.html" .icon }}</span>
+    <span class="doc-linkcard-text"><span class="doc-linkcard-name">{{ .name }}</span><span class="doc-linkcard-host">{{ .host }}</span></span>
+    <span class="doc-linkcard-arrow" aria-hidden="true">↗</span>
+</a>
+{{- /* */ -}}

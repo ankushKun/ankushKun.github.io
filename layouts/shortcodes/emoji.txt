@@ -1,0 +1,1 @@
+{{- /* Plain-text twin of emoji.html for llms-full.txt (text/plain cannot use the .md one); keep in step with emoji.md */ -}}

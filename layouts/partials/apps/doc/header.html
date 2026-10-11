@@ -1,0 +1,57 @@
+{{- /*
+Header of the shared document layout (blog posts, projects, timeline entries):
+one quiet meta line, the title, the lede, and an optional framed cover.
+
+The meta line keeps the .post-meta-bar class: assets/js/post-social.js
+appends its live "N reading now" indicator to it.
+
+Usage: {{ partial "apps/doc/header.html" (dict "page" . "kind" "blog") }}
+kind: "blog" | "project" | "timeline"
+*/ -}}
+{{- $p := .page -}}
+{{- $kind := .kind -}}
+{{- $kindLabel := index (dict "blog" "Blog post" "project" "Project" "timeline" "Timeline") $kind | default "Page" -}}
+{{- $yearOnly := eq $p.Params.date_precision "year" -}}
+<header class="doc-header">
+    <div class="doc-meta post-meta-bar">
+        <span class="doc-meta-item doc-kind">{{ $kindLabel }}</span>
+        {{- if not $p.Date.IsZero }}
+        <span class="doc-meta-item">
+            {{- if $yearOnly -}}
+            <time datetime="{{ $p.Date.Format "2006" }}">{{ $p.Date.Format "2006" }}</time>
+            {{- else if eq $kind "project" -}}
+            <time datetime="{{ $p.Date.Format "2006-01" }}">{{ $p.Date.Format "January 2006" }}</time>
+            {{- else -}}
+            <time datetime="{{ $p.Date.Format "2006-01-02" }}">{{ $p.Date.Format "January 2, 2006" }}</time>
+            {{- end -}}
+        </span>
+        {{- end }}
+        {{- if eq $kind "blog" }}
+        {{- /* "Updated" only for a hand-set `lastmod` on a later day than
+        publication. The git date also moves on tag or front-matter edits,
+        which are not a revision of the article, so a Lastmod that is exactly
+        the commit time is not shown. (.Params.lastmod cannot tell: Hugo fills
+        it in from git too.) */ -}}
+        {{- $handSet := true -}}
+        {{- with $p.GitInfo }}{{ if or (eq $p.Lastmod.Unix .AuthorDate.Unix) (eq $p.Lastmod.Unix .CommitDate.Unix) }}{{ $handSet = false }}{{ end }}{{ end -}}
+        {{- if and $handSet (not $p.Lastmod.IsZero) (gt ($p.Lastmod.Format "2006-01-02") ($p.Date.Format "2006-01-02")) }}
+        <span class="doc-meta-item post-updated">Updated <time datetime="{{ $p.Lastmod.Format "2006-01-02" }}">{{ $p.Lastmod.Format "January 2, 2006" }}</time></span>
+        {{- end }}
+        <span class="doc-meta-item">{{ $p.ReadingTime }} min read</span>
+        {{- end }}
+        {{- if eq $p.Params.status "archived" }}
+        <span class="doc-meta-item"><span class="status-badge archived" title="No longer maintained">Archived</span></span>
+        {{- end }}
+    </div>
+
+    <h1 class="doc-title">{{ $p.Title }}</h1>
+
+    {{- /* The one-sentence answer, visible at the top instead of only in
+    <meta>. apps/doc/lede.html decides its text so the body never repeats
+    it (pass its "lede" here); without one, the summary is shown as is. */ -}}
+    {{- $lede := .lede -}}
+    {{- if eq $lede nil }}{{ with or $p.Params.summary $p.Description }}{{ $lede = . | markdownify | plainify | htmlUnescape }}{{ end }}{{ end -}}
+    {{- with $lede }}
+    <p class="doc-lede">{{ . }}</p>
+    {{- end }}
+</header>

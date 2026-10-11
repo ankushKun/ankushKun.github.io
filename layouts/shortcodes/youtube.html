@@ -1,6 +1,37 @@
-<div class="youtube-embed">
-    <iframe src="https://www.youtube.com/embed/{{ .Get 0 }}" frameborder="0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowfullscreen>
-    </iframe>
-</div>
+{{- /* Lite facade: a poster and play button instead of a full player per embed.
+Usage: {{< youtube VIDEO_ID >}} or {{< youtube VIDEO_ID "Video title" >}}
+   or: {{< youtube id="VIDEO_ID" title="..." caption="..." ratio="4:3" >}}
+caption: markdown shown under the video (and used as the title if none).
+ratio:   the video's own shape, "16:9" (default), "4:3", "1:1" or "9:16",
+         so the frame has no bars inside it.
+A delegated click handler in baseof.html swaps in the youtube-nocookie.com
+player; without JS (or with a modifier click) the link opens YouTube.
+Styles: assets/css/apps/doc.css (.doc-video). */ -}}
+{{- $id := "" -}}
+{{- $title := "" -}}
+{{- $caption := "" -}}
+{{- $ratio := "16:9" -}}
+{{- if .IsNamedParams -}}
+{{- $id = .Get "id" -}}
+{{- $title = .Get "title" | default "" -}}
+{{- $caption = .Get "caption" | default "" -}}
+{{- $ratio = .Get "ratio" | default "16:9" -}}
+{{- else -}}
+{{- $id = .Get 0 -}}
+{{- $title = .Get 1 | default "" -}}
+{{- end -}}
+{{- if not (in (slice "16:9" "4:3" "1:1" "9:16") $ratio) }}{{ $ratio = "16:9" }}{{ end -}}
+{{- $label := $title | default ($caption | markdownify | plainify) -}}
+<figure class="doc-video">
+    <div class="youtube-embed" data-ratio="{{ $ratio }}">
+        <a class="yt-lite" href="https://youtu.be/{{ $id }}" data-yt="{{ $id }}" data-title="{{ $label | default "YouTube video" }}" target="_blank" rel="noopener">
+            <img src="https://i.ytimg.com/vi/{{ $id }}/hqdefault.jpg" alt="" width="480" height="360" loading="lazy" decoding="async">
+            <span class="yt-lite-play" aria-hidden="true"></span>
+            <span class="yt-lite-label">Play video{{ with $label }}: {{ . }}{{ end }}</span>
+        </a>
+    </div>
+    {{- with $caption }}
+    <figcaption>{{ . | markdownify }}</figcaption>
+    {{- end }}
+</figure>
+{{- /* */ -}}

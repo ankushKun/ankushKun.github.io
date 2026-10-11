@@ -1,0 +1,25 @@
+{{- /*
+Blockquotes. GitHub-style alerts become callouts styled like Mavericks alert
+panels (assets/css/apps/doc.css):
+
+  > [!NOTE]          > [!TIP]          > [!IMPORTANT]
+  > [!WARNING]       > [!CAUTION]      > [!TIP] Custom title
+
+Any other blockquote is rendered as Goldmark would.
+*/ -}}
+{{- if eq .Type "alert" -}}
+{{- $type := lower .AlertType -}}
+{{- $titles := dict "note" "Note" "tip" "Tip" "important" "Important" "warning" "Warning" "caution" "Caution" -}}
+{{- $kind := cond (in (slice "note" "tip" "important" "warning" "caution") $type) $type "note" -}}
+{{- $title := .AlertTitle | default (index $titles $kind) -}}
+<aside class="doc-callout doc-callout--{{ $kind }}" aria-label="{{ $title | plainify }}">
+<p class="doc-callout-title"><span class="doc-callout-icon">{{ partial "apps/doc/glyph.html" $kind }}</span><span>{{ $title }}</span></p>
+<div class="doc-callout-body">
+{{ .Text }}
+</div>
+</aside>
+{{- else -}}
+<blockquote {{- range $k, $v := .Attributes }} {{ $k }}="{{ $v }}"{{ end }}>
+{{ .Text }}
+</blockquote>
+{{- end -}}

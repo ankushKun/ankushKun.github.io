@@ -1,0 +1,24 @@
+{{/*
+Reaction bar under a blog post or project.
+
+Ships hidden: assets/js/post-social.js shows it once the realtime relay has
+answered, so a visitor without JavaScript (or without the relay) never sees
+buttons that do nothing. `data-post-key` is the page's own path, which keys
+the reactions and the "reading now" count the same way on the article page
+and inside a desktop window.
+
+Usage: {{ partial "apps/blog/social.html" (dict "page" . "kind" "blog") }}
+kind: "blog" | "project"
+*/}}
+{{- $noun := cond (eq .kind "project") "project" "post" -}}
+<section class="post-social" data-post-key="{{ .page.RelPermalink }}" data-kind="{{ .kind }}"
+    aria-label="Reactions" hidden>
+    <div class="ps-bar" role="group" aria-label="React to this {{ $noun }}">
+        <button type="button" class="ps-react" data-reaction="heart" data-label="Heart" aria-pressed="false"><span class="ps-emoji" aria-hidden="true">❤️</span><span class="ps-count"></span></button>
+        <button type="button" class="ps-react" data-reaction="fire" data-label="Fire" aria-pressed="false"><span class="ps-emoji" aria-hidden="true">🔥</span><span class="ps-count"></span></button>
+        <button type="button" class="ps-react" data-reaction="laugh" data-label="Laughing" aria-pressed="false"><span class="ps-emoji" aria-hidden="true">😂</span><span class="ps-count"></span></button>
+        <button type="button" class="ps-react" data-reaction="party" data-label="Party" aria-pressed="false"><span class="ps-emoji" aria-hidden="true">🎉</span><span class="ps-count"></span></button>
+        <button type="button" class="ps-react" data-reaction="mind" data-label="Mind blown" aria-pressed="false"><span class="ps-emoji" aria-hidden="true">🤯</span><span class="ps-count"></span></button>
+    </div>
+    <p class="ps-status" role="status"></p>
+</section>

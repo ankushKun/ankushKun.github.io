@@ -1,0 +1,13 @@
+{{- /* A set of media shown together: a two-up grid on a wide page, one
+column on a phone. Each item keeps its own caption underneath.
+Usage:
+  {{< gallery >}}
+  {{< youtube id="VIDEO_ID" caption="What this one shows" >}}
+  {{< youtube id="VIDEO_ID" caption="And this one" >}}
+  {{< /gallery >}}
+Items are youtube shortcodes, or markdown images on their own lines.
+Styles: assets/css/apps/doc.css (.doc-gallery). */ -}}
+<div class="doc-gallery">
+{{ .Inner | strings.TrimSpace | .Page.RenderString (dict "display" "block") }}
+</div>
+{{- /* */ -}}

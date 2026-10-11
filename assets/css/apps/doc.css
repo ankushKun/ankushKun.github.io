@@ -1,0 +1,1599 @@
+/* ==========================================================================
+   Document layout: blog posts, projects and timeline entries
+   --------------------------------------------------------------------------
+   Markup: layouts/partials/apps/doc/ (document, header, links, toc, footer),
+   apps/related.html, the shortcodes and the render hooks in
+   layouts/_default/_markup. Behaviour: assets/js/doc.js. Code: doc-code.css.
+
+   The article (.doc) is a size container, so the layout follows the width of
+   the window it is in (or the standalone page), not the viewport:
+     - text keeps a ~68ch measure (680px), centred, 16px / 1.7
+     - code, figures, video, galleries and tables may widen to 840px
+     - a long document gets a sticky contents column when there is room,
+       a "Contents" disclosure otherwise
+   The old .markdown-body / .post-* / .project-* / .event-* / .shortcode-*
+   rules in main.css, mavericks.css and partials.css are overridden here
+   (every selector starts at .doc); see the progress log for the list of
+   rules this makes dead.
+   ========================================================================== */
+
+:root {
+    --doc-measure: 680px;
+    --doc-wide: 840px;
+    --doc-radius: 10px;
+    --doc-media-scrim: rgba(18, 18, 20, 0.55);
+    --doc-media-scrim-strong: rgba(18, 18, 20, 0.75);
+    --doc-media-ink: #FFFFFF;
+    --doc-viewer-scrim: rgba(12, 12, 14, 0.82);
+    --doc-kbd-face: linear-gradient(180deg, #FFFFFF 0%, #F1F2F4 100%);
+}
+
+html[data-appearance="dark"] {
+    --doc-kbd-face: linear-gradient(180deg, #4A4D52 0%, #3D4044 100%);
+}
+
+/* ---------- Container and measure ---------- */
+
+.doc {
+    container: doc / inline-size;
+    position: relative;
+    color: var(--text-color);
+    font-family: var(--font-system);
+    -webkit-font-smoothing: antialiased;
+}
+
+.doc-inner {
+    --doc-gutter: 32px;
+    width: min(var(--doc-measure), 100% - 2 * var(--doc-gutter));
+    margin-inline: auto;
+    padding: 36px 0 56px;
+}
+
+@container doc (max-width: 600px) {
+    .doc-inner {
+        --doc-gutter: 16px;
+        padding-top: 22px;
+        padding-bottom: 40px;
+    }
+}
+
+/* ---------- Reading progress (a hairline under the titlebar) ---------- */
+
+.doc-progress {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    height: 0;
+}
+
+.doc-progress-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--accent-blue);
+    transform-origin: 0 50%;
+    transform: scaleX(var(--doc-progress, 0));
+}
+
+@supports (animation-timeline: scroll()) {
+    .doc-progress-bar {
+        animation: doc-progress linear both;
+        animation-timeline: scroll(nearest block);
+    }
+
+    @keyframes doc-progress {
+        from { transform: scaleX(0); }
+        to { transform: scaleX(1); }
+    }
+}
+
+/* ---------- Header ---------- */
+
+.doc .doc-header {
+    margin: 0 0 22px;
+    padding: 0;
+    border: 0;
+    text-align: left;
+}
+
+.doc .doc-meta {
+    display: flex;
+    /* main.css stacks .post-meta-bar in a centred column under 640px */
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px 0;
+    margin: 0 0 10px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-tertiary);
+}
+
+.doc .doc-meta-item {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.doc .doc-meta-item + .doc-meta-item::before {
+    content: "·";
+    margin: 0 8px;
+    color: var(--text-placeholder);
+}
+
+.doc .doc-meta time {
+    display: inline;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: inherit;
+    color: inherit;
+}
+
+.doc .doc-kind {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
+.doc .doc-meta .status-badge {
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+/* post-social.js appends "N reading now"; its green dot is the separator */
+.doc .doc-meta .ps-readers {
+    margin-left: 12px;
+    font-size: inherit;
+    color: var(--text-secondary);
+}
+
+.doc .doc-title {
+    margin: 0 0 12px;
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+    text-shadow: none;
+    overflow-wrap: break-word;
+}
+
+.doc .doc-lede {
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.55;
+    color: var(--text-secondary);
+}
+
+.doc .doc-lede a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: var(--hairline-strong);
+}
+
+/* After the links bar; the picture itself separates header from body, so
+   no hairline follows it */
+.doc .doc-cover {
+    margin: 0 0 32px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--doc-radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    line-height: 0;
+    background: var(--surface-alt);
+}
+
+.doc .doc-cover img {
+    display: block;
+    width: 100%;
+    max-width: none;
+    height: auto;
+    aspect-ratio: 1200 / 630;
+    object-fit: cover;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+@container doc (max-width: 600px) {
+    .doc .doc-title {
+        font-size: 24px;
+    }
+
+    .doc .doc-lede {
+        font-size: 16.5px;
+    }
+}
+
+/* ---------- Links bar ---------- */
+
+.doc .doc-links {
+    margin: 0 0 30px;
+}
+
+.doc .doc-links-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.doc .doc-links-list li {
+    margin: 0;
+}
+
+.doc a.doc-link {
+    min-width: 0;
+    padding: 5px 12px;
+    font-size: 12.5px;
+    font-weight: 500;
+    gap: 6px;
+    text-decoration: none;
+}
+
+.doc .doc-link .ui-glyph {
+    flex: none;
+    width: 14px;
+    height: 14px;
+}
+
+/* "App Store listing · snapshot": a quiet suffix, so it never reads like the
+   header's Archived status badge */
+.doc .doc-link-note {
+    font-size: 0.92em;
+    font-weight: 400;
+    opacity: 0.72;
+}
+
+.doc .doc-link-note::before {
+    content: "·";
+    margin-right: 5px;
+}
+
+@media (pointer: coarse) {
+    .doc a.doc-link {
+        min-height: 36px;
+        padding: 6px 14px;
+    }
+}
+
+/* ---------- Body typography ---------- */
+
+.doc .doc-body {
+    --doc-wide-w: min(var(--doc-wide), 100cqi - 2 * var(--doc-gutter));
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--text-color);
+    overflow-wrap: break-word;
+}
+
+/* A short body (most timeline entries) sits under one hairline */
+.doc .doc-header + .doc-body,
+.doc .doc-links + .doc-body,
+.doc .doc-toc + .doc-body {
+    padding-top: 26px;
+    border-top: 1px solid var(--border);
+}
+
+/* ...but a body of one paragraph right under the header (DevFest and other
+   one-line entries) just follows the lede: a rule above and the footer's
+   below would frame a single sentence */
+.doc .doc-header + .doc-body:has(> p:only-child) {
+    padding-top: 0;
+    border-top: 0;
+}
+
+.doc .doc-body > :first-child {
+    margin-top: 0;
+}
+
+.doc .doc-body > :last-child {
+    margin-bottom: 0;
+}
+
+.doc .doc-body p {
+    margin: 0 0 1.1em;
+    font-size: inherit;
+    line-height: inherit;
+    color: inherit;
+}
+
+.doc .doc-body :is(h2, h3, h4, h5, h6) {
+    color: var(--text-primary);
+    font-weight: 700;
+    border: 0;
+    padding: 0;
+    scroll-margin-top: 16px;
+}
+
+.doc .doc-body h2 {
+    margin: 2em 0 0.55em;
+    font-size: 22px;
+    line-height: 1.3;
+    letter-spacing: -0.005em;
+}
+
+.doc .doc-body h3 {
+    margin: 1.7em 0 0.45em;
+    font-size: 18px;
+    line-height: 1.35;
+}
+
+.doc .doc-body :is(h4, h5, h6) {
+    margin: 1.5em 0 0.4em;
+    font-size: 16px;
+    line-height: 1.4;
+}
+
+.doc .doc-body :is(h2, h3) + :is(h3, h4) {
+    margin-top: 0.8em;
+}
+
+/* Section dividers: spacing does the work, so a rule right before a heading
+   (or at either end of the body) is not drawn */
+.doc .doc-body hr {
+    height: 1px;
+    margin: 2.4em 0;
+    border: 0;
+    background: var(--border);
+}
+
+.doc .doc-body hr:has(+ :is(h1, h2, h3, h4, h5, h6)),
+.doc .doc-body hr:first-child,
+.doc .doc-body hr:last-child,
+.doc .doc-body hr + hr {
+    display: none;
+}
+
+.doc .doc-body :is(ul, ol) {
+    margin: 0 0 1.1em;
+    padding-left: 1.45em;
+}
+
+.doc .doc-body li {
+    margin: 0.35em 0;
+    color: inherit;
+}
+
+.doc .doc-body li > :is(ul, ol) {
+    margin: 0.35em 0 0;
+}
+
+.doc .doc-body li > p {
+    margin: 0.35em 0;
+}
+
+.doc .doc-body li::marker {
+    color: var(--text-tertiary);
+}
+
+/* GitHub task lists ("- [ ] item") */
+.doc .doc-body li:has(> input[type="checkbox"]) {
+    list-style: none;
+    margin-left: -1.3em;
+}
+
+.doc .doc-body li > input[type="checkbox"] {
+    margin: 0 0.5em 0 0;
+    vertical-align: -0.1em;
+}
+
+.doc .doc-body :is(strong, b) {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.doc .doc-body blockquote:not(.twitter-tweet) {
+    margin: 1.5em 0;
+    padding: 0.15em 0 0.15em 1.1em;
+    border: 0;
+    border-left: 3px solid var(--gray-300);
+    border-radius: 0;
+    background: none;
+    color: var(--text-secondary);
+    font-style: normal;
+}
+
+.doc .doc-body blockquote:not(.twitter-tweet) > :last-child {
+    margin-bottom: 0;
+}
+
+/* ---------- X (Twitter) embeds ---------- */
+
+/* Before widgets.js draws it (or when it cannot load), the quote is a quiet
+   card of the same size and place as the embed that replaces it */
+.doc .doc-body blockquote.twitter-tweet {
+    max-width: 550px;
+    margin: 2em auto;
+    padding: 16px 18px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    color: var(--text-color);
+    font-size: 15px;
+    font-style: normal;
+    text-align: left;
+}
+
+.doc .doc-body blockquote.twitter-tweet p {
+    margin: 0 0 8px;
+}
+
+/* The drawn embed: centred and framed like the other media. widgets.js puts
+   its margins inline, hence !important. The iframe declares no colour
+   scheme of its own, so with the page in dark Chrome would paint an opaque
+   white box behind it (the square corners around the rounded card): giving
+   the iframe the normal scheme keeps its backdrop transparent. The card's
+   own light or dark theme follows the appearance (assets/js/doc.js). */
+.doc .doc-body .twitter-tweet.twitter-tweet-rendered {
+    margin: 2em auto !important;
+    border-radius: 12px;
+    overflow: hidden;
+    background: transparent;
+}
+
+.doc .doc-body .twitter-tweet-rendered iframe {
+    color-scheme: normal;
+    border-radius: 12px;
+    background: transparent;
+}
+
+/* A snug chip, so punctuation around it stays attached: "(1)" not "( 1 )".
+   clone keeps the padding and border on both halves of a wrapped chip. */
+.doc .doc-body :not(pre) > code {
+    padding: 0.08em 0.24em;
+    border: 1px solid var(--hairline);
+    border-radius: 4px;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    background: var(--code-bg);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    overflow-wrap: anywhere;
+}
+
+/* Prose links: underlined, quietly */
+.doc .doc-body a:not([class]),
+.doc .doc-faq a:not([class]) {
+    color: var(--link);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+    text-underline-offset: 3px;
+}
+
+.doc .doc-body a:not([class]):hover,
+.doc .doc-faq a:not([class]):hover {
+    text-decoration-color: currentColor;
+}
+
+/* Links that leave the site (render-link.html) */
+/* Inline (not inline-block) so the link's underline runs on under the
+   arrow and it reads as part of the link, not a stray character */
+.doc .doc-body a[data-external]::after,
+.doc .doc-faq a[data-external]::after {
+    content: "↗";
+    content: "↗" / "";
+    display: inline;
+    margin-left: 0.1em;
+    font-size: 0.78em;
+    line-height: 1;
+    vertical-align: 0.1em;
+    color: color-mix(in srgb, currentColor 72%, transparent);
+}
+
+.doc .doc-body a[data-external]:has(img)::after {
+    content: none;
+}
+
+.doc .doc-body a.heading-anchor {
+    font-weight: 400;
+    font-size: 0.85em;
+    color: var(--text-placeholder);
+    text-decoration: none;
+}
+
+.doc .doc-body a.heading-anchor:hover {
+    color: var(--link);
+}
+
+/* On touch screens there is no hover to reveal the "#", so it stays hidden
+   (mavericks.css shows it at 60%) except on the section linked to */
+@media (hover: none) {
+    .doc .doc-body a.heading-anchor {
+        opacity: 0;
+    }
+
+    .doc .doc-body :target > a.heading-anchor,
+    .doc .doc-body a.heading-anchor:focus-visible {
+        opacity: 0.6;
+    }
+}
+
+/* ---------- Wide elements ---------- */
+
+/* Only pictures widen. Code, tables and callouts keep to the text column on
+   every page, with or without a contents column, so their left edges line
+   up with the prose instead of stepping out and back in every few lines.
+   (Plain-text diagrams are centred illustrations, see doc-code.css.) */
+.doc .doc-body > :is(.doc-figure, .doc-video, .doc-gallery) {
+    width: var(--doc-wide-w);
+    max-width: none;
+    margin-left: calc((100% - var(--doc-wide-w)) / 2);
+    margin-right: calc((100% - var(--doc-wide-w)) / 2);
+}
+
+/* ---------- Figures and images ---------- */
+
+.doc .doc-figure {
+    margin-top: 2em;
+    margin-bottom: 2em;
+    text-align: center;
+}
+
+.doc .doc-body .doc-figure img,
+.doc .doc-body .doc-figure video {
+    display: block;
+    width: auto;
+    max-width: 100% !important;
+    height: auto;
+    max-height: min(80vh, 760px);
+    margin: 0 auto;
+    border: 1px solid var(--hairline);
+    border-radius: 8px;
+    box-shadow: var(--shadow-md);
+    background: var(--surface);
+}
+
+/* A phone recording is tall and narrow: keep it to about half a screen so
+   the first sentence after it is not pushed below the fold */
+.doc .doc-body .doc-figure--portrait video,
+.doc .doc-body .doc-figure--portrait img {
+    width: auto;
+    max-height: min(60vh, 480px);
+    border-radius: 14px;
+}
+
+.doc .doc-body img[data-zoomable] {
+    cursor: zoom-in;
+}
+
+.doc .doc-body img[data-zoomable]:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 3px;
+}
+
+.doc figcaption {
+    max-width: var(--doc-measure);
+    margin: 10px auto 0;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--text-tertiary);
+    text-align: center;
+    text-wrap: balance;
+}
+
+.doc figcaption p {
+    margin: 0;
+}
+
+/* Embeds with a fixed width (itch.io widgets) shrink on a phone */
+.doc .doc-body iframe {
+    max-width: 100%;
+}
+
+/* A playable embed (the DOOM renderer demo): framed like a picture, with a
+   "Click to play" veil that lifts on hover or once the frame has focus */
+.doc .doc-demo-frame {
+    position: relative;
+    max-width: 760px;
+    aspect-ratio: 760 / 500;
+    margin: 0 auto;
+    overflow: hidden;
+    border: 1px solid var(--hairline);
+    border-radius: var(--doc-radius);
+    box-shadow: var(--shadow-md);
+    background: var(--doc-media-scrim-strong);
+}
+
+.doc .doc-demo-frame iframe {
+    display: block;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    border: 0;
+    cursor: pointer;
+}
+
+.doc .doc-demo-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--doc-media-scrim);
+    color: var(--doc-media-ink);
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.doc .doc-demo-frame:is(:hover, :focus-within) .doc-demo-overlay {
+    opacity: 0;
+}
+
+/* A muted aside (a closing remark under the main text) */
+.doc .doc-body .doc-aside {
+    font-size: 15px;
+    color: var(--text-secondary);
+}
+
+/* Inline images (emoji shortcode and the like) stay in the line of text */
+.doc .doc-body p > img {
+    display: inline;
+    margin: 0;
+    box-shadow: none;
+}
+
+/* ---------- Video (youtube shortcode) ---------- */
+
+.doc .doc-video {
+    margin-top: 2em;
+    margin-bottom: 2em;
+}
+
+.doc .doc-video .youtube-embed {
+    height: auto;
+    margin: 0 auto;
+    padding: 0;
+    aspect-ratio: 16 / 9;
+    border: 1px solid var(--hairline);
+    border-radius: var(--doc-radius);
+    box-shadow: var(--shadow-md);
+    background: var(--doc-media-scrim-strong);
+}
+
+.doc .doc-video .youtube-embed[data-ratio="4:3"] {
+    aspect-ratio: 4 / 3;
+    max-width: 640px;
+}
+
+.doc .doc-video .youtube-embed[data-ratio="1:1"] {
+    aspect-ratio: 1;
+    max-width: 520px;
+}
+
+.doc .doc-video .youtube-embed[data-ratio="9:16"] {
+    aspect-ratio: 9 / 16;
+    max-width: 340px;
+}
+
+/* The poster covers the whole frame, so hqdefault.jpg's baked-in letterbox
+   bars are cropped off. mavericks.css caps every .markdown-body img at
+   min(640px, 100% - 48px) with !important, which left the poster narrower
+   than its frame (black strips right and below); only !important undoes it */
+.doc .doc-video .yt-lite img {
+    width: 100%;
+    height: 100%;
+    max-width: none !important;
+    margin: 0;
+    box-shadow: none;
+    object-fit: cover;
+    opacity: 1;
+}
+
+/* QuickTime-style play button: a dark glass disc with a white triangle */
+.doc .doc-video .yt-lite-play {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--doc-media-scrim);
+    -webkit-backdrop-filter: blur(10px) saturate(1.4);
+    backdrop-filter: blur(10px) saturate(1.4);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+    transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.doc .doc-video .yt-lite-play::before {
+    border-width: 11px 0 11px 18px;
+    border-color: transparent transparent transparent var(--doc-media-ink);
+    transform: translate(-36%, -50%);
+}
+
+.doc .doc-video .yt-lite:is(:hover, :focus-visible) .yt-lite-play {
+    background: var(--doc-media-scrim-strong);
+    transform: translate(-50%, -50%) scale(1.06);
+}
+
+/* ---------- Gallery shortcode ---------- */
+
+.doc .doc-gallery {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px 18px;
+    margin-top: 2em;
+    margin-bottom: 2em;
+}
+
+.doc .doc-gallery > * {
+    margin: 0;
+    width: auto;
+}
+
+/* An odd last item sits centred under the pair rather than alone at left */
+.doc .doc-gallery > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: calc(50% - 9px);
+}
+
+.doc .doc-gallery .youtube-embed[data-ratio] {
+    max-width: none;
+}
+
+@container doc (max-width: 600px) {
+    .doc .doc-gallery {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .doc .doc-gallery > :last-child:nth-child(odd) {
+        width: auto;
+    }
+}
+
+/* ---------- Callouts (render-blockquote.html) ---------- */
+
+.doc .doc-callout {
+    --c: var(--accent-blue);
+    margin: 1.6em 0;
+    padding: 12px 16px 13px;
+    border: 1px solid color-mix(in srgb, var(--c) 32%, var(--border));
+    border-radius: var(--doc-radius);
+    background: linear-gradient(180deg,
+            color-mix(in srgb, var(--c) 10%, var(--surface)) 0%,
+            color-mix(in srgb, var(--c) 6%, var(--surface)) 100%);
+    box-shadow: var(--shadow-sm), inset 0 1px 0 var(--bevel);
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.doc .doc-callout--tip { --c: var(--success); }
+.doc .doc-callout--important { --c: var(--info); }
+.doc .doc-callout--warning { --c: var(--warning); }
+.doc .doc-callout--caution { --c: var(--error); }
+
+.doc .doc-body .doc-callout-title {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0 0 4px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.4;
+    color: color-mix(in srgb, var(--c) 58%, var(--text-primary));
+}
+
+.doc .doc-callout-icon {
+    display: inline-flex;
+    font-size: 16px;
+}
+
+.doc .doc-callout-body > :last-child {
+    margin-bottom: 0;
+}
+
+/* ---------- Keys, tables, footnotes ---------- */
+
+.doc kbd {
+    display: inline-block;
+    min-width: 1.7em;
+    margin: 0 0.1em;
+    padding: 0.05em 0.45em 0.1em;
+    border: 1px solid var(--hairline-strong);
+    border-bottom-width: 2px;
+    border-radius: 5px;
+    background: var(--doc-kbd-face);
+    box-shadow: 0 1px 1px var(--hairline), inset 0 1px 0 var(--bevel);
+    color: var(--text-primary);
+    font-family: var(--font-system);
+    font-size: 0.78em;
+    font-weight: 600;
+    line-height: 1.5;
+    text-align: center;
+    vertical-align: 0.1em;
+    white-space: nowrap;
+}
+
+.doc .doc-table-frame {
+    position: relative;
+    margin-top: 1.8em;
+    margin-bottom: 1.8em;
+    border: 1px solid var(--border);
+    border-radius: var(--doc-radius);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.doc .doc-table {
+    max-height: min(75vh, 640px);
+    overflow: auto;
+    border-radius: inherit;
+}
+
+.doc .doc-table:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+/* More columns to the right: the same edge fade as an overflowing code block
+   (doc.js toggles the class while the table is not scrolled to its end) */
+.doc .doc-table-frame.doc-table-overflow::after {
+    content: "";
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    bottom: 1px;
+    width: 40px;
+    border-radius: 0 var(--doc-radius) var(--doc-radius) 0;
+    background: linear-gradient(to right, transparent, var(--surface) 85%);
+    pointer-events: none;
+}
+
+.doc .doc-table table {
+    display: table;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.doc .doc-table :is(th, td) {
+    padding: 9px 14px;
+    border: 0;
+    border-bottom: 1px solid var(--border-subtle);
+    text-align: left;
+    vertical-align: top;
+    color: var(--text-color);
+}
+
+.doc .doc-table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--surface-alt);
+    border-bottom-color: var(--border);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.doc .doc-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.doc .doc-table tr:hover {
+    background: var(--hover-tint);
+}
+
+.doc .doc-table td code {
+    white-space: nowrap;
+    overflow-wrap: normal;
+}
+
+.doc .footnotes {
+    margin-top: 3em;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+.doc .footnotes hr {
+    display: block;
+    width: 96px;
+    margin: 0 0 1.2em;
+}
+
+.doc .footnotes ol {
+    padding-left: 1.3em;
+}
+
+.doc .doc-body sup {
+    line-height: 0;
+}
+
+.doc .doc-body a.footnote-ref,
+.doc .doc-body a.footnote-backref {
+    padding: 0 0.15em;
+    color: var(--link);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+/* ---------- Inline button and link card (shortcodes) ---------- */
+
+.doc .doc-body a.doc-inline-btn {
+    gap: 5px;
+    margin: 0 2px;
+    padding: 1px 9px;
+    font-size: 12px;
+    vertical-align: 1px;
+    text-decoration: none;
+}
+
+.doc .doc-inline-btn .ui-glyph {
+    width: 12px;
+    height: 12px;
+}
+
+.doc .doc-body a.doc-linkcard {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 100%;
+    margin: 2px 0;
+    padding: 7px 12px 7px 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--doc-radius);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    color: var(--text-primary);
+    line-height: 1.25;
+    text-decoration: none;
+    vertical-align: middle;
+}
+
+.doc .doc-body a.doc-linkcard:hover {
+    border-color: var(--border-strong);
+    background: var(--surface-alt);
+    text-decoration: none;
+}
+
+.doc .doc-linkcard-icon {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--hairline);
+    border-radius: 7px;
+    background: var(--surface-alt);
+    font-size: 16px;
+}
+
+.doc .doc-linkcard-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.doc .doc-linkcard-name {
+    overflow: hidden;
+    font-size: 13.5px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.doc .doc-linkcard-host {
+    font-size: 11.5px;
+    color: var(--text-tertiary);
+}
+
+.doc .doc-linkcard-arrow {
+    margin-left: 4px;
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+/* ---------- Table of contents ---------- */
+
+.doc .doc-toc--side {
+    display: none;
+}
+
+.doc .doc-toc--inline {
+    margin: 0 0 26px;
+    border: 1px solid var(--border);
+    border-radius: var(--doc-radius);
+    background: var(--surface-alt);
+}
+
+.doc .doc-toc-summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+}
+
+.doc .doc-toc-summary::-webkit-details-marker {
+    display: none;
+}
+
+/* Disclosure triangle (a clip-path, so no inherited border rule can turn
+   it into a square) */
+.doc .doc-toc-summary::before {
+    content: "";
+    flex: none;
+    width: 7px;
+    height: 9px;
+    border: 0;
+    background: currentColor;
+    clip-path: polygon(0 0, 100% 50%, 0 100%);
+    transition: transform 0.15s ease;
+}
+
+.doc .doc-toc--inline[open] .doc-toc-summary::before {
+    transform: rotate(90deg);
+}
+
+.doc .doc-toc-summary:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: -2px;
+    border-radius: var(--doc-radius);
+}
+
+.doc .doc-toc--inline .doc-toc-nav {
+    padding: 0 8px 10px;
+}
+
+/* The disclosure is the same outline as the side column at rest: sections
+   only (a phone screen cannot hold every sub-heading) */
+.doc .doc-toc--inline .doc-toc-nav li > ul {
+    display: none;
+}
+
+/* ...so while a sub-section is being read, its section is the one marked */
+.doc .doc-toc--inline .doc-toc-nav li:has(ul a[aria-current="true"]) > a {
+    background: var(--accent-blue-subtle);
+    color: var(--link);
+    font-weight: 600;
+}
+
+.doc .doc-toc-nav ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.doc .doc-toc-nav li {
+    margin: 0;
+    color: inherit;
+}
+
+.doc .doc-toc-nav ul ul {
+    padding-left: 12px;
+}
+
+.doc .doc-toc-nav a {
+    display: block;
+    padding: 4px 8px;
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.4;
+    text-decoration: none;
+}
+
+.doc .doc-toc-nav a:hover {
+    background: var(--hover-tint);
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.doc .doc-toc-nav a[aria-current="true"] {
+    background: var(--accent-blue-subtle);
+    color: var(--link);
+    font-weight: 600;
+}
+
+.doc .doc-toc-title {
+    margin: 0 0 6px;
+    padding: 0 8px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+}
+
+/* Wide enough for a column beside the text. The text stays in the same
+   centred 680px column as every other document (no jump between a post with
+   contents and one without); the contents column sits in the right-hand
+   margin, 20px from the window edge. Wide pictures still break out by
+   --doc-toc-b on each side: whatever the margin leaves between them and the
+   contents (0 at the narrowest, the full 80px of --doc-wide in a big window).
+   Narrower than this, the "Contents" disclosure above the text is used. */
+@container doc (min-width: 1140px) {
+    .doc--has-toc .doc-inner {
+        --doc-toc-w: 190px;
+        --doc-toc-b: clamp(0px, (100cqi - var(--doc-measure)) / 2 - var(--doc-toc-w) - 40px, (var(--doc-wide) - var(--doc-measure)) / 2);
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) var(--doc-measure) minmax(0, 1fr);
+        align-items: start;
+        width: 100%;
+    }
+
+    .doc--has-toc .doc-inner > * {
+        grid-column: 2;
+        min-width: 0;
+    }
+
+    .doc--has-toc .doc-inner > .doc-toc--side {
+        display: block;
+        grid-column: 3;
+        grid-row: 1 / span 8;
+        justify-self: start;
+        width: var(--doc-toc-w);
+        margin-left: calc(var(--doc-toc-b) + 20px);
+        position: sticky;
+        top: 28px;
+        /* --doc-scroll-h is the height of the scrolling window body (set by
+           doc.js), so the column never runs past the window's bottom edge */
+        max-height: calc(var(--doc-scroll-h, 100vh) - 56px);
+        overflow: auto;
+        overscroll-behavior: contain;
+        scrollbar-width: thin;
+        padding: 2px 0 2px 14px;
+        border-left: 1px solid var(--border);
+    }
+
+    /* Sections only. Sub-sections that opened under the section being read
+       made the column grow and shrink under the eye while scrolling; while
+       one is read, its section is the entry marked instead. */
+    .doc--has-toc .doc-toc--side .doc-toc-nav li > ul {
+        display: none;
+    }
+
+    .doc--has-toc .doc-toc--side .doc-toc-nav li:has(ul a[aria-current="true"]) > a {
+        background: var(--accent-blue-subtle);
+        color: var(--link);
+        font-weight: 600;
+    }
+
+    .doc--has-toc .doc-toc--side .doc-toc-nav a {
+        font-size: 12.5px;
+        padding: 3px 8px;
+    }
+
+    .doc--has-toc .doc-toc--inline {
+        display: none;
+    }
+
+    .doc--has-toc .doc-links + .doc-toc--side + .doc-toc--inline + .doc-body,
+    .doc--has-toc .doc-header + .doc-toc--side + .doc-toc--inline + .doc-body {
+        padding-top: 26px;
+        border-top: 1px solid var(--border);
+    }
+
+    .doc--has-toc .doc-body {
+        --doc-wide-w: calc(100% + 2 * var(--doc-toc-b));
+    }
+}
+
+/* ---------- FAQ ---------- */
+
+.doc .doc-faq {
+    margin-top: 2.5em;
+}
+
+.doc .doc-faq-question {
+    margin: 1.4em 0 0.35em;
+}
+
+/* ---------- Footer ---------- */
+
+.doc .doc-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    margin-top: 48px;
+    padding-top: 28px;
+    border-top: 1px solid var(--border);
+}
+
+.doc .doc-tags {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.doc .doc-tags-label {
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+.doc .doc-tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.doc .doc-tag-list li {
+    margin: 0;
+}
+
+.doc a.doc-tag {
+    display: inline-block;
+    padding: 1px 9px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface-alt);
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.6;
+    text-decoration: none;
+}
+
+.doc a.doc-tag::before {
+    content: "#";
+    margin-right: 1px;
+    opacity: 0.55;
+}
+
+.doc a.doc-tag:hover,
+.doc a.doc-tag:focus-visible {
+    border-color: var(--border-strong);
+    color: var(--link);
+    text-decoration: none;
+}
+
+.doc .post-social {
+    margin: 0;
+}
+
+/* Author card with the RSS row (blog posts) */
+.doc .doc-author {
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-alt);
+}
+
+.doc .doc-author-main {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+}
+
+.doc .doc-author-avatar {
+    flex: none;
+    width: 52px;
+    height: 52px;
+    max-width: none;
+    margin: 0;
+    border: 1px solid var(--hairline);
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.doc .doc-author-text {
+    min-width: 0;
+}
+
+.doc .doc-author-name {
+    margin: 0 0 2px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--text-primary);
+}
+
+.doc .doc-author-name a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: var(--hairline-strong);
+    text-underline-offset: 3px;
+}
+
+.doc .doc-author-name a:hover {
+    color: var(--link);
+    text-decoration-color: currentColor;
+}
+
+.doc .doc-author-bio {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+.doc .doc-subscribe {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 16px;
+    padding: 10px 18px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--text-secondary);
+}
+
+/* Previous / Next, then Related: one card for every kind */
+.doc .doc-more {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+.doc .doc-pager {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.doc a.doc-card {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    height: 100%;
+    min-width: 0;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--doc-radius);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    text-decoration: none;
+    transition: border-color 0.12s ease, background-color 0.12s ease;
+}
+
+.doc a.doc-card:hover,
+.doc a.doc-card:focus-visible {
+    border-color: var(--border-strong);
+    background: var(--surface-alt);
+    text-decoration: none;
+}
+
+.doc a.doc-card:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.doc .doc-card-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+}
+
+.doc .doc-card-eyebrow time {
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.doc .doc-card-title {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--text-primary);
+}
+
+.doc a.doc-card:hover .doc-card-title {
+    color: var(--link);
+}
+
+.doc .doc-pager-next {
+    grid-column: 2;
+    align-items: flex-end;
+    text-align: right;
+}
+
+.window-content .doc .doc-more h2.doc-related-heading {
+    margin: 0 0 10px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+}
+
+/* Two to a row like Previous / Next (related.html keeps the count even) */
+.doc .doc-related-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.doc .doc-related-list li {
+    margin: 0;
+}
+
+@container doc (max-width: 600px) {
+    .doc .doc-pager {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .doc .doc-pager-next {
+        grid-column: 1;
+    }
+
+    .doc .doc-related-list {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .doc .doc-author-main {
+        align-items: flex-start;
+    }
+}
+
+/* ---------- Quick Look image viewer (assets/js/doc.js) ---------- */
+
+.doc-viewer {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 56px 24px 28px;
+    background: var(--doc-viewer-scrim);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    opacity: 0;
+    transition: opacity 0.18s ease;
+    cursor: zoom-out;
+}
+
+.doc-viewer.is-open {
+    opacity: 1;
+}
+
+.doc-viewer-img {
+    display: block;
+    max-width: 100%;
+    max-height: calc(100% - 48px);
+    margin: 0;
+    border-radius: 8px;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+    background: var(--surface);
+    object-fit: contain;
+    transform: scale(0.96);
+    transition: transform 0.2s ease;
+}
+
+.doc-viewer.is-open .doc-viewer-img {
+    transform: none;
+}
+
+.doc-viewer-caption {
+    max-width: 70ch;
+    margin: 0;
+    font-family: var(--font-system);
+    font-size: 13px;
+    line-height: 1.45;
+    text-align: center;
+    color: var(--doc-media-ink);
+    opacity: 0.85;
+}
+
+.doc-viewer-close {
+    position: absolute;
+    top: calc(14px + var(--sat, 0px));
+    left: calc(14px + var(--sal, 0px));
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 50%;
+    background: var(--doc-media-scrim);
+    color: var(--doc-media-ink);
+    font: 600 15px/1 var(--font-system);
+    cursor: pointer;
+}
+
+.doc-viewer-close:hover {
+    background: var(--doc-media-scrim-strong);
+}
+
+.doc-viewer-close:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+}
+
+/* The system setting, and the site's own Preferences > Reduce motion */
+@media (prefers-reduced-motion: reduce) {
+    .doc-viewer,
+    .doc-viewer-img,
+    .doc .doc-video .yt-lite-play,
+    .doc .doc-demo-overlay,
+    .doc .doc-toc-summary::before {
+        transition: none;
+    }
+
+    .doc-viewer-img {
+        transform: none;
+    }
+
+    .doc .doc-video .yt-lite:is(:hover, :focus-visible) .yt-lite-play {
+        transform: translate(-50%, -50%);
+    }
+}
+
+html[data-motion="reduce"] .doc-viewer,
+html[data-motion="reduce"] .doc-viewer-img,
+html[data-motion="reduce"] .doc .doc-video .yt-lite-play,
+html[data-motion="reduce"] .doc .doc-demo-overlay,
+html[data-motion="reduce"] .doc .doc-toc-summary::before {
+    transition: none;
+}
+
+html[data-motion="reduce"] .doc-viewer-img {
+    transform: none;
+}
+
+html[data-motion="reduce"] .doc .doc-video .yt-lite:is(:hover, :focus-visible) .yt-lite-play {
+    transform: translate(-50%, -50%);
+}
+
+/* ---------- Print ---------- */
+
+@media print {
+    .doc-progress,
+    .doc-toc,
+    .doc-footer,
+    .doc-viewer {
+        display: none !important;
+    }
+
+    .doc-inner {
+        width: auto !important;
+        padding: 0 !important;
+        display: block !important;
+    }
+
+    .doc .doc-body > * {
+        width: auto !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    .doc .doc-links-list a::after {
+        content: " (" attr(href) ")";
+        font-size: 0.85em;
+        overflow-wrap: anywhere;
+    }
+
+    .doc .doc-body a[data-external]::after {
+        content: " (" attr(href) ")";
+        font-size: 0.9em;
+        vertical-align: baseline;
+    }
+}

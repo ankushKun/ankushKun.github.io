@@ -1,0 +1,15 @@
+{{- /* A playable page embedded as a framed figure, behind a veil that lifts
+on hover or focus (styles: .doc-demo in assets/css/apps/doc.css).
+Usage: {{< demo src="https://..." title="What it is" caption="Move with WASD" >}}
+Optional: overlay="Click to play" (the veil's label). */ -}}
+{{- $src := .Get "src" -}}
+{{- $title := .Get "title" | default "Interactive demo" -}}
+<figure class="doc-figure doc-demo">
+  <div class="doc-demo-frame">
+    <iframe src="{{ $src }}" title="{{ $title }}" loading="lazy"></iframe>
+    <div class="doc-demo-overlay" aria-hidden="true">{{ .Get "overlay" | default "Click to play" }}</div>
+  </div>
+  {{- with .Get "caption" }}
+  <figcaption>{{ . | $.Page.RenderString }}</figcaption>
+  {{- end }}
+</figure>

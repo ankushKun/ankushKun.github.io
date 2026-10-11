@@ -1,0 +1,2 @@
+{{- /* Plain-text (llms-full.txt; keep in step with gallery.md) twin of gallery.html: the items one after another */ -}}
+{{ .Inner | strings.TrimSpace }}

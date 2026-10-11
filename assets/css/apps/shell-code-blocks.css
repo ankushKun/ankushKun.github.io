@@ -1,0 +1,70 @@
+/* ================================================
+   Code blocks in articles: language label and Copy button.
+   Added to each .highlight by decorateContent() in assets/js/mavericks.js;
+   .markdown-body .highlight is already position: relative (mavericks.css).
+   ================================================ */
+
+.highlight {
+    position: relative;
+}
+
+.code-tools {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-system);
+    font-size: 11px;
+    line-height: 1;
+}
+
+.code-lang {
+    color: rgba(255, 255, 255, 0.45);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    pointer-events: none;
+    user-select: none;
+}
+
+.code-copy {
+    padding: 4px 8px;
+    font: inherit;
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 4px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.12s ease, background 0.12s ease;
+}
+
+.highlight:hover .code-copy,
+.code-copy:focus-visible,
+.code-copy.copied {
+    opacity: 1;
+}
+
+.code-copy:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.code-copy.copied {
+    color: #7ee787;
+    border-color: rgba(126, 231, 135, 0.45);
+}
+
+/* No hover on touch screens: keep the button visible */
+@media (hover: none) {
+    .code-copy {
+        opacity: 1;
+    }
+}
+
+@media print {
+    .code-tools {
+        display: none;
+    }
+}

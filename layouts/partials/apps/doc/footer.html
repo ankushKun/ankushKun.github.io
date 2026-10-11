@@ -1,0 +1,49 @@
+{{- /*
+Foot of the shared document layout, in one order for every kind:
+tags -> reactions (blog posts and projects) -> author card with the RSS
+subscribe row (blog posts) -> previous / next -> related.
+
+Usage: {{ partial "apps/doc/footer.html" (dict "page" . "kind" "blog") }}
+*/ -}}
+{{- $p := .page -}}
+{{- $kind := .kind -}}
+<footer class="doc-footer">
+    {{- with $p.GetTerms "tags" }}
+    <div class="doc-tags">
+        <span class="doc-tags-label">Tagged</span>
+        <ul class="doc-tag-list" role="list">
+            {{- /* The tag page by its real URL (trailing slash, no redirect) */ -}}
+            {{- range . }}
+            <li><a href="{{ .RelPermalink }}" class="doc-tag" rel="tag">{{ .Data.Term }}</a></li>
+            {{- end }}
+        </ul>
+    </div>
+    {{- end }}
+
+    {{- if in (slice "blog" "project") $kind }}
+    {{ partial "apps/blog/social.html" (dict "page" $p "kind" $kind) }}
+    {{- end }}
+
+    {{- if eq $kind "blog" }}
+    {{- $name := site.Params.profile.name | default site.Params.author.name }}
+    <aside class="doc-author" aria-label="About the author">
+        <div class="doc-author-main">
+            <img class="doc-author-avatar" src="/pfp-128.webp" alt="" width="56" height="56" loading="lazy" decoding="async">
+            <div class="doc-author-text">
+                <p class="doc-author-name">Written by <a rel="author" href="{{ site.Home.RelPermalink }}about/">{{ $name }}</a></p>
+                <p class="doc-author-bio">Co-founder and CTO of Construct Computer, an AI workforce where agents get their own cloud computers.</p>
+            </div>
+        </div>
+        {{- /* The feed opens in a tab, never an embedded window */}}
+        {{- with $p.CurrentSection }}{{ with .OutputFormats.Get "rss" }}
+        <div class="doc-subscribe">
+            <span class="doc-subscribe-text">New posts, in your feed reader. No newsletter to sign up for, just RSS.</span>
+            <a href="{{ .RelPermalink }}" class="mac-btn small" data-open="tab" target="_blank" rel="noopener"
+                type="application/rss+xml">Subscribe via RSS</a>
+        </div>
+        {{- end }}{{ end }}
+    </aside>
+    {{- end }}
+
+    {{ partial "apps/related.html" $p }}
+</footer>

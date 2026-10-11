@@ -1,0 +1,147 @@
+/* ==========================================================================
+   Reactions popover - opened from the #online-count pill (cursors.js)
+   The pill's position and look stay in mavericks.css; this only makes it
+   clickable and styles what it opens.
+   ========================================================================== */
+
+#online-count {
+    margin: 0;
+    border: 0;
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+/* The pill is tiny; give it a finger-sized hit area without changing how it
+   looks. It is position:fixed, so it is the containing block for this. */
+#online-count::after {
+    content: "";
+    position: absolute;
+    inset: -10px -14px -6px -6px;
+}
+
+/* Compact mode: a window fills the screen, so the pill would sit on its
+   bottom-left corner and take taps meant for the content or the path bar's
+   "Desktop" link. It shows on the bare desktop only: #desktop is inert while
+   a window covers it (updateDesktopInert in mavericks.js), and route pages
+   are always a window. */
+@media (max-width: 768px), (pointer: coarse) and (max-height: 500px) {
+    body:has(#desktop[inert]) #online-count,
+    body:has(.static-window) #online-count {
+        visibility: hidden;
+    }
+}
+
+#online-count:hover,
+#online-count[aria-expanded="true"] {
+    background: rgba(50, 50, 50, 0.9);
+}
+
+#online-count:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 1px;
+}
+
+#reactions-popover {
+    position: fixed;
+    z-index: 999999;
+    width: max-content;
+    max-width: calc(100vw - 8px);
+    padding: 8px 10px 9px;
+    font-family: var(--font-system, -apple-system, BlinkMacSystemFont, sans-serif);
+    font-size: 11px;
+    line-height: 1.4;
+    color: #f2f2f2;
+    background: rgba(40, 40, 42, 0.94);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 9px;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+}
+
+#reactions-popover[hidden] {
+    display: none;
+}
+
+.reactions-row {
+    display: grid;
+    grid-template-columns: repeat(8, 32px);
+    gap: 2px;
+}
+
+.reaction-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    font-size: 19px;
+    line-height: 1;
+    background: transparent;
+    border: 0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: transform 0.08s ease, background 0.1s ease;
+}
+
+.reaction-btn:hover,
+.reaction-btn:focus-visible {
+    background: rgba(255, 255, 255, 0.16);
+    outline: none;
+}
+
+.reaction-btn:active {
+    transform: scale(0.86);
+}
+
+.reactions-hint {
+    margin: 6px 2px 7px;
+    color: rgba(255, 255, 255, 0.62);
+}
+
+.reactions-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 2px;
+    padding-top: 7px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    cursor: pointer;
+}
+
+.reactions-toggle input {
+    margin: 0;
+}
+
+/* Other people's cursors off; reactions share the layer and stay visible. */
+#cursor-layer.cursors-hidden .remote-cursor {
+    display: none;
+}
+
+/* No keyboard, bigger targets */
+@media (pointer: coarse) {
+    .reactions-row {
+        grid-template-columns: repeat(4, 44px);
+        gap: 4px;
+    }
+
+    .reaction-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 24px;
+    }
+
+    .reactions-keys {
+        display: none;
+    }
+
+    .reactions-toggle {
+        min-height: 32px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .reaction-btn {
+        transition: none;
+    }
+}

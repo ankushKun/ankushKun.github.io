@@ -1,3 +1,14 @@
-<a href="{{ .Get 0 }}" target="_blank" rel="noopener" class="shortcode-button">
-    {{ .Get 1 | default "View" }}
+{{- /* Usage: {{< button "https://example.com" "Label" >}}
+Archived variant (muted, for dead sites that only survive as a snapshot):
+{{< button "https://web.archive.org/web/2024/https://example.com" "Label" "archived" >}}
+Any web.archive.org link gets the archived treatment automatically. */ -}}
+{{- /* An inline small Aqua button that sits on the line of text it belongs
+to (styles: assets/css/apps/doc.css). A page's own resources (site, repo,
+store, docs) belong in front matter instead, where the links bar shows them:
+see layouts/partials/apps/doc/links-data.html. */ -}}
+{{- $href := .Get 0 -}}
+{{- $archived := or (eq (.Get 2) "archived") (strings.Contains $href "web.archive.org/") -}}
+<a href="{{ $href }}" target="_blank" rel="noopener" class="mac-btn small doc-inline-btn{{ if $archived }} archived{{ end }}"{{ if $archived }} title="Archived snapshot on the Wayback Machine: the original site is no longer online"{{ end }}>
+    {{- partial "apps/doc/glyph.html" (cond $archived "archive" "external") -}}
+    <span>{{ .Get 1 | default "View" }}</span>{{ if $archived }}<span class="doc-link-note">snapshot</span>{{ end -}}
 </a>

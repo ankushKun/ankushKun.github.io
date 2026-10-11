@@ -1,0 +1,30 @@
+{{/* One project card (used by projects/grid.html for the Featured row and the year grids).
+Usage: {{ partial "apps/projects/card.html" (dict "page" . "prefix" "project" "standalone" false) }}
+"showYear" true adds the year to the date badge (the Featured row mixes years).
+Always a real link. In a desktop window the data-* attributes let
+mavericks.js open the project in a window on a plain click. */}}
+{{- $standalone := .standalone -}}
+{{- $prefix := .prefix -}}
+{{- $dateFormat := cond (not (not .showYear)) "Jan 2006" "Jan" -}}
+{{- with .page }}
+<a href="{{ .RelPermalink }}" class="project-card finder-row{{ if $standalone }} project-link{{ end }}{{ if eq .Params.status "archived" }} is-archived{{ end }}"
+    data-date="{{ .Date.Unix }}" data-tags="{{ delimit (.Params.tags | default slice) " " | lower }}"
+    {{- if not $standalone }} data-window="{{ $prefix }}-{{ .File.UniqueID }}"
+    data-title="{{ .Title }}" data-permalink="{{ .Permalink }}"{{ end }}>
+    <div class="project-card-icon">
+        {{/* The project's cover when it has one, the folder otherwise */}}
+        {{ with partial "apps/thumb.html" (dict "src" .Params.og_image "spec" "120x90") }}
+        <img class="project-card-cover" src="{{ .RelPermalink }}" alt="" width="60" height="45" loading="lazy" decoding="async">
+        {{ else }}
+        {{ partial "icons/ui/folder.html" (dict "color" "#5A8CBB" "size" 48) }}
+        {{ end }}
+        <time class="project-card-date" datetime="{{ .Date.Format "2006-01" }}">{{ .Date.Format $dateFormat }}</time>
+    </div>
+    <div class="project-card-content">
+        <div class="project-card-title">{{ .Title }}{{ if eq .Params.status "archived" }} <span class="status-badge archived" title="No longer maintained">Archived</span>{{ end }}</div>
+        {{ with .Summary }}
+        <div class="project-card-summary">{{ . | plainify | htmlUnescape | truncate 100 }}</div>
+        {{ end }}
+    </div>
+</a>
+{{- end }}

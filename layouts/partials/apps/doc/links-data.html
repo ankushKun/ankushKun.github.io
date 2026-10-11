@@ -1,0 +1,81 @@
+{{- /*
+Every external resource of a blog post, project or timeline entry, in the
+order the links bar shows them. Returns a slice of dicts:
+  label, url, icon, title (tooltip, may be ""), primary (bool), archived (bool)
+
+Front matter it reads:
+  website = "https://..."            Website (the main destination)
+  demo    = "https://..."            Live demo
+  github  = "owner/repo" or a URL    GitHub (stays a single string: the
+                                     JSON-LD codeRepository reads it too)
+  npm     = "package" or a URL       npm
+  video   = "https://..."            Watch video (skipped when the same
+                                     YouTube video is embedded in the body)
+  links   = [{ label = "...", url = "...", icon = "github", primary = true }]
+            anything else: more repos, docs, stores, posts, snapshots.
+            icon is optional (guessed from the host); primary marks the main
+            destination when there is no website.
+
+A web.archive.org address is a snapshot of something that is gone: it is
+never primary and is labelled as archived wherever it is shown.
+
+Usage: {{ $links := partial "apps/doc/links-data.html" . }}
+*/ -}}
+{{- $p := . -}}
+{{- $raw := slice -}}
+{{- with $p.Params.website -}}
+{{- $raw = $raw | append (dict "label" "Website" "url" . "icon" "globe" "primary" true) -}}
+{{- end -}}
+{{- with $p.Params.demo -}}
+{{- $raw = $raw | append (dict "label" "Live demo" "url" . "icon" "play" "primary" (not $p.Params.website)) -}}
+{{- end -}}
+{{- with $p.Params.github -}}
+{{- $name := . | replaceRE `^https?://(www\.)?github\.com/` "" | strings.TrimSuffix "/" -}}
+{{- $url := . -}}
+{{- if not (findRE `^https?://` .) }}{{ $url = printf "https://github.com/%s" . }}{{ end -}}
+{{- $raw = $raw | append (dict "label" "GitHub" "url" $url "icon" "github" "title" (printf "%s on GitHub" $name)) -}}
+{{- end -}}
+{{- with $p.Params.npm -}}
+{{- $pkg := . | replaceRE `^https?://(www\.)?npmjs\.com/package/` "" | strings.TrimSuffix "/" -}}
+{{- $url := . -}}
+{{- if not (findRE `^https?://` .) }}{{ $url = printf "https://www.npmjs.com/package/%s" . }}{{ end -}}
+{{- $raw = $raw | append (dict "label" "npm" "url" $url "icon" "npm" "title" (printf "%s on npm" $pkg)) -}}
+{{- end -}}
+{{- range $p.Params.links -}}
+{{- $url := .url | default "" -}}
+{{- if $url -}}
+{{- $host := (urls.Parse $url).Hostname | lower | strings.TrimPrefix "www." -}}
+{{- $icon := .icon | default "" -}}
+{{- if not $icon -}}
+{{- $icon = "link" -}}
+{{- if eq $host "github.com" }}{{ $icon = "github" -}}
+{{- else if eq $host "npmjs.com" }}{{ $icon = "npm" -}}
+{{- else if in (slice "x.com" "twitter.com") $host }}{{ $icon = "x" -}}
+{{- else if in (slice "youtube.com" "youtu.be") $host }}{{ $icon = "video" -}}
+{{- else if strings.HasSuffix $host "itch.io" }}{{ $icon = "gamepad" -}}
+{{- else if eq $host "gist.github.com" }}{{ $icon = "code" -}}
+{{- end -}}
+{{- end -}}
+{{- $raw = $raw | append (dict "label" (.label | default $host) "url" $url "icon" $icon "title" (.title | default "") "primary" (and (not $p.Params.website) (not $p.Params.demo) (.primary | default false))) -}}
+{{- end -}}
+{{- end -}}
+{{- with $p.Params.video -}}
+{{- $yt := index (findRESubmatch `(?:youtu\.be/|[?&]v=|/embed/)([A-Za-z0-9_-]{6,20})` . 1) 0 -}}
+{{- $id := cond (gt (len $yt) 1) (index $yt 1) "" -}}
+{{- if or (not $id) (not (strings.Contains (string $p.RawContent) $id)) -}}
+{{- $raw = $raw | append (dict "label" "Watch video" "url" . "icon" "video") -}}
+{{- end -}}
+{{- end -}}
+{{- $out := slice -}}
+{{- $seen := slice -}}
+{{- range $raw -}}
+{{- if not (in $seen .url) -}}
+{{- $seen = $seen | append .url -}}
+{{- $archived := gt (len (findRE `^https?://web\.archive\.org/` .url)) 0 -}}
+{{- $icon := cond $archived "archive" .icon -}}
+{{- $title := .title | default "" -}}
+{{- if $archived }}{{ $title = "Archived snapshot on the Wayback Machine: the original is no longer online" }}{{ end -}}
+{{- $out = $out | append (dict "label" .label "url" .url "icon" $icon "title" $title "primary" (and (.primary | default false) (not $archived)) "archived" $archived) -}}
+{{- end -}}
+{{- end -}}
+{{- return $out -}}

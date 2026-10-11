@@ -1,0 +1,15 @@
+{{- /*
+Markdown links. Same markup as Goldmark's default (href, optional title), plus
+data-external on links that leave the site, which assets/css/apps/doc.css
+marks with a small arrow. The desktop shell's link handling in
+assets/js/mavericks.js is unchanged: external links still open in a window or
+a tab, and links to this site (including ref shortcode output, an absolute
+URL on the site's own host) open as windows.
+*/ -}}
+{{- $dest := .Destination -}}
+{{- $u := urls.Parse $dest -}}
+{{- $own := (urls.Parse site.BaseURL).Hostname | lower | strings.TrimPrefix "www." -}}
+{{- $host := $u.Hostname | lower | strings.TrimPrefix "www." -}}
+{{- $external := and (in (slice "http" "https") $u.Scheme) $host (ne $host $own) (not (strings.HasSuffix $host (print "." $own))) -}}
+<a href="{{ $dest | safeURL }}"{{ with .Title }} title="{{ . }}"{{ end }}{{ if $external }} data-external{{ end }}>{{ .Text }}</a>
+{{- /* chomp trailing newline so the link does not gain a stray space */ -}}

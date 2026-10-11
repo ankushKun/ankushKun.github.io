@@ -1,0 +1,2 @@
+{{- /* Plain-text twin of github.html for llms-full.txt (text/plain cannot use the .md one); keep in step with github.md */ -}}
+[github.com/{{ .Get 0 }}](https://github.com/{{ .Get 0 }})

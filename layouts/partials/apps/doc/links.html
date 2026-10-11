@@ -1,0 +1,22 @@
+{{- /*
+Links bar: every external resource of the page in one row of Aqua buttons
+right under the header, the same on every blog post, project and timeline
+entry. Data and front matter: apps/doc/links-data.html.
+
+Usage: {{ partial "apps/doc/links.html" . }} where . is a Page
+*/ -}}
+{{- with partial "apps/doc/links-data.html" . }}
+<nav class="doc-links" aria-label="Links">
+    <ul class="doc-links-list" role="list">
+        {{- range . }}
+        <li><a href="{{ .url }}" target="_blank" rel="noopener" class="mac-btn doc-link{{ if .primary }} primary{{ end }}{{ if .archived }} archived{{ end }}"{{ with .title }} title="{{ . }}"{{ end }}>
+            {{- partial "apps/doc/glyph.html" .icon -}}
+            <span class="doc-link-label">{{ .label }}</span>
+            {{- /* "Snapshot", not "archived": the header's Archived badge is the
+            project's status, this is a Wayback Machine copy of a page */ -}}
+            {{- if .archived }}<span class="doc-link-note">snapshot</span>{{ end -}}
+        </a></li>
+        {{- end }}
+    </ul>
+</nav>
+{{- end }}

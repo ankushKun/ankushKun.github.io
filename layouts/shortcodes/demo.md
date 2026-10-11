@@ -1,0 +1,3 @@
+{{- /* Markdown twin of demo.html: a link to the playable page */ -}}
+{{- $title := .Get "title" | default "Interactive demo" -}}
+[{{ $title }}]({{ .Get "src" }}){{ with .Get "caption" }} ({{ . | plainify }}){{ end }}
