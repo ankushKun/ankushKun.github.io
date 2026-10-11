@@ -19,25 +19,38 @@ Usage:
 {{ $showToolbar := default true .showToolbar }}
 {{ $downloadLabel := default "↗" .downloadLabel }}
 {{ $external := default false .external }}
+{{/* Anything served from another origin is third-party, whether or not the
+caller passed "external". Same-origin embeds (/resume.pdf, /doom/) must stay
+unsandboxed: a sandboxed frame cannot load the browser's PDF viewer. */}}
+{{ $thirdParty := or $external (hasPrefix $url "http://") (hasPrefix $url "https://") (hasPrefix $url "//") }}
+{{/* Optional "background" (a CSS colour) paints the frame before the embed
+does. Doom is dark from the first frame, so it defaults to black. */}}
+{{ $background := .background }}
+{{ if and (not $background) (eq $id "doom") }}{{ $background = "#000" }}{{ end }}
 
 <div id="content-{{ $id }}">
     <div class="external-window" style="height: 100%; display: flex; flex-direction: column;">
         {{ if $showToolbar }}
         <div class="window-toolbar">
             <div class="url-bar">
-                <span class="url-icon">{{ $icon }}</span>
+                <span class="url-icon" aria-hidden="true">{{ $icon }}</span>
                 <span class="url-text">{{ $title }}</span>
             </div>
-            <a href="{{ $url }}" target="_blank" class="open-external" title="Open in new tab">{{ $downloadLabel }}</a>
+            <a href="{{ $url }}" target="_blank" rel="noopener" class="open-external" title="Open in new tab" aria-label="Open in new tab">{{ $downloadLabel }}</a>
         </div>
         {{ end }}
-        <div class="window-iframe-container" style="flex: 1; position: relative;">
-            <div class="window-loader">
-                <div class="spinner"></div>
+        <div class="window-iframe-container{{ with $background }} window-iframe-dark{{ end }}" style="flex: 1; position: relative;{{ with $background }} background: {{ . }};{{ end }}">
+            <div class="window-loader" role="status" aria-label="Loading">
+                <div class="spinner mac-spinner"></div>
             </div>
-            <iframe data-src="{{ $url }}" frameborder="0" {{ if $external }}allowfullscreen{{ end }}
+            <iframe data-src="{{ $url }}" title="{{ $title | default $id }}" frameborder="0" allowfullscreen
+                allow="fullscreen; gamepad; autoplay"
+                {{- if $thirdParty }}
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-pointer-lock allow-modals allow-presentation allow-downloads"
+                referrerpolicy="strict-origin-when-cross-origin"
+                {{- end }}
                 onload="this.previousElementSibling.style.display='none'"
-                style="width: 100%; height: 100%;{{ if eq $id " doom" }} background: #000;{{ end }}"></iframe>
+                style="width: 100%; height: 100%;{{ with $background }} background: {{ . }};{{ end }}"></iframe>
         </div>
     </div>
 </div>

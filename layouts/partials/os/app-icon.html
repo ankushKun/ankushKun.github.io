@@ -12,13 +12,29 @@ Contexts map to fixed visual sizes in CSS: desktop 64px, grid 48px, spotlight/no
 {{- with $icon -}}{{- $iconType = .type -}}{{- end -}}
 {{- $classes := slice "app-icon" (printf "app-icon-%s" $context) (printf "app-icon-type-%s" $iconType) (printf "app-icon-fit-%s" $fit) -}}
 {{- with .class -}}{{- $classes = $classes | append . -}}{{- end -}}
-{{- $loading := "eager" -}}
-{{- if eq $context "desktop" -}}{{- $loading = "lazy" -}}{{- end -}}
+{{/* Desktop icons are on screen at first paint. Every other context lives in
+a hidden template or a list that is cloned on demand, where an eager image
+would be fetched on every page view without ever being shown. */}}
+{{- $loading := "lazy" -}}
+{{- if eq $context "desktop" -}}{{- $loading = "eager" -}}{{- end -}}
+{{- $px := index (dict "desktop" 64 "grid" 48 "spotlight" 32 "notification" 32 "chrome" 18) $context | default 64 -}}
 <span class="{{ delimit $classes " " }}" aria-hidden="true">
     {{- if and $icon (eq $icon.type "image") -}}
-    <img src="{{ $icon.src }}" alt="" draggable="false" loading="{{ $loading }}">
+    <img src="{{ $icon.src }}" alt="" draggable="false" width="{{ $px }}" height="{{ $px }}" loading="{{ $loading }}" decoding="async">
     {{- else if and $icon (eq $icon.type "partial") -}}
-    <span class="app-icon-art">{{ partial $icon.partial $app }}</span>
+    {{- $art := partial $icon.partial $app -}}
+    {{- /* The desktop icon keeps the artwork's own gradient ids. Every other
+    copy (list toolbars, Spotlight data) gets them suffixed with the context,
+    so the home page never holds two elements with the same id and each
+    copy's url(#...) points at its own definitions. */ -}}
+    {{- if ne $context "desktop" -}}
+    {{- $sfx := printf "-%s" $context -}}
+    {{- $art = $art | replaceRE `(\sid=")([^"]+)(")` (printf "${1}${2}%s${3}" $sfx) -}}
+    {{- $art = $art | replaceRE `(url\(\s*['"]?#)([^'")\s]+)` (printf "${1}${2}%s" $sfx) -}}
+    {{- $art = $art | replaceRE `((?:xlink:)?href="#)([^"]+)` (printf "${1}${2}%s" $sfx) -}}
+    {{- $art = $art | safeHTML -}}
+    {{- end -}}
+    <span class="app-icon-art">{{ $art }}</span>
     {{- else -}}
     <span class="app-icon-art">{{ partial "icons/desktop/document.html" $app }}</span>
     {{- end -}}

@@ -1,0 +1,16 @@
+/* ================================================
+   Menubar clock beside minimised windows (compact layouts)
+   On a phone the minimised-window chips are the only on-screen trace of a
+   minimised window (there is no Dock), and the tray is the one item in
+   .menubar-right that shrinks. With the people-online item, sound, search
+   and the full "Mon, Oct 12, 2:10 AM" clock beside it, it was left a few
+   pixels wide. While it holds chips, the clock keeps just the time (the
+   phone's own status bar has the date too). setupClock() in
+   assets/js/mavericks.js renders .clock-date and .clock-time.
+   ================================================ */
+
+@media (max-width: 768px), (pointer: coarse) and (max-height: 500px) {
+    .menubar-minimized:not(:empty) ~ #clock .clock-date {
+        display: none;
+    }
+}

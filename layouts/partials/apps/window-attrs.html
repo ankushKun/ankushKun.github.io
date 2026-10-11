@@ -1,0 +1,19 @@
+{{/*
+The data-* attributes that let the desktop shell open a content page in a
+window instead of navigating to it. Put them on a real <a href> together
+with one of the classes setupFinderItems() binds in mavericks.js
+(.finder-item is the unstyled one). Only live desktop windows are bound, so
+on a direct-link page the element stays a plain link.
+
+The window id (<prefix>-<File.UniqueID>) is the same one the Blogs, Projects
+and Timeline apps use, so a page never opens twice.
+
+Usage: <a href="{{ .RelPermalink }}" class="finder-item" {{ partial "apps/window-attrs.html" . }}>
+*/}}
+{{- $attrs := "" -}}
+{{- with .File -}}
+{{- $prefix := "timeline" -}}
+{{- if eq $.Section "blogs" }}{{ $prefix = "post" }}{{ else if eq $.Section "projects" }}{{ $prefix = "project" }}{{ end -}}
+{{- $attrs = printf `data-window="%s-%s" data-title="%s" data-permalink="%s"` $prefix .UniqueID ($.Title | htmlEscape) ($.Permalink | htmlEscape) -}}
+{{- end -}}
+{{- return ($attrs | safeHTMLAttr) -}}

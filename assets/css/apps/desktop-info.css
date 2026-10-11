@@ -1,0 +1,101 @@
+/* ================================================
+   Get Info
+   The small inspector opened from File > Get Info, or from the context menu
+   of an icon, a Dock item or a titlebar. Built by openInfoWindow() in
+   assets/js/mavericks.js from the app registry and the search index.
+   ================================================ */
+
+.window.info-window .window-content {
+    padding: 0;
+    background: var(--window-bg-solid);
+}
+
+.gi-pane {
+    padding: 16px 18px 18px;
+    font-family: var(--font-system);
+    font-size: 12px;
+    color: var(--text-color);
+}
+
+.gi-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.gi-icon {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+}
+
+.gi-icon .app-icon {
+    --app-icon-size: 48px;
+}
+
+.gi-heading {
+    min-width: 0;
+}
+
+.gi-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    overflow-wrap: anywhere;
+}
+
+.gi-kind {
+    margin-top: 2px;
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+.gi-description {
+    margin: 12px 0 0;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+/* "General:" disclosure heading, as in the Finder inspector */
+.gi-section {
+    margin: 14px 0 6px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+.gi-rows {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 5px 8px;
+    margin: 0;
+}
+
+.gi-row {
+    display: contents;
+}
+
+.gi-row dt {
+    font-weight: 700;
+    text-align: right;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.gi-row dd {
+    margin: 0;
+    min-width: 0;
+    color: var(--text-primary);
+    overflow-wrap: anywhere;
+}
+
+.gi-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+}

@@ -1,101 +1,238 @@
 {{ define "main" }}
-<div class="static-window centered-window">
+{{/*
+404 - an OS X alert: caution icon, what went wrong, ways out.
+.alert-window, not .static-window: a dialog keeps its own size on phones
+instead of being stretched into a full-height sheet.
+Styles: assets/css/apps/alert.css
+*/}}
+<div class="alert-window" role="alertdialog" aria-labelledby="alert-title" aria-describedby="alert-text">
     <div class="window-titlebar">
-        {{ partial "os/window/controls.html" (dict "closeLink" "/") }}
-        <div class="window-title">Error</div>
+        {{ partial "os/window/controls.html" (dict "closeLink" "/" "inert" true) }}
+        <div class="window-title">Finder</div>
     </div>
-    <div class="window-content error-content">
-        <div class="error-icon">⚠️</div>
-        <h1>404</h1>
-        <p>The content you are looking for could not be found.</p>
-        <a href="/" class="action-btn primary">Back to Desktop</a>
+    <div class="alert-body">
+        <div class="alert-icon" aria-hidden="true">
+            <svg width="64" height="64" viewBox="0 0 64 64" focusable="false">
+                <defs>
+                    <linearGradient id="alert-caution-fill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0" stop-color="#FFE45C" />
+                        <stop offset="1" stop-color="#F5B400" />
+                    </linearGradient>
+                </defs>
+                <path d="M32 6 L60 56 H4 Z" fill="url(#alert-caution-fill)" stroke="#B88300" stroke-width="2"
+                    stroke-linejoin="round" />
+                <rect x="29" y="24" width="6" height="18" rx="3" fill="#3A2C00" />
+                <circle cx="32" cy="48.500" r="3.500" fill="#3A2C00" />
+            </svg>
+        </div>
+        <div class="alert-message">
+            {{/* The script below names the missing path (as text, never HTML) */}}
+            <h1 class="alert-title" id="alert-title">This page can’t be found.</h1>
+            <p class="alert-text" id="alert-text">It may have been moved or renamed, or it never existed (error 404).
+                Search the site, or pick up from one of these:</p>
+            {{/* Filled by the script below from /index.json: the closest real
+            pages to the address that was asked for. Styles:
+            assets/css/apps/notfound-suggest.css */}}
+            <div class="alert-suggest" id="alert-suggest" hidden>
+                <p class="alert-subhead" id="alert-suggest-title">Did you mean</p>
+                <ul class="alert-suggest-list" aria-labelledby="alert-suggest-title"></ul>
+            </div>
+            <nav class="alert-links" aria-label="Site">
+                {{ range site.Menus.main }}<a href="{{ .URL }}">{{ .Name }}</a>{{ end }}
+            </nav>
+            {{ with site.GetPage "/blogs" }}
+            <p class="alert-subhead alert-latest">Latest posts</p>
+            <ul class="alert-posts alert-latest">
+                {{ range first 3 .RegularPages.ByDate.Reverse }}
+                <li><a href="{{ .RelPermalink }}">{{ .Title }}</a></li>
+                {{ end }}
+            </ul>
+            {{ end }}
+        </div>
+    </div>
+    <div class="alert-actions">
+        {{/* Shown by the script once Spotlight is known to be available */}}
+        <button type="button" class="mac-btn" id="alert-search" hidden>Search…</button>
+        <a href="/blogs/" class="mac-btn">Blogs</a>
+        <a href="/" class="mac-btn primary">Back to Desktop</a>
     </div>
 </div>
 
-<style>
-    .centered-window {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 400px;
-        height: auto;
-        min-height: 250px;
-        background: var(--window-bg);
-        border-radius: 6px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-        display: flex;
-        flex-direction: column;
-        border: 1px solid var(--window-border);
-        z-index: 1000;
-        /* Override generic static window animation which only translates X */
-        animation: centeredWindowOpen 0.3s cubic-bezier(0.19, 1, 0.22, 1) !important;
-    }
+<script>
+    (function () {
+        var rawPath = window.location.pathname;
+        var path = rawPath;
+        try { path = decodeURIComponent(rawPath); } catch (e) { /* keep the raw path */ }
 
-    @keyframes centeredWindowOpen {
-        0% {
-            transform: translate(-50%, -50%) scale(0.95);
-            opacity: 0;
+        var title = document.getElementById('alert-title');
+        if (title) {
+            var shown = path.length > 60 ? path.slice(0, 57) + '…' : path;
+            title.textContent = 'The page “' + shown + '” can’t be found.';
         }
 
-        100% {
-            transform: translate(-50%, -50%) scale(1);
-            opacity: 1;
+        // ---- Closest real pages -------------------------------------------
+        // The bad address is scored against every page and app in the search
+        // index (slug and title), so a typo, a renamed post or a guessed URL
+        // still lands somewhere useful.
+
+        // Words that say nothing about which page was meant
+        var STOP = {};
+        ('the a an and or of to in on for with how is my me i it this that ' +
+            'index html htm php asp aspx md www page pages blog blogs post posts ' +
+            'project projects timeline category categories tag tags en amp').split(' ')
+            .forEach(function (w) { STOP[w] = true; });
+
+        // A leading /blog/, /posts/, /project/ ... hints at the section
+        var SECTION_HINTS = {
+            blog: 'blogs', blogs: 'blogs', post: 'blogs', posts: 'blogs', article: 'blogs', articles: 'blogs',
+            project: 'projects', projects: 'projects', work: 'projects', portfolio: 'projects',
+            timeline: 'timeline'
+        };
+
+        var KIND_LABELS = { blogs: 'Blog post', projects: 'Project', timeline: 'Timeline', game: 'Game', app: 'App' };
+
+        function fold(s) {
+            s = String(s || '').toLowerCase();
+            return s.normalize ? s.normalize('NFKD').replace(/[̀-ͯ]/g, '') : s;
         }
-    }
 
-    .error-content {
-        padding: 30px 20px;
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-    }
-
-    .error-icon {
-        font-size: 48px;
-        margin-bottom: 16px;
-    }
-
-    .error-content h1 {
-        font-size: 32px;
-        margin-bottom: 8px;
-        font-weight: 500;
-        color: #333;
-    }
-
-    .error-content p {
-        font-size: 14px;
-        color: #666;
-        margin-bottom: 24px;
-    }
-
-    .action-btn.primary {
-        background: linear-gradient(180deg, #6CB3FA 0%, #007AFF 100%);
-        color: white;
-        border: 1px solid #0056B3;
-        border-radius: 4px;
-        padding: 6px 16px;
-        font-size: 13px;
-        font-weight: 500;
-        text-decoration: none;
-        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
-        transition: all 0.1s;
-    }
-
-    .action-btn.primary:active {
-        background: #0056B3;
-        transform: translateY(1px);
-    }
-
-    /* Mobile override for 404 */
-    @media (max-width: 480px) {
-        .centered-window {
-            width: 90%;
-            min-width: 280px;
+        function words(s) {
+            // camelCase in a typed address ("betterIDE") is two words
+            return fold(String(s || '').replace(/([a-z])([A-Z])/g, '$1 $2')).split(/[^a-z0-9]+/).filter(function (w) { return w && !STOP[w]; });
         }
-    }
-</style>
+
+        function bigrams(s) {
+            var out = [];
+            for (var i = 0; i < s.length - 1; i++) out.push(s.slice(i, i + 2));
+            return out;
+        }
+
+        // Sørensen–Dice on character pairs: forgiving of typos and word order
+        function dice(a, b) {
+            if (!a || !b) return 0;
+            if (a === b) return 1;
+            if (a.length < 2 || b.length < 2) return 0;
+            var pa = bigrams(a), pb = bigrams(b), counts = {}, hits = 0;
+            pa.forEach(function (p) { counts[p] = (counts[p] || 0) + 1; });
+            pb.forEach(function (p) { if (counts[p] > 0) { counts[p]--; hits++; } });
+            return (2 * hits) / (pa.length + pb.length);
+        }
+
+        function wordScore(q, candidateWords) {
+            var best = 0;
+            candidateWords.forEach(function (c) {
+                var s = 0;
+                if (c === q) s = 1;
+                else if (q.length >= 3 && c.length >= 3 && (c.indexOf(q) === 0 || q.indexOf(c) === 0)) {
+                    // A prefix counts for more the more of the word it covers
+                    s = 0.55 + 0.4 * Math.min(q.length, c.length) / Math.max(q.length, c.length);
+                }
+                else s = dice(q, c);
+                if (s > best) best = s;
+            });
+            return best;
+        }
+
+        function lastSegment(p) {
+            var parts = String(p || '').split('/').filter(Boolean);
+            return parts.length ? parts[parts.length - 1] : '';
+        }
+
+        function suggest(index) {
+            var segments = path.split('/').filter(Boolean);
+            var hint = segments.length ? SECTION_HINTS[fold(segments[0])] : null;
+            var qWords = words(segments.join(' '));
+            if (!qWords.length) return [];
+            var qJoined = qWords.join('');
+
+            var scored = [];
+            index.forEach(function (item) {
+                if (!item || typeof item.title !== 'string') return;
+                var isApp = item.kind === 'app';
+                var href = item.permalink || (isApp && item.openWindow ? '/?open=' + encodeURIComponent(item.openWindow) : '');
+                if (!href || href.charAt(0) !== '/') return;
+
+                var slug = isApp && !item.permalink ? item.openWindow : lastSegment(item.permalink);
+                var slugWords = words(slug);
+                var cWords = slugWords.concat(words(item.title));
+                var joined = dice(qJoined, slugWords.join(''));
+                var perWord = 0;
+                qWords.forEach(function (w) { perWord += wordScore(w, cWords); });
+                perWord /= qWords.length;
+
+                var score = Math.max(joined, perWord * 0.95);
+                if (hint && item.type === hint) score += 0.08;
+                if (score >= 0.55) scored.push({ item: item, href: href, score: score });
+            });
+
+            scored.sort(function (a, b) {
+                return (b.score - a.score) || String(b.item.date || '').localeCompare(String(a.item.date || ''));
+            });
+            // One entry per destination (an app and its page share a permalink)
+            // ...and nothing far behind the best match: a clear hit stands alone
+            var floor = scored.length ? scored[0].score * 0.75 : 0;
+            var seen = {};
+            return scored.filter(function (s) {
+                if (s.score < floor || seen[s.href]) return false;
+                seen[s.href] = true;
+                return true;
+            }).slice(0, 3);
+        }
+
+        function renderSuggestions(list) {
+            var box = document.getElementById('alert-suggest');
+            if (!box || !list.length) return;
+            var ul = box.querySelector('ul');
+            list.forEach(function (s, rank) {
+                var li = document.createElement('li');
+                var a = document.createElement('a');
+                a.href = s.href;
+                var name = document.createElement('span');
+                name.className = 'alert-suggest-name';
+                name.textContent = s.item.title;
+                var meta = document.createElement('span');
+                meta.className = 'alert-suggest-meta';
+                var label = KIND_LABELS[s.item.type] || 'Page';
+                meta.textContent = s.item.permalink ? label + ' · ' + s.item.permalink : label;
+                a.appendChild(name);
+                a.appendChild(meta);
+                a.addEventListener('click', function () {
+                    if (window.track) window.track('not_found_suggestion', { rank: rank + 1, kind: s.item.type });
+                });
+                li.appendChild(a);
+                ul.appendChild(li);
+            });
+            box.hidden = false;
+            // The closest matches replace the generic list, keeping the alert short
+            Array.prototype.forEach.call(document.querySelectorAll('.alert-latest'), function (el) { el.hidden = true; });
+        }
+
+        if (window.fetch) {
+            fetch('/index.json', { credentials: 'same-origin' })
+                .then(function (r) { return r.ok ? r.json() : []; })
+                .then(function (index) { if (Array.isArray(index)) renderSuggestions(suggest(index)); })
+                .catch(function () { /* the static links still work */ });
+        }
+
+        // mavericks.js is deferred, so its globals exist only after parsing
+        document.addEventListener('DOMContentLoaded', function () {
+            var search = document.getElementById('alert-search');
+            if (!search || typeof window.toggleSpotlightFromMenu !== 'function') return;
+            search.hidden = false;
+            search.addEventListener('click', function (e) {
+                // Spotlight closes on outside clicks; keep this one from reaching it
+                e.stopPropagation();
+                window.toggleSpotlightFromMenu();
+                // Start the search from the words of the address that missed
+                var input = document.getElementById('spotlight-input');
+                var query = words(path.split('/').join(' ')).join(' ');
+                if (input && query && !input.value) {
+                    input.value = query;
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    input.select();
+                }
+            });
+        });
+    })();
+</script>
 {{ end }}

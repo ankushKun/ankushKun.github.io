@@ -1,0 +1,148 @@
+{{/* Menubar menus after the app name: File, Edit, View, Go, Window, Help.
+
+Same pattern as the Apple menu in baseof.html: a wrapper holding
+button.menu-trigger[aria-controls] and its [role=menu] dropdown, with items
+wired in mavericks.js by data-menu-action (MENU_ACTIONS).
+
+  data-menu-needs   state an item depends on; the shell disables or hides it
+                    each time the menu opens (see updateMenuState)
+  data-shortcut     chord shown at the right, spelled per platform by the shell
+                    ("alt+W" becomes "⌥W" on a Mac and "Alt+W" elsewhere)
+
+Every item does something real. Nothing here is rendered on phones: the
+stylesheet hides .menubar-menu in compact mode, where the Apple menu keeps the
+essentials. */}}
+{{- $apps := where hugo.Data.apps.apps "type" "app" -}}
+
+<div class="menu-item menubar-menu">
+    <button type="button" class="menu-trigger" id="menu-file-trigger" aria-haspopup="menu" aria-expanded="false"
+        aria-controls="menu-file">File</button>
+    <div class="apple-dropdown" id="menu-file" role="menu" aria-labelledby="menu-file-trigger">
+        <button type="button" class="dropdown-item" role="menuitem" tabindex="-1" data-menu-action="new-sticky"
+            data-menu-needs="personal">New Sticky Note</button>
+        <button type="button" class="dropdown-item" role="menuitem" tabindex="-1" data-menu-action="search"
+            data-shortcut="mod+K">Search…</button>
+        <div class="dropdown-divider" role="separator"></div>
+        <button type="button" class="dropdown-item" role="menuitem" tabindex="-1" data-menu-action="close-window"
+            data-menu-needs="window" data-shortcut="alt+W">Close Window</button>
+        <button type="button" class="dropdown-item" role="menuitem" tabindex="-1" data-menu-action="close-all"
+            data-menu-needs="windows">Close All Windows</button>
+        <div class="dropdown-divider" role="separator"></div>
+        <button type="button" class="dropdown-item" role="menuitem" tabindex="-1" data-menu-action="get-info"
+            data-menu-needs="window-app">Get Info</button>
+        <button type="button" class="dropdown-item" role="menuitem" tabindex="-1" data-menu-action="copy-link"
+            data-menu-needs="link">Copy Link</button>
+        <button type="button" class="dropdown-item" role="menuitem" tabindex="-1" data-menu-action="open-tab"
+            data-menu-needs="link">Open in New Tab</button>
+        <div class="dropdown-divider" role="separator"></div>
+        <button type="button" class="dropdown-item" role="menuitem" tabindex="-1"
+            data-menu-action="print">Print…</button>
+    </div>
+</div>
+
+<div class="menu-item menubar-menu">
+    <button type="button" class="menu-trigger" id="menu-edit-trigger" aria-haspopup="menu" aria-expanded="false"
+        aria-controls="menu-edit">Edit</button>
+    <div class="apple-dropdown" id="menu-edit" role="menu" aria-labelledby="menu-edit-trigger">
+        <button type="button" class="dropdown-item" role="menuitem" tabindex="-1" data-menu-action="edit-undo"
+            data-menu-needs="editable" data-shortcut="mod+Z">Undo</button>
+        <button type="button" class="dropdown-item" role="menuitem" tabindex="-1" data-menu-action="edit-redo"
+            data-menu-needs="editable" data-shortcut="mod+shift+Z">Redo</button>
+        <div class="dropdown-divider" role="separator"></div>
+        <button type="button" class="dropdown-item" role="menuitem" tabindex="-1" data-menu-action="edit-cut"
+            data-menu-needs="editable-selection" data-shortcut="mod+X">Cut</button>
+        <button type="button" class="dropdown-item" role="menuitem" tabindex="-1" data-menu-action="edit-copy"
+            data-menu-needs="selection" data-shortcut="mod+C">Copy</button>
+        <button type="button" class="dropdown-item" role="menuitem" tabindex="-1" data-menu-action="edit-paste"
+            data-menu-needs="paste" data-shortcut="mod+V">Paste</button>
+        <button type="button" class="dropdown-item" role="menuitem" tabindex="-1" data-menu-action="edit-select-all"
+            data-shortcut="mod+A">Select All</button>
+        <div class="dropdown-divider" role="separator"></div>
+        <button type="button" class="dropdown-item" role="menuitem" tabindex="-1" data-menu-action="search"
+            data-shortcut="mod+K">Find…</button>
+    </div>
+</div>
+
+<div class="menu-item menubar-menu">
+    <button type="button" class="menu-trigger" id="menu-view-trigger" aria-haspopup="menu" aria-expanded="false"
+        aria-controls="menu-view">View</button>
+    <div class="apple-dropdown" id="menu-view" role="menu" aria-labelledby="menu-view-trigger">
+        <button type="button" class="dropdown-item" role="menuitem" tabindex="-1" data-menu-action="clean-up"
+            data-menu-needs="personal">Clean Up</button>
+        <button type="button" class="dropdown-item" role="menuitem" tabindex="-1" data-menu-action="sort-icons"
+            data-menu-needs="personal">Sort Icons by Name</button>
+        <button type="button" class="dropdown-item" role="menuitem" tabindex="-1" data-menu-action="reset-icons"
+            data-menu-needs="arranged">Restore Default Arrangement</button>
+        <div class="dropdown-divider" role="separator" data-menu-needs="personal"></div>
+        <button type="button" class="dropdown-item" role="menuitemcheckbox" aria-checked="false" tabindex="-1"
+            data-menu-action="toggle-shared-sticky" data-menu-needs="shared-sticky">Shared Sticky Note</button>
+        <button type="button" class="dropdown-item" role="menuitemcheckbox" aria-checked="true" tabindex="-1"
+            data-menu-action="toggle-sound" data-menu-needs="sound">Sound Effects</button>
+        <div class="dropdown-divider" role="separator"></div>
+        <button type="button" class="dropdown-item" role="menuitem" tabindex="-1" data-menu-action="desktop-background"
+            data-menu-needs="prefs">Change Desktop Background…</button>
+        <button type="button" class="dropdown-item" role="menuitem" tabindex="-1" data-menu-action="page-fullscreen"
+            data-menu-needs="fullscreen">Enter Full Screen</button>
+    </div>
+</div>
+
+<div class="menu-item menubar-menu">
+    <button type="button" class="menu-trigger" id="menu-go-trigger" aria-haspopup="menu" aria-expanded="false"
+        aria-controls="menu-go">Go</button>
+    <div class="apple-dropdown" id="menu-go" role="menu" aria-labelledby="menu-go-trigger">
+        {{/* Real links: they also work on article pages, where there is no
+        desktop to open a window on, and for Cmd-click. */}}
+        <a class="dropdown-item" role="menuitem" tabindex="-1" href="/" data-menu-action="go-desktop">Desktop</a>
+        <div class="dropdown-divider" role="separator"></div>
+        {{- range $apps }}
+        <a class="dropdown-item" role="menuitem" tabindex="-1"
+            href="{{ with .contentPermalink }}{{ . }}{{ else }}/?open={{ .id }}{{ end }}" data-menu-action="open-app"
+            data-app="{{ .id }}">{{ .label | default .title }}</a>
+        {{- end }}
+    </div>
+</div>
+
+<div class="menu-item menubar-menu">
+    <button type="button" class="menu-trigger" id="menu-window-trigger" aria-haspopup="menu" aria-expanded="false"
+        aria-controls="menu-window">Window</button>
+    <div class="apple-dropdown" id="menu-window" role="menu" aria-labelledby="menu-window-trigger">
+        <button type="button" class="dropdown-item" role="menuitem" tabindex="-1" data-menu-action="minimize-window"
+            data-menu-needs="window" data-shortcut="alt+M">Minimize</button>
+        <button type="button" class="dropdown-item" role="menuitem" tabindex="-1" data-menu-action="zoom-window"
+            data-menu-needs="window-zoom">Zoom</button>
+        <button type="button" class="dropdown-item" role="menuitem" tabindex="-1" data-menu-action="cycle-windows"
+            data-menu-needs="windows" data-shortcut="alt+`">Cycle Through Windows</button>
+        <div class="dropdown-divider" role="separator"></div>
+        <button type="button" class="dropdown-item" role="menuitem" tabindex="-1" data-menu-action="tile"
+            data-menu-needs="windows">Tile Windows</button>
+        <button type="button" class="dropdown-item" role="menuitem" tabindex="-1" data-menu-action="show-desktop"
+            data-menu-needs="windows" data-shortcut="alt+H">Minimize All</button>
+        <button type="button" class="dropdown-item" role="menuitem" tabindex="-1" data-menu-action="bring-all"
+            data-menu-needs="windows">Bring All to Front</button>
+        <div class="dropdown-divider" role="separator"></div>
+        <div class="menu-windows-list" role="none"></div>
+    </div>
+</div>
+
+<div class="menu-item menubar-menu">
+    <button type="button" class="menu-trigger" id="menu-help-trigger" aria-haspopup="menu" aria-expanded="false"
+        aria-controls="menu-help">Help</button>
+    <div class="apple-dropdown" id="menu-help" role="menu" aria-labelledby="menu-help-trigger">
+        <button type="button" class="dropdown-item" role="menuitem" tabindex="-1" data-menu-action="tour"
+            data-menu-needs="tour">Welcome Tour</button>
+        <button type="button" class="dropdown-item" role="menuitem" tabindex="-1"
+            data-menu-action="shortcuts">Keyboard Shortcuts</button>
+        <div class="dropdown-divider" role="separator"></div>
+        <button type="button" class="dropdown-item" role="menuitem" tabindex="-1"
+            data-menu-action="about-site">About This Site</button>
+        <a class="dropdown-item" role="menuitem" tabindex="-1" href="/privacy/" data-menu-action="open-app"
+            data-app="privacy">Privacy</a>
+        <a class="dropdown-item" role="menuitem" tabindex="-1" href="/credits/" data-menu-action="open-app"
+            data-app="credits">Credits</a>
+        {{- with site.Params.repository | default "https://github.com/ankushKun/ankushKun.github.io" }}
+        <div class="dropdown-divider" role="separator"></div>
+        <a class="dropdown-item" role="menuitem" tabindex="-1" href="{{ . }}" target="_blank" rel="noopener"
+            data-open="tab" data-menu-action="follow-link">View Source on GitHub</a>
+        {{- end }}
+    </div>
+</div>

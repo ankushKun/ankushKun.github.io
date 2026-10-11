@@ -1,0 +1,343 @@
+/* ================================================
+   Navigation around content pages: the path bar on direct-link windows,
+   Related / Previous / Next at the foot of a page, the subscribe card, and
+   the small additions to the Blogs, Projects and Timeline lists.
+   Markup: layouts/partials/os/window/pathbar.html, apps/related.html,
+   apps/blog/*, apps/projects/*, apps/timeline/*
+   ================================================ */
+
+/* ---------- Window title as the page heading ---------- */
+
+/* On list pages the titlebar text is the <h1>; it must look like the <div> */
+h1.window-title {
+    margin: 0;
+    line-height: inherit;
+}
+
+/* ---------- Path bar (bottom of a direct-link window) ---------- */
+
+.window-pathbar {
+    border-top: 1px solid var(--toolbar-border);
+    background: var(--toolbar-bg);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.window-pathbar::-webkit-scrollbar {
+    display: none;
+}
+
+.pathbar-trail ol {
+    display: flex;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    white-space: nowrap;
+}
+
+.pathbar-trail li {
+    display: flex;
+    align-items: center;
+}
+
+/* Finder's little arrow between path segments */
+.pathbar-trail li + li::before {
+    content: "›";
+    margin: 0 6px;
+    color: var(--gray-500);
+}
+
+.pathbar-trail [aria-current="page"] span {
+    display: inline-block;
+    max-width: 32ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: bottom;
+    color: var(--text-primary);
+}
+
+.pathbar-sitenav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    white-space: nowrap;
+}
+
+.window-pathbar a {
+    color: var(--text-secondary);
+    text-decoration: none;
+}
+
+.window-pathbar a:hover,
+.window-pathbar a:focus-visible {
+    color: var(--link);
+    text-decoration: underline;
+}
+
+.pathbar-sitenav a[aria-current="page"] {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* Narrow windows: the page title is already in the titlebar */
+@media (max-width: 640px) {
+    .pathbar-trail li[aria-current="page"] {
+        display: none;
+    }
+}
+
+/* Phones: the trail and the five section links do not fit side by side, and
+   the last link ended up cut off. The section links stay; the trail goes,
+   since the titlebar names the page and its red and yellow lights lead back
+   to the desktop. Narrower screens still scroll the bar (edge fade below). */
+@media (max-width: 480px) {
+    .pathbar-trail {
+        display: none;
+    }
+
+    .pathbar-sitenav {
+        margin: 0 auto;
+    }
+}
+
+@media (pointer: coarse) {
+    .window-pathbar {
+        min-height: 36px;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+
+    .pathbar-sitenav {
+        gap: 16px;
+    }
+
+    /* Links fill the bar's height so they are finger-sized targets */
+    .window-pathbar a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 36px;
+        min-width: 32px;
+    }
+}
+
+/* When the bar scrolls sideways, fade whichever edge has more behind it.
+   The timeline is inactive when nothing overflows, so a bar that fits is
+   left alone; browsers without scroll timelines keep the plain bar. */
+@property --pathbar-fade-start {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0px;
+}
+
+@property --pathbar-fade-end {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0px;
+}
+
+@supports (animation-timeline: scroll()) {
+    .window-pathbar {
+        -webkit-mask-image: linear-gradient(90deg, transparent, #000 var(--pathbar-fade-start), #000 calc(100% - var(--pathbar-fade-end)), transparent);
+        mask-image: linear-gradient(90deg, transparent, #000 var(--pathbar-fade-start), #000 calc(100% - var(--pathbar-fade-end)), transparent);
+        animation: pathbarEdgeFade linear both;
+        animation-timeline: scroll(self inline);
+    }
+
+    @keyframes pathbarEdgeFade {
+        0% {
+            --pathbar-fade-start: 0px;
+            --pathbar-fade-end: 32px;
+        }
+
+        8%,
+        92% {
+            --pathbar-fade-start: 32px;
+            --pathbar-fade-end: 32px;
+        }
+
+        100% {
+            --pathbar-fade-start: 32px;
+            --pathbar-fade-end: 0px;
+        }
+    }
+}
+
+/* ---------- Section intro (the _index.md text on list pages) ---------- */
+
+.section-intro {
+    padding: 12px 20px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--gray-150);
+}
+
+.section-intro p + p {
+    margin-top: 6px;
+}
+
+.timeline-content > .section-intro,
+.projects-content > .section-intro {
+    padding: 0 0 12px;
+    border-bottom: none;
+}
+
+/* ---------- Blogs list ---------- */
+
+.blogs-rss {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border: 1px solid var(--gray-400);
+    border-radius: 4px;
+    background: var(--surface);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--rss-orange, #B45309);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.blogs-rss:hover,
+.blogs-rss:focus-visible {
+    background: var(--rss-tint, #FFF7ED);
+    border-color: var(--rss-orange, #B45309);
+    text-decoration: none;
+}
+
+html[data-appearance="dark"] .blogs-rss {
+    --rss-orange: #F59A4A;
+    --rss-tint: #3A2A1C;
+}
+
+.blogs-chips {
+    flex: none;
+    padding: 6px 12px;
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-150);
+}
+
+.blog-reading-time {
+    margin-left: 2px;
+}
+
+/* .window-empty is display:flex, which would beat the hidden attribute */
+.blogs-empty[hidden] {
+    display: none;
+}
+
+@media (max-width: 640px) {
+    /* Search, count and RSS do not fit next to the title on a phone */
+    .blogs-controls .blogs-count {
+        display: none;
+    }
+
+    .blogs-chips {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+}
+
+/* ---------- Projects ---------- */
+
+/* Only the picture fades: the date below it stays at full contrast */
+.project-card.is-archived .project-card-icon > :not(.project-card-date) {
+    filter: grayscale(1);
+    opacity: 0.7;
+}
+
+.project-card-title .status-badge {
+    margin-left: 4px;
+    font-size: 9px;
+}
+
+/* ---------- Timeline ---------- */
+
+/* /timeline/ only: one-line summary under the title, so the list reads as text */
+.event-item.event-link {
+    flex-wrap: wrap;
+}
+
+.event-item-summary {
+    flex-basis: 100%;
+    padding-left: 44px;
+    margin-top: -6px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--text-tertiary);
+}
+
+.timeline-controls {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    row-gap: 4px;
+}
+
+/* ---------- Tag pages (Finder list) ---------- */
+
+.finder-kind {
+    margin-left: 6px;
+    padding: 0 6px;
+    border-radius: 8px;
+    background: var(--gray-150);
+    font-size: 10px;
+    color: var(--text-tertiary);
+    text-transform: lowercase;
+    vertical-align: middle;
+    flex: none;
+}
+
+/* A long title ellipsizes before the badge instead of clipping it */
+.col-name:has(> .col-title) {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+
+.col-name > .col-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ---------- About window ---------- */
+
+/* .info-header became an <h2>: keep the small-caps label look rather than
+   the generic .window-content h2 one */
+.window-content h2.info-header {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+    .window-content h2.info-header {
+        font-size: 10px;
+        margin-bottom: 8px;
+    }
+}
+
+/* ---------- Post header ---------- */
+
+/* Three items (date, byline, reading time) need to wrap on a phone */
+.post-meta-bar {
+    flex-wrap: wrap;
+    row-gap: 8px;
+}
+
+.post-updated {
+    white-space: nowrap;
+}
+
+/* ---------- Heading permalinks (layouts/_default/_markup/render-heading.html) ---------- */
+
+/* The anchor is empty in the HTML so the glyph stays out of plain-text
+   renderings (summaries, feeds, the search index) */
+.heading-anchor::before {
+    content: "#";
+}

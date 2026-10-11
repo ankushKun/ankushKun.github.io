@@ -5,11 +5,13 @@
         {{ partial "os/window/controls.html" (dict "closeLink" "/") }}
         <div class="window-title">{{ .title }}</div>
         {{ with .permalink }}
-        <a href="{{ . }}" target="_blank" class="titlebar-link" data-tip="Open in new tab">↗</a>
+        <a href="{{ . }}" target="_blank" rel="noopener" class="titlebar-link" data-tip="Open in new tab"
+            aria-label="Open in new tab"><span aria-hidden="true">↗</span></a>
         {{ end }}
     </div>
     <div class="window-content {{ with .contentClass }}{{ . }}{{ end }}" {{ with .contentStyle }} style="{{ . }}" {{ end
         }}>
         {{ .content | safeHTML }}
     </div>
+    {{ with .page }}{{ partial "os/window/pathbar.html" . }}{{ end }}
 </div>

@@ -1,0 +1,121 @@
+/* ================================================
+   Toolbar glyphs, project search/tag filter, cover thumbnails
+   (icons/ui/glyph.html, apps/toolbar-icon.html, apps/projects/grid.html,
+   apps/projects/card.html, apps/blog/list.html)
+   ================================================ */
+
+/* ---------- Glyphs (monochrome SVG in place of emoji) ---------- */
+
+.ui-glyph {
+    flex: none;
+    vertical-align: -0.15em;
+}
+
+/* Toolbar titles are 13px text next to an 18px app icon; a glyph there
+   should read at the same optical size as the icon, not as a letter. */
+.finder-title .ui-glyph {
+    width: 16px;
+    height: 16px;
+    vertical-align: -3px;
+    color: var(--text-secondary);
+}
+
+.url-icon .ui-glyph,
+.search-icon .ui-glyph {
+    display: block;
+}
+
+.open-external .ui-glyph {
+    width: 16px;
+    height: 16px;
+    display: block;
+}
+
+/* ---------- Projects: search + tag chips ---------- */
+
+.projects-chips {
+    flex: none;
+    padding: 6px 12px;
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-150);
+}
+
+/* display:flex / display:block on these would beat the hidden attribute */
+.project-card[hidden],
+.projects-year-section[hidden],
+.projects-empty[hidden] {
+    display: none;
+}
+
+.projects-empty {
+    min-height: 200px;
+}
+
+/* A grid item is as wide as its longest unbreakable line by default; the
+   one-line title would push the card past a phone-width window. */
+.projects-grid > .project-card {
+    min-width: 0;
+}
+
+/* ---------- Cover thumbnails ---------- */
+
+/* The extra .window-content beats `.window-content img { margin: 12px 0 }` */
+.project-card-cover,
+.window-content .project-card-cover {
+    display: block;
+    width: 60px;
+    height: 45px;
+    margin: 1px 0 2px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid var(--gray-200);
+    background: var(--gray-150);
+    box-sizing: border-box;
+}
+
+.blog-row {
+    align-items: center;
+    gap: 14px;
+}
+
+.blog-row-content {
+    min-width: 0;
+}
+
+.blog-row-thumb,
+.window-content .blog-row-thumb {
+    flex: none;
+    width: 76px;
+    height: 40px;
+    margin: 0;
+    box-sizing: border-box;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid var(--gray-200);
+    background: var(--gray-150);
+}
+
+@media (max-width: 640px) {
+    /* Search and count do not both fit next to the title on a phone */
+    .projects-controls .projects-count {
+        display: none;
+    }
+
+    .projects-chips {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .project-card-cover,
+    .window-content .project-card-cover {
+        width: 48px;
+        height: 36px;
+    }
+
+    .blog-row-thumb,
+    .window-content .blog-row-thumb {
+        width: 60px;
+        height: 32px;
+    }
+}

@@ -8,7 +8,9 @@ Usage:
 "content" "partial-name.html"
 "contentData" $dataForPartial
 "rawContent" .Content (optional - for raw HTML content)
-"padding" "24px" (optional - default is 0)
+"padding" "24px" (optional - default is 0; with rawContent it goes on an inner
+wrapper, because the desktop shell lifts only the innerHTML of .window-content
+into its own window and the padding has to travel with it)
 ) }}
 */}}
 
@@ -16,18 +18,21 @@ Usage:
     {{/* Window Titlebar */}}
     <div class="window-titlebar">
         {{ partial "os/window/controls.html" (dict "closeLink" "/") }}
-        <div class="window-title">{{ .title }}</div>
+        {{/* "h1" true: the window title is the page heading (list pages
+        whose content partial has no h1 of its own) */}}
+        {{ if .h1 }}<h1 class="window-title">{{ .title }}</h1>{{ else }}<div class="window-title">{{ .title }}</div>{{ end }}
     </div>
 
     {{/* Window Content */}}
     {{ $padding := default "0" .padding }}
-    <div class="window-content" style="display: flex; flex-direction: column; padding: {{ $padding }};">
+    <div class="window-content" style="display: flex; flex-direction: column; padding: {{ if .content }}{{ $padding }}{{ else }}0{{ end }};">
         {{ if .content }}
         {{/* Render a partial with provided data */}}
         {{ partial .content .contentData }}
         {{ else if .rawContent }}
         {{/* Render raw HTML content */}}
-        {{ .rawContent | safeHTML }}
+        <div class="window-raw-content" style="padding: {{ $padding }};">{{ .rawContent | safeHTML }}</div>
         {{ end }}
     </div>
+    {{ with .page }}{{ partial "os/window/pathbar.html" . }}{{ end }}
 </div>

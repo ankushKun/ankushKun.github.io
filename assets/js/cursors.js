@@ -31,20 +31,87 @@
     const CURSOR_TTL_MS = 6000;       // hide a cursor we stopped hearing from
     const PRESENCE_TTL_MS = 15000;    // count someone as online this long after a beat
     const GRAPH_PRUNE_MS = 60000;     // delete truly abandoned nodes from the graph
+    const MAX_PEERS = 40;             // cursors drawn at once; ids are self-declared
+    const MAX_TRACKED_IDS = 2000;     // ids remembered per stream for liveness
+    const MAX_ANCHOR_LEN = 80;
+    const MAX_OFFSET = 10000;         // px; nothing anchored is anywhere near this big
+    const HIDE_CURSORS_KEY = 'cursors-hidden';
 
-    // Cursors are a pointing device; a touch screen has nothing to broadcast.
-    // Presence still runs so the online count stays honest on mobile.
-    const publishesCursor = !window.matchMedia('(max-width: 768px)').matches;
+    // Cursors are a pointing device; a touch screen has nothing to broadcast,
+    // but a narrow desktop window still does - so this asks about the pointer,
+    // not the viewport. Presence runs either way so the online count stays
+    // honest on mobile.
+    const hasFinePointer = window.matchMedia('(pointer: fine)').matches;
 
     const cursorsRef = window.SiteGun.paths.live.cursors(ROOM);
     const presenceRef = window.SiteGun.paths.live.presence(ROOM);
     const reactionsRef = window.SiteGun.paths.live.reactions(ROOM);
 
-    let myId = localStorage.getItem('multiplayer-cursor-id');
-    if (!myId) {
-        myId = Math.random().toString(36).slice(2, 11);
-        localStorage.setItem('multiplayer-cursor-id', myId);
+    // Storage may be blocked; SiteGun.store never throws.
+    const store = window.SiteGun.store;
+    const myId = window.SiteGun.visitorId();
+
+    let cursorsHidden = store.get(HIDE_CURSORS_KEY) === '1';
+    const publishesCursor = () => hasFinePointer && !cursorsHidden;
+
+    /**
+     * Liveness without trusting anyone's clock.
+     *
+     * Comparing a sender's `ts` with our own Date.now() made every visitor
+     * whose clock ran a few seconds behind invisible, and let a forged `ts`
+     * look alive forever. What actually proves a peer is here is that its `ts`
+     * CHANGED while we were listening, so that is what is tracked, against
+     * local receipt time. The sender's clock is only consulted once, for the
+     * very first value seen (which may be a stale node replayed on load).
+     */
+    function livenessTracker(firstSeenTtl) {
+        const seen = new Map(); // id -> { ts, at }
+        return {
+            /** @returns {boolean} true when this update is evidence of life */
+            touch(id, ts) {
+                const now = Date.now();
+                const prev = seen.get(id);
+                if (!prev) {
+                    // Bounded: drop the longest-remembered id to make room.
+                    if (seen.size >= MAX_TRACKED_IDS) seen.delete(seen.keys().next().value);
+                    seen.set(id, { ts: ts, at: now, pruned: false });
+                    return Math.abs(now - ts) <= firstSeenTtl;
+                }
+                if (prev.ts === ts) return false;
+                prev.ts = ts;
+                prev.at = now;
+                prev.pruned = false;
+                return true;
+            },
+            /**
+             * Ids whose value has not changed for maxAge, a few at a time.
+             * The record is kept (so a later change still counts as life) and
+             * only flagged, so each id is handed out once per quiet spell.
+             */
+            abandoned(maxAge, limit) {
+                const now = Date.now();
+                const out = [];
+                for (const [id, rec] of seen) {
+                    if (rec.pruned || now - rec.at <= maxAge) continue;
+                    rec.pruned = true;
+                    out.push(id);
+                    if (out.length >= limit) break;
+                }
+                return out;
+            }
+        };
     }
+
+    /** Delete nodes nobody has touched in a long time so the graph stays small. */
+    function pruneAbandoned(tracker, ref) {
+        tracker.abandoned(GRAPH_PRUNE_MS, 20).forEach((id) => {
+            if (id !== myId) ref.get(id).put(null);
+        });
+    }
+
+    const finite = (v) => typeof v === 'number' && Number.isFinite(v);
+    const clampOffset = (v) => Math.max(-MAX_OFFSET, Math.min(MAX_OFFSET, Math.round(v)));
+    const validAnchor = (a) => typeof a === 'string' && a.length > 0 && a.length < MAX_ANCHOR_LEN;
 
     // ------------------------------------------------------------------
     // Render layer
@@ -53,10 +120,16 @@
     // relative - so the layer must be fixed, not absolutely positioned in body.
     const layer = document.createElement('div');
     layer.id = 'cursor-layer';
+    layer.classList.toggle('cursors-hidden', cursorsHidden);
     document.body.appendChild(layer);
 
-    const onlineCountEl = document.createElement('div');
+    // The online pill doubles as the way into reactions and cursor settings:
+    // it is the one piece of multiplayer UI that is always on screen.
+    const onlineCountEl = document.createElement('button');
+    onlineCountEl.type = 'button';
     onlineCountEl.id = 'online-count';
+    onlineCountEl.setAttribute('aria-haspopup', 'dialog');
+    onlineCountEl.setAttribute('aria-expanded', 'false');
     document.body.appendChild(onlineCountEl);
 
     // peerId -> { a, ox, oy, lastSeen, el, positioned }
@@ -109,9 +182,15 @@
     let lastSent = 0;
     let lastPayload = '';
 
+    /** Our own multiplayer chrome is not something to point at. */
+    function isOwnChrome(target) {
+        return !!(target && target.closest && target.closest('#online-count, #reactions-popover'));
+    }
+
     function publishPosition(e) {
         const now = Date.now();
         if (now - lastSent < MOVE_THROTTLE_MS) return;
+        if (isOwnChrome(e.target)) return;
 
         const anchor = anchorFor(e.target);
         if (!anchor) return;
@@ -133,7 +212,9 @@
         lastPayload = signature;
         lastAnchor = anchor;
         lastClient = { x: e.clientX, y: e.clientY };
-        cursorsRef.get(myId).put(payload);
+        // With cursors hidden the position is still tracked locally, so a
+        // reaction lands where the pointer is, but it is not shared.
+        if (publishesCursor()) cursorsRef.get(myId).put(payload);
     }
 
     // ------------------------------------------------------------------
@@ -147,13 +228,42 @@
         '1': '❤️', '2': '🔥', '3': '😂', '4': '🎉', '5': '👀',
         '6': '🤯', '7': '👍', '8': '💀'
     };
+    const REACTION_NAMES = {
+        '1': 'Heart', '2': 'Fire', '3': 'Laughing', '4': 'Party', '5': 'Eyes',
+        '6': 'Mind blown', '7': 'Thumbs up', '8': 'Skull'
+    };
+    // What a peer sends is rendered as text, so only these are ever drawn.
+    const ALLOWED_REACTIONS = new Set(Object.values(REACTION_KEYS));
     const REACTION_COOLDOWN_MS = 350;
     const REACTION_LIFETIME_MS = 2200;
+    // Receive-side limits. Sender ids are self-declared, so the per-sender
+    // limit alone could be dodged with fresh ids - hence the global one.
+    const REACTION_WINDOW_MS = 2000;
+    const REACTIONS_PER_SENDER = 5;
+    const REACTIONS_PER_WINDOW = 14;
 
     let lastReactionAt = 0;
     let lastAnchor = null;
     let lastClient = null;
-    const seenReactions = new Set();
+
+    const reactionLive = livenessTracker(REACTION_LIFETIME_MS);
+    const reactionTimes = new Map(); // senderId -> recent receipt times
+    let reactionTimesAll = [];
+
+    function reactionAllowed(id) {
+        const now = Date.now();
+        reactionTimesAll = reactionTimesAll.filter((t) => now - t < REACTION_WINDOW_MS);
+        if (reactionTimesAll.length >= REACTIONS_PER_WINDOW) return false;
+
+        const mine = (reactionTimes.get(id) || []).filter((t) => now - t < REACTION_WINDOW_MS);
+        if (mine.length >= REACTIONS_PER_SENDER) return false;
+
+        mine.push(now);
+        if (reactionTimes.size > 200) reactionTimes.clear();
+        reactionTimes.set(id, mine);
+        reactionTimesAll.push(now);
+        return true;
+    }
 
     function sendReaction(emoji) {
         const now = Date.now();
@@ -176,14 +286,14 @@
             a: anchor.key,
             ox: Math.round(client.x - anchor.rect.left),
             oy: Math.round(client.y - anchor.rect.top),
-            ts: now,
-            // Distinguishes rapid repeats of the same emoji at the same spot
-            id: myId + '-' + now
+            ts: now
         };
 
-        reactionsRef.get(payload.id).put(payload);
+        // One node per visitor, overwritten on each press. A fresh key per
+        // press left a tombstone behind every time, and every new visitor had
+        // to be sent all of them.
+        reactionsRef.get(myId).put(payload);
         spawnReaction(payload); // instant local feedback, no relay round-trip
-        seenReactions.add(payload.id);
     }
 
     function spawnReaction(data) {
@@ -192,6 +302,7 @@
 
         const el = document.createElement('div');
         el.className = 'cursor-reaction';
+        el.setAttribute('aria-hidden', 'true');
         el.textContent = data.e;
         // Randomised drift so simultaneous reactions do not perfectly overlap
         el.style.setProperty('--drift', (Math.random() * 44 - 22).toFixed(1) + 'px');
@@ -217,24 +328,26 @@
         });
 
         reactionsRef.map().on((data, id) => {
-            if (!data || !data.e || !data.a) return;
-            if (seenReactions.has(id)) return;
-            seenReactions.add(id);
+            if (id === myId || !data) return; // own presses are shown locally
 
-            const age = Date.now() - (data.ts || 0);
-            if (age > REACTION_LIFETIME_MS) {
-                // Reactions are momentary; do not let them accumulate in the graph
-                if (age > GRAPH_PRUNE_MS) reactionsRef.get(id).put(null);
-                return;
-            }
+            // Anything that is not one of our eight emoji at a sane anchor is
+            // dropped: this text is drawn over other people's screens.
+            if (!ALLOWED_REACTIONS.has(data.e) || !validAnchor(data.a)) return;
+            if (!finite(data.ox) || !finite(data.oy)) return;
 
-            spawnReaction(data);
+            // `ts` is unique per press (see the cooldown) and is the last
+            // field Gun applies, so by the time it changes the rest of the
+            // node belongs to the same press.
+            if (!reactionLive.touch(id, Number(data.ts) || 0)) return;
+            if (!reactionAllowed(id)) return;
+
+            spawnReaction({
+                e: data.e,
+                a: data.a,
+                ox: clampOffset(data.ox),
+                oy: clampOffset(data.oy)
+            });
         });
-
-        // Bound the local dedupe set
-        setInterval(() => {
-            if (seenReactions.size > 300) seenReactions.clear();
-        }, 30000);
     }
 
     // ------------------------------------------------------------------
@@ -250,6 +363,9 @@
      *   cursor must snap with the layout instead of sliding after it.
      */
     function scheduleRender(instant) {
+        // Nothing to place. This runs on every scroll, resize and window
+        // mutation, and most visits never have a second person in the room.
+        if (!peers.size) return;
         if (instant) renderInstant = true;
         if (renderQueued) return;
         renderQueued = true;
@@ -335,33 +451,33 @@
     // Subscriptions
     // ------------------------------------------------------------------
 
+    const cursorLive = livenessTracker(CURSOR_TTL_MS);
+
     cursorsRef.map().on((data, id) => {
         if (id === myId) return;
 
-        if (!data || typeof data.a !== 'string') {
+        if (!data || !validAnchor(data.a)) {
             removePeer(id);
             return;
         }
 
-        const age = Date.now() - (data.ts || 0);
-
-        if (age > CURSOR_TTL_MS) {
-            // Prune nodes nobody has touched in a long time so the graph does
-            // not grow without bound.
-            if (age > GRAPH_PRUNE_MS) cursorsRef.get(id).put(null);
-            removePeer(id);
-            return;
-        }
+        // Only a changed `ts` counts as the peer moving. A replayed or
+        // re-delivered node leaves the cursor to expire by receipt time
+        // (positionAll removes it after CURSOR_TTL_MS).
+        if (!cursorLive.touch(id, Number(data.ts) || 0)) return;
 
         let peer = peers.get(id);
         if (!peer) {
+            // Ids are self-declared, so without a ceiling one script could
+            // fill the layer with thousands of elements.
+            if (peers.size >= MAX_PEERS) return;
             peer = { el: createPeerElement() };
             peers.set(id, peer);
         }
 
         peer.a = data.a;
-        peer.ox = typeof data.ox === 'number' ? data.ox : 0;
-        peer.oy = typeof data.oy === 'number' ? data.oy : 0;
+        peer.ox = finite(data.ox) ? clampOffset(data.ox) : 0;
+        peer.oy = finite(data.oy) ? clampOffset(data.oy) : 0;
         peer.lastSeen = Date.now();
 
         scheduleRender(false);
@@ -390,8 +506,13 @@
         return counts;
     }
 
+    let badgesShown = false;
+
     function refreshViewerBadges() {
+        // No peers and nothing left over to clear: skip the DOM queries.
+        if (!peers.size && !badgesShown) return;
         const counts = viewerCounts();
+        badgesShown = counts.size > 0;
 
         // Clear badges whose anchor no longer has viewers
         document.querySelectorAll('.' + VIEWER_BADGE_CLASS).forEach((badge) => {
@@ -441,7 +562,9 @@
     // Presence - the online count must not depend on people wiggling a mouse
     // ------------------------------------------------------------------
 
-    const presentPeers = new Map(); // id -> lastBeat
+    const presentPeers = new Map(); // id -> local time its last beat arrived
+    const presenceLive = livenessTracker(PRESENCE_TTL_MS);
+    let lastCount = 0;
 
     function announcePresence() {
         presenceRef.get(myId).put({ ts: Date.now() });
@@ -450,35 +573,34 @@
     function updateOnlineCount() {
         const now = Date.now();
         let count = 1; // this viewer
-        presentPeers.forEach((ts, id) => {
-            if (now - ts > PRESENCE_TTL_MS) {
+        presentPeers.forEach((at, id) => {
+            if (now - at > PRESENCE_TTL_MS) {
                 presentPeers.delete(id);
                 return;
             }
             if (id !== myId) count++;
         });
+        if (count === lastCount) return;
+        lastCount = count;
         onlineCountEl.textContent = count + ' Online';
+        onlineCountEl.setAttribute('aria-label',
+            count + ' online. Reactions and cursor settings');
     }
 
     presenceRef.map().on((data, id) => {
+        if (id === myId) return;
         if (!data || !data.ts) {
             presentPeers.delete(id);
             updateOnlineCount();
             return;
         }
-        if (Date.now() - data.ts > PRESENCE_TTL_MS) {
-            if (Date.now() - data.ts > GRAPH_PRUNE_MS) presenceRef.get(id).put(null);
-            presentPeers.delete(id);
-            updateOnlineCount();
-            return;
-        }
-        presentPeers.set(id, data.ts);
+        // A beat only counts when it is new to us - see livenessTracker.
+        if (!presenceLive.touch(id, Number(data.ts) || 0)) return;
+        if (presentPeers.size >= MAX_TRACKED_IDS && !presentPeers.has(id)) return;
+        presentPeers.set(id, Date.now());
         updateOnlineCount();
     });
 
-    announcePresence();
-    setInterval(announcePresence, PRESENCE_BEAT_MS);
-    setInterval(updateOnlineCount, 2000);
     updateOnlineCount();
 
     // ------------------------------------------------------------------
@@ -491,35 +613,190 @@
 
     // Window drags, resizes, maximize and minimize all mutate inline styles.
     // rAF coalescing keeps this to one reposition per frame during a drag.
+    //
+    // Only the window elements themselves are watched (plus windows being
+    // added or removed). Watching the whole subtree fired for every DOM change
+    // inside every app - a chat message, a terminal line - none of which move
+    // an anchor's box in a way the scroll/resize listeners do not already see.
     const windowsContainer = document.getElementById('windows-container');
     if (windowsContainer && 'MutationObserver' in window) {
-        new MutationObserver(() => scheduleRender(true)).observe(windowsContainer, {
-            attributes: true,
-            attributeFilter: ['style', 'class'],
-            subtree: true,
-            childList: true
-        });
+        const windowObserver = new MutationObserver(() => scheduleRender(true));
+        const watchWindow = (el) => {
+            if (el.nodeType !== 1) return;
+            windowObserver.observe(el, { attributes: true, attributeFilter: ['style', 'class'] });
+        };
+        Array.prototype.forEach.call(windowsContainer.children, watchWindow);
+
+        new MutationObserver((records) => {
+            records.forEach((r) => r.addedNodes.forEach(watchWindow));
+            scheduleRender(true);
+        }).observe(windowsContainer, { childList: true });
     }
 
-    // Prune expired cursors even when no updates are arriving.
-    setInterval(() => scheduleRender(false), 2000);
+    // ------------------------------------------------------------------
+    // Reactions and settings popover, opened from the online pill
+    //
+    // Keys 1-8 were the only way to react, which nobody could discover and a
+    // touch screen could not do at all.
+    // ------------------------------------------------------------------
 
-    // Viewer badges change slowly; a 1s cadence is plenty and keeps the
-    // DOM work off the cursor render path.
-    setInterval(refreshViewerBadges, 1000);
+    let popover = null;
+
+    function setCursorsHidden(hidden) {
+        cursorsHidden = hidden;
+        if (hidden) store.set(HIDE_CURSORS_KEY, '1');
+        else store.remove(HIDE_CURSORS_KEY);
+        layer.classList.toggle('cursors-hidden', hidden);
+        lastPayload = '';
+        // Hiding is mutual: stop sharing ours as well.
+        if (hidden) cursorsRef.get(myId).put(null);
+    }
+
+    function buildPopover() {
+        const el = document.createElement('div');
+        el.id = 'reactions-popover';
+        el.setAttribute('role', 'dialog');
+        el.setAttribute('aria-label', 'Reactions');
+        el.hidden = true;
+
+        const row = document.createElement('div');
+        row.className = 'reactions-row';
+        Object.keys(REACTION_KEYS).forEach((key) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'reaction-btn';
+            btn.textContent = REACTION_KEYS[key];
+            btn.setAttribute('aria-label', REACTION_NAMES[key] + ' reaction');
+            btn.addEventListener('click', () => sendReaction(REACTION_KEYS[key]));
+            row.appendChild(btn);
+        });
+        el.appendChild(row);
+
+        const hint = document.createElement('p');
+        hint.className = 'reactions-hint';
+        hint.textContent = 'Everyone on this page sees it.';
+        const keys = document.createElement('span');
+        keys.className = 'reactions-keys';
+        keys.textContent = ' Or press 1–8 anywhere.';
+        hint.appendChild(keys);
+        el.appendChild(hint);
+
+        const label = document.createElement('label');
+        label.className = 'reactions-toggle';
+        const box = document.createElement('input');
+        box.type = 'checkbox';
+        box.checked = cursorsHidden;
+        box.addEventListener('change', () => setCursorsHidden(box.checked));
+        label.appendChild(box);
+        label.appendChild(document.createTextNode(' Hide cursors'));
+        el.appendChild(label);
+
+        // Keep the shell's shortcuts and window focus handling out of it
+        el.addEventListener('mousedown', (e) => e.stopPropagation());
+        document.body.appendChild(el);
+        return el;
+    }
+
+    function closePopover() {
+        if (!popover || popover.hidden) return;
+        popover.hidden = true;
+        onlineCountEl.setAttribute('aria-expanded', 'false');
+    }
+
+    function openPopover() {
+        if (!popover) popover = buildPopover();
+        // Anchored to wherever the stylesheet has put the pill.
+        const rect = onlineCountEl.getBoundingClientRect();
+        popover.style.left = Math.max(4, Math.round(rect.left)) + 'px';
+        popover.style.bottom = Math.round(window.innerHeight - rect.top + 6) + 'px';
+        popover.hidden = false;
+        onlineCountEl.setAttribute('aria-expanded', 'true');
+    }
+
+    onlineCountEl.addEventListener('click', () => {
+        if (popover && !popover.hidden) closePopover();
+        else openPopover();
+    });
+    onlineCountEl.addEventListener('mousedown', (e) => e.stopPropagation());
+
+    document.addEventListener('pointerdown', (e) => {
+        if (isOwnChrome(e.target)) return;
+        closePopover();
+        // Remember where a tap landed so a reaction sent from the popover
+        // goes there, on devices that never publish a cursor position.
+        const anchor = anchorFor(e.target);
+        if (anchor) {
+            lastAnchor = anchor;
+            lastClient = { x: e.clientX, y: e.clientY };
+        }
+    }, true);
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape' || !popover || popover.hidden) return;
+        closePopover();
+        onlineCountEl.focus();
+    });
 
     // Reactions work on every device, including ones with no cursor to publish
     setupReactions();
 
-    if (publishesCursor) {
+    if (hasFinePointer) {
         window.addEventListener('mousemove', publishPosition, { passive: true });
-
-        // Best effort removal. Fires synchronously; anything queued behind a
-        // timer here would never run, which is why the old version's delayed
-        // cleanup was dead code. Staleness is the real guarantee.
-        window.addEventListener('pagehide', () => {
-            cursorsRef.get(myId).put(null);
-            presenceRef.get(myId).put(null);
-        });
     }
+
+    // ------------------------------------------------------------------
+    // Timers only run while the tab is visible
+    //
+    // A background tab has nobody looking at it: it should not keep writing a
+    // presence beat every few seconds, and it should not be counted as online.
+    // ------------------------------------------------------------------
+
+    let timers = [];
+
+    function leave() {
+        // Best effort removal. Staleness is the real guarantee.
+        cursorsRef.get(myId).put(null);
+        presenceRef.get(myId).put(null);
+        lastPayload = '';
+    }
+
+    function startTimers() {
+        if (timers.length) return;
+        announcePresence();
+        updateOnlineCount();
+        timers = [
+            setInterval(announcePresence, PRESENCE_BEAT_MS),
+            setInterval(() => {
+                updateOnlineCount();
+                // Prune expired cursors even when no updates are arriving.
+                scheduleRender(false);
+                pruneAbandoned(cursorLive, cursorsRef);
+                pruneAbandoned(presenceLive, presenceRef);
+                pruneAbandoned(reactionLive, reactionsRef);
+            }, 2000),
+            // Viewer badges change slowly; a 1s cadence is plenty and keeps
+            // the DOM work off the cursor render path.
+            setInterval(refreshViewerBadges, 1000)
+        ];
+    }
+
+    function stopTimers() {
+        timers.forEach(clearInterval);
+        timers = [];
+    }
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            stopTimers();
+            leave();
+        } else {
+            startTimers();
+        }
+    });
+
+    // Fires synchronously; anything queued behind a timer here would never
+    // run, which is why the old version's delayed cleanup was dead code.
+    window.addEventListener('pagehide', leave);
+
+    if (!document.hidden) startTimers();
 })();

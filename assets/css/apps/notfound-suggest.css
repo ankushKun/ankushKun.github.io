@@ -1,0 +1,73 @@
+/* ================================================
+   404 alert: "Did you mean" suggestions (layouts/404.html).
+   The list is built by the page's script from /index.json; each row is a
+   link with the page title and, underneath, what it is and where it lives.
+   ================================================ */
+
+.alert-suggest {
+    margin: 0 0 12px;
+}
+
+.alert-suggest[hidden] {
+    display: none;
+}
+
+.alert-suggest-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border: 1px solid var(--border-subtle);
+    border-radius: 5px;
+    background: var(--surface);
+    overflow: hidden;
+}
+
+.alert-suggest-list li + li {
+    border-top: 1px solid var(--border-subtle);
+}
+
+.alert-message .alert-suggest-list a {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 6px 10px;
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.alert-message .alert-suggest-list a:hover {
+    background: var(--hover-tint);
+    text-decoration: none;
+}
+
+/* Selected-row look of an OS X source list */
+.alert-message .alert-suggest-list a:focus-visible {
+    outline: none;
+    background: var(--accent-fill);
+    color: var(--accent-fill-text);
+    text-decoration: none;
+}
+
+.alert-suggest-name {
+    font-weight: 600;
+    color: inherit;
+    overflow-wrap: anywhere;
+}
+
+.alert-suggest-meta {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.alert-suggest-list a:focus-visible .alert-suggest-meta {
+    color: inherit;
+    opacity: 0.85;
+}
+
+/* `hidden` on the "Latest posts" block once suggestions take its place */
+.alert-message .alert-latest[hidden] {
+    display: none;
+}

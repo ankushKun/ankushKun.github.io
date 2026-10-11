@@ -1,0 +1,209 @@
+{{/* Visitor preferences bootstrap. Runs synchronously in <head>, before the
+stylesheet, so the saved appearance, accent and wallpaper are in place for the
+first paint (no flash of the default theme).
+
+Storage: localStorage "site-prefs-v1", one JSON object:
+  appearance  "light" | "dark" | "auto" (auto, the default, follows prefers-color-scheme)
+  accent      "blue" | "graphite" | "purple" | "pink" | "red" | "orange" | "green"
+  wallpaper   an id from data/wallpapers.yaml
+  chrome      "modern" | "mavericks" (10.9-style light menu bar and gel buttons)
+  motion      "auto" | "reduce"
+  contrast    "auto" | "more"
+Other features may keep small values of their own under further keys.
+
+It sets on <html>: data-appearance (always the RESOLVED "light" or "dark"),
+data-accent, data-chrome, data-motion="reduce" (only when reduced),
+data-contrast="more" (only when increased), and the
+custom properties --desktop-wallpaper / --desktop-color. The colours themselves
+live in assets/css/mavericks.css.
+
+window.SitePrefs: get(key), set(key, value) (null restores the default),
+all(), subscribe(fn) -> unsubscribe,
+resolved() -> { appearance, wallpaper }, wallpapers (the list below),
+openPane(id). Every change fires a "site:prefs" CustomEvent on document with
+detail { key, value, prefs, appearance }. */}}
+{{- $data := hugo.Data.wallpapers -}}
+{{- $list := slice -}}
+{{- range $data.wallpapers -}}
+{{- $list = $list | append (dict "id" .id "name" .name "src" (.src | default "") "color" .color) -}}
+{{- end -}}
+<script>
+    (function () {
+        var KEY = 'site-prefs-v1';
+        var WALLPAPERS = {{ $list | jsonify | safeJS }};
+        // Appearance follows the visitor's system (prefers-color-scheme) until
+        // they pick Light or Dark in System Preferences
+        var DEFAULTS = { appearance: 'auto', accent: 'blue', wallpaper: {{ $data.default }}, chrome: 'modern', motion: 'auto', contrast: 'auto' };
+        var VALID = {
+            appearance: /^(light|dark|auto)$/,
+            accent: /^(blue|graphite|purple|pink|red|orange|green)$/,
+            chrome: /^(modern|mavericks)$/,
+            motion: /^(auto|reduce)$/,
+            contrast: /^(auto|more)$/
+        };
+        var root = document.documentElement;
+        var darkQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+        var subscribers = [];
+        var memory = null;      // used when storage is blocked
+        var prefs = load();
+        var painted = false;    // false until the first apply()
+
+        function load() {
+            var saved = memory;
+            try { saved = JSON.parse(localStorage.getItem(KEY)); } catch (e) { /* blocked or corrupt */ }
+            var out = {}, key;
+            if (saved && typeof saved === 'object') {
+                for (key in saved) {
+                    if (Object.prototype.hasOwnProperty.call(saved, key)) out[key] = saved[key];
+                }
+            }
+            for (key in DEFAULTS) {
+                if (!VALID[key] || !VALID[key].test(out[key])) {
+                    if (key !== 'wallpaper' || !findWallpaper(out[key])) out[key] = DEFAULTS[key];
+                }
+            }
+            return out;
+        }
+
+        function findWallpaper(id) {
+            for (var i = 0; i < WALLPAPERS.length; i++) {
+                if (WALLPAPERS[i].id === id) return WALLPAPERS[i];
+            }
+            return null;
+        }
+
+        function resolved() {
+            var appearance = prefs.appearance;
+            if (appearance === 'auto') appearance = darkQuery && darkQuery.matches ? 'dark' : 'light';
+            return {
+                appearance: appearance,
+                wallpaper: findWallpaper(prefs.wallpaper) || findWallpaper(DEFAULTS.wallpaper) || WALLPAPERS[0]
+            };
+        }
+
+        function paintWallpaper(wallpaper) {
+            var style = root.style;
+            style.setProperty('--desktop-color', wallpaper.color);
+            style.setProperty('--desktop-wallpaper', wallpaper.src ? 'url("' + wallpaper.src + '")' : 'none');
+            // The inline blur-up preview in the stylesheet belongs to the default image
+            if (wallpaper.id === DEFAULTS.wallpaper) style.removeProperty('--desktop-wallpaper-preview');
+            else style.setProperty('--desktop-wallpaper-preview', 'none');
+            root.setAttribute('data-wallpaper', wallpaper.id);
+        }
+
+        function apply() {
+            var now = resolved();
+            root.setAttribute('data-appearance', now.appearance);
+            root.setAttribute('data-accent', prefs.accent);
+            root.setAttribute('data-chrome', prefs.chrome);
+            if (prefs.motion === 'reduce') root.setAttribute('data-motion', 'reduce');
+            else root.removeAttribute('data-motion');
+            if (prefs.contrast === 'more') root.setAttribute('data-contrast', 'more');
+            else root.removeAttribute('data-contrast');
+
+            var meta = document.querySelector('meta[name="theme-color"]');
+            // Browser chrome matches the menu bar: pale for the classic 10.9 bar
+            // (light appearance only), the dark glass otherwise
+            if (meta) meta.setAttribute('content', prefs.chrome === 'mavericks' && now.appearance !== 'dark' ? '#e2e2e2' : '#282c32');
+
+            var wallpaper = now.wallpaper;
+            if (!wallpaper || root.getAttribute('data-wallpaper') === wallpaper.id) { painted = true; return; }
+            if (!painted && wallpaper.src) {
+                // First paint: fetch the chosen image (and only that one) early
+                var link = document.createElement('link');
+                link.rel = 'preload';
+                link.as = 'image';
+                link.href = wallpaper.src;
+                document.head.appendChild(link);
+            }
+            if (painted && wallpaper.src) {
+                // Later changes: swap once the image has arrived, so the
+                // desktop cross-fades instead of flashing the plain colour
+                var image = new Image();
+                image.onload = image.onerror = function () {
+                    if (resolved().wallpaper === wallpaper) paintWallpaper(wallpaper);
+                };
+                image.src = wallpaper.src;
+            } else {
+                paintWallpaper(wallpaper);
+            }
+            painted = true;
+        }
+
+        function notify(key, value) {
+            var detail = { key: key, value: value, prefs: all(), appearance: resolved().appearance };
+            for (var i = 0; i < subscribers.length; i++) {
+                try { subscribers[i](detail); } catch (e) { /* one bad listener must not stop the rest */ }
+            }
+            try { document.dispatchEvent(new CustomEvent('site:prefs', { detail: detail })); } catch (e) { /* very old browser */ }
+        }
+
+        function all() {
+            var copy = {};
+            for (var key in prefs) copy[key] = prefs[key];
+            return copy;
+        }
+
+        function set(key, value) {
+            if (typeof key !== 'string' || !key || key.length > 40) return false;
+            // null restores the default (or forgets a key that has none)
+            if (value !== null && VALID[key] && !VALID[key].test(value)) return false;
+            if (value !== null && key === 'wallpaper' && !findWallpaper(value)) return false;
+            if (value !== null && typeof value === 'object') return false;
+            if (typeof value === 'string' && value.length > 200) return false;
+            if (prefs[key] === value) return true;
+            if (value === null || value === undefined) delete prefs[key];
+            else prefs[key] = value;
+            if (key in DEFAULTS && !(key in prefs)) prefs[key] = DEFAULTS[key];
+            memory = all();
+            try { localStorage.setItem(KEY, JSON.stringify(prefs)); } catch (e) { /* kept for this visit only */ }
+            apply();
+            notify(key, prefs[key]);
+            return true;
+        }
+
+        window.SitePrefs = {
+            get: function (key) { return prefs[key]; },
+            set: set,
+            all: all,
+            subscribe: function (fn) {
+                if (typeof fn !== 'function') return function () { };
+                subscribers.push(fn);
+                return function () {
+                    var i = subscribers.indexOf(fn);
+                    if (i !== -1) subscribers.splice(i, 1);
+                };
+            },
+            resolved: resolved,
+            wallpapers: WALLPAPERS,
+            // Show a pane of the Preferences window (open it first with
+            // openWindow('preferences')). Remembered until the window is ready.
+            openPane: function (pane) {
+                window.SitePrefs.pendingPane = String(pane || '');
+                try { document.dispatchEvent(new CustomEvent('site:prefs-pane', { detail: { pane: window.SitePrefs.pendingPane } })); } catch (e) { /* see notify() */ }
+            },
+            pendingPane: ''
+        };
+
+        apply();
+
+        // "auto" follows the system as it changes (sunset schedules etc.)
+        if (darkQuery) {
+            var onScheme = function () {
+                if (prefs.appearance !== 'auto') return;
+                apply();
+                notify('appearance', 'auto');
+            };
+            if (darkQuery.addEventListener) darkQuery.addEventListener('change', onScheme);
+            else if (darkQuery.addListener) darkQuery.addListener(onScheme);
+        }
+
+        // Another tab changed the preferences
+        window.addEventListener('storage', function (e) {
+            if (e.key !== KEY) return;
+            prefs = load();
+            apply();
+            notify('*', null);
+        });
+    })();
+</script>

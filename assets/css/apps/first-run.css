@@ -1,0 +1,179 @@
+/* ================================================
+   Welcome tour (first visit; Help > Welcome Tour)
+   A Mavericks popover pointing at the thing it explains, and a soft ring
+   around that thing. Script: assets/js/desktop-personal.js.
+   ================================================ */
+
+.tour-card {
+    --tour-bg: var(--window-bg-solid);
+    position: fixed;
+    z-index: 10003;
+    width: 300px;
+    max-width: calc(100vw - 24px);
+    padding: 14px 16px 12px;
+    background: var(--tour-bg);
+    border: 1px solid var(--window-border);
+    border-radius: 8px;
+    box-shadow: var(--window-shadow);
+    font-family: var(--font-system);
+    color: var(--text-primary);
+}
+
+.tour-card.is-stepping {
+    animation: tourIn 0.22s ease-out;
+}
+
+@keyframes tourIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: none; }
+}
+
+.tour-title {
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.tour-body {
+    margin: 6px 0 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+.tour-footer {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.tour-progress {
+    margin-right: auto;
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+.tour-link {
+    margin: 0;
+    padding: 2px 4px;
+    border: 0;
+    background: none;
+    font: inherit;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+.tour-link:hover {
+    color: var(--text-primary);
+}
+
+.tour-link:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 1px;
+}
+
+.tour-link[hidden],
+.tour-card [hidden] {
+    display: none;
+}
+
+/* The arrow: a rotated square sharing the card's border */
+.tour-arrow {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    margin-left: -6px;
+    background: var(--tour-bg);
+    border: 1px solid var(--window-border);
+    transform: rotate(45deg);
+}
+
+.tour-card[data-placement="center"] .tour-arrow {
+    display: none;
+}
+
+.tour-card[data-placement="below"] .tour-arrow {
+    top: -7px;
+    border-right: 0;
+    border-bottom: 0;
+}
+
+.tour-card[data-placement="above"] .tour-arrow {
+    bottom: -7px;
+    border-left: 0;
+    border-top: 0;
+}
+
+.tour-card[data-placement="left"] .tour-arrow,
+.tour-card[data-placement="right"] .tour-arrow {
+    margin-left: 0;
+    margin-top: -6px;
+}
+
+.tour-card[data-placement="left"] .tour-arrow {
+    right: -7px;
+    border-left: 0;
+    border-bottom: 0;
+}
+
+.tour-card[data-placement="right"] .tour-arrow {
+    left: -7px;
+    border-right: 0;
+    border-top: 0;
+}
+
+/* The ring around the subject */
+.tour-ring {
+    position: fixed;
+    z-index: 10002;
+    border-radius: 12px;
+    box-shadow: 0 0 0 2px var(--accent-blue), 0 0 0 6px color-mix(in srgb, var(--accent-blue) 30%, transparent);
+    pointer-events: none;
+    animation: tourPulse 1.6s ease-in-out infinite;
+    transition: left 0.25s ease, top 0.25s ease, width 0.25s ease, height 0.25s ease;
+}
+
+.tour-ring.is-round {
+    border-radius: 6px;
+}
+
+.tour-ring[hidden] {
+    display: none;
+}
+
+@keyframes tourPulse {
+    0%, 100% { box-shadow: 0 0 0 2px var(--accent-blue), 0 0 0 6px color-mix(in srgb, var(--accent-blue) 30%, transparent); }
+    50% { box-shadow: 0 0 0 2px var(--accent-blue), 0 0 0 10px color-mix(in srgb, var(--accent-blue) 10%, transparent); }
+}
+
+@media (pointer: coarse) {
+    .tour-link {
+        padding: 8px 6px;
+        font-size: 13px;
+    }
+
+    .tour-card .mac-btn.small {
+        padding: 6px 14px;
+        font-size: 13px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tour-card.is-stepping,
+    .tour-ring {
+        animation: none;
+        transition: none;
+    }
+}
+
+@media print {
+    .tour-card,
+    .tour-ring {
+        display: none !important;
+    }
+}

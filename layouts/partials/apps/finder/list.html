@@ -6,7 +6,7 @@ Usage (simple - for fallback in list.html):
 Usage (detailed - for specific customization):
 {{ partial "finder-list.html" (dict
 "id" "blog"
-"icon" "📝"
+"icon" "document" (a glyph name, see icons/ui/glyph.html)
 "title" "Blog Posts"
 "pages" $pages
 "prefix" "post"
@@ -27,7 +27,7 @@ Usage (detailed - for specific customization):
 {{ $standalone := default false .standalone }}
 
 {{/* Section-specific defaults */}}
-{{ $icon := "📄" }}
+{{ $icon := "document" }}
 {{ $title := "Items" }}
 {{ $countLabel := "items" }}
 {{ $dateFormat := "Jan 2, 2006" }}
@@ -35,20 +35,20 @@ Usage (detailed - for specific customization):
 {{ $iconColor := "#999" }}
 
 {{ if eq $section "projects" }}
-{{ $icon = "🚀" }}
+{{ $icon = "folder" }}
 {{ $title = "Projects" }}
 {{ $countLabel = "projects" }}
 {{ $dateFormat = "2006" }}
 {{ $iconPartial = "icons/ui/folder.html" }}
 {{ $iconColor = "#FF9500" }}
 {{ else if eq $section "blogs" }}
-{{ $icon = "📝" }}
+{{ $icon = "document" }}
 {{ $title = "Blogs" }}
 {{ $countLabel = "posts" }}
 {{ $iconPartial = "icons/ui/document.html" }}
 {{ $iconColor = "#007AFF" }}
 {{ else if eq $section "timeline" }}
-{{ $icon = "📅" }}
+{{ $icon = "calendar" }}
 {{ $title = "Timeline" }}
 {{ $countLabel = "events" }}
 {{ $iconPartial = "icons/ui/document.html" }}
@@ -66,7 +66,7 @@ Usage (detailed - for specific customization):
 <div id="content-{{ $id }}">
     <div class="finder-window" style="display: flex; flex-direction: column; height: 100%;">
         <div class="finder-toolbar">
-            <span class="finder-title">{{ $icon }} {{ $title }}</span>
+            <span class="finder-title">{{ partial "icons/ui/glyph.html" $icon }} {{ $title }}</span>
             <span class="finder-count">{{ len .pages }} {{ $countLabel }}</span>
         </div>
         <div class="finder-content">
@@ -82,8 +82,20 @@ Usage (detailed - for specific customization):
                     <span class="col-icon">
                         {{ partial $iconPartial (dict "color" $iconColor "size" 16) }}
                     </span>
-                    <span class="col-name">{{ .Title }}</span>
-                    <span class="col-date">{{ .Date.Format $dateFormat }}</span>
+                    {{- /* Tag pages: a tag row shows how much it holds, a tagged
+                    page says which section it comes from */}}
+                    {{- /* With a kind badge the title gets its own span, so a long
+                    title is the part that ellipsizes and the badge stays whole */}}
+                    <span class="col-name">{{ if eq .Kind "term" }}#{{ .Data.Term }}{{ else if and $.showKind .IsPage }}<span class="col-title">{{ .Title }}</span>{{ else }}{{ .Title }}{{ end }}
+                        {{- if and $.showKind .IsPage }} <span class="finder-kind">{{ if eq .Section "blogs" }}blog{{ else if eq .Section "projects" }}project{{ else }}{{ .Section }}{{ end }}</span>{{ end -}}
+                    </span>
+                    {{ if eq .Kind "term" -}}
+                    <span class="col-date">{{ len .Pages }} {{ cond (eq (len .Pages) 1) "item" "items" }}</span>
+                    {{- else if not .Date.IsZero -}}
+                    <time class="col-date" datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format $dateFormat }}</time>
+                    {{- else -}}
+                    <span class="col-date"></span>
+                    {{- end }}
                 </a>
                 {{ else }}
                 {{ $uniqueId := "" }}
