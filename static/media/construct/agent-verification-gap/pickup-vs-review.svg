@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 394" width="760" height="394" role="img" aria-labelledby="t d" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif">
+  <title id="t">Pull requests wait five times longer, then review faster</title>
+  <desc id="d">Hours per pull request. Work written without AI waits about 3.3 hours for a reviewer to start; AI assisted work waits more than 16 hours, about five times longer. Once review begins the order reverses: 4.2 hours for unassisted work against 3.2 hours for AI assisted work.</desc>
+  <rect width="760" height="394" fill="#ffffff"/>
+  <text x="28" y="40" font-size="19" font-weight="600" fill="#4e4646">The expensive part of review is not the reading</text>
+  <text x="28" y="63" font-size="13.5" fill="#8a9aa2">Hours per pull request, across 8.1 million pull requests</text>
+  <circle cx="33" cy="88" r="5" fill="#01b4c8"/>
+  <text x="45" y="92" font-size="13" fill="#4e4646">Written without AI</text>
+  <circle cx="203.8" cy="88" r="5" fill="#eb6834"/>
+  <text x="215.8" y="92" font-size="13" fill="#4e4646">AI assisted</text>
+  <line x1="218" y1="116" x2="218" y2="296" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="218" y="316" font-size="12" fill="#8a9aa2" text-anchor="middle">0h</text>
+  <line x1="318" y1="116" x2="318" y2="296" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="318" y="316" font-size="12" fill="#8a9aa2" text-anchor="middle">4h</text>
+  <line x1="418" y1="116" x2="418" y2="296" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="418" y="316" font-size="12" fill="#8a9aa2" text-anchor="middle">8h</text>
+  <line x1="518" y1="116" x2="518" y2="296" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="518" y="316" font-size="12" fill="#8a9aa2" text-anchor="middle">12h</text>
+  <line x1="618" y1="116" x2="618" y2="296" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="618" y="316" font-size="12" fill="#8a9aa2" text-anchor="middle">16h</text>
+  <text x="202" y="158" font-size="15" font-weight="600" fill="#4e4646" text-anchor="end">Waiting for a reviewer</text>
+  <text x="202" y="180" font-size="13" fill="#8a9aa2" text-anchor="end">5x longer</text>
+  <path d="M 218 136 H 296.5 a 4 4 0 0 1 4 4 V 154 a 4 4 0 0 1 -4 4 H 218 Z" fill="#01b4c8"/>
+  <text x="310.5" y="152" font-size="14" font-weight="600" fill="#4e4646">3.3h</text>
+  <path d="M 218 160 H 614 a 4 4 0 0 1 4 4 V 178 a 4 4 0 0 1 -4 4 H 218 Z" fill="#eb6834"/>
+  <text x="628" y="176" font-size="14" font-weight="600" fill="#4e4646">16h+</text>
+  <text x="202" y="254" font-size="15" font-weight="600" fill="#4e4646" text-anchor="end">Actually being reviewed</text>
+  <text x="202" y="276" font-size="13" fill="#8a9aa2" text-anchor="end">slightly quicker</text>
+  <path d="M 218 232 H 319 a 4 4 0 0 1 4 4 V 250 a 4 4 0 0 1 -4 4 H 218 Z" fill="#01b4c8"/>
+  <text x="333" y="248" font-size="14" font-weight="600" fill="#4e4646">4.2h</text>
+  <path d="M 218 256 H 294 a 4 4 0 0 1 4 4 V 274 a 4 4 0 0 1 -4 4 H 218 Z" fill="#eb6834"/>
+  <text x="308" y="272" font-size="14" font-weight="600" fill="#4e4646">3.2h</text>
+  <text x="28" y="368" font-size="12" fill="#8a9aa2">LinearB, 2026 Engineering Benchmarks Report. 4,800 teams in 42 countries.</text>
+</svg>

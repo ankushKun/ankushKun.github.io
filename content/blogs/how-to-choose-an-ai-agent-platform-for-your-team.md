@@ -4,9 +4,11 @@ draft = false
 title = "How to Choose an AI Agent Platform for Your Team"
 description = "A vendor-agnostic evaluation checklist for AI agent platforms: pilot-failure data, six evaluation criteria, governance pressure, and a scorecard you can reuse."
 summary = "Most teams evaluating AI agent platforms compare feature lists and demo videos, then discover months later that the demo and the production job were not the same thing. Here's a framework to choose wisely."
-tags = ["ai-agents", "evaluation", "governance", "productivity"]
-og_image = "/media/ai-agent-platform-og.jpg"
+tags = ["ai-agents", "construct"]
+og_image = "/media/construct/how-to-choose-an-ai-agent-platform-for-your-team.jpg"
 author = 'Ankush'
+canonical = "https://construct.computer/blog/how-to-choose-an-ai-agent-platform-for-your-team/"
+related = ["/projects/2026.construct-computer"]
 +++
 
 Most teams evaluating an AI agent platform compare feature lists and demo videos, then discover months later that the demo and the production job were not the same thing. This is a vendor-agnostic framework for how to choose an AI agent platform: why pilots stall, six criteria that actually predict whether a platform survives contact with real work, the governance rules now attached to that decision, and a scorecard you can apply to any product on your shortlist.

@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 492" width="760" height="492" role="img" aria-labelledby="t d" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif">
+  <title id="t">The verification stack code has and other work does not</title>
+  <desc id="d">Five questions asked of any finished work. Shipping code answers all five with existing tools: git diff, staging, CI and tests, a pull request, and git revert. The same questions asked of everything else an agent does have no equivalent: you reread the work, there is no staging inbox, nothing runs automatically, approval is at best a chat message, and sending is final.</desc>
+  <rect width="760" height="492" fill="#ffffff"/>
+  <text x="28" y="40" font-size="19" font-weight="600" fill="#4e4646">The same five questions, asked of two kinds of work</text>
+  <text x="28" y="63" font-size="13.5" fill="#8a9aa2">Only one column has tools for the answer</text>
+  <text x="330" y="92" font-size="12" font-weight="600" letter-spacing="0.08em" fill="#8a9aa2">SHIPPING CODE</text>
+  <text x="520" y="92" font-size="12" font-weight="600" letter-spacing="0.08em" fill="#8a9aa2">EVERYTHING ELSE AGENTS DO</text>
+  <line x1="24" y1="106" x2="732" y2="106" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="24" y="145" font-size="15" fill="#4e4646">See exactly what changed</text>
+  <circle cx="341" cy="140" r="11" fill="#01b4c8"/>
+  <path d="M 335.5 140 l 3.8 4 l 7.2 -7.6" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="362" y="145" font-size="15" fill="#4e4646">git diff</text>
+  <circle cx="531" cy="140" r="10" fill="none" stroke="#eb6834" stroke-width="2"/>
+  <text x="552" y="145" font-size="15" fill="#8a9aa2">Read it all again</text>
+  <line x1="24" y1="170" x2="732" y2="170" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="24" y="207" font-size="15" fill="#4e4646">Try it without consequences</text>
+  <circle cx="341" cy="202" r="11" fill="#01b4c8"/>
+  <path d="M 335.5 202 l 3.8 4 l 7.2 -7.6" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="362" y="207" font-size="15" fill="#4e4646">Staging</text>
+  <circle cx="531" cy="202" r="10" fill="none" stroke="#eb6834" stroke-width="2"/>
+  <text x="552" y="207" font-size="15" fill="#8a9aa2">No staging inbox</text>
+  <line x1="24" y1="232" x2="732" y2="232" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="24" y="269" font-size="15" fill="#4e4646">Have a machine check it</text>
+  <circle cx="341" cy="264" r="11" fill="#01b4c8"/>
+  <path d="M 335.5 264 l 3.8 4 l 7.2 -7.6" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="362" y="269" font-size="15" fill="#4e4646">CI and tests</text>
+  <circle cx="531" cy="264" r="10" fill="none" stroke="#eb6834" stroke-width="2"/>
+  <text x="552" y="269" font-size="15" fill="#8a9aa2">Nothing runs</text>
+  <line x1="24" y1="294" x2="732" y2="294" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="24" y="331" font-size="15" fill="#4e4646">Record who approved it</text>
+  <circle cx="341" cy="326" r="11" fill="#01b4c8"/>
+  <path d="M 335.5 326 l 3.8 4 l 7.2 -7.6" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="362" y="331" font-size="15" fill="#4e4646">Pull request</text>
+  <circle cx="531" cy="326" r="10" fill="none" stroke="#eb6834" stroke-width="2"/>
+  <text x="552" y="331" font-size="15" fill="#8a9aa2">A chat message</text>
+  <line x1="24" y1="356" x2="732" y2="356" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="24" y="393" font-size="15" fill="#4e4646">Undo it afterwards</text>
+  <circle cx="341" cy="388" r="11" fill="#01b4c8"/>
+  <path d="M 335.5 388 l 3.8 4 l 7.2 -7.6" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="362" y="393" font-size="15" fill="#4e4646">git revert</text>
+  <circle cx="531" cy="388" r="10" fill="none" stroke="#eb6834" stroke-width="2"/>
+  <text x="552" y="393" font-size="15" fill="#8a9aa2">Send is final</text>
+  <line x1="24" y1="418" x2="732" y2="418" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="24" y="462" font-size="12" fill="#8a9aa2">Software spent forty years building the left column.</text>
+</svg>

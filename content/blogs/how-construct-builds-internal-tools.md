@@ -4,9 +4,11 @@ draft = false
 title = "How Construct Builds Internal Tools in Your Workspace"
 description = "Turn a repeated process into a private workspace app that Construct can build, validate, debug, and update while preserving the last successful build."
 summary = "Internal tools often begin as a spreadsheet, a checklist, or a prompt someone runs every week. Construct can turn that repeated process into a small private app."
-tags = ["internal-tools", "workspace-apps", "ai-agents", "productivity"]
-og_image = "/media/internal-tools-og.jpg"
+tags = ["ai-agents", "construct"]
+og_image = "/media/construct/build-internal-tools-with-construct.jpg"
 author = 'Ankush'
+canonical = "https://construct.computer/blog/build-internal-tools-with-construct/"
+related = ["/projects/2026.construct-computer"]
 +++
 
 Internal tools often begin as a spreadsheet, a checklist, or a prompt someone runs every week. The process works, but the interface does not: people copy values between tabs, remember status in their heads, and repeat the same setup each time. Construct can turn that repeated process into a small private app that lives inside the same workspace as the files and agent doing the work.
