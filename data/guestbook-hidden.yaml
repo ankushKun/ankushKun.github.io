@@ -1,0 +1,10 @@
+# Guestbook hide list (moderation).
+#
+# Visitor ids listed here are left out of the daily snapshot
+# (data/guestbook.json) and are not shown in the Guestbook window, whatever the
+# relay holds for them. To find an id, look the entry up in data/guestbook.json.
+# Takes effect on the next deploy.
+#
+# ids:
+#   - abc123xyz
+ids: []

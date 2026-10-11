@@ -1,0 +1,63 @@
+# Daily snapshot of the guestbook into data/guestbook.json, so the book
+# survives the Gun relays losing it. Read-only towards the relays; entries on
+# the hide list (data/guestbook-hidden.yaml) are left out.
+name: Guestbook backup
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: guestbook-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    # A manual run can be started on any branch; the snapshot commit and the
+    # redeploy below only ever belong on main.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      # The script needs Node 22+ for the built-in WebSocket client.
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+
+      # Exits 0 and leaves the snapshot alone when no relay can be reached.
+      - name: Snapshot the guestbook
+        run: node scripts/guestbook.mjs backup
+
+      - name: Commit the snapshot if it changed
+        id: commit
+        run: |
+          if git diff --quiet -- data/guestbook.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/guestbook.json
+          git commit -m "Update guestbook snapshot."
+          # main may have moved while this ran
+          git push || (git pull --rebase && git push)
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      # A push made with the workflow token does not start the deploy
+      # workflow by itself, so ask for one. Not fatal: the snapshot ships
+      # with the next ordinary deploy otherwise.
+      - name: Deploy the new snapshot
+        if: steps.commit.outputs.changed == 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run hugo.yml --ref main

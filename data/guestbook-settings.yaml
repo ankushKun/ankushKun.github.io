@@ -1,0 +1,7 @@
+# Public key for the guestbook's "keep my email private" option.
+#
+# Empty = the option is not offered and every email left in the book is public.
+# Generate a pair with `node scripts/guestbook.mjs keygen`, paste the PUBLIC key
+# here and keep the private key out of the repo. Read the private emails with
+# `node scripts/guestbook.mjs emails`.
+privateEmailKey: ""

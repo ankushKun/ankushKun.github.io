@@ -1,0 +1,173 @@
+{
+  "_readme": [
+    "Curation for scripts/changelog.mjs, which turns `git log` into data/changelog.json (the Software Update app).",
+    "One update is one day of commits. Without an entry under `releases` a day gets its notes from the commit subjects themselves and a title built from them.",
+    "ignore:   regexes (case-insensitive) for commit subjects that say nothing to a visitor. A day whose commits are all ignored is left out of the list.",
+    "areas:    first match wins; gives an update its icon (`app` is an id from data/apps.yaml) and, when a day has several notes, its title.",
+    "releases: keyed by commit date (YYYY-MM-DD). `title`, `app` and `notes` each override the generated value; `hide: true` drops the day."
+  ],
+  "repo": "https://github.com/ankushKun/ankushKun.github.io",
+  "ignore": [
+    "^merge\\b",
+    "^bump\\b",
+    "\\(deps\\)",
+    "^update guestbook snapshot",
+    "^checkpoint",
+    "^v86:checkpoint",
+    "^wip$",
+    "^work$",
+    "^updates?$",
+    "^updated$",
+    "^patches$",
+    "^refactor$",
+    "^cleanup$",
+    "^code reduction$",
+    "^partials revamp$",
+    "^gitignore$",
+    "^ready for push$",
+    "^ordered$",
+    "^create hugo\\.yml$",
+    "^skip dart$",
+    "^content update$",
+    "^add back$",
+    "^yeet$",
+    "^ck$",
+    "^test\\b",
+    "^yadc13k$",
+    "^loader$",
+    "^desktop icons$",
+    "^font$",
+    "^deep linking false$",
+    "^app-support$",
+    "^cloudflare update$"
+  ],
+  "areas": [
+    { "match": "music|itunes|cover flow|playlist", "label": "Music", "app": "music" },
+    { "match": "guestbook", "label": "Guestbook", "app": "guestbook" },
+    { "match": "\\bpaint\\b", "label": "Paint", "app": "paint" },
+    { "match": "\\birc\\b|\\bchat\\b|\\bgifs?\\b", "label": "IRC Chat", "app": "irc-chat" },
+    { "match": "sticky note", "label": "Sticky Note" },
+    { "match": "cursor", "label": "Multiplayer Cursors" },
+    { "match": "terminal|\\bv86\\b", "label": "Terminal", "app": "terminal" },
+    { "match": "quake|doom|flash|\\bgames?\\b|portal|crysis", "label": "Games", "app": "games" },
+    { "match": "\\bblogs?\\b|\\bposts?\\b|cross-post", "label": "Blogs", "app": "blogs" },
+    { "match": "\\bprojects?\\b", "label": "Projects", "app": "projects" },
+    { "match": "resume", "label": "Resume", "app": "resume" },
+    { "match": "timeline|\\bwins\\b|hackathon", "label": "Timeline", "app": "timeline" },
+    { "match": "\\babout\\b|contact", "label": "About Me", "app": "about" },
+    { "match": "\\bseo\\b|\\brss\\b|sitemap|llms|crawl|structured data|open graph|\\bog\\b", "label": "Search and Feeds" },
+    { "match": "\\bhugo\\b|\\bbuild\\b|\\bgun\\b|relay|posthog|analytics|cloudflare", "label": "Under the Hood" }
+  ],
+  "releases": {
+    "2026-08-10": { "title": "Music, with Cover Flow", "app": "music" },
+    "2026-07-28": {
+      "title": "Guestbook, Paint and a reworked desktop",
+      "app": "guestbook",
+      "notes": [
+        "Add Paint, a shared canvas everyone draws on together",
+        "Add the Guestbook, a signed and bound visitors' book with a paper page turn",
+        "Add reactions, viewer badges, a menubar status and a startup chime",
+        "Rework multiplayer cursors to be anchor-based and anonymous",
+        "Improve the desktop: minimize tray, sheets, deep links and chat scroll",
+        "Cross-post two blog posts from construct.computer, with attribution",
+        "Fix realtime bugs, the RSS feed and the Hugo build"
+      ]
+    },
+    "2026-07-03": { "title": "A communal sticky note" },
+    "2026-05-14": { "title": "Mavericks UI polish" },
+    "2026-02-25": { "title": "Resume update", "app": "resume", "notes": ["Update the resume"] },
+    "2026-02-19": {
+      "title": "SEO, AI crawling and two new projects",
+      "notes": [
+        "Improve SEO and AI crawling: structured data, llms.txt, robots.txt and sitemap",
+        "Add the PumpMyClaw and PokePerps project pages"
+      ]
+    },
+    "2026-01-26": { "title": "Resume update", "app": "resume", "notes": ["Update the resume"] },
+    "2026-01-22": { "title": "Multiplayer cursors", "notes": ["Add multiplayer cursors"] },
+    "2026-01-19": {
+      "title": "Pokemon scanner",
+      "app": "projects",
+      "notes": ["Add the Pokemon scanner project page", "Update the Pokemon scanner blog post"]
+    },
+    "2026-01-14": { "title": "Pokemon scanner blog post", "app": "blogs", "notes": ["Add the Pokemon scanner blog post"] },
+    "2026-01-11": { "title": "Breadcrumbs fix", "notes": ["Fix the breadcrumbs list"] },
+    "2026-01-06": { "title": "WebAnimate", "app": "projects", "notes": ["Add the WebAnimate project page", "Update links"] },
+    "2026-01-02": {
+      "title": "Quake 3 Arena",
+      "app": "quake3",
+      "notes": ["Add Quake 3 Arena, with multiplayer", "Fix Open Graph images"]
+    },
+    "2026-01-01": { "title": "CommentKit project page", "app": "projects", "notes": ["Update the CommentKit project page"] },
+    "2025-12-31": {
+      "title": "IRC Chat and CommentKit",
+      "app": "irc-chat",
+      "notes": ["More work on IRC Chat", "Add the CommentKit project page and blog post"]
+    },
+    "2025-12-30": {
+      "title": "IRC Chat",
+      "app": "irc-chat",
+      "notes": ["Add IRC Chat", "Restyle the scrollbars", "Add CommentKit verification"]
+    },
+    "2025-12-25": {
+      "title": "Terminal file uploads and an RSS feed",
+      "app": "terminal",
+      "notes": ["Add file uploads to the Terminal", "Improve the Terminal", "Add an RSS feed", "Update About Me"]
+    },
+    "2025-12-24": {
+      "title": "DOOM, Flash games and search",
+      "app": "games",
+      "notes": [
+        "Add DOOM",
+        "Add four Flash games",
+        "Add search",
+        "Add the recent blogs widget",
+        "Add the DOOM-style renderer blog post"
+      ]
+    },
+    "2025-12-23": {
+      "title": "Terminal",
+      "app": "terminal",
+      "notes": [
+        "Add the Terminal, running on the v86 emulator",
+        "Add easter eggs",
+        "Add the Mandelbrot blog post"
+      ]
+    },
+    "2025-12-22": {
+      "title": "Windows for projects, blogs, contact and search",
+      "app": "",
+      "notes": [
+        "Add windows for projects, blogs, contact and search",
+        "Add notifications",
+        "Add the timeline",
+        "Add a DOOM icon",
+        "Update Open Graph images"
+      ]
+    },
+    "2025-12-21": {
+      "title": "The desktop",
+      "notes": ["Rebuild the site as an OS X Mavericks-style desktop", "Serve the wallpaper as WebP"]
+    },
+    "2025-12-20": { "title": "Blog", "app": "blogs", "notes": ["Add a blog", "SEO work"] },
+    "2025-12-17": { "title": "Analytics", "notes": ["Add PostHog analytics", "Fix the home page"] },
+    "2025-12-15": {
+      "title": "create-magicblock and pixels.earth",
+      "app": "projects",
+      "notes": ["Add the create-magicblock and pixels.earth project pages", "Update the resume"]
+    },
+    "2025-12-03": { "title": "Schedule a call", "app": "book-a-call", "notes": ["Add call scheduling through cal.com"] },
+    "2025-11-25": { "title": "Resume update", "app": "resume", "notes": ["Update the resume"] },
+    "2025-11-21": {
+      "title": "x402bay",
+      "app": "projects",
+      "notes": ["Add the x402bay project page", "Update project summaries", "Update the resume"]
+    },
+    "2025-10-28": { "title": "About Me update", "app": "about", "notes": ["Update About Me"] },
+    "2025-10-27": { "title": "About Me update", "app": "about", "notes": ["Update About Me"] },
+    "2024-12-23": { "title": "Power Editor", "app": "projects", "notes": ["Add the Power Editor project page and timeline entry"] },
+    "2024-12-12": { "title": "ETHIndia", "app": "timeline", "notes": ["Add ETHIndia to the timeline"] },
+    "2024-11-17": { "title": "A new domain", "notes": ["Move the site from ankushKun.github.io to ankush.one"] },
+    "2024-11-02": { "title": "The first version", "app": "", "notes": ["First version of the site, with the full timeline"] }
+  }
+}
