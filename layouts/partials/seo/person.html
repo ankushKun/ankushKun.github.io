@@ -1,0 +1,45 @@
+{{/*
+The site owner as a schema.org Person, returned as a dict for `jsonify`.
+Emitted once per page under a fixed @id ("<baseURL>#person"); every other
+JSON-LD block refers to that @id instead of repeating the name.
+
+Facts come from hugo.toml [params.profile] (mirrors the About window),
+data/contact.yaml (sameAs) and data/wins.yaml (award).
+*/}}
+{{- $p := site.Params.profile | default dict -}}
+{{- $home := site.Home.Permalink -}}
+{{- $person := dict
+    "@type" "Person"
+    "@id" (printf "%s#person" $home)
+    "name" ($p.name | default site.Params.author.name)
+    "url" $home
+-}}
+{{- with $p.alternateName }}{{ $person = merge $person (dict "alternateName" .) }}{{ end -}}
+{{- with $p.description }}{{ $person = merge $person (dict "description" .) }}{{ end -}}
+{{- with $p.jobTitle }}{{ $person = merge $person (dict "jobTitle" .) }}{{ end -}}
+{{- with $p.worksFor }}
+{{- $person = merge $person (dict "worksFor" (dict "@type" "Organization" "name" .name "url" .url)) -}}
+{{- end -}}
+{{- with $p.alumniOf }}
+{{- $school := dict "@type" "CollegeOrUniversity" "name" .name -}}
+{{- with .url }}{{ $school = merge $school (dict "url" .) }}{{ end -}}
+{{- $person = merge $person (dict "alumniOf" $school) -}}
+{{- end -}}
+{{- with site.Params.author.email }}{{ $person = merge $person (dict "email" .) }}{{ end -}}
+{{- with $p.image -}}
+{{- $img := partial "seo/image.html" . -}}
+{{- $person = merge $person (dict "image" $img.jsonld) -}}
+{{- end -}}
+{{- with $p.knowsAbout }}{{ $person = merge $person (dict "knowsAbout" .) }}{{ end -}}
+
+{{- $sameAs := slice -}}
+{{- range hugo.Data.contact.socials }}{{ with .url }}{{ $sameAs = $sameAs | append . }}{{ end }}{{ end -}}
+{{- with $sameAs }}{{ $person = merge $person (dict "sameAs" .) }}{{ end -}}
+
+{{- $awards := slice -}}
+{{- range hugo.Data.wins.wins -}}
+{{- $awards = $awards | append (printf "%s — %s (%v)" .prize .competition .year) -}}
+{{- end -}}
+{{- with $awards }}{{ $person = merge $person (dict "award" .) }}{{ end -}}
+
+{{- return $person -}}

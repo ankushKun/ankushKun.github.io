@@ -1,0 +1,35 @@
+{{/*
+Build-time social card (1200x630) for a blog post or project that has no
+`og_image` of its own: the desktop wallpaper, dimmed, with the page's kind,
+date and title set over it. Drawn with Hugo's built-in font (Go Regular), so
+no font file is bundled.
+
+Usage: {{ with partial "seo/card.html" . }}...{{ end }}  (. is a Page)
+Returns the same dict as seo/image.html ("url" "width" "height" "jsonld"),
+or false for pages that do not get a card (everything else keeps the site
+default /og-image.jpg). The wallpaper comes from static/wallpapers, mounted as
+assets/wallpapers in hugo.toml.
+*/}}
+{{- $out := false -}}
+{{- $kind := index (dict "blogs" "Blog" "projects" "Project") .Section -}}
+{{- if and $kind .IsPage -}}
+{{- with resources.Get "wallpapers/wallpaper.webp" -}}
+{{- $label := $kind -}}
+{{- if not $.Date.IsZero -}}
+{{- $label = printf "%s  ·  %s" $kind ($.Date.Format (cond (eq $.Section "projects") "2006" "Jan 2, 2006")) -}}
+{{- end -}}
+{{- $by := printf "%s  ·  %s" (site.Params.profile.name | default site.Params.author.name) (replaceRE `^https?://|/$` "" site.BaseURL) -}}
+{{- $base := (.Fill "1200x630 Center jpg q82").Filter (images.GaussianBlur 4) (images.Brightness -45) -}}
+{{- $card := $base.Filter
+    (images.Text (upper $label) (dict "color" "#9CC8FF" "size" 30 "x" 80 "y" 96))
+    (images.Text $.Title (dict "color" "#ffffff" "size" 66 "linespacing" 14 "x" 80 "y" 160))
+    (images.Text $by (dict "color" "#D8DEE6" "size" 30 "x" 80 "y" 520))
+-}}
+{{- /* Published as /og/<section>/<slug>.jpg rather than a hashed wallpaper name */ -}}
+{{- $card = $card | resources.Copy (printf "og/%s.jpg" (strings.Trim $.RelPermalink "/" | urlize)) -}}
+{{- $url := $card.Permalink -}}
+{{- $out = dict "url" $url "width" $card.Width "height" $card.Height
+    "jsonld" (dict "@type" "ImageObject" "url" $url "width" $card.Width "height" $card.Height) -}}
+{{- end -}}
+{{- end -}}
+{{- return $out -}}

@@ -1,0 +1,37 @@
+{{- /*
+/external-hosts.json - {"hosts": ["github.com", ...]}: every external hostname
+the site links to. workers/site-worker reads it as the allowlist of hosts the
+link proxy may load (ALLOWLIST_URL), and the link checker can use it too.
+
+Sources:
+- content: every http(s) href in the rendered body of every page, plus any
+  URL in front matter (website, canonical, ...) and `github = "owner/repo"`
+- data: every URL anywhere in data/*.yaml|json and in hugo.toml [params]
+- layouts: every http(s) href hard-coded in a template (About window etc.)
+Embedded media (img/video/script src) is not a link and is left out.
+
+Hosts are lower-cased, a leading "www." is dropped, the site's own host is
+left out, and the list is de-duplicated and sorted.
+*/ -}}
+{{- $urls := slice -}}
+{{- $anyURL := `https?://[^\s"'<>\\)]+` -}}
+{{- $linked := `href=["']https?://[^"'\s<>{]+` -}}
+{{- range site.Pages -}}
+    {{- $urls = $urls | append (findRE $linked .Content) -}}
+    {{- $urls = $urls | append (findRE $anyURL (.Params | jsonify (dict "noHTMLEscape" true))) -}}
+    {{- if .Params.github }}{{ $urls = $urls | append "https://github.com/" }}{{ end -}}
+{{- end -}}
+{{- $urls = $urls | append (findRE $anyURL (hugo.Data | jsonify (dict "noHTMLEscape" true))) -}}
+{{- $urls = $urls | append (findRE $anyURL (site.Params | jsonify (dict "noHTMLEscape" true))) -}}
+{{- $urls = $urls | append (findRE $linked (partial "agents/layout-sources.md" "layouts")) -}}
+
+{{- $own := (urls.Parse site.BaseURL).Hostname | lower | strings.TrimPrefix "www." -}}
+{{- $hosts := slice -}}
+{{- range $urls -}}
+    {{- $host := . | replaceRE `^.*?https?://` "" | replaceRE `[/?#:@].*$` "" | lower | strings.TrimPrefix "www." -}}
+    {{- /* Plain dotted hostnames only: no IPs, ports, localhost or template leftovers */ -}}
+    {{- if and (findRE `^[a-z0-9]([a-z0-9_-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9_-]*[a-z0-9])?)*\.[a-z]{2,}$` $host 1) (ne $host $own) (not (strings.HasSuffix $host (print "." $own))) -}}
+        {{- $hosts = $hosts | append $host -}}
+    {{- end -}}
+{{- end -}}
+{{- dict "hosts" ($hosts | uniq | sort) | jsonify -}}

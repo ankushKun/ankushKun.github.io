@@ -1,0 +1,41 @@
+{{- /*
+/llms.txt (https://llmstxt.org): a short, generated index of the site.
+Nothing here is hand-maintained: identity from hugo.toml [params.profile],
+pages from content/, socials from data/contact.yaml.
+*/ -}}
+{{- $blogs := (where site.RegularPages "Section" "blogs").ByDate.Reverse -}}
+{{- $projects := (where site.RegularPages "Section" "projects").ByDate.Reverse -}}
+{{- $featured := where $projects "Params.featured" true -}}
+{{ partial "agents/intro.md" . | strings.TrimSpace }}
+
+## About
+
+{{ range slice "/about" "/uses" "/resume" "/timeline" }}{{ with site.GetPage . }}{{ if not .Draft }}{{ partial "agents/line.md" . }}
+{{ end }}{{ end }}{{ end -}}
+- [Resume (PDF)]({{ "resume.pdf" | absURL }})
+
+## Experience
+{{ partial "agents/experience.md" . }}
+
+## Blog posts
+
+{{ range $blogs }}{{ partial "agents/line.md" . }}
+{{ end }}
+## Featured projects
+
+{{ range $featured }}{{ partial "agents/line.md" . }}
+{{ end -}}
+{{ with site.GetPage "/projects" }}- [All {{ len $projects }} projects]({{ with .OutputFormats.Get "markdown" }}{{ .Permalink }}{{ else }}{{ .Permalink }}{{ end }})
+{{ end }}
+## Elsewhere
+{{ partial "agents/socials.md" . }}
+
+## For agents
+
+{{ partial "agents/endpoints.md" . | strings.TrimSpace }}
+
+## Optional
+
+- [Full context]({{ "llms-full.txt" | absURL }}): all {{ len $projects }} projects, every win, the timeline and the full text of the {{ len $blogs }} blog posts
+{{ range slice "/credits" "/privacy" }}{{ with site.GetPage . }}{{ partial "agents/line.md" . }}
+{{ end }}{{ end -}}

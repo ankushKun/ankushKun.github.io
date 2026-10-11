@@ -1,45 +1,58 @@
-{{- $pctx := . -}}
-{{- if .IsHome -}}{{ $pctx = .Site }}{{- end -}}
+{{- /*
+One template, two kinds of feed:
+- a section feed (/blogs/index.xml, ...) carries only that section's pages
+- the home feed (/index.xml) mixes blogs, projects and timeline, and labels
+  each item with its section
+Which sections get a feed is decided by the [[cascade]] in hugo.toml.
+*/ -}}
+{{- $mixed := not .IsSection -}}
 {{- $pages := slice -}}
-{{- /* Collect pages from blogs, projects, and timeline sections */ -}}
-{{- range where .Site.RegularPages "Section" "blogs" -}}
-  {{- $pages = $pages | append . -}}
+{{- if $mixed -}}
+  {{- $pages = where .Site.RegularPages "Section" "in" (slice "blogs" "projects" "timeline") -}}
+{{- else -}}
+  {{- $pages = .RegularPages -}}
 {{- end -}}
-{{- range where .Site.RegularPages "Section" "projects" -}}
-  {{- $pages = $pages | append . -}}
-{{- end -}}
-{{- range where .Site.RegularPages "Section" "timeline" -}}
-  {{- $pages = $pages | append . -}}
-{{- end -}}
-{{- /* Sort by date descending and limit to 50 items */ -}}
-{{- $pages = sort $pages ".Date" "desc" | first 50 -}}
+{{- /* Newest first, at most 50 items */ -}}
+{{- $pages = $pages.ByDate.Reverse | first 50 -}}
 {{- $limit := .Site.Config.Services.RSS.Limit -}}
 {{- if ge $limit 1 -}}
   {{- $pages = $pages | first $limit -}}
 {{- end -}}
+{{- /* Latest change to anything in the feed */ -}}
+{{- $updated := .Lastmod -}}
+{{- range $pages }}{{ if .Lastmod.After $updated }}{{ $updated = .Lastmod }}{{ end }}{{ end -}}
 {{- printf "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>" | safeHTML }}
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
-    <title>{{ if eq .Title .Site.Title }}{{ .Site.Title }}{{ else }}{{ with .Title }}{{ . }} on {{ end }}{{ .Site.Title }}{{ end }}</title>
+    <title>{{ if $mixed }}{{ .Site.Title }}{{ else }}{{ .Title }} — {{ .Site.Title }}{{ end }}</title>
     <link>{{ .Permalink }}</link>
-    <description>Recent content {{ if ne .Title .Site.Title }}{{ with .Title }}in {{ . }} {{ end }}{{ end }}on {{ .Site.Title }}</description>
+    <description>{{ if $mixed }}Blog posts, projects and timeline entries from {{ .Site.Title }}{{ else }}{{ with .Description }}{{ . }}{{ else }}Recent content in {{ .Title }} on {{ .Site.Title }}{{ end }}{{ end }}</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>{{ site.Language.Lang }}</language>{{ with site.Params.author.email }}
     <managingEditor>{{ . }}{{ with site.Params.author.name }} ({{ . }}){{ end }}</managingEditor>{{ end }}{{ with site.Params.author.email }}
     <webMaster>{{ . }}{{ with site.Params.author.name }} ({{ . }}){{ end }}</webMaster>{{ end }}{{ with .Site.Copyright }}
-    <copyright>{{ . }}</copyright>{{ end }}{{ if not .Date.IsZero }}
-    <lastBuildDate>{{ (index $pages 0).Date.Format "Mon, 02 Jan 2006 15:04:05 -0700" | safeHTML }}</lastBuildDate>{{ end }}
+    <copyright>{{ . }}</copyright>{{ end }}{{ if not $updated.IsZero }}
+    <lastBuildDate>{{ $updated.Format "Mon, 02 Jan 2006 15:04:05 -0700" | safeHTML }}</lastBuildDate>{{ end }}
     {{- with .OutputFormats.Get "RSS" }}
     {{ printf "<atom:link href=%q rel=\"self\" type=%q />" .Permalink .MediaType | safeHTML }}
     {{- end }}
     {{- range $pages }}
     <item>
-      <title>{{ if eq .Section "blogs" }}[Blog] {{ else if eq .Section "projects" }}[Project] {{ else if eq .Section "timeline" }}[Timeline] {{ end }}{{ .Title }}</title>
+      <title>{{ if $mixed }}{{ if eq .Section "blogs" }}[Blog] {{ else if eq .Section "projects" }}[Project] {{ else if eq .Section "timeline" }}[Timeline] {{ end }}{{ end }}{{ .Title }}</title>
       <link>{{ .Permalink }}</link>
       <pubDate>{{ .Date.Format "Mon, 02 Jan 2006 15:04:05 -0700" | safeHTML }}</pubDate>
       {{- with site.Params.author.email }}<author>{{ . }}{{ with site.Params.author.name }} ({{ . }}){{ end }}</author>{{ end }}
       <guid>{{ .Permalink }}</guid>
-      <description>{{ .Summary | html }}</description>
+      {{- range .Params.tags }}
+      <category>{{ . }}</category>
+      {{- end }}
+      <description>{{ .Summary | transform.XMLEscape | safeHTML }}</description>
+      {{- /* Full text (links bar + body) for every item, so it can be read in
+      the feed reader. layouts/index.jsonfeed.json builds the same HTML. */ -}}
+      {{- with printf "%s%s" (partial "apps/doc/links-feed.html" .) .Content | strings.TrimSpace }}
+      {{- /* Root-relative links and images mean nothing outside the site */}}
+      <content:encoded>{{ . | replaceRE `(src|href|poster)="/([^/])` (printf `$1="%s$2` site.BaseURL) | transform.XMLEscape | safeHTML }}</content:encoded>
+      {{- end }}
     </item>
     {{- end }}
   </channel>

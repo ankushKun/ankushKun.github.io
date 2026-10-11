@@ -1,14 +1,25 @@
+{{- /*
+Search index for Spotlight (assets/js/mavericks.js). Root is an array.
+
+Icon markup is deliberately NOT repeated per item - it used to be 80% of this
+file. Apps carry none: the shell takes it from the inline #app-registry block
+in baseof.html. Content pages carry an "icon" key (document|folder|calendar),
+and only the first item of each key also carries "iconHtml", which the shell
+caches and reuses for every other item with that key. The 18px titlebar
+variant is the same markup with "app-icon-spotlight" swapped for
+"app-icon-chrome".
+*/ -}}
 {{- $results := slice -}}
+{{- $iconsEmitted := newScratch -}}
 
 {{/* 1. Registered apps */}}
-{{- range where .Site.Data.apps.apps "searchable" true -}}
+{{- range where hugo.Data.apps.apps "searchable" true -}}
     {{- $item := dict
         "title" .title
         "type" .type
+        "kind" "app"
         "openWindow" .id
         "description" .description
-        "iconHtml" (partial "os/app-icon.html" (dict "app" . "context" "spotlight"))
-        "iconHtmlChrome" (partial "os/app-icon.html" (dict "app" . "context" "chrome"))
     -}}
     {{- with .contentPermalink -}}{{- $item = merge $item (dict "permalink" .) -}}{{- end -}}
     {{- with .defaultSize -}}{{- $item = merge $item (dict "width" .width "height" .height) -}}{{- end -}}
@@ -20,29 +31,43 @@
     {{- $title := .Title -}}
     {{- $type := .Section -}}
     {{- if eq $type "" }}{{ $type = "page" }}{{ end -}}
-    {{- $content := .Plain | truncate 300 -}}
+    {{- /* Plain text, not HTML: .Plain keeps entities and truncate escapes its
+    input again, so unescape on both sides or Spotlight searches "&amp;".
+    600 characters of body text per page: enough for Spotlight to find a page
+    by what its opening says, and the whole index stays well under the CI
+    budget (150 KB). */ -}}
+    {{- $content := .Plain | htmlUnescape | truncate 600 | htmlUnescape -}}
     {{- $prefix := $type -}}
     {{- if eq .Section "blogs" }}{{ $prefix = "post" }}{{ end -}}
     {{- if eq .Section "projects" }}{{ $prefix = "project" }}{{ end -}}
     {{- if eq .Section "timeline" }}{{ $prefix = "timeline" }}{{ end -}}
     {{- $uniqueId := .RelPermalink | urlize -}}
     {{- with .File }}{{ $uniqueId = .UniqueID }}{{ end -}}
-    {{- $icon := dict "type" "partial" "partial" "icons/desktop/document.html" -}}
-    {{- if eq .Section "projects" }}{{ $icon = dict "type" "partial" "partial" "icons/desktop/folder.html" }}{{ end -}}
-    {{- if eq .Section "timeline" }}{{ $icon = dict "type" "partial" "partial" "icons/desktop/calendar.html" }}{{ end -}}
+    {{- $iconKey := "document" -}}
+    {{- if eq .Section "projects" }}{{ $iconKey = "folder" }}{{ end -}}
+    {{- if eq .Section "timeline" }}{{ $iconKey = "calendar" }}{{ end -}}
 
-    {{- if not (or (eq $title "Wins") (eq $title "Contact") (eq $title "Schedule Call")) -}}
+    {{- if ne $title "Schedule Call" -}}
         {{- $item := dict
             "title" $title
             "type" $type
+            "kind" "page"
             "openWindow" (printf "%s-%s" $prefix $uniqueId)
             "permalink" .RelPermalink
+            "url" .Permalink
             "content" $content
             "width" 900
             "height" 650
-            "iconHtml" (partial "os/app-icon.html" (dict "icon" $icon "context" "spotlight"))
-            "iconHtmlChrome" (partial "os/app-icon.html" (dict "icon" $icon "context" "chrome"))
+            "icon" $iconKey
         -}}
+        {{- with .Description -}}{{- $item = merge $item (dict "description" .) -}}{{- end -}}
+        {{- if not .Date.IsZero -}}{{- $item = merge $item (dict "date" (.Date.Format "2006-01-02")) -}}{{- end -}}
+        {{- with .Params.tags -}}{{- $item = merge $item (dict "tags" .) -}}{{- end -}}
+        {{- if not ($iconsEmitted.Get $iconKey) -}}
+            {{- $iconsEmitted.Set $iconKey true -}}
+            {{- $icon := dict "type" "partial" "partial" (printf "icons/desktop/%s.html" $iconKey) -}}
+            {{- $item = merge $item (dict "iconHtml" (partial "os/app-icon.html" (dict "icon" $icon "context" "spotlight"))) -}}
+        {{- end -}}
         {{- $results = $results | append $item -}}
     {{- end -}}
 {{- end -}}
