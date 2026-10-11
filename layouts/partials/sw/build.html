@@ -1,0 +1,11 @@
+{{- /* Service worker build id: "<unix build time>-<short deploy commit>".
+Always call it through partialCached ("sw/build.html" . "sw-build") so /sw.js,
+/offline.html and every page carry the SAME id within one build; a plain
+partial call would read the clock again. It starts with the build time, so ids
+sort by age, and it changes on every deploy (the worker's cache names, and so
+the cache cleanup on activate, hang off it). */ -}}
+{{- $id := now.Unix | string -}}
+{{- with site.Params.gitcommit | default (getenv "CF_PAGES_COMMIT_SHA") -}}
+{{- $id = printf "%s-%s" $id (substr . 0 7) -}}
+{{- end -}}
+{{- return $id -}}

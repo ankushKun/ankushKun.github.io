@@ -1,0 +1,18 @@
+{{- /* Service worker hook for every page (included at the end of baseof's script
+section). "sw-build:<id>" is the marker /sw.js looks for: it only precaches
+and stores pages of its own build. The script registers the worker, applies
+the kill switch and shows the update notice; see assets/js/sw-register.js and
+docs/service-worker.md. */ -}}
+{{- $build := partialCached "sw/build.html" . "sw-build" -}}
+{{- $config := dict
+    "marker" (printf "sw-build:%s" $build)
+    "enabled" (partial "sw/enabled.html" .)
+    "url" ("sw.js" | relURL)
+    "kill" ("sw-disabled.txt" | relURL)
+-}}
+{{- with resources.Get "js/sw-register.js" }}
+<script>
+    window.SW_CONFIG = {{ $config | jsonify | safeJS }};
+    {{ (. | resources.Minify).Content | safeJS }}
+</script>
+{{- end }}
