@@ -4,11 +4,13 @@ draft = false
 title = 'Automating Mandelbrot Fractal generation with SYCL Programming'
 description = "Learn how to generate Mandelbrot fractals using Intel oneAPI and SYCL programming. Includes a bash script to automate fractal generation at various resolutions and iterations on Intel DevCloud."
 summary = 'A walkthrough of generating Mandelbrot fractals with Intel oneAPI SYCL, plus an automation script — from a hackathon-winning project at IIT Roorkee.'
-tags = ['Mandelbrot', 'Intel OneAPI', 'SYCL', 'bash scripting']
+tags = ['graphics', 'hackathon', 'tutorial']
 author = 'Ankush'
+slug = "mandelbrot-intel-oneapi"
+aliases = ["/blogs/mendelbrot-intel-oneapi/"]
 +++
 
-# What’s this about?
+## What’s this about?
 
 I had recently attended a workshop by Intel on their oneAPI programming model which was conducted by [Abhishek Nandy](https://medium.com/u/af7b551ddcdb) at IIT Roorkee during the Cognizance 2023. I attended this workshop with my friend, [Krish Agrawal](https://medium.com/@kragrrr), who is also the co-author of this blog.  
 The workshop was held for 2 days in which Nandy Sir on the first day told about this new model by **Intel** and how to get started with its implementation with the help of **JupyterLab**. Before ending the day, we were told that there will be a hackathon where he will take implementations of the this new model by all the students in the form of teams as to how we use Intel oneAPI in real-life projects.
@@ -21,11 +23,11 @@ The workshop was held for 2 days in which Nandy Sir on the first day told about 
 
 Now that we know what our project revolves around, let’s see its implementation in JupyterLab.
 
-# Getting started on DevCloud
+## Getting started on DevCloud
 
 DevCloud is sandbox that intel provides to learn and try out their oneAPI ecosystem. We will be using the devcloud jupyter lab to run our SYCL fractal generation project. It is way easier and quicker to run SYCL projects on the sandbox than on your local machine.
 
-So head over to https://devcloud.intel.com/oneapi/ and create an account. Navigate to the 'Getting Started' tab, scroll down to 'Connect with JupyterLab' and Launch a JupyterLab instance. It might take some time or get loaded instantly depending on the server load so have some patience.
+So head over to [devcloud.intel.com/oneapi](https://web.archive.org/web/20241207195212/https://devcloud.intel.com/oneapi/) (archived snapshot, the DevCloud site is no longer online) and create an account. Navigate to the 'Getting Started' tab, scroll down to 'Connect with JupyterLab' and Launch a JupyterLab instance. It might take some time or get loaded instantly depending on the server load so have some patience.
 
 ![Devcloud Jupyterlab](https://miro.medium.com/v2/resize:fit:1400/format:webp/1*8JUHbOpbnWCiTXeLqpqEPQ.png)
 
@@ -47,7 +49,7 @@ If you checkout the `src/mandel.hpp` file, you can find 4 variables row and colu
 
 Try changing these values and see how much time it takes for the images of different configurations to generate.
 
-# Automate it
+## Automate it
 
 Let’s now write a **bash script** that automatically changes the values in the C++ file and builds the project.
 
@@ -173,7 +175,7 @@ done
 
 More iterations means better quality of the image, you can zoom in and see the small details and tiny fractal repetitions, but to see these clearly the resolution must be increased.
 
-# The winning moment
+## The winning moment
 
 It was Day 2 and we both had absolutely nothing with us.
 We sat at the back thinking what we would present the crowd with.

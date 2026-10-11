@@ -4,16 +4,19 @@ wins:
     medal: "🥉"
     competition: "ETHIndia '24"
     url: "https://devfolio.co/projects/hackadome-daf3"
+    timeline: "/timeline/2024.ethindia"
   - year: 2024
     prize: "Third prize"
     medal: "🥉"
     competition: "Weavers dev bounty III"
     url: "https://x.com/Weavers_Org/status/1821262463897075745"
+    timeline: "/timeline/2024.weavers3"
   - year: 2023
     prize: "Grand Prize"
     medal: "🥇"
     competition: "Arweave India Cohort #1 hackerhouse"
     url: "https://x.com/arweaveindia/status/1734972911163961371"
+    timeline: "/timeline/2023.hackerhouse"
   - year: 2023
     prize: "Second"
     medal: "🥈"
@@ -22,35 +25,43 @@ wins:
     prize: "Second"
     medal: "🥈"
     competition: "Hack-O-Octo 1.0"
+    timeline: "/timeline/2023.hack-o-octo"
   - year: 2023
     prize: "First"
     medal: "🥇"
     competition: "CDAC's GCON Vegathon"
+    timeline: "/timeline/2023.vegathon-2"
   - year: 2023
     prize: "First"
     medal: "🥇"
     competition: "IIT Roorkee Intel OneAPI workshop & hackathon"
+    timeline: "/blogs/mendelbrot-intel-oneapi"
   - year: 2023
     prize: "Track Prize"
     medal: "🏅"
     competition: "SheBuilds Hackathon"
     url: "https://devfolio.co/projects/pokemonzilla-c051"
+    timeline: "/timeline/2023.shebuilds"
   - year: 2022
     prize: "Second"
     medal: "🥈"
     competition: "Hash It Out 1.0"
+    timeline: "/timeline/2022.hash-it-out"
   - year: 2022
     prize: "Track Prize"
     medal: "🏅"
     competition: "Neighbourhood Hacks 2.0"
+    timeline: "/timeline/2022.nh2"
   - year: 2022
     prize: "Track Prize"
     medal: "🏅"
     competition: "Support-a-thon"
+    timeline: "/timeline/2022.support-a-thon"
   - year: 2022
     prize: "Track Prize"
     medal: "🏅"
     competition: "We Make Devs <> Stream hackathon"
+    timeline: "/timeline/2022.wmd"
 
 participations:
   - year: 2024

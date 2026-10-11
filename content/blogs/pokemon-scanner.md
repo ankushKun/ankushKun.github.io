@@ -4,16 +4,17 @@ draft = false
 title = "How I built a Pokemon TCG scanner that runs 100% in your browser"
 description = "A story about building a lightning fast, offline-capable Pokemon card scanner using YOLO11, MobileCLIP, and WebAssembly."
 summary = "I wanted a way to scan my Pokemon cards instantly without waiting for server uploads. Here is how I built a fully client-side scanner using modern web AI tools."
-tags = ['tensorflow', 'CLIP', 'tfjs', 'onnx', 'siglip', 'embedding', 'pokemon', 'tcg', 'scanner', 'web-assembly']
+tags = ['machine-learning', 'web']
 author = 'Ankush'
+related = ["/projects/2026.pokemon-scanner"]
 +++
 
-<div align="center">
-  <img src="/media/mypokemonscanner.webp" alt="Scanner Demo" style="border-radius: 8px; max-width: 100%;" />
-  <p style="font-size: 0.9em; color: #888; margin-top: 8px;">It's fast. Really fast.</p>
-</div>
-
-<br/>
+<figure class="doc-figure doc-figure--portrait">
+  <video autoplay loop muted playsinline poster="/media/mypokemonscanner-poster.webp" width="332" height="670" aria-label="Scanner Demo">
+    <source src="/media/mypokemonscanner.mp4" type="video/mp4">
+  </video>
+  <figcaption>It's fast. Really fast.</figcaption>
+</figure>
 
 I have always been a huge fan of Pokemon. I have played almost every game from GBC to HGSS, and recently played a few 3DS games when I got my hands on a 'new' 3DS in Thailand.
 
@@ -54,12 +55,6 @@ Now I have a codebase which can:
 
 ## Package and ship
 
-Setup a cron on my VPS to update my card data every 3 days, cleaned up the codebase, wrote QOL scripts, built a nice little frontend hosted it on [mypokemonscanner.com](https://mypokemonscanner.com) and we're done building our card scanner (•̀ᴗ•́ )و 
+Setup a cron on my VPS to update my card data every 3 days, cleaned up the codebase, wrote QOL scripts, built a nice little frontend hosted it on mypokemonscanner.com and we're done building our card scanner (•̀ᴗ•́ )و 
 
-<center>
-
-{{< github "ankushKun/mypokemonscanner" >}}
-<br/>
-{{< button "https://mypokemonscanner.com" "mypokemonscanner.com" >}}
-
-</center>
+*Update: mypokemonscanner.com is no longer online, but the Wayback Machine has an [archived snapshot](https://web.archive.org/web/20260227180613/https://mypokemonscanner.com/). The [project page]({{< ref "/projects/2026.pokemon-scanner.md" >}}) has the demo and the tech stack.*

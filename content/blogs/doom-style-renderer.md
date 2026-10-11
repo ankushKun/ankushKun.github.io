@@ -4,73 +4,23 @@ draft = false
 title = "Building a DOOM-Style 3D Renderer from Scratch in JavaScript"
 description = "A deep dive into building a 3D renderer from scratch using JavaScript and HTML5 Canvas, inspired by the classic DOOM engine."
 summary = "Ever wondered how classic games like DOOM rendered their immersive 3D worlds? This post breaks down the math and logic behind a retro 3D engine."
-tags = ["graphics", "javascript", "doom", "2.5d", "3d", "game-development", "canvas", "rendering-engine"]
+tags = ["graphics", "game-dev", "web", "tutorial"]
 og_image = "/media/doom-renderer-og.jpg"
+# The playable demo opens the post, so the social card is not repeated above it
+cover = false
 author = 'Ankush'
+links = [
+  { label = "Full Source Code", url = "https://gist.github.com/ankushKun/653b7eeaf6d4279ef97f1ab6f709110a", icon = "code" },
+]
 +++
 
-# How 3D Graphics Work: Building a DOOM-Style Renderer from Scratch
-
-<div align="center">
-
-<style>
-  .demo-container {
-    position: relative;
-    display: inline-block;
-    width: 100%;
-    max-width: 760px;
-  }
-  .demo-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.5em;
-    font-weight: bold;
-    pointer-events: none;
-    border-radius: 8px;
-  }
-  .demo-container:hover .demo-overlay,
-  .demo-container:focus-within .demo-overlay {
-    display: none;
-  }
-  #demo {
-    width: 100%;
-    max-width: 760px;
-    height: auto;
-    aspect-ratio: 760 / 500;
-    border-radius: 8px;
-    cursor: pointer;
-  }
-</style>
-
-<div class="demo-container">
-  <iframe id="demo" src="https://7jiiceni3iqjhaxe44sesz2qjd5q7m5l3kumbu2gzmoerv5ifi3a.arweave.net/-lCBEajaIJOC5OckSWdQSPsPs6vaqMDTRsscSNeoKjY?"></iframe>
-  <div class="demo-overlay">Click to play</div>
-</div>
-<p style="font-size: 0.9em; color: #888; margin-top: 8px;">Move with WASD</p>
-
-</div>
-
-<br/>
+{{< demo src="https://7jiiceni3iqjhaxe44sesz2qjd5q7m5l3kumbu2gzmoerv5ifi3a.arweave.net/-lCBEajaIJOC5OckSWdQSPsPs6vaqMDTRsscSNeoKjY?" title="DOOM-style renderer demo" caption="Move with WASD" >}}
 
 Recently I have been adding games to my portfolio and DOOM is one of them. But instead of just embedding the original game, I wanted to understand how it actually worked. So I went down the rabbit hole (a second time) and built a more whacky version of the doom renderer from scratch and in HTML canvas, no extra dependencies.
 
 Turns out, classic games like **DOOM** didn't do real 3D at all. They used something called **2.5D rendering**,  basically faking 3D with clever 2D math. And it ran on hardware way worse (100x or more times worse) than what you are reading this on.
 
 Today I'll break down how I built my own DOOM-style renderer. No fancy tools required, just a code editor and a web browser.
-
-<center>
-
-{{< button "https://gist.github.com/ankushKun/653b7eeaf6d4279ef97f1ab6f709110a" "Full Source Code" >}}
-
-</center>
 
 
 ## Is 3D actually 3D?
@@ -94,7 +44,8 @@ This process generally involves defining the world (objects), placing the camera
 
 The simplest way to define a world map is with a **grid map**. We can represent this as an array where each cell is either a wall (`1`) or empty space (`0`).
 
-> Future Scope: we can implement an `enum` and use different types of walls or place objects with different number instead of just 0 and 1.
+> [!TIP] Future Scope
+> we can implement an `enum` and use different types of walls or place objects with different number instead of just 0 and 1.
 
 ```javascript
 const MAP_WIDTH = 11 // Number of rows
@@ -376,12 +327,6 @@ setInterval(loop, 1000 / 30)
 The engine we built covers the fundamentals, but classic DOOM had much more: texture mapping, sprites, variable height sectors for different floor/ceiling heights, lighting, enemy AI, sound, guns, an actual game!
 
 Feel free to extend this engine to add more features! &lt;3
-
-<center>
-
-{{< button "https://gist.github.com/ankushKun/653b7eeaf6d4279ef97f1ab6f709110a" "Full Source Code" >}}
-
-</center>
 
 
 ## References
