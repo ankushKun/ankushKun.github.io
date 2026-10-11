@@ -1,0 +1,14 @@
+{{- /*
+Markdown headings.
+- The page title is the only <h1>, so a "# Heading" in a body becomes <h2>.
+- Each heading ends with an empty a.heading-anchor pointing at itself; the
+  "#" glyph comes from CSS so it never leaks into summaries or the search
+  index. Heading ids are exactly what Hugo would have generated.
+*/ -}}
+{{- $level := .Level -}}
+{{- if eq $level 1 }}{{ $level = 2 }}{{ end -}}
+<h{{ $level }} id="{{ .Anchor }}"
+  {{- range $k, $v := .Attributes }}{{ if ne $k "id" }}{{ printf " %s=%q" $k (string $v) | safeHTMLAttr }}{{ end }}{{ end }}>
+  {{- .Text -}}
+  <a class="heading-anchor" href="#{{ .Anchor }}" aria-label="Link to this section"></a>
+</h{{ $level }}>

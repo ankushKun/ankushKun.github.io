@@ -1,0 +1,2 @@
+{{- /* Text twin of aside.html */ -}}
+{{ .Inner | strings.TrimSpace }}

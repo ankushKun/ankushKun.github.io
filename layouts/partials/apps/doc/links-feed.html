@@ -1,0 +1,14 @@
+{{- /*
+The links bar for a feed item: a short paragraph of plain links (feed readers
+drop the site CSS), placed ahead of the full text in content:encoded.
+Data: apps/doc/links-data.html. Returns "" when the page has no links.
+
+Usage: {{ partial "apps/doc/links-feed.html" . }} where . is a Page
+*/ -}}
+{{- $items := slice -}}
+{{- range partial "apps/doc/links-data.html" . -}}
+{{- $items = $items | append (printf `<a href="%s">%s</a>%s` (.url | htmlEscape) (.label | htmlEscape) (cond .archived " (archived snapshot)" "")) -}}
+{{- end -}}
+{{- $out := "" -}}
+{{- with $items }}{{ $out = printf "<p>Links: %s</p>\n" (delimit . " · ") }}{{ end -}}
+{{- return $out -}}

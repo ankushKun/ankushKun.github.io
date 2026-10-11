@@ -1,0 +1,52 @@
+{{- /*
+The shared document layout for blog posts, projects and timeline entries,
+inside a desktop window and on the page's own URL alike.
+
+  header (meta line, title, lede, cover)   apps/doc/header.html
+  links bar                                apps/doc/links.html
+  table of contents (long documents)       apps/doc/toc.html
+  body (.Content through the render hooks in _default/_markup)
+  FAQ (front matter `faq`)
+  footer (tags, reactions, author, prev/next, related)  apps/doc/footer.html
+
+Styles: assets/css/apps/doc*.css. Behaviour (image viewer, contents
+highlight, reading progress fallback, code overflow fade): assets/js/doc.js,
+which finds articles by [data-doc] whenever a window's content arrives.
+
+Usage: {{ partial "apps/doc/document.html" (dict "page" . "kind" "blog") }}
+kind: "blog" | "project" | "timeline"
+*/ -}}
+{{- $p := .page -}}
+{{- $kind := .kind -}}
+{{- $ld := partial "apps/doc/lede.html" (dict "page" $p "kind" $kind) -}}
+{{- $tocSide := partial "apps/doc/toc.html" (dict "page" $p "variant" "side") -}}
+{{- $tocInline := partial "apps/doc/toc.html" (dict "page" $p "variant" "inline") -}}
+<article class="doc doc--{{ $kind }}{{ if $tocSide }} doc--has-toc{{ end }}" data-doc>
+    {{- if ge $p.ReadingTime 3 }}
+    <div class="doc-progress" aria-hidden="true"><span class="doc-progress-bar"></span></div>
+    {{- end }}
+    <div class="doc-inner">
+        {{ partial "apps/doc/header.html" (dict "page" $p "kind" $kind "lede" $ld.lede) }}
+        {{ partial "apps/doc/links.html" $p }}
+        {{ partial "apps/doc/cover.html" (dict "page" $p "kind" $kind) }}
+        {{ $tocSide }}
+        {{ $tocInline }}
+        <div class="doc-body markdown-body">
+            {{ $ld.content }}
+        </div>
+
+        {{- /* Optional `faq = [{ q = "...", a = "..." }]` front matter (answers
+        are markdown). Mirrored as FAQPage JSON-LD in partials/seo/jsonld.html. */}}
+        {{- with $p.Params.faq }}
+        <section class="doc-faq doc-body markdown-body" aria-labelledby="faq-{{ $p.File.UniqueID }}">
+            <h2 id="faq-{{ $p.File.UniqueID }}">FAQ</h2>
+            {{- range . }}{{ if and .q .a }}
+            <h3 class="doc-faq-question">{{ .q }}</h3>
+            <div class="doc-faq-answer">{{ .a | $p.RenderString (dict "display" "block") }}</div>
+            {{- end }}{{ end }}
+        </section>
+        {{- end }}
+
+        {{ partial "apps/doc/footer.html" (dict "page" $p "kind" $kind) }}
+    </div>
+</article>

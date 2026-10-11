@@ -1,0 +1,4 @@
+{{- /* A quiet side remark in smaller, muted type (styles: .doc-aside in
+assets/css/apps/doc.css). The text is markdown.
+Usage: {{< aside >}}Unfortunately I lost the source code{{< /aside >}} */ -}}
+<p class="doc-aside">{{ .Inner | strings.TrimSpace | .Page.RenderString }}</p>

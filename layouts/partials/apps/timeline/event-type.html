@@ -1,0 +1,26 @@
+{{/*
+The kind of a timeline row, as a lowercase slug ("" when it has none).
+Drives the coloured chip on each row and the filter chips in the toolbar;
+the slugs match the .event-type.<slug> colours in assets/css/partials.css.
+
+Order: an explicit `type` in front matter, then the section (projects and
+blog posts share the timeline), then the first tag that names a kind.
+
+Usage: {{ $type := partial "apps/timeline/event-type.html" $page }}
+*/}}
+{{- $type := "" -}}
+{{- with .Params.type -}}
+{{- $type = . | lower | urlize -}}
+{{- else -}}
+{{- if eq .Section "projects" -}}
+{{- $type = "project" -}}
+{{- else if eq .Section "blogs" -}}
+{{- $type = "blog" -}}
+{{- else -}}
+{{- $byTag := dict "hackathon" "hackathon" "job" "work" "talk" "speaking" -}}
+{{- range .Params.tags -}}
+{{- if not $type }}{{ with index $byTag (lower .) }}{{ $type = . }}{{ end }}{{ end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- return $type -}}

@@ -1,0 +1,42 @@
+{{- /*
+Markdown images.
+- A standalone image (its own paragraph; hugo.toml sets
+  wrapStandAloneImageWithinParagraph = false) becomes a figure with a caption:
+  the image title, else the alt text when it reads as a description rather
+  than a file name. A caption that repeats the alt is hidden from screen
+  readers so it is not announced twice.
+- width/height are written when Hugo can measure the file (static/ or a page
+  resource), so the page does not jump as images load.
+- assets/js/doc.js makes figure images open in the Quick Look viewer.
+*/ -}}
+{{- $src := .Destination -}}
+{{- $alt := .PlainText -}}
+{{- $w := 0 -}}
+{{- $h := 0 -}}
+{{- if not (findRE `^([a-z]+:)?//` $src) -}}
+{{- with .PageInner.Resources.Get $src -}}
+{{- if and (eq .MediaType.MainType "image") (ne .MediaType.SubType "svg") }}{{ $w = .Width }}{{ $h = .Height }}{{ end -}}
+{{- end -}}
+{{- if not $w -}}
+{{- $file := printf "static/%s" (strings.TrimPrefix "/" $src) -}}
+{{- if and (fileExists $file) (findRE `(?i)\.(jpe?g|png|gif|webp)$` $src) -}}
+{{- with try (imageConfig $file) }}{{ with .Value }}{{ $w = .Width }}{{ $h = .Height }}{{ end }}{{ end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- $img := printf `<img src="%s" alt="%s"` ($src | safeURL) ($alt | htmlEscape) -}}
+{{- with .Title }}{{ $img = printf `%s title="%s"` $img (. | htmlEscape) }}{{ end -}}
+{{- if and $w $h }}{{ $img = printf `%s width="%d" height="%d"` $img $w $h }}{{ end -}}
+{{- $img = printf `%s loading="lazy" decoding="async">` $img -}}
+{{- if .IsBlock -}}
+{{- $caption := .Title -}}
+{{- $fromAlt := false -}}
+{{- if and (not $caption) (findRE `\s` (strings.TrimSpace $alt)) (not (findRE `(?i)(\.(png|jpe?g|gif|webp|svg)$|^(image|img|screenshot|picture|photo)\s*\d*$)` $alt)) -}}
+{{- $caption = $alt -}}
+{{- $fromAlt = true -}}
+{{- end -}}
+<figure class="doc-figure">{{ $img | safeHTML }}{{ with $caption }}<figcaption{{ if $fromAlt }} aria-hidden="true"{{ end }}>{{ . }}</figcaption>{{ end }}</figure>
+{{- else -}}
+{{- $img | safeHTML -}}
+{{- end -}}
+{{- /* chomp trailing newline so inline images do not gain a stray space */ -}}

@@ -1,0 +1,17 @@
+{{/* Small cover thumbnail for list rows and cards.
+Usage: {{ with partial "apps/thumb.html" (dict "src" .Params.og_image "spec" "128x96") }}<img src="{{ .RelPermalink }}" ...>{{ end }}
+"src" is a site path under /media/ (static/media is also mounted as
+assets/media in hugo.toml so Hugo can resize it); "spec" is an image Fill
+size. Returns the processed image resource, or false when there is no usable
+raster image - callers then show their normal icon. */}}
+{{- $out := false -}}
+{{- with .src -}}
+{{- if hasPrefix . "/media/" -}}
+{{- with resources.Get (strings.TrimPrefix "/" .) -}}
+{{- if in (slice "jpeg" "png" "webp") .MediaType.SubType -}}
+{{- $out = .Fill (printf "%s webp q80" $.spec) -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- return $out -}}

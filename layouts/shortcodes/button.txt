@@ -1,0 +1,4 @@
+{{- /* Plain-text twin of button.html for llms-full.txt (text/plain cannot use the .md one); keep in step with button.md */ -}}
+{{- $href := .Get 0 -}}
+{{- $archived := or (eq (.Get 2) "archived") (strings.Contains $href "web.archive.org/") -}}
+[{{ .Get 1 | default "View" }}{{ if $archived }} (archived snapshot){{ end }}]({{ $href }})

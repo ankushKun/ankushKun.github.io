@@ -1,0 +1,296 @@
+/* ==========================================================================
+   Code blocks: syntax theme, header strip, copy button, overflow fade
+   --------------------------------------------------------------------------
+   hugo.toml sets [markup.highlight] noClasses = false, so Chroma writes
+   classes (.k, .s, .c1 ...) instead of inline Monokai colours, and the theme
+   below is custom properties: Xcode's default light and dark palettes.
+   The language label and Copy button (.code-tools) are added to every
+   .highlight by decorateContent() in assets/js/mavericks.js; here they become
+   a header strip. assets/js/doc.js adds .doc-code-overflow while a block has
+   more to scroll to on the right.
+   A ```text block (diagrams, ASCII art) is a lighter centred figure with no
+   strip and no language label.
+   shell-code-blocks.css loads after this file: selectors here carry two
+   classes so they win over its single-class rules.
+   ========================================================================== */
+
+:root {
+    --doc-code-bg: #F7F8FA;
+    --doc-code-head: #EDF0F3;
+    --doc-code-border: rgba(0, 0, 0, 0.1);
+    --doc-code-fg: #1F2328;
+    --doc-text-block-bg: #FBFBFC;
+
+    --syn-keyword: #9B2393;
+    --syn-string: #C41A16;
+    --syn-number: #1C00CF;
+    --syn-comment: #5D6C79;
+    --syn-type: #0B4F79;
+    --syn-function: #326D74;
+    --syn-builtin: #6C36A9;
+    --syn-attribute: #815F03;
+    --syn-constant: #643820;
+    --syn-tag: #0B4F79;
+    --syn-deleted-bg: rgba(255, 59, 48, 0.12);
+    --syn-inserted-bg: rgba(52, 199, 89, 0.14);
+    --syn-line-bg: rgba(0, 122, 255, 0.08);
+}
+
+html[data-appearance="dark"] {
+    --doc-code-bg: #1A1B1E;
+    --doc-code-head: #24262A;
+    --doc-code-border: rgba(255, 255, 255, 0.09);
+    --doc-code-fg: #DEE0E3;
+    --doc-text-block-bg: #222326;
+
+    --syn-keyword: #FF7AB2;
+    --syn-string: #FF8170;
+    --syn-number: #D9C97C;
+    --syn-comment: #8C98A4;
+    --syn-type: #6BDFFF;
+    --syn-function: #67B7A4;
+    --syn-builtin: #B281EB;
+    --syn-attribute: #E8C88A;
+    --syn-constant: #FFA14F;
+    --syn-tag: #5DD8FF;
+    --syn-deleted-bg: rgba(255, 69, 58, 0.18);
+    --syn-inserted-bg: rgba(50, 215, 75, 0.16);
+    --syn-line-bg: rgba(10, 132, 255, 0.16);
+}
+
+/* ---------- The block ---------- */
+
+.window-content .highlight,
+.static-window .highlight {
+    position: relative;
+    margin: 1.6em 0;
+    border: 1px solid var(--doc-code-border);
+    border-radius: 10px;
+    background: var(--doc-code-bg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    --doc-fade-bg: var(--doc-code-bg);
+}
+
+.window-content .highlight pre,
+.window-content .highlight pre.chroma {
+    margin: 0;
+    padding: 14px 18px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--doc-code-fg);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.6;
+    overflow-x: auto;
+    tab-size: 4;
+}
+
+.window-content .highlight pre code {
+    display: block;
+    min-width: max-content;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font-size: inherit;
+}
+
+/* Selection inside code: mavericks.css made it translucent for Monokai */
+.window-content .highlight pre ::selection {
+    background: var(--selection);
+}
+
+/* ---------- Header strip: language + Copy ---------- */
+
+.highlight:has(> .code-tools) {
+    padding-top: 34px;
+}
+
+.highlight:has(> .code-tools)::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 34px;
+    background: var(--doc-code-head);
+    border-bottom: 1px solid var(--doc-code-border);
+}
+
+.highlight > .code-tools {
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 1;
+    height: 34px;
+    padding: 0 8px 0 14px;
+    gap: 8px;
+}
+
+.highlight .code-lang {
+    color: var(--text-tertiary);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+}
+
+.highlight .code-copy {
+    margin-left: auto;
+    padding: 3px 10px;
+    opacity: 1;
+    color: var(--text-secondary);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    font-size: 11px;
+    line-height: 1.3;
+}
+
+.highlight .code-copy:hover {
+    color: var(--text-primary);
+    background: var(--surface-alt);
+}
+
+.highlight .code-copy:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 1px;
+}
+
+.highlight .code-copy.copied {
+    color: color-mix(in srgb, var(--success) 60%, var(--text-primary));
+    border-color: color-mix(in srgb, var(--success) 50%, var(--border-strong));
+}
+
+/* shell-code-blocks.css pads the code down under the old floating button
+   on touch screens; the strip already makes room */
+@media (hover: none) {
+    .window-content .highlight:has(> .code-tools) pre.chroma {
+        padding-top: 14px;
+    }
+}
+
+/* ---------- More to the right: a fade on the edge ---------- */
+
+.highlight.doc-code-overflow::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 48px;
+    background: linear-gradient(to right, transparent, var(--doc-fade-bg) 85%);
+    pointer-events: none;
+}
+
+.highlight.doc-code-overflow:has(> .code-tools)::after {
+    top: 35px;
+}
+
+/* ---------- Plain text blocks (```text and fences with no language) ---------- */
+
+.window-content .highlight:has(> pre > code[data-lang="text"]),
+.window-content .doc-body > pre:not(.chroma) {
+    width: fit-content;
+    max-width: var(--doc-wide-w, 100%);
+    margin-left: 50%;
+    margin-right: 0;
+    transform: translateX(-50%);
+    padding-top: 0;
+    background: var(--doc-text-block-bg);
+    box-shadow: none;
+    --doc-fade-bg: var(--doc-text-block-bg);
+}
+
+.window-content .doc-body > pre:not(.chroma) {
+    padding: 14px 18px;
+    border: 1px solid var(--doc-code-border);
+    border-radius: 10px;
+    color: var(--doc-code-fg);
+    font-size: 12.5px;
+    line-height: 1.4;
+    overflow-x: auto;
+}
+
+.window-content .doc-body > pre:not(.chroma) code {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font-size: inherit;
+}
+
+.highlight:has(> pre > code[data-lang="text"])::before {
+    content: none;
+}
+
+.window-content .highlight:has(> pre > code[data-lang="text"]) pre.chroma {
+    padding: 14px 20px;
+    font-size: 12.5px;
+    line-height: 1.4;
+}
+
+/* Text blocks are diagrams and ASCII art, i.e. illustrations: no Copy pill
+   sitting on top of the drawing (the text can still be selected) */
+.highlight:has(> pre > code[data-lang="text"]) > .code-tools {
+    display: none;
+}
+
+.highlight.doc-code-overflow:has(> pre > code[data-lang="text"])::after {
+    top: 0;
+}
+
+/* ---------- Syntax colours (Chroma class names) ---------- */
+
+.chroma .err { color: var(--syn-string); }
+.chroma .hl { display: block; background: var(--syn-line-bg); }
+.chroma :is(.ln, .lnt) { color: var(--text-placeholder); margin-right: 1em; user-select: none; }
+
+/* Keywords */
+.chroma :is(.k, .kc, .kd, .kn, .kp, .kr, .ow) { color: var(--syn-keyword); font-weight: 600; }
+.chroma .kt { color: var(--syn-type); }
+
+/* Names */
+.chroma :is(.nb, .bp) { color: var(--syn-builtin); }
+.chroma :is(.nc, .nn, .ne) { color: var(--syn-type); }
+.chroma :is(.nf, .fm) { color: var(--syn-function); }
+.chroma :is(.no, .nl) { color: var(--syn-constant); }
+.chroma :is(.nt) { color: var(--syn-tag); }
+.chroma :is(.na) { color: var(--syn-attribute); }
+.chroma :is(.nd) { color: var(--syn-builtin); }
+.chroma :is(.nv, .vc, .vg, .vi, .vm) { color: var(--syn-function); }
+
+/* Literals */
+.chroma :is(.s, .sa, .sb, .sc, .dl, .sd, .s2, .sh, .sx, .s1, .ss) { color: var(--syn-string); }
+.chroma :is(.se, .si, .sr) { color: var(--syn-constant); }
+.chroma :is(.m, .mb, .mf, .mh, .mi, .il, .mo) { color: var(--syn-number); }
+.chroma :is(.l, .ld) { color: var(--syn-number); }
+
+/* Comments */
+.chroma :is(.c, .ch, .cm, .c1, .cs) { color: var(--syn-comment); font-style: italic; }
+.chroma :is(.cp, .cpf) { color: var(--syn-constant); font-style: normal; }
+
+/* Generic (diffs, shell output) */
+.chroma .gd { display: inline-block; min-width: 100%; background: var(--syn-deleted-bg); }
+.chroma .gi { display: inline-block; min-width: 100%; background: var(--syn-inserted-bg); }
+.chroma :is(.gh, .gu) { color: var(--syn-type); font-weight: 600; }
+.chroma .ge { font-style: italic; }
+.chroma .gs { font-weight: 600; }
+.chroma :is(.gp, .go) { color: var(--syn-comment); }
+
+@media print {
+    .highlight:has(> .code-tools) {
+        padding-top: 0 !important;
+    }
+
+    .highlight::before,
+    .highlight::after {
+        content: none !important;
+    }
+
+    .window-content .highlight:has(> pre > code[data-lang="text"]),
+    .window-content .doc-body > pre:not(.chroma) {
+        margin-left: 0;
+        transform: none;
+    }
+}

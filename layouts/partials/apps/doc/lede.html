@@ -1,0 +1,75 @@
+{{- /*
+Decides what the header lede says and what the body starts with, so a page
+never shows the same sentence twice (summary in the header, then again as
+the opening paragraph). Returns a dict:
+  lede     safe HTML for .doc-lede, or "" for no lede (always plain weight:
+           bold/italics are stripped, links are kept)
+  content  the page's .Content, minus the opening paragraph when it moved
+           up into the lede
+
+Rules
+- The lede comes from `summary` (or `description`), as plain text.
+- A summary that only repeats the title (80% of its words are in it) is
+  not shown.
+- Timeline entries: bodies are a few lines and the summary is usually a
+  polished rewrite of them, so the lede is dropped when the body starts with
+  it or when at least half of its words appear in the title and body
+  together ("Started college as a CS major." over "CS Major"). ("Words" here
+  are 3+ letters and not filler such as "the", "with", "built".)
+  The summary still feeds list views and the meta description.
+- Projects and blog posts: when the body OPENS with a paragraph that
+  restates the summary (it contains 55% or more of the summary's words),
+  that paragraph becomes the lede, in the lede's place and style, and is
+  left out of the body. Its words are kept, only moved. An opening longer
+  than about two sentences (320 characters) stays in the body and the
+  header simply has no lede. The markdown and
+  feed outputs are unaffected (they print the full body).
+
+Usage: {{ $ld := partial "apps/doc/lede.html" (dict "page" . "kind" "project") }}
+*/ -}}
+{{- $p := .page -}}
+{{- $kind := .kind -}}
+{{- $content := string $p.Content -}}
+{{- $ledeHTML := "" -}}
+{{- $lede := "" -}}
+{{- with or $p.Params.summary $p.Description -}}
+{{- $lede = . | markdownify | plainify | htmlUnescape | strings.TrimSpace -}}
+{{- end -}}
+{{- if $lede -}}
+{{- $ledeHTML = $lede | htmlEscape -}}
+{{- $norm := `[^a-z0-9]+` -}}
+{{- $ledeKey := $lede | lower | replaceRE $norm "" -}}
+{{- $filler := slice "the" "and" "for" "with" "that" "are" "was" "from" "into" "its" "this" "you" "your" "our" "their" "can" "has" "have" "but" "not" "all" "any" "via" "using" "use" "built" -}}
+{{- $ledeWords := complement $filler (findRE `[a-z0-9]{3,}` (lower $lede) | uniq) -}}
+{{- $titleWords := findRE `[a-z0-9]+` (lower $p.Title) | uniq -}}
+{{- if and $ledeWords (ge (mul (len (intersect $ledeWords $titleWords)) 5) (mul (len $ledeWords) 4)) -}}
+{{- /* The summary only repeats the title ("Graduated high school (12th
+standard)." under "Graduated High School [12th Standard]") */ -}}
+{{- $ledeHTML = "" -}}
+{{- else if eq $kind "timeline" -}}
+{{- $bodyText := $p.Plain | htmlUnescape | lower -}}
+{{- $bodyKey := $bodyText | replaceRE $norm "" -}}
+{{- if and $ledeKey (strings.HasPrefix $bodyKey $ledeKey) -}}
+{{- $ledeHTML = "" -}}
+{{- else if and $bodyKey $ledeWords -}}
+{{- $shared := intersect $ledeWords (union $titleWords (findRE `[a-z0-9]+` $bodyText | uniq)) -}}
+{{- if ge (mul (len $shared) 2) (len $ledeWords) }}{{ $ledeHTML = "" }}{{ end -}}
+{{- end -}}
+{{- else if $ledeWords -}}
+{{- with findRESubmatch `^\s*<p>((?s:.*?))</p>` $content 1 -}}
+{{- $first := index (index . 0) 1 -}}
+{{- $firstText := $first | plainify | htmlUnescape | lower -}}
+{{- $shared := intersect $ledeWords (findRE `[a-z0-9]+` $firstText | uniq) -}}
+{{- if ge (mul (len $shared) 20) (mul (len $ledeWords) 11) -}}
+{{- if le (len $firstText) 320 -}}
+{{- $ledeHTML = $first | replaceRE `</?(strong|b|em|i)>` "" | replaceRE `\s*<br\s*/?>\s*` " " | strings.TrimSpace -}}
+{{- $content = replaceRE `^\s*<p>(?s:.*?)</p>\s*` "" $content 1 -}}
+{{- else -}}
+{{- /* Too long to read as a lede: the body keeps it, the summary goes */ -}}
+{{- $ledeHTML = "" -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- return dict "lede" ($ledeHTML | safeHTML) "content" ($content | safeHTML) -}}

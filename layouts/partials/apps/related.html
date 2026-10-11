@@ -1,0 +1,87 @@
+{{/*
+Foot of a content page (blog post, project, timeline entry): what to read
+next, so no page is a dead end.
+
+1. Previous / Next within the section, by date.
+2. Related - pages named in the `related = ["/blogs/slug", ...]` front-matter
+   list first, then others that share tags (see [related] in hugo.toml), up
+   to four in total, never the previous / next pages, and an even number
+   so the two-column grid has no lone card. Timeline entries are never
+   suggested automatically.
+Styles: assets/css/apps/doc.css (.doc-card).
+
+Every link is a real <a href>; inside a desktop window the data-* attributes
+make it open as a window instead (see apps/window-attrs.html).
+
+Usage: {{ partial "apps/related.html" . }} where . is a Page
+*/}}
+{{- $max := 4 -}}
+{{- $prev := .PrevInSection -}}
+{{- $next := .NextInSection -}}
+{{- $related := slice -}}
+{{- /* The previous / next pages already have their own cards above */ -}}
+{{- $seen := slice .RelPermalink -}}
+{{- with $prev }}{{ $seen = $seen | append .RelPermalink }}{{ end -}}
+{{- with $next }}{{ $seen = $seen | append .RelPermalink }}{{ end -}}
+{{- range .Params.related -}}
+{{- with site.GetPage . -}}
+{{- if not (in $seen .RelPermalink) -}}
+{{- $related = $related | append . -}}
+{{- $seen = $seen | append .RelPermalink -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- range where (site.RegularPages.Related .) "Section" "in" (slice "blogs" "projects") -}}
+{{- if and (lt (len $related) $max) (not (in $seen .RelPermalink)) -}}
+{{- $related = $related | append . -}}
+{{- $seen = $seen | append .RelPermalink -}}
+{{- end -}}
+{{- end -}}
+{{- /* Cards sit two to a row, like Previous / Next: an even count (4 or 2)
+leaves no card alone on the last row */ -}}
+{{- if and (gt (len $related) 1) (modBool (len $related) 2 | not) -}}
+{{- $related = first (sub (len $related) 1) $related -}}
+{{- end -}}
+{{- $sectionTitle := "" -}}
+{{- with .CurrentSection }}{{ $sectionTitle = .Title }}{{ end -}}
+{{- if or $related $prev $next }}
+{{- /* Inside the document footer (apps/doc/footer.html), so a div: a
+footer may not contain another footer. Previous / Next first, then Related,
+and every card reads the same whatever kind of page it points to.
+.post-navigation .nav-link is the hook mavericks.js uses to turn the page
+inside the same window (navigateWindow) instead of opening a new one. */}}
+<div class="doc-more">
+    {{- if or $prev $next }}
+    <nav class="doc-pager post-navigation" aria-label="{{ with $sectionTitle }}More in {{ . }}{{ else }}More{{ end }}">
+        {{- with $prev }}
+        <a href="{{ .RelPermalink }}" class="doc-card doc-pager-prev nav-link prev finder-item" rel="prev" {{ partial "apps/window-attrs.html" . }}>
+            <span class="doc-card-eyebrow"><span aria-hidden="true">← </span>Previous</span>
+            <span class="doc-card-title">{{ .Title }}</span>
+        </a>
+        {{- end }}
+        {{- with $next }}
+        <a href="{{ .RelPermalink }}" class="doc-card doc-pager-next nav-link next finder-item" rel="next" {{ partial "apps/window-attrs.html" . }}>
+            <span class="doc-card-eyebrow">Next<span aria-hidden="true"> →</span></span>
+            <span class="doc-card-title">{{ .Title }}</span>
+        </a>
+        {{- end }}
+    </nav>
+    {{- end }}
+    {{- with $related }}
+    <section class="doc-related" aria-labelledby="related-{{ $.File.UniqueID }}">
+        <h2 class="doc-related-heading" id="related-{{ $.File.UniqueID }}">Related</h2>
+        <ul class="doc-related-list" role="list">
+            {{- range . }}
+            {{- $yearOnly := eq .Params.date_precision "year" }}
+            <li>
+                <a href="{{ .RelPermalink }}" class="doc-card finder-item" {{ partial "apps/window-attrs.html" . }}>
+                    <span class="doc-card-eyebrow">{{ if eq .Section "blogs" }}Blog post{{ else if eq .Section "projects" }}Project{{ else }}Timeline{{ end }}{{ if not .Date.IsZero }} · <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format (cond $yearOnly "2006" "Jan 2006") }}</time>{{ end }}</span>
+                    <span class="doc-card-title">{{ .Title }}</span>
+                </a>
+            </li>
+            {{- end }}
+        </ul>
+    </section>
+    {{- end }}
+</div>
+{{- end }}

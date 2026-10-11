@@ -1,0 +1,147 @@
+/* Print / "Save as PDF"
+   On screen the page is a fixed-height desktop whose windows scroll inside
+   themselves, so without this a printout is one clipped screenful of
+   wallpaper. Here the chrome is dropped and the open document flows across
+   pages. The !important flags are needed to beat the mobile window rules. */
+
+@media print {
+
+    @page {
+        margin: 18mm 16mm;
+    }
+
+    html,
+    body {
+        width: auto !important;
+        height: auto !important;
+        overflow: visible !important;
+        background: #fff !important;
+        color: #000;
+        font-size: 11pt;
+    }
+
+    /* Desktop chrome, overlays and anything interactive-only */
+    body::before,
+    .menubar,
+    .desktop-icons,
+    .desktop-widget,
+    .desktop-sticky-note,
+    .window-titlebar,
+    .window-toolbar,
+    .window-resize,
+    .window-loader,
+    .window.inactive,
+    .heading-anchor,
+    .viewer-badge,
+    .skip-link,
+    .sheet-overlay,
+    #macos-boot-loader,
+    #cursor-layer,
+    #online-count,
+    #notification-container,
+    #spotlight-overlay,
+    #mu-ambient-yt-mount,
+    iframe,
+    video,
+    audio {
+        display: none !important;
+    }
+
+    /* Un-fix the window stack so content paginates */
+    .desktop,
+    .windows-container,
+    .static-window,
+    .window,
+    .window-content {
+        position: static !important;
+        width: auto !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        background: #fff !important;
+        transform: none !important;
+        animation: none !important;
+        transition: none !important;
+    }
+
+    /* Flex columns with a fixed height do not fragment across pages */
+    .desktop,
+    .static-window,
+    .window-content {
+        display: block !important;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+        break-after: avoid;
+        page-break-after: avoid;
+    }
+
+    p,
+    li,
+    blockquote {
+        orphans: 3;
+        widows: 3;
+    }
+
+    img,
+    figure,
+    table,
+    blockquote {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .markdown-body img {
+        box-shadow: none !important;
+    }
+
+    /* Highlighted code carries light-on-dark inline colours; browsers drop
+       backgrounds when printing, which would leave pale text on white. */
+    pre,
+    .window-content pre {
+        white-space: pre-wrap !important;
+        overflow-wrap: anywhere;
+        overflow: visible !important;
+        background: #fff !important;
+        border: 1px solid #bbb !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    pre,
+    pre * {
+        color: #000 !important;
+        background-color: transparent !important;
+        text-shadow: none !important;
+    }
+
+    .window-content code {
+        color: #000;
+        background: none;
+        border: 0;
+    }
+
+    .window-content a,
+    .markdown-body a:not([class]) {
+        color: #000 !important;
+    }
+
+    /* A printed link is useless without its address */
+    .markdown-body a:not([class])[href^="http"]::after {
+        content: " (" attr(href) ")";
+        font-size: 0.9em;
+        font-weight: normal;
+        overflow-wrap: anywhere;
+    }
+}
