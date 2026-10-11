@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+  Generated desktop pictures for System Preferences > Desktop.
+  Every image is drawn here with the canvas API from a fixed seed, so the
+  output is reproducible and owes nothing to anyone else's artwork.
+  scripts/wallpapers/README.md explains how to export them.
+
+  Open with ?id=<wallpaper id> to draw one at 2560x1600.
+-->
+<head>
+    <meta charset="utf-8">
+    <title>Wallpaper renderer</title>
+    <style>
+        html, body { margin: 0; background: #000; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <canvas id="c" width="2560" height="1600"></canvas>
+    <script>
+        const W = 2560, H = 1600;
+        const canvas = document.getElementById('c');
+        const g = canvas.getContext('2d');
+
+        // Small deterministic PRNG so every export is identical
+        function rng(seed) {
+            let s = seed >>> 0;
+            return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
+        }
+
+        function linear(x0, y0, x1, y1, stops) {
+            const gr = g.createLinearGradient(x0, y0, x1, y1);
+            stops.forEach(([at, colour]) => gr.addColorStop(at, colour));
+            return gr;
+        }
+
+        function radial(x, y, r, stops) {
+            const gr = g.createRadialGradient(x, y, 0, x, y, r);
+            stops.forEach(([at, colour]) => gr.addColorStop(at, colour));
+            return gr;
+        }
+
+        function blob(x, y, r, colour, alpha) {
+            g.save();
+            g.globalAlpha = alpha;
+            g.fillStyle = radial(x, y, r, [[0, colour], [1, 'rgba(0,0,0,0)']]);
+            g.fillRect(x - r, y - r, r * 2, r * 2);
+            g.restore();
+        }
+
+        // Fine film grain: hides gradient banding once the image is compressed
+        function grain(amount, seed) {
+            const r = rng(seed);
+            const img = g.getImageData(0, 0, W, H);
+            const d = img.data;
+            for (let i = 0; i < d.length; i += 4) {
+                const n = (r() - 0.5) * amount;
+                d[i] += n; d[i + 1] += n; d[i + 2] += n;
+            }
+            g.putImageData(img, 0, 0);
+        }
+
+        function vignette(strength) {
+            g.fillStyle = radial(W / 2, H / 2, Math.hypot(W, H) / 2, [
+                [0.55, 'rgba(0,0,0,0)'], [1, `rgba(0,0,0,${strength})`]
+            ]);
+            g.fillRect(0, 0, W, H);
+        }
+
+        const ART = {
+            // Aqua: the glassy blue of early OS X, light falling across it in soft bands
+            aqua() {
+                g.fillStyle = linear(0, 0, W * 0.35, H, [[0, '#86C2F4'], [0.45, '#2C7DD8'], [1, '#0A2C6E']]);
+                g.fillRect(0, 0, W, H);
+                const r = rng(11);
+                // Broad soft shafts of light, then a few crisp glints on top
+                for (const pass of [{ blur: 70, n: 6, w: [220, 420], a: [0.10, 0.16] }, { blur: 14, n: 9, w: [10, 46], a: [0.10, 0.22] }]) {
+                    g.save();
+                    g.filter = `blur(${pass.blur}px)`;
+                    g.globalCompositeOperation = 'screen';
+                    for (let i = 0; i < pass.n; i++) {
+                        const x = -500 + (i / pass.n) * (W + 600) + r() * 180;
+                        const w = pass.w[0] + r() * (pass.w[1] - pass.w[0]);
+                        g.globalAlpha = pass.a[0] + r() * (pass.a[1] - pass.a[0]);
+                        g.fillStyle = linear(x, 0, x + 700, H, [[0, '#ffffff'], [1, 'rgba(255,255,255,0)']]);
+                        g.beginPath();
+                        g.moveTo(x, -200);
+                        g.lineTo(x + w, -200);
+                        g.lineTo(x + w + 700, H + 200);
+                        g.lineTo(x + 700, H + 200);
+                        g.closePath();
+                        g.fill();
+                    }
+                    g.restore();
+                }
+                blob(W * 0.16, H * 0.08, 1000, '#d6ecff', 0.5);
+                vignette(0.38);
+                grain(5, 1);
+            },
+
+            // Wave: ribbons of light rolling in from the left, on a deep sea
+            wave() {
+                g.fillStyle = linear(0, 0, 0, H, [[0, '#031427'], [0.6, '#06304D'], [1, '#0A5470']]);
+                g.fillRect(0, 0, W, H);
+                blob(W * 0.82, H * 0.2, 1100, '#1D7FA8', 0.35);
+                const layers = [
+                    { y: 0.50, amp: 120, len: 1.15, phase: 0.4, top: '#0E6E8E', bottom: '#073A55', alpha: 0.55, blur: 18 },
+                    { y: 0.58, amp: 150, len: 0.95, phase: 1.6, top: '#1592A8', bottom: '#08445E', alpha: 0.6, blur: 10 },
+                    { y: 0.66, amp: 170, len: 0.85, phase: 2.7, top: '#29B3BE', bottom: '#0A4D67', alpha: 0.7, blur: 4 },
+                    { y: 0.76, amp: 140, len: 0.75, phase: 3.9, top: '#55D0CF', bottom: '#0C5672', alpha: 0.8, blur: 0 },
+                    { y: 0.86, amp: 110, len: 0.7, phase: 5.1, top: '#8FE6DD', bottom: '#0E5F7A', alpha: 0.9, blur: 0 }
+                ];
+                const curve = (L, x) => H * L.y
+                    + Math.sin((x / W) * Math.PI * 2 * L.len + L.phase) * L.amp
+                    + Math.sin((x / W) * Math.PI * 5.3 + L.phase * 2) * L.amp * 0.18;
+                for (const L of layers) {
+                    g.save();
+                    g.filter = L.blur ? `blur(${L.blur}px)` : 'none';
+                    g.globalAlpha = L.alpha;
+                    g.fillStyle = linear(0, H * L.y - L.amp, 0, H, [[0, L.top], [0.35, L.bottom], [1, '#031427']]);
+                    g.beginPath();
+                    g.moveTo(-50, H + 50);
+                    for (let x = -50; x <= W + 50; x += 8) g.lineTo(x, curve(L, x));
+                    g.lineTo(W + 50, H + 50);
+                    g.closePath();
+                    g.fill();
+                    // A bright crest line along the top of each ribbon
+                    g.globalAlpha = L.alpha * 0.55;
+                    g.strokeStyle = '#E4FFFB';
+                    g.lineWidth = 2.5;
+                    g.beginPath();
+                    for (let x = -50; x <= W + 50; x += 8) {
+                        const y = curve(L, x);
+                        x === -50 ? g.moveTo(x, y) : g.lineTo(x, y);
+                    }
+                    g.stroke();
+                    g.restore();
+                }
+                vignette(0.4);
+                grain(5, 2);
+            },
+
+            // Dusk: a low sun behind three ridges of hills
+            dusk() {
+                g.fillStyle = linear(0, 0, 0, H, [[0, '#1A1238'], [0.38, '#4E2768'], [0.62, '#B44E6A'], [0.8, '#EE8A5E'], [1, '#F7C278']]);
+                g.fillRect(0, 0, W, H);
+                blob(W * 0.62, H * 0.74, 700, '#FFE3A3', 0.75);
+                blob(W * 0.62, H * 0.74, 220, '#FFF6DA', 0.9);
+                const r = rng(7);
+                const ridges = [
+                    { base: 0.72, rough: 90, colour: '#7A3A6A', alpha: 0.75 },
+                    { base: 0.80, rough: 110, colour: '#4E2452', alpha: 0.9 },
+                    { base: 0.90, rough: 80, colour: '#2A1433', alpha: 1 }
+                ];
+                for (const R of ridges) {
+                    const pts = [];
+                    let y = H * R.base;
+                    for (let x = -40; x <= W + 40; x += 40) {
+                        y += (r() - 0.5) * R.rough * 0.5;
+                        y = Math.min(Math.max(y, H * R.base - R.rough), H * R.base + R.rough * 0.6);
+                        pts.push([x, y]);
+                    }
+                    g.save();
+                    g.globalAlpha = R.alpha;
+                    g.fillStyle = R.colour;
+                    g.beginPath();
+                    g.moveTo(-40, H + 10);
+                    // Smooth the ridge line through midpoints
+                    for (let i = 0; i < pts.length - 1; i++) {
+                        const [x0, y0] = pts[i], [x1, y1] = pts[i + 1];
+                        g.quadraticCurveTo(x0, y0, (x0 + x1) / 2, (y0 + y1) / 2);
+                    }
+                    g.lineTo(W + 40, H + 10);
+                    g.closePath();
+                    g.fill();
+                    g.restore();
+                }
+                vignette(0.3);
+                grain(6, 3);
+            },
+
+            // Graphite: brushed dark metal, made for the dark appearance
+            graphite() {
+                g.fillStyle = radial(W * 0.5, H * 0.42, Math.hypot(W, H) * 0.6, [[0, '#5D6168'], [0.55, '#34373C'], [1, '#141518']]);
+                g.fillRect(0, 0, W, H);
+                // Horizontal brushing
+                const r = rng(5);
+                g.save();
+                g.globalCompositeOperation = 'overlay';
+                for (let y = 0; y < H; y += 1) {
+                    g.globalAlpha = 0.012 + r() * 0.03;
+                    g.fillStyle = r() > 0.5 ? '#ffffff' : '#000000';
+                    g.fillRect(0, y, W, 1);
+                }
+                g.restore();
+                blob(W * 0.5, H * 0.3, 1000, '#8A9099', 0.18);
+                grain(4, 4);
+            },
+
+            // Lagoon: green and teal light pooling over dark water
+            lagoon() {
+                g.fillStyle = linear(0, 0, W, H, [[0, '#04201F'], [1, '#062B3A']]);
+                g.fillRect(0, 0, W, H);
+                g.save();
+                g.globalCompositeOperation = 'screen';
+                blob(W * 0.25, H * 0.3, 1100, '#1F9E7A', 0.55);
+                blob(W * 0.7, H * 0.25, 900, '#2A7FB0', 0.5);
+                blob(W * 0.55, H * 0.75, 1200, '#2BB59A', 0.4);
+                blob(W * 0.9, H * 0.85, 800, '#3C5FB5', 0.35);
+                blob(W * 0.1, H * 0.9, 700, '#7BD6A8', 0.25);
+                g.restore();
+                // A drifting band of silk: many fine curves, each a little offset
+                const r = rng(9);
+                g.save();
+                g.globalCompositeOperation = 'screen';
+                g.filter = 'blur(1.5px)';
+                for (let i = 0; i < 70; i++) {
+                    const t = i / 70;
+                    g.globalAlpha = 0.05 + 0.13 * Math.sin(t * Math.PI);
+                    g.strokeStyle = t < 0.5 ? '#BFFFE6' : '#B8E4FF';
+                    g.lineWidth = 1.5 + r() * 1.5;
+                    const dy = (t - 0.5) * 520;
+                    g.beginPath();
+                    g.moveTo(-100, H * 0.78 + dy * 0.6);
+                    g.bezierCurveTo(W * 0.3, H * 0.2 + dy, W * 0.62, H * 1.05 + dy * 0.8, W + 100, H * 0.3 + dy * 0.5);
+                    g.stroke();
+                }
+                g.restore();
+                vignette(0.45);
+                grain(5, 6);
+            }
+        };
+
+        const id = new URLSearchParams(location.search).get('id') || 'aqua';
+        (ART[id] || ART.aqua)();
+        document.title = 'ready:' + id;
+    </script>
+</body>
+</html>

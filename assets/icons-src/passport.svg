@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+<!-- Passport: a navy leather passport with gold-foil emblem, its page block showing and a stamped visa slip tucked inside. Source for static/icons/passport.webp -->
+<defs>
+  <linearGradient id="leather" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#4a6fb6"/><stop offset=".35" stop-color="#2a4c90"/><stop offset=".8" stop-color="#1b3466"/><stop offset="1" stop-color="#12244a"/>
+  </linearGradient>
+  <linearGradient id="backLeather" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#1b326a"/><stop offset="1" stop-color="#0b1630"/>
+  </linearGradient>
+  <linearGradient id="foil" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#fff2b8"/><stop offset=".22" stop-color="#e8c06a"/><stop offset=".45" stop-color="#a87422"/><stop offset=".62" stop-color="#f3d78a"/><stop offset=".8" stop-color="#c3913a"/><stop offset="1" stop-color="#8d5f1c"/>
+  </linearGradient>
+  <linearGradient id="pages" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#d9d2bf"/><stop offset=".5" stop-color="#f6f1e2"/><stop offset="1" stop-color="#cfc6ae"/>
+  </linearGradient>
+  <linearGradient id="pagesB" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#efe9d8"/><stop offset="1" stop-color="#c9c0a6"/>
+  </linearGradient>
+  <pattern id="pageLines" width="2.2" height="256" patternUnits="userSpaceOnUse"><rect width="1" height="256" fill="#8f856b" opacity=".35"/></pattern>
+  <pattern id="pageLinesH" width="256" height="2.2" patternUnits="userSpaceOnUse"><rect width="256" height="1" fill="#8f856b" opacity=".35"/></pattern>
+  <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#fff" stop-opacity=".28"/><stop offset=".3" stop-color="#fff" stop-opacity=".05"/><stop offset=".6" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".25"/>
+  </linearGradient>
+  <linearGradient id="slip" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#fbf4ea"/><stop offset="1" stop-color="#e9dccb"/>
+  </linearGradient>
+  <filter id="grain" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="3" seed="11" result="n"/>
+    <feDiffuseLighting in="n" surfaceScale="1.4" diffuseConstant="1.15" lighting-color="#fff" result="l"><feDistantLight azimuth="235" elevation="58"/></feDiffuseLighting>
+    <feComposite in="l" in2="SourceGraphic" operator="arithmetic" k1="1.05" k2="0" k3="0" k4="0" result="m"/>
+    <feComposite in="m" in2="SourceAlpha" operator="in"/>
+  </filter>
+  <filter id="foilTex" x="-5%" y="-5%" width="110%" height="110%">
+    <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="2" result="n"/>
+    <feDiffuseLighting in="n" surfaceScale=".7" lighting-color="#fff" result="l"><feDistantLight azimuth="235" elevation="65"/></feDiffuseLighting>
+    <feComposite in="l" in2="SourceGraphic" operator="arithmetic" k1="1.1" k2="0" k3="0" k4="0" result="m"/>
+    <feComposite in="m" in2="SourceAlpha" operator="in"/>
+  </filter>
+  <filter id="drop" x="-20%" y="-20%" width="140%" height="150%">
+    <feGaussianBlur in="SourceAlpha" stdDeviation="4"/><feOffset dx="2" dy="5"/>
+    <feComponentTransfer><feFuncA type="linear" slope=".5"/></feComponentTransfer>
+    <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="contact" x="-30%" y="-100%" width="160%" height="300%"><feGaussianBlur stdDeviation="5"/></filter>
+  <filter id="inkBleed"><feTurbulence type="fractalNoise" baseFrequency=".5" numOctaves="2" seed="5" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2.4"/></filter>
+  <mask id="stampWear"><rect width="256" height="256" fill="#fff"/><rect width="256" height="256" fill="#000" filter="url(#wear)"/></mask>
+  <filter id="wear" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".35" numOctaves="2" seed="9"/><feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2.6 1.2"/></filter>
+  <clipPath id="coverClip"><path d="M53 26H179Q190 26 190 37V211Q190 222 179 222H53Q50 222 50 219V29Q50 26 53 26Z"/></clipPath>
+</defs>
+<ellipse cx="124" cy="232" rx="82" ry="8" fill="#000" opacity=".45" filter="url(#contact)"/>
+<g transform="rotate(-6 128 128)">
+  <g filter="url(#drop)">
+    <!-- back cover -->
+    <path d="M53 26H179Q190 26 190 37V211Q190 222 179 222H53Q50 222 50 219V29Q50 26 53 26Z" transform="translate(9 8)" fill="url(#backLeather)"/>
+    <!-- page block -->
+    <path d="M184 30H194Q198 30 198 38V224H184Z" fill="url(#pages)"/>
+    <path d="M184 30H194Q198 30 198 38V224H184Z" fill="url(#pageLines)"/>
+    <path d="M58 216H198V225Q198 228 194 228H58Z" fill="url(#pagesB)"/>
+    <path d="M58 216H198V225Q198 228 194 228H58Z" fill="url(#pageLinesH)"/>
+    <!-- visa slip tucked between the pages -->
+    <g transform="translate(-4 -7) rotate(14 182 52)">
+      <rect x="148" y="16" width="64" height="70" rx="2" fill="url(#slip)"/>
+      <path d="M152 24H200M152 30H190" stroke="#b9a68b" stroke-width="1.4"/>
+      <g mask="url(#stampWear)" filter="url(#inkBleed)">
+        <circle cx="190" cy="44" r="15" fill="none" stroke="#c4262e" stroke-width="2.6"/>
+        <circle cx="190" cy="44" r="10.5" fill="none" stroke="#c4262e" stroke-width="1.2"/>
+        <path d="M181 44h18M190 37v14" stroke="#c4262e" stroke-width="1.4"/>
+        <rect x="155" y="38" width="22" height="11" rx="1" fill="none" stroke="#2c5aa0" stroke-width="1.6" transform="rotate(-8 166 43)"/>
+      </g>
+    </g>
+    <!-- front cover -->
+    <path d="M53 26H179Q190 26 190 37V211Q190 222 179 222H53Q50 222 50 219V29Q50 26 53 26Z" fill="url(#leather)" filter="url(#grain)"/>
+  </g>
+  <g clip-path="url(#coverClip)">
+    <rect width="256" height="256" fill="url(#sheen)"/>
+    <!-- spine crease near the left edge -->
+    <rect x="59" y="0" width="1.4" height="256" fill="#000" opacity=".28"/>
+    <rect x="60.4" y="0" width="1" height="256" fill="#fff" opacity=".12"/>
+    <!-- worn edge highlight -->
+    <path d="M53 26H179Q190 26 190 37V211Q190 222 179 222H53Q50 222 50 219V29Q50 26 53 26Z" fill="none" stroke="#9fb6e6" stroke-opacity=".5" stroke-width="2.4"/>
+  </g>
+  <path d="M53 26H179Q190 26 190 37V211Q190 222 179 222H53Q50 222 50 219V29Q50 26 53 26Z" fill="none" stroke="#0a142c" stroke-opacity=".7" stroke-width=".8"/>
+  <!-- foil: debossed, so a dark lip above and a light lip below -->
+  <g fill="#000" stroke="#000" opacity=".55" transform="translate(0 -1.1)"><circle cx="123" cy="104" r="26" fill="none" stroke-width="3.2"/>
+  <ellipse cx="123" cy="104" rx="11" ry="26" fill="none" stroke-width="2.2"/>
+  <path d="M123 78V130M97 104H149M100.5 91H145.5M100.5 117H145.5" fill="none" stroke-width="2.2"/><path d="M109.63 140.64L105.69 138.95L101.95 136.83L98.48 134.33L95.3 131.45L92.45 128.24L89.97 124.74L87.9 120.99L86.24 117.04L85.03 112.92L84.28 108.7L84 104.42L84.19 100.14L84.85 95.9L85.97 91.76L87.54 87.77L89.53 83.98L91.93 80.42L94.71 77.15L97.83 74.21L101.25 71.63" fill="none" stroke-width="1.6"/><path d="M136.37 140.64L140.31 138.95L144.05 136.83L147.52 134.33L150.7 131.45L153.55 128.24L156.03 124.74L158.1 120.99L159.76 117.04L160.97 112.92L161.72 108.7L162 104.42L161.81 100.14L161.15 95.9L160.03 91.76L158.46 87.77L156.47 83.98L154.07 80.42L151.29 77.15L148.17 74.21L144.75 71.63" fill="none" stroke-width="1.6"/><g stroke="none"><ellipse cx="103.13" cy="134.06" rx="5.40" ry="2.1" transform="rotate(-115.07 103.13 134.06)"/><ellipse cx="100.23" cy="139.77" rx="5.40" ry="2.1" transform="rotate(-191.07 100.23 139.77)"/><ellipse cx="95.84" cy="127.67" rx="5.15" ry="2.1" transform="rotate(-99.6 95.84 127.67)"/><ellipse cx="91.52" cy="132.4" rx="5.15" ry="2.1" transform="rotate(-175.6 91.52 132.4)"/><ellipse cx="90.51" cy="119.57" rx="4.90" ry="2.1" transform="rotate(-84.13 90.51 119.57)"/><ellipse cx="85.08" cy="122.98" rx="4.90" ry="2.1" transform="rotate(-160.13 85.08 122.98)"/><ellipse cx="87.53" cy="110.34" rx="4.65" ry="2.1" transform="rotate(-68.66 87.53 110.34)"/><ellipse cx="81.4" cy="112.17" rx="4.65" ry="2.1" transform="rotate(-144.66 81.4 112.17)"/><ellipse cx="87.12" cy="100.65" rx="4.40" ry="2.1" transform="rotate(-53.19 87.12 100.65)"/><ellipse cx="80.72" cy="100.78" rx="4.40" ry="2.1" transform="rotate(-129.19 80.72 100.78)"/><ellipse cx="89.32" cy="91.2" rx="4.15" ry="2.1" transform="rotate(-37.72 89.32 91.2)"/><ellipse cx="83.11" cy="89.62" rx="4.15" ry="2.1" transform="rotate(-113.72 83.11 89.62)"/><ellipse cx="93.95" cy="82.68" rx="3.90" ry="2.1" transform="rotate(-22.25 93.95 82.68)"/><ellipse cx="88.39" cy="79.5" rx="3.90" ry="2.1" transform="rotate(-98.25 88.39 79.5)"/><ellipse cx="100.69" cy="75.7" rx="3.65" ry="2.1" transform="rotate(-6.78 100.69 75.7)"/><ellipse cx="96.18" cy="71.16" rx="3.65" ry="2.1" transform="rotate(-82.78 96.18 71.16)"/><ellipse cx="142.87" cy="134.06" rx="5.40" ry="2.1" transform="rotate(-64.93 142.87 134.06)"/><ellipse cx="145.77" cy="139.77" rx="5.40" ry="2.1" transform="rotate(11.07 145.77 139.77)"/><ellipse cx="150.16" cy="127.67" rx="5.15" ry="2.1" transform="rotate(-80.4 150.16 127.67)"/><ellipse cx="154.48" cy="132.4" rx="5.15" ry="2.1" transform="rotate(-4.4 154.48 132.4)"/><ellipse cx="155.49" cy="119.57" rx="4.90" ry="2.1" transform="rotate(-95.87 155.49 119.57)"/><ellipse cx="160.92" cy="122.98" rx="4.90" ry="2.1" transform="rotate(-19.87 160.92 122.98)"/><ellipse cx="158.47" cy="110.34" rx="4.65" ry="2.1" transform="rotate(-111.34 158.47 110.34)"/><ellipse cx="164.6" cy="112.17" rx="4.65" ry="2.1" transform="rotate(-35.34 164.6 112.17)"/><ellipse cx="158.88" cy="100.65" rx="4.40" ry="2.1" transform="rotate(-126.81 158.88 100.65)"/><ellipse cx="165.28" cy="100.78" rx="4.40" ry="2.1" transform="rotate(-50.81 165.28 100.78)"/><ellipse cx="156.68" cy="91.2" rx="4.15" ry="2.1" transform="rotate(-142.28 156.68 91.2)"/><ellipse cx="162.89" cy="89.62" rx="4.15" ry="2.1" transform="rotate(-66.28 162.89 89.62)"/><ellipse cx="152.05" cy="82.68" rx="3.90" ry="2.1" transform="rotate(-157.75 152.05 82.68)"/><ellipse cx="157.61" cy="79.5" rx="3.90" ry="2.1" transform="rotate(-81.75 157.61 79.5)"/><ellipse cx="145.31" cy="75.7" rx="3.65" ry="2.1" transform="rotate(-173.22 145.31 75.7)"/><ellipse cx="149.82" cy="71.16" rx="3.65" ry="2.1" transform="rotate(-97.22 149.82 71.16)"/></g>
+  <text x="123" y="179" text-anchor="middle" font-family="Didot, 'Bodoni 72', Baskerville, 'Times New Roman', serif" font-size="19" letter-spacing="3.2" font-weight="700" stroke="none">PASSPORT</text>
+  <text x="123" y="52" text-anchor="middle" font-family="Didot, 'Bodoni 72', Baskerville, serif" font-size="10.5" letter-spacing="2.4" stroke="none">ANKUSH · ONE</text>
+  <g transform="translate(112 192)" fill="none" stroke-width="1.8"><rect x="0" y="0" width="22" height="14" rx="1.5"/><circle cx="11" cy="7" r="3.8"/><path d="M0 7H7.2M14.8 7H22"/></g></g>
+  <g fill="#bcd0ff" stroke="#bcd0ff" opacity=".35" transform="translate(0 1.1)"><circle cx="123" cy="104" r="26" fill="none" stroke-width="3.2"/>
+  <ellipse cx="123" cy="104" rx="11" ry="26" fill="none" stroke-width="2.2"/>
+  <path d="M123 78V130M97 104H149M100.5 91H145.5M100.5 117H145.5" fill="none" stroke-width="2.2"/><path d="M109.63 140.64L105.69 138.95L101.95 136.83L98.48 134.33L95.3 131.45L92.45 128.24L89.97 124.74L87.9 120.99L86.24 117.04L85.03 112.92L84.28 108.7L84 104.42L84.19 100.14L84.85 95.9L85.97 91.76L87.54 87.77L89.53 83.98L91.93 80.42L94.71 77.15L97.83 74.21L101.25 71.63" fill="none" stroke-width="1.6"/><path d="M136.37 140.64L140.31 138.95L144.05 136.83L147.52 134.33L150.7 131.45L153.55 128.24L156.03 124.74L158.1 120.99L159.76 117.04L160.97 112.92L161.72 108.7L162 104.42L161.81 100.14L161.15 95.9L160.03 91.76L158.46 87.77L156.47 83.98L154.07 80.42L151.29 77.15L148.17 74.21L144.75 71.63" fill="none" stroke-width="1.6"/><g stroke="none"><ellipse cx="103.13" cy="134.06" rx="5.40" ry="2.1" transform="rotate(-115.07 103.13 134.06)"/><ellipse cx="100.23" cy="139.77" rx="5.40" ry="2.1" transform="rotate(-191.07 100.23 139.77)"/><ellipse cx="95.84" cy="127.67" rx="5.15" ry="2.1" transform="rotate(-99.6 95.84 127.67)"/><ellipse cx="91.52" cy="132.4" rx="5.15" ry="2.1" transform="rotate(-175.6 91.52 132.4)"/><ellipse cx="90.51" cy="119.57" rx="4.90" ry="2.1" transform="rotate(-84.13 90.51 119.57)"/><ellipse cx="85.08" cy="122.98" rx="4.90" ry="2.1" transform="rotate(-160.13 85.08 122.98)"/><ellipse cx="87.53" cy="110.34" rx="4.65" ry="2.1" transform="rotate(-68.66 87.53 110.34)"/><ellipse cx="81.4" cy="112.17" rx="4.65" ry="2.1" transform="rotate(-144.66 81.4 112.17)"/><ellipse cx="87.12" cy="100.65" rx="4.40" ry="2.1" transform="rotate(-53.19 87.12 100.65)"/><ellipse cx="80.72" cy="100.78" rx="4.40" ry="2.1" transform="rotate(-129.19 80.72 100.78)"/><ellipse cx="89.32" cy="91.2" rx="4.15" ry="2.1" transform="rotate(-37.72 89.32 91.2)"/><ellipse cx="83.11" cy="89.62" rx="4.15" ry="2.1" transform="rotate(-113.72 83.11 89.62)"/><ellipse cx="93.95" cy="82.68" rx="3.90" ry="2.1" transform="rotate(-22.25 93.95 82.68)"/><ellipse cx="88.39" cy="79.5" rx="3.90" ry="2.1" transform="rotate(-98.25 88.39 79.5)"/><ellipse cx="100.69" cy="75.7" rx="3.65" ry="2.1" transform="rotate(-6.78 100.69 75.7)"/><ellipse cx="96.18" cy="71.16" rx="3.65" ry="2.1" transform="rotate(-82.78 96.18 71.16)"/><ellipse cx="142.87" cy="134.06" rx="5.40" ry="2.1" transform="rotate(-64.93 142.87 134.06)"/><ellipse cx="145.77" cy="139.77" rx="5.40" ry="2.1" transform="rotate(11.07 145.77 139.77)"/><ellipse cx="150.16" cy="127.67" rx="5.15" ry="2.1" transform="rotate(-80.4 150.16 127.67)"/><ellipse cx="154.48" cy="132.4" rx="5.15" ry="2.1" transform="rotate(-4.4 154.48 132.4)"/><ellipse cx="155.49" cy="119.57" rx="4.90" ry="2.1" transform="rotate(-95.87 155.49 119.57)"/><ellipse cx="160.92" cy="122.98" rx="4.90" ry="2.1" transform="rotate(-19.87 160.92 122.98)"/><ellipse cx="158.47" cy="110.34" rx="4.65" ry="2.1" transform="rotate(-111.34 158.47 110.34)"/><ellipse cx="164.6" cy="112.17" rx="4.65" ry="2.1" transform="rotate(-35.34 164.6 112.17)"/><ellipse cx="158.88" cy="100.65" rx="4.40" ry="2.1" transform="rotate(-126.81 158.88 100.65)"/><ellipse cx="165.28" cy="100.78" rx="4.40" ry="2.1" transform="rotate(-50.81 165.28 100.78)"/><ellipse cx="156.68" cy="91.2" rx="4.15" ry="2.1" transform="rotate(-142.28 156.68 91.2)"/><ellipse cx="162.89" cy="89.62" rx="4.15" ry="2.1" transform="rotate(-66.28 162.89 89.62)"/><ellipse cx="152.05" cy="82.68" rx="3.90" ry="2.1" transform="rotate(-157.75 152.05 82.68)"/><ellipse cx="157.61" cy="79.5" rx="3.90" ry="2.1" transform="rotate(-81.75 157.61 79.5)"/><ellipse cx="145.31" cy="75.7" rx="3.65" ry="2.1" transform="rotate(-173.22 145.31 75.7)"/><ellipse cx="149.82" cy="71.16" rx="3.65" ry="2.1" transform="rotate(-97.22 149.82 71.16)"/></g>
+  <text x="123" y="179" text-anchor="middle" font-family="Didot, 'Bodoni 72', Baskerville, 'Times New Roman', serif" font-size="19" letter-spacing="3.2" font-weight="700" stroke="none">PASSPORT</text>
+  <text x="123" y="52" text-anchor="middle" font-family="Didot, 'Bodoni 72', Baskerville, serif" font-size="10.5" letter-spacing="2.4" stroke="none">ANKUSH · ONE</text>
+  <g transform="translate(112 192)" fill="none" stroke-width="1.8"><rect x="0" y="0" width="22" height="14" rx="1.5"/><circle cx="11" cy="7" r="3.8"/><path d="M0 7H7.2M14.8 7H22"/></g></g>
+  <g fill="url(#foil)" stroke="url(#foil)" filter="url(#foilTex)"><circle cx="123" cy="104" r="26" fill="none" stroke-width="3.2"/>
+  <ellipse cx="123" cy="104" rx="11" ry="26" fill="none" stroke-width="2.2"/>
+  <path d="M123 78V130M97 104H149M100.5 91H145.5M100.5 117H145.5" fill="none" stroke-width="2.2"/><path d="M109.63 140.64L105.69 138.95L101.95 136.83L98.48 134.33L95.3 131.45L92.45 128.24L89.97 124.74L87.9 120.99L86.24 117.04L85.03 112.92L84.28 108.7L84 104.42L84.19 100.14L84.85 95.9L85.97 91.76L87.54 87.77L89.53 83.98L91.93 80.42L94.71 77.15L97.83 74.21L101.25 71.63" fill="none" stroke-width="1.6"/><path d="M136.37 140.64L140.31 138.95L144.05 136.83L147.52 134.33L150.7 131.45L153.55 128.24L156.03 124.74L158.1 120.99L159.76 117.04L160.97 112.92L161.72 108.7L162 104.42L161.81 100.14L161.15 95.9L160.03 91.76L158.46 87.77L156.47 83.98L154.07 80.42L151.29 77.15L148.17 74.21L144.75 71.63" fill="none" stroke-width="1.6"/><g stroke="none"><ellipse cx="103.13" cy="134.06" rx="5.40" ry="2.1" transform="rotate(-115.07 103.13 134.06)"/><ellipse cx="100.23" cy="139.77" rx="5.40" ry="2.1" transform="rotate(-191.07 100.23 139.77)"/><ellipse cx="95.84" cy="127.67" rx="5.15" ry="2.1" transform="rotate(-99.6 95.84 127.67)"/><ellipse cx="91.52" cy="132.4" rx="5.15" ry="2.1" transform="rotate(-175.6 91.52 132.4)"/><ellipse cx="90.51" cy="119.57" rx="4.90" ry="2.1" transform="rotate(-84.13 90.51 119.57)"/><ellipse cx="85.08" cy="122.98" rx="4.90" ry="2.1" transform="rotate(-160.13 85.08 122.98)"/><ellipse cx="87.53" cy="110.34" rx="4.65" ry="2.1" transform="rotate(-68.66 87.53 110.34)"/><ellipse cx="81.4" cy="112.17" rx="4.65" ry="2.1" transform="rotate(-144.66 81.4 112.17)"/><ellipse cx="87.12" cy="100.65" rx="4.40" ry="2.1" transform="rotate(-53.19 87.12 100.65)"/><ellipse cx="80.72" cy="100.78" rx="4.40" ry="2.1" transform="rotate(-129.19 80.72 100.78)"/><ellipse cx="89.32" cy="91.2" rx="4.15" ry="2.1" transform="rotate(-37.72 89.32 91.2)"/><ellipse cx="83.11" cy="89.62" rx="4.15" ry="2.1" transform="rotate(-113.72 83.11 89.62)"/><ellipse cx="93.95" cy="82.68" rx="3.90" ry="2.1" transform="rotate(-22.25 93.95 82.68)"/><ellipse cx="88.39" cy="79.5" rx="3.90" ry="2.1" transform="rotate(-98.25 88.39 79.5)"/><ellipse cx="100.69" cy="75.7" rx="3.65" ry="2.1" transform="rotate(-6.78 100.69 75.7)"/><ellipse cx="96.18" cy="71.16" rx="3.65" ry="2.1" transform="rotate(-82.78 96.18 71.16)"/><ellipse cx="142.87" cy="134.06" rx="5.40" ry="2.1" transform="rotate(-64.93 142.87 134.06)"/><ellipse cx="145.77" cy="139.77" rx="5.40" ry="2.1" transform="rotate(11.07 145.77 139.77)"/><ellipse cx="150.16" cy="127.67" rx="5.15" ry="2.1" transform="rotate(-80.4 150.16 127.67)"/><ellipse cx="154.48" cy="132.4" rx="5.15" ry="2.1" transform="rotate(-4.4 154.48 132.4)"/><ellipse cx="155.49" cy="119.57" rx="4.90" ry="2.1" transform="rotate(-95.87 155.49 119.57)"/><ellipse cx="160.92" cy="122.98" rx="4.90" ry="2.1" transform="rotate(-19.87 160.92 122.98)"/><ellipse cx="158.47" cy="110.34" rx="4.65" ry="2.1" transform="rotate(-111.34 158.47 110.34)"/><ellipse cx="164.6" cy="112.17" rx="4.65" ry="2.1" transform="rotate(-35.34 164.6 112.17)"/><ellipse cx="158.88" cy="100.65" rx="4.40" ry="2.1" transform="rotate(-126.81 158.88 100.65)"/><ellipse cx="165.28" cy="100.78" rx="4.40" ry="2.1" transform="rotate(-50.81 165.28 100.78)"/><ellipse cx="156.68" cy="91.2" rx="4.15" ry="2.1" transform="rotate(-142.28 156.68 91.2)"/><ellipse cx="162.89" cy="89.62" rx="4.15" ry="2.1" transform="rotate(-66.28 162.89 89.62)"/><ellipse cx="152.05" cy="82.68" rx="3.90" ry="2.1" transform="rotate(-157.75 152.05 82.68)"/><ellipse cx="157.61" cy="79.5" rx="3.90" ry="2.1" transform="rotate(-81.75 157.61 79.5)"/><ellipse cx="145.31" cy="75.7" rx="3.65" ry="2.1" transform="rotate(-173.22 145.31 75.7)"/><ellipse cx="149.82" cy="71.16" rx="3.65" ry="2.1" transform="rotate(-97.22 149.82 71.16)"/></g>
+  <text x="123" y="179" text-anchor="middle" font-family="Didot, 'Bodoni 72', Baskerville, 'Times New Roman', serif" font-size="19" letter-spacing="3.2" font-weight="700" stroke="none">PASSPORT</text>
+  <text x="123" y="52" text-anchor="middle" font-family="Didot, 'Bodoni 72', Baskerville, serif" font-size="10.5" letter-spacing="2.4" stroke="none">ANKUSH · ONE</text>
+  <g transform="translate(112 192)" fill="none" stroke-width="1.8"><rect x="0" y="0" width="22" height="14" rx="1.5"/><circle cx="11" cy="7" r="3.8"/><path d="M0 7H7.2M14.8 7H22"/></g></g>
+  <ellipse cx="96" cy="70" rx="38" ry="9" fill="#fff" opacity=".12" transform="rotate(-50 96 70)" style="filter:blur(4px)"/>
+</g>
+</svg>

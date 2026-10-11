@@ -228,6 +228,18 @@ def build_cover(vid, blob):
     subprocess.run(["sips", "-Z", "640", str(out)], check=True, capture_output=True)
     return f"/music/covers/{vid}.jpg"
 
+# Flat playlist entries often carry no artist (auto-generated "Topic" uploads),
+# so artists already filled in music.json - by hand or by an earlier sync - are
+# kept. The manifest hash is built from track ids only, so this never changes it.
+known_artists = {}
+try:
+    with open(out_path, "r", encoding="utf-8") as f:
+        for prev in (json.load(f).get("tracks") or []):
+            if prev.get("videoId") and prev.get("artist"):
+                known_artists[prev["videoId"]] = prev["artist"]
+except (OSError, ValueError):
+    pass
+
 entries = data.get("entries") or []
 tracks = []
 keep_ids = set()
@@ -251,10 +263,14 @@ for entry in entries:
         or "",
         60,
     )
+    # "Artist - Topic" is YouTube's auto-generated artist channel name
+    artist = clean(re.sub(r"\s+-\s+Topic$", "", artist), 60)
     if not artist and " - " in title:
         left, right = title.split(" - ", 1)
         if left and right:
             artist, title = clean(left, 60), clean(right, 80)
+    if vid in known_artists:
+        artist = clean(known_artists[vid], 60)
 
     dur = entry.get("duration")
     try:
