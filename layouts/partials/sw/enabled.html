@@ -1,0 +1,10 @@
+{{- /* Is the service worker on for this build? Production builds only (never
+`hugo server`), and `serviceWorker.enabled = false` under [params] in hugo.toml
+turns it off for everyone: /sw.js then becomes a worker that removes itself and
+its caches, and every page unregisters it. See docs/service-worker.md. */ -}}
+{{- $on := hugo.IsProduction -}}
+{{- with index site.Params "serviceworker" -}}
+{{- /* "false" too: HUGO_PARAMS_SERVICEWORKER_ENABLED=false arrives as a string */ -}}
+{{- if eq (printf "%v" (index . "enabled")) "false" -}}{{- $on = false -}}{{- end -}}
+{{- end -}}
+{{- return $on -}}
