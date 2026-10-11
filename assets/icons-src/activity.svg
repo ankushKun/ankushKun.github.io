@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+<!-- Activity Monitor: a brushed-aluminium display showing a glowing phosphor CPU graph. Source for static/icons/activity.webp -->
+<defs>
+  <linearGradient id="alu" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#f4f5f7"/><stop offset=".1" stop-color="#d9dce0"/><stop offset=".55" stop-color="#c3c7cc"/><stop offset=".92" stop-color="#a9aeb4"/><stop offset="1" stop-color="#8e939a"/>
+  </linearGradient>
+  <linearGradient id="aluFoot" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#9ba0a7"/><stop offset=".3" stop-color="#d4d7db"/><stop offset="1" stop-color="#b7bbc1"/>
+  </linearGradient>
+  <linearGradient id="aluNeck" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#8a8f96"/><stop offset=".35" stop-color="#d9dce0"/><stop offset=".7" stop-color="#bfc3c8"/><stop offset="1" stop-color="#7f848b"/>
+  </linearGradient>
+  <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#fff"/><stop offset=".5" stop-color="#fff" stop-opacity=".2"/><stop offset="1" stop-color="#5d6268" stop-opacity=".8"/>
+  </linearGradient>
+  <radialGradient id="glass" cx=".5" cy=".55" r=".7">
+    <stop offset="0" stop-color="#0b2a17"/><stop offset=".6" stop-color="#05160c"/><stop offset="1" stop-color="#010503"/>
+  </radialGradient>
+  <linearGradient id="phosphorFill" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#5dff8a" stop-opacity=".55"/><stop offset="1" stop-color="#1ea84a" stop-opacity=".05"/>
+  </linearGradient>
+  <linearGradient id="reflect" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".45" stop-color="#fff" stop-opacity=".06"/><stop offset=".46" stop-color="#fff" stop-opacity="0"/>
+  </linearGradient>
+  <pattern id="scan" width="4" height="2.4" patternUnits="userSpaceOnUse"><rect width="4" height="1.2" fill="#000" opacity=".28"/></pattern>
+  <filter id="brushed" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency=".004 .75" numOctaves="3" seed="3" result="n"/>
+    <feColorMatrix in="n" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1.3 -.55" result="w"/>
+    <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.2 .62" result="b"/>
+    <feMerge result="streaks"><feMergeNode in="w"/><feMergeNode in="b"/></feMerge>
+    <feComposite in="streaks" in2="SourceAlpha" operator="in" result="s"/>
+    <feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="s"/></feMerge>
+  </filter>
+  <filter id="glow" x="-10%" y="-30%" width="120%" height="160%"><feGaussianBlur stdDeviation="3"/></filter>
+  <filter id="glowSm" x="-10%" y="-30%" width="120%" height="160%"><feGaussianBlur stdDeviation="1.2"/></filter>
+  <filter id="drop" x="-20%" y="-20%" width="140%" height="150%">
+    <feGaussianBlur in="SourceAlpha" stdDeviation="4"/><feOffset dy="5"/>
+    <feComponentTransfer><feFuncA type="linear" slope=".42"/></feComponentTransfer>
+    <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="contact" x="-30%" y="-100%" width="160%" height="300%"><feGaussianBlur stdDeviation="4"/></filter>
+  <clipPath id="screen"><rect x="42" y="44" width="172" height="116" rx="3"/></clipPath>
+</defs>
+<ellipse cx="128" cy="232" rx="66" ry="6" fill="#000" opacity=".5" filter="url(#contact)"/>
+<!-- stand -->
+<g filter="url(#drop)">
+  <path d="M110 186H146L150 222H106Z" fill="url(#aluNeck)"/>
+  <path d="M110 186H146L147 196H109Z" fill="#000" opacity=".25"/>
+  <path d="M74 222Q74 216 82 216H174Q182 216 182 222V226Q182 230 176 230H80Q74 230 74 226Z" fill="url(#aluFoot)"/>
+  <path d="M80 216.6H176" stroke="#fff" stroke-width="1.2" opacity=".9"/>
+</g>
+<!-- display body -->
+<g filter="url(#drop)">
+  <rect x="20" y="24" width="216" height="168" rx="16" fill="url(#alu)" filter="url(#brushed)"/>
+  <rect x="20.8" y="24.8" width="214.4" height="166.4" rx="15.2" fill="none" stroke="url(#rim)" stroke-width="1.6"/>
+  <rect x="20.4" y="24.4" width="215.2" height="167.2" rx="15.6" fill="none" stroke="#5f646b" stroke-opacity=".6" stroke-width=".8"/>
+</g>
+<!-- black glass bezel and screen -->
+<rect x="34" y="36" width="188" height="132" rx="7" fill="#0c0d0f"/>
+<rect x="34" y="36" width="188" height="132" rx="7" fill="none" stroke="#7a7f86" stroke-width="1"/>
+<rect x="33.5" y="35.5" width="189" height="133" rx="7.5" fill="none" stroke="#000" stroke-opacity=".35" stroke-width="1"/>
+<g clip-path="url(#screen)">
+  <rect x="42" y="44" width="172" height="116" fill="url(#glass)"/>
+  <path d="M56 44V160M70.3 44V160M84.6 44V160M98.9 44V160M113.2 44V160M127.5 44V160M141.8 44V160M156.1 44V160M170.4 44V160M184.7 44V160M199 44V160M213.3 44V160M42 58H214M42 72.3H214M42 86.6H214M42 100.9H214M42 115.2H214M42 129.5H214M42 143.8H214M42 158.1H214" stroke="#3cff78" stroke-opacity=".13" stroke-width="1"/>
+  <path d="M46 133.8L51.66 130.2L57.31 132L62.97 123L68.62 126.6L74.28 128.4L79.93 118.5L85.59 123L91.24 124.8L96.9 94.2L102.55 72.6L108.21 105L113.86 119.4L119.52 123L125.17 112.2L130.83 115.8L136.48 123L142.14 125.7L147.79 100.5L153.45 79.8L159.1 67.2L164.76 96L170.41 114L176.07 120.3L181.72 123L187.38 117.6L193.03 106.8L198.69 114L204.34 118.5L210 123L210 160L46 160Z" fill="url(#phosphorFill)"/>
+  <path d="M46 139.6L51.66 138.08L57.31 138.84L62.97 135.06L68.62 136.57L74.28 137.33L79.93 133.17L85.59 135.06L91.24 135.82L96.9 122.96L102.55 113.89L108.21 127.5L113.86 133.55L119.52 135.06L125.17 130.52L130.83 132.04L136.48 135.06L142.14 136.19L147.79 125.61L153.45 116.92L159.1 111.62L164.76 123.72L170.41 131.28L176.07 133.93L181.72 135.06L187.38 132.79L193.03 128.26L198.69 131.28L204.34 133.17L210 135.06" fill="none" stroke="#ff5a4a" stroke-width="2" stroke-linejoin="round" opacity=".85"/>
+  <path d="M46 139.6L51.66 138.08L57.31 138.84L62.97 135.06L68.62 136.57L74.28 137.33L79.93 133.17L85.59 135.06L91.24 135.82L96.9 122.96L102.55 113.89L108.21 127.5L113.86 133.55L119.52 135.06L125.17 130.52L130.83 132.04L136.48 135.06L142.14 136.19L147.79 125.61L153.45 116.92L159.1 111.62L164.76 123.72L170.41 131.28L176.07 133.93L181.72 135.06L187.38 132.79L193.03 128.26L198.69 131.28L204.34 133.17L210 135.06" fill="none" stroke="#ff5a4a" stroke-width="5" stroke-linejoin="round" opacity=".5" filter="url(#glow)"/>
+  <path d="M46 133.8L51.66 130.2L57.31 132L62.97 123L68.62 126.6L74.28 128.4L79.93 118.5L85.59 123L91.24 124.8L96.9 94.2L102.55 72.6L108.21 105L113.86 119.4L119.52 123L125.17 112.2L130.83 115.8L136.48 123L142.14 125.7L147.79 100.5L153.45 79.8L159.1 67.2L164.76 96L170.41 114L176.07 120.3L181.72 123L187.38 117.6L193.03 106.8L198.69 114L204.34 118.5L210 123" fill="none" stroke="#38ff6c" stroke-width="8" stroke-linejoin="round" opacity=".7" filter="url(#glow)"/>
+  <path d="M46 133.8L51.66 130.2L57.31 132L62.97 123L68.62 126.6L74.28 128.4L79.93 118.5L85.59 123L91.24 124.8L96.9 94.2L102.55 72.6L108.21 105L113.86 119.4L119.52 123L125.17 112.2L130.83 115.8L136.48 123L142.14 125.7L147.79 100.5L153.45 79.8L159.1 67.2L164.76 96L170.41 114L176.07 120.3L181.72 123L187.38 117.6L193.03 106.8L198.69 114L204.34 118.5L210 123" fill="none" stroke="#7dff9c" stroke-width="3" stroke-linejoin="round" filter="url(#glowSm)"/>
+  <path d="M46 133.8L51.66 130.2L57.31 132L62.97 123L68.62 126.6L74.28 128.4L79.93 118.5L85.59 123L91.24 124.8L96.9 94.2L102.55 72.6L108.21 105L113.86 119.4L119.52 123L125.17 112.2L130.83 115.8L136.48 123L142.14 125.7L147.79 100.5L153.45 79.8L159.1 67.2L164.76 96L170.41 114L176.07 120.3L181.72 123L187.38 117.6L193.03 106.8L198.69 114L204.34 118.5L210 123" fill="none" stroke="#e8ffe9" stroke-width="1.3" stroke-linejoin="round"/>
+  <rect x="42" y="44" width="172" height="116" fill="url(#scan)"/>
+  <rect x="42" y="44" width="172" height="116" fill="url(#reflect)"/>
+  <rect x="42" y="44" width="172" height="116" fill="none" stroke="#000" stroke-opacity=".8" stroke-width="5" filter="url(#glowSm)"/>
+</g>
+<!-- chin: power light -->
+<circle cx="128" cy="178" r="3" fill="#2b2e33"/>
+<circle cx="128" cy="178" r="2" fill="#9cffb5"/>
+<circle cx="128" cy="178" r="5" fill="#58ff86" opacity=".35" filter="url(#glowSm)"/>
+<circle cx="127.3" cy="177.3" r=".7" fill="#fff"/>
+</svg>

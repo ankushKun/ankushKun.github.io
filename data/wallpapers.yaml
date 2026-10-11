@@ -1,0 +1,69 @@
+# Desktop wallpapers offered in System Preferences > Desktop.
+#
+#   id     stable key saved in the visitor's preferences (never rename one)
+#   name   label under the thumbnail
+#   src    full-size image under static/ (omit for a solid colour)
+#   color  dominant colour: painted before the image arrives, and the whole
+#          desktop for a solid colour
+#
+# Every image needs a thumbnail at static/wallpapers/thumbs/<id>.webp
+# (320x200); a solid colour needs none. scripts/wallpapers/README.md explains
+# how the generated pictures are drawn and exported.
+default: aurora
+
+wallpapers:
+  - id: aurora
+    name: Aurora
+    src: /wallpapers/wallpaper.webp
+    color: "#3b1d46"
+
+  # Drawn by scripts/wallpapers/wallpapers.html
+  - id: aqua
+    name: Aqua
+    src: /wallpapers/aqua.webp
+    color: "#28589a"
+
+  - id: wave
+    name: Wave
+    src: /wallpapers/wave.webp
+    color: "#09384e"
+
+  - id: dusk
+    name: Dusk
+    src: /wallpapers/dusk.webp
+    color: "#5d2f53"
+
+  - id: lagoon
+    name: Lagoon
+    src: /wallpapers/lagoon.webp
+    color: "#0f4246"
+
+  - id: graphite
+    name: Graphite
+    src: /wallpapers/graphite.webp
+    color: "#3d4045"
+
+  # Solid colours (no image)
+  - id: solid-space-gray
+    name: Space Gray
+    color: "#4a4d53"
+
+  - id: solid-aqua-blue
+    name: Aqua Blue
+    color: "#2a68b0"
+
+  - id: solid-teal
+    name: Teal
+    color: "#24676e"
+
+  - id: solid-plum
+    name: Plum
+    color: "#4d2c55"
+
+  - id: solid-stone
+    name: Stone
+    color: "#8a867f"
+
+  - id: solid-night
+    name: Night
+    color: "#16181c"

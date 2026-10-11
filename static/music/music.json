@@ -1,8 +1,8 @@
 {
   "version": 1,
   "title": "Top Picks",
-  "updated": "2026-08-10",
-  "manifestHash": "f65a4acdb486a8f6",
+  "updated": "2026-10-11",
+  "manifestHash": "5abbc0fa10bdf09e",
   "tracks": [
     {
       "id": "b0805e1131e1",
@@ -16,7 +16,7 @@
       "id": "38802b1a2ae4",
       "videoId": "ZwLvcaDMhU8",
       "title": "Promise (Reprise)",
-      "artist": "",
+      "artist": "Akira Yamaoka",
       "durationSec": 105,
       "thumb": "/music/covers/ZwLvcaDMhU8.jpg"
     },
@@ -24,7 +24,7 @@
       "id": "c47f2a807ebe",
       "videoId": "lXoVugTertI",
       "title": "Subwoofer Lullaby",
-      "artist": "",
+      "artist": "Daniel Rosenfeld",
       "durationSec": 209,
       "thumb": "/music/covers/lXoVugTertI.jpg"
     },
@@ -32,7 +32,7 @@
       "id": "dd001a3c7cd4",
       "videoId": "5w3rRFWzjcM",
       "title": "Sweden",
-      "artist": "",
+      "artist": "Daniel Rosenfeld",
       "durationSec": 216,
       "thumb": "/music/covers/5w3rRFWzjcM.jpg"
     },
@@ -40,7 +40,7 @@
       "id": "58e31d3786ae",
       "videoId": "enHmnTPsp9w",
       "title": "I Want Love (Studio Mix)",
-      "artist": "",
+      "artist": "Akira Yamaoka",
       "durationSec": 281,
       "thumb": "/music/covers/enHmnTPsp9w.jpg"
     },
@@ -64,7 +64,7 @@
       "id": "c940346ee4ad",
       "videoId": "maWHojZTnTg",
       "title": "Aria Math",
-      "artist": "",
+      "artist": "Daniel Rosenfeld",
       "durationSec": 310,
       "thumb": "/music/covers/maWHojZTnTg.jpg"
     },
@@ -72,7 +72,7 @@
       "id": "5a08bd1f010a",
       "videoId": "_ZaeKhITDWw",
       "title": "Hazardous Environments",
-      "artist": "",
+      "artist": "Valve",
       "durationSec": 83,
       "thumb": "/music/covers/_ZaeKhITDWw.jpg"
     },
@@ -80,9 +80,153 @@
       "id": "db62097964d0",
       "videoId": "td3P1-cfZ4E",
       "title": "Theme of Laura",
-      "artist": "",
+      "artist": "Akira Yamaoka",
       "durationSec": 205,
       "thumb": "/music/covers/td3P1-cfZ4E.jpg"
+    },
+    {
+      "id": "f354ba3bb4d5",
+      "videoId": "2zPGWGqdfJ8",
+      "title": "oh yeah?",
+      "artist": "Steve Lacy",
+      "durationSec": 171,
+      "thumb": "/music/covers/2zPGWGqdfJ8.jpg"
+    },
+    {
+      "id": "5c8278b04c64",
+      "videoId": "MX7FSAnRPug",
+      "title": "Loser",
+      "artist": "Tame Impala",
+      "durationSec": 224,
+      "thumb": "/music/covers/MX7FSAnRPug.jpg"
+    },
+    {
+      "id": "9a9af642200e",
+      "videoId": "SCzjQePVhl8",
+      "title": "To All of You",
+      "artist": "Syd Matters",
+      "durationSec": 284,
+      "thumb": "/music/covers/SCzjQePVhl8.jpg"
+    },
+    {
+      "id": "28cb0e8c4319",
+      "videoId": "UkumV_dHbkg",
+      "title": "You're Not Here",
+      "artist": "Akira Yamaoka",
+      "durationSec": 226,
+      "thumb": "/music/covers/UkumV_dHbkg.jpg"
+    },
+    {
+      "id": "f65fefbb997d",
+      "videoId": "D1Fw6CbGAX4",
+      "title": "Running Up That Hill (A Deal With God)",
+      "artist": "Kate Bush",
+      "durationSec": 299,
+      "thumb": "/music/covers/D1Fw6CbGAX4.jpg"
+    },
+    {
+      "id": "15f92c1c50be",
+      "videoId": "Kf5pXDhx5Vc",
+      "title": "End of Beginning",
+      "artist": "Djo",
+      "durationSec": 160,
+      "thumb": "/music/covers/Kf5pXDhx5Vc.jpg"
+    },
+    {
+      "id": "9a80f50ecd97",
+      "videoId": "cuMuMnCRfqk",
+      "title": "Dracula",
+      "artist": "Tame Impala",
+      "durationSec": 206,
+      "thumb": "/music/covers/cuMuMnCRfqk.jpg"
+    },
+    {
+      "id": "32cc15dc3281",
+      "videoId": "-SaUrDhp034",
+      "title": "Every Breath You Take",
+      "artist": "The Police",
+      "durationSec": 254,
+      "thumb": "/music/covers/-SaUrDhp034.jpg"
+    },
+    {
+      "id": "9488cc1b3fbe",
+      "videoId": "Y1-Qymcppps",
+      "title": "Everybody Wants To Rule The World",
+      "artist": "Tears for Fears",
+      "durationSec": 252,
+      "thumb": "/music/covers/Y1-Qymcppps.jpg"
+    },
+    {
+      "id": "4f0f9103fd35",
+      "videoId": "HzdD8kbDzZA",
+      "title": "Take on Me",
+      "artist": "a-ha",
+      "durationSec": 226,
+      "thumb": "/music/covers/HzdD8kbDzZA.jpg"
+    },
+    {
+      "id": "6022189fe1d6",
+      "videoId": "7qlU0bWMzUU",
+      "title": "Never Ending Story",
+      "artist": "Gaten Matarazzo & Gabriella Pizzolo",
+      "durationSec": 126,
+      "thumb": "/music/covers/7qlU0bWMzUU.jpg"
+    },
+    {
+      "id": "1c4bdadf1bc0",
+      "videoId": "wjZMcWaniA4",
+      "title": "Should I Stay or Should I Go (Remastered)",
+      "artist": "The Clash",
+      "durationSec": 189,
+      "thumb": "/music/covers/wjZMcWaniA4.jpg"
+    },
+    {
+      "id": "4223da12329a",
+      "videoId": "fEnpB9fPUbg",
+      "title": "Want You Gone",
+      "artist": "Aperture Science Psychoacoustic Laboratories",
+      "durationSec": 144,
+      "thumb": "/music/covers/fEnpB9fPUbg.jpg"
+    },
+    {
+      "id": "4e93c775b0d0",
+      "videoId": "i5_asj1BGFs",
+      "title": "Sweet Dreams (Are Made of This)",
+      "artist": "Eurythmics",
+      "durationSec": 218,
+      "thumb": "/music/covers/i5_asj1BGFs.jpg"
+    },
+    {
+      "id": "23dea3ade5f8",
+      "videoId": "qGBohd0V2Mo",
+      "title": "Video Killed The Radio Star",
+      "artist": "The Buggles",
+      "durationSec": 254,
+      "thumb": "/music/covers/qGBohd0V2Mo.jpg"
+    },
+    {
+      "id": "34e8903371bc",
+      "videoId": "lYBUbBu4W08",
+      "title": "Never Gonna Give You Up",
+      "artist": "Rick Astley",
+      "durationSec": 214,
+      "thumb": "/music/covers/lYBUbBu4W08.jpg"
+    },
+    {
+      "id": "68bb784fb24b",
+      "videoId": "Ha2OcL_0gtM",
+      "title": "Kids",
+      "artist": "Kyle Dixon & Michael Stein",
+      "durationSec": 158,
+      "thumb": "/music/covers/Ha2OcL_0gtM.jpg"
+    },
+    {
+      "id": "8352751629c7",
+      "videoId": "qnleYf6Qmfk",
+      "title": "Pokemon EPIC REMIX",
+      "artist": "Vs Red HeartGold SoulSilver",
+      "durationSec": 186,
+      "thumb": "/music/covers/qnleYf6Qmfk.jpg"
     }
   ]
 }
