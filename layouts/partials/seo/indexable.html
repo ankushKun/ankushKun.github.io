@@ -1,0 +1,22 @@
+{{/*
+Should search engines index this page? One rule shared by the robots meta in
+baseof.html and by sitemap.xml so the two can never disagree.
+
+Usage: {{ if partial "seo/indexable.html" . }}...{{ end }}
+
+Not indexable:
+- the 404 page
+- pages with `noindex = true` in front matter
+- tag list pages (/tags/ and /tags/<tag>/): navigation aids, not content
+- timeline entries with fewer than 40 words: /timeline/ lists every one of
+  them in full, so the single page adds nothing a crawler needs
+*/}}
+{{- $ok := true -}}
+{{- if or (eq .Kind "404") .Params.noindex -}}
+{{- $ok = false -}}
+{{- else if in (slice "term" "taxonomy") .Kind -}}
+{{- $ok = false -}}
+{{- else if and .IsPage (eq .Section "timeline") (lt .WordCount 40) -}}
+{{- $ok = false -}}
+{{- end -}}
+{{- return $ok -}}

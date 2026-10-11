@@ -8,36 +8,194 @@ enableEmoji = true
 # Enable Git info for commit hash access
 enableGitInfo = true
 
-# Enable sitemap and robots.txt
-enableRobotsTXT = false # We have custom robots.txt in static/
+# robots.txt is generated from layouts/robots.txt
+enableRobotsTXT = true
 
 # Suppress raw HTML warnings
 ignoreLogs = ['warning-goldmark-raw-html']
 
+# Keep local and CI builds on the same Hugo (see .github/workflows/hugo.yml)
+[module]
+[module.hugoVersion]
+extended = true
+min = "0.163.0"
+# Cover images live in static/media (served as-is for og:image). Mounting the
+# folder as assets/media too lets templates resize them into list thumbnails
+# (layouts/partials/apps/thumb.html); the wallpaper is the backdrop of the
+# generated social cards (layouts/partials/seo/card.html). Declaring any
+# assets mount drops the default one, so it is restated first.
+[[module.mounts]]
+source = "assets"
+target = "assets"
+[[module.mounts]]
+source = "static/media"
+target = "assets/media"
+[[module.mounts]]
+source = "static/wallpapers"
+target = "assets/wallpapers"
+
+# A hand-set `lastmod` wins over the git commit date
+[frontmatter]
+lastmod = ['lastmod', ':git', 'date']
+
+# Machine-readable outputs of the home page. All generated at build time so
+# they cannot go stale:
+#   /llms.txt, /llms-full.txt  layouts/index.llms.txt, index.llmsfull.txt
+#   /feed.json                 layouts/index.jsonfeed.json (JSON Feed 1.1)
+#   /external-hosts.json       layouts/index.externalhosts.json (allowlist read
+#                              by workers/site-worker)
+[mediaTypes."application/feed+json"]
+suffixes = ["json"]
+
+[outputFormats.llms]
+mediaType = "text/plain"
+baseName = "llms"
+isPlainText = true
+notAlternative = true
+[outputFormats.llmsfull]
+mediaType = "text/plain"
+baseName = "llms-full"
+isPlainText = true
+notAlternative = true
+[outputFormats.jsonfeed]
+mediaType = "application/feed+json"
+baseName = "feed"
+isPlainText = true
+rel = "alternate"
+[outputFormats.externalhosts]
+mediaType = "application/json"
+baseName = "external-hosts"
+isPlainText = true
+notAlternative = true
+# /sw.js (layouts/index.sw.js) and /offline.html (layouts/index.offline.html):
+# the service worker and the page it shows offline. Root URLs with no
+# fingerprint; see docs/service-worker.md and [params.serviceWorker] below.
+[outputFormats.sw]
+mediaType = "text/javascript"
+baseName = "sw"
+isPlainText = true
+notAlternative = true
+[outputFormats.offline]
+mediaType = "text/html"
+baseName = "offline"
+isHTML = true
+notAlternative = true
+
 # Output formats including JSON for search index
 [outputs]
-home = ["HTML", "JSON", "RSS"]
+home = ["HTML", "JSON", "RSS", "jsonfeed", "llms", "llmsfull", "externalhosts", "sw", "offline"]
+# Every page and section also has a plain-markdown twin at <url>index.md
+# (layouts/_default/single.md, list.md) for agents that would rather not
+# parse the desktop chrome.
+page = ["HTML", "markdown"]
+# Tag pages get no feed of their own. Sections default to HTML + markdown; the
+# three that hold dated pages get a per-section feed through the cascade below.
+section = ["HTML", "markdown"]
+taxonomy = ["HTML"]
+term = ["HTML"]
+
+# /blogs/index.xml, /projects/index.xml, /timeline/index.xml (see
+# layouts/_default/rss.xml). Add a section here to give it a feed.
+[[cascade]]
+outputs = ["HTML", "RSS", "markdown"]
+[cascade.target]
+kind = "section"
+path = "{/blogs,/projects,/timeline}"
+
+# Only tags are used; declaring them alone drops the empty /categories/ pages.
+[taxonomies]
+tag = 'tags'
+
+# "Related" block on project, blog and timeline pages (see
+# layouts/partials/apps/related.html). A `related = [...]` front-matter list
+# always comes first; this fills the rest by shared tags.
+[related]
+includeNewer = true
+threshold = 80
+toLower = true
+[[related.indices]]
+name = 'tags'
+weight = 100
 
 # Site params for SEO & SGO
 [params]
-description = "Ankush Singh — Software engineer building AI agents, DeFi protocols on Solana, and developer tools. Portfolio, blog, and open-source projects."
+description = "Ankush Singh — Co-founder and CTO of Construct Computer, building AI agents and developer tools. Portfolio, blog, and open-source projects."
 twitter = "@ankushKun_"
 github = "ankushKun"
 linkedin = "ankushkun"
 siteUrl = "https://ankush.one"
 locale = "en_US"
+# Origin of the external-link proxy Worker (workers/site-worker), e.g.
+# "https://links.ankush.one". Empty = feature off: external links open in a new
+# tab unless their host is known to allow embedding. See docs/cloudflare.md.
+linkProxy = ""
+
+# Service worker (/sw.js, offline desktop, instant repeat visits). Production
+# builds only. Set enabled = false and deploy to switch it off for everyone:
+# the worker removes itself and its caches on each visitor's next visit. A
+# faster switch that needs no rebuild: put a file at static/sw-disabled.txt.
+# See docs/service-worker.md.
+[params.serviceWorker]
+enabled = true
 
 [params.author]
 name = "Ankush Singh"
 email = "ankush4singh@gmail.com"
 
+# Identity facts for the Person JSON-LD (layouts/partials/seo/person.html).
+# Mirrors the About window; sameAs comes from data/contact.yaml and the award
+# list from data/wins.yaml.
+[params.profile]
+name = "Ankush Singh"
+alternateName = ["Ankush Kun", "ankushKun"]
+jobTitle = "Co-founder and CTO"
+description = "Co-founder and CTO of Construct Computer, an AI workforce where agents get their own cloud computers. Previously Entrepreneur in Residence at Forward Research, building developer tools for Arweave and AO."
+image = "/pfp.png"
+knowsAbout = ["AI Agents", "Developer Tools", "Cloudflare Workers", "Arweave", "AO", "Solana", "DeFi", "TypeScript", "React", "Rust", "Lua", "WebAssembly", "Open Source"]
+[params.profile.worksFor]
+name = "Construct Computer"
+url = "https://construct.computer"
+# From the Education line of static/resume.pdf
+[params.profile.alumniOf]
+name = "Chandigarh University"
+# Work history, newest first. Rendered as the Experience panel of the About
+# window and repeated in /about/index.md, /llms.txt and /llms-full.txt.
+[[params.profile.experience]]
+role = "Co-founder and CTO"
+org = "Construct Computer"
+url = "https://construct.computer"
+current = true
+[[params.profile.experience]]
+role = "Entrepreneur in Residence"
+org = "Forward Research"
+url = "https://forward.arweave.net/"
+[[params.profile.experience]]
+role = "Devrel Engineer + Community Manager"
+org = "Arweave India"
+url = "https://arweaveindia.com"
+[[params.profile.experience]]
+role = "Software Engineer Intern"
+org = "Physics Wallah"
+url = "https://www.pw.live/about-us"
+
 # Syntax highlighting & markdown rendering
 [markup]
+# Classes instead of inline colours: the syntax theme is CSS custom
+# properties (assets/css/apps/doc-code.css), so it is right in light and dark.
 [markup.highlight]
-style = 'monokai'
+noClasses = false
 lineNos = false
 [markup.goldmark.renderer]
 unsafe = true
+# A standalone image is rendered as a block (figure + caption) by
+# layouts/_default/_markup/render-image.html instead of an <img> in a <p>.
+[markup.goldmark.parser]
+wrapStandAloneImageWithinParagraph = false
+# Sections for the document table of contents (layouts/partials/apps/doc/toc.html)
+[markup.tableOfContents]
+startLevel = 2
+endLevel = 3
+ordered = false
 
 # Sitemap configuration
 [sitemap]
@@ -57,26 +215,22 @@ getenv = ['^HUGO_', '^CI$', '^CF_PAGES_COMMIT_SHA$']
 # Navigation menu
 [menu]
 [[menu.main]]
+name = "About"
+url = "/about/"
+weight = 1
+[[menu.main]]
 name = "Projects"
 url = "/projects/"
-weight = 1
+weight = 2
 [[menu.main]]
 name = "Blogs"
 url = "/blogs/"
-weight = 2
+weight = 3
 [[menu.main]]
 name = "Timeline"
 url = "/timeline/"
-weight = 3
-[[menu.main]]
-name = "Wins"
-url = "/wins/"
 weight = 4
-[[menu.main]]
-name = "Contact"
-url = "/contact/"
-weight = 5
 [[menu.main]]
 name = "Schedule"
 url = "/schedule/"
-weight = 6
+weight = 7

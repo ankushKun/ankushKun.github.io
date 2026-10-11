@@ -1,0 +1,68 @@
+{{/*
+Page-type structured data that is easier to build as a dict than as a
+hand-written JSON template. Called from the <head> in baseof.html.
+
+Usage: {{ partial "seo/jsonld.html" (dict "page" . "personId" $id "description" $desc "image" $img) }}
+
+Emits, when they apply:
+- project pages: SoftwareSourceCode when `github` is set, CreativeWork otherwise
+- /projects/: ItemList of every project
+- any page with a `faq = [{q, a}]` front-matter list: FAQPage
+*/}}
+{{- $page := .page -}}
+{{- $personRef := dict "@id" .personId -}}
+{{- $ctx := dict "@context" "https://schema.org" -}}
+
+{{- if and $page.IsPage (eq $page.Section "projects") -}}
+{{- $node := merge $ctx (dict
+    "@type" (cond (not (not $page.Params.github)) "SoftwareSourceCode" "CreativeWork")
+    "name" $page.Title
+    "description" .description
+    "url" $page.Permalink
+    "mainEntityOfPage" $page.Permalink
+    "dateCreated" ($page.Date.Format "2006-01-02")
+    "creator" $personRef
+    "author" $personRef
+    "inLanguage" "en-US"
+) -}}
+{{- if not $page.Lastmod.IsZero }}{{ $node = merge $node (dict "dateModified" ($page.Lastmod.Format "2006-01-02")) }}{{ end -}}
+{{- /* `github` is owner/repo; a full URL is used as given */ -}}
+{{- with $page.Params.github }}{{ $node = merge $node (dict "codeRepository" (cond (gt (len (findRE `^https?://` .)) 0) . (printf "https://github.com/%s" .))) }}{{ end -}}
+{{- with $page.Params.website }}{{ $node = merge $node (dict "sameAs" (slice .)) }}{{ end -}}
+{{- with $page.Params.tags }}{{ $node = merge $node (dict "keywords" (delimit . ", ")) }}{{ end -}}
+{{- /* The page's own cover or generated card, never the site-wide default */ -}}
+{{- if ne $.image.url (absURL "/og-image.jpg") }}{{ $node = merge $node (dict "image" $.image.jsonld) }}{{ end -}}
+{{- if eq $page.Params.status "archived" }}{{ $node = merge $node (dict "creativeWorkStatus" "Archived") }}{{ end }}
+    <script type="application/ld+json">{{ $node | jsonify | safeJS }}</script>
+{{- end -}}
+
+{{- if and $page.IsSection (eq $page.Section "projects") -}}
+{{- $items := slice -}}
+{{- range $i, $p := $page.RegularPages.ByDate.Reverse -}}
+{{- $items = $items | append (dict "@type" "ListItem" "position" (add $i 1) "name" $p.Title "url" $p.Permalink) -}}
+{{- end -}}
+{{- $node := merge $ctx (dict
+    "@type" "ItemList"
+    "name" (printf "Projects by %s" (site.Params.profile.name | default site.Params.author.name))
+    "url" $page.Permalink
+    "numberOfItems" (len $items)
+    "itemListElement" $items
+) }}
+    <script type="application/ld+json">{{ $node | jsonify | safeJS }}</script>
+{{- end -}}
+
+{{- with $page.Params.faq -}}
+{{- $qs := slice -}}
+{{- range . -}}
+{{- if and .q .a -}}
+{{- $qs = $qs | append (dict
+    "@type" "Question"
+    "name" .q
+    "acceptedAnswer" (dict "@type" "Answer" "text" (.a | $page.RenderString | plainify | htmlUnescape))
+) -}}
+{{- end -}}
+{{- end -}}
+{{- with $qs }}
+    <script type="application/ld+json">{{ merge $ctx (dict "@type" "FAQPage" "mainEntity" .) | jsonify | safeJS }}</script>
+{{- end -}}
+{{- end -}}

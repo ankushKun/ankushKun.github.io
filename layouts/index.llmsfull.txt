@@ -1,0 +1,79 @@
+{{- /*
+/llms-full.txt: the whole site as one markdown document - identity, bio,
+every project, hackathon win (data/wins.yaml) and timeline entry, and the
+full text of every blog post.
+Generated, like /llms.txt (see layouts/index.llms.txt).
+*/ -}}
+{{- $blogs := (where site.RegularPages "Section" "blogs").ByDate.Reverse -}}
+{{- $projects := (where site.RegularPages "Section" "projects").ByDate.Reverse -}}
+{{- $timeline := (where site.RegularPages "Section" "timeline").ByDate.Reverse -}}
+{{ partial "agents/intro.md" . | strings.TrimSpace }}
+
+## Experience
+{{ partial "agents/experience.md" . }}
+{{- with site.Params.profile.alumniOf }}
+- Studied at {{ .name }}
+{{- end }}
+
+## About
+{{ with site.GetPage "/about" }}
+{{ partial "agents/body.md" . }}
+{{ end }}
+{{- /* The hand-written "uses" page. GetPage also returns drafts, which are
+not built, so it is skipped while it is one. */ -}}
+{{ range slice "/uses" }}{{ with site.GetPage . }}{{ if not .Draft }}
+## {{ .Params.heading | default .Title }}
+{{ if not .Lastmod.IsZero }}
+Last updated {{ .Lastmod.Format "2006-01-02" }}.
+{{ end }}
+{{ partial "agents/body.md" . | replaceRE `(?m)^(#{2,5} )` "#$1" }}
+{{ end }}{{ end }}{{ end }}
+## Contact
+{{ partial "agents/socials.md" . }}
+- Resume: {{ with site.GetPage "/resume" }}{{ .Permalink }} (PDF: {{ end }}{{ "resume.pdf" | absURL }}{{ with site.GetPage "/resume" }}){{ end }}
+{{ with site.GetPage "/resume" }}
+## Resume
+
+{{ partial "apps/resume/body.md" hugo.Data.resume | replaceRE `(?m)^(#{2,5} )` "#$1" }}
+{{ end }}
+
+## Projects
+{{ range $projects.GroupByDate "2006" }}
+### {{ .Key }}
+
+{{ range .Pages }}{{ partial "agents/line.md" (dict "page" . "tags" true) }}
+{{ end }}{{ end }}
+{{- with hugo.Data.wins.wins }}
+## Hackathon wins
+
+{{ range . }}- {{ .prize }}, {{ .competition }} ({{ .year }})
+{{- with .timeline }}{{ with site.GetPage . }}{{ $url := .Permalink }}{{ with .OutputFormats.Get "markdown" }}{{ $url = .Permalink }}{{ end }}: [{{ .Title | replaceRE `[\[\]]` "" }}]({{ $url }}){{ end }}
+{{- else }}{{ with .url }}: {{ . }}{{ end }}{{ end }}
+{{ end }}
+{{ end -}}
+## Timeline
+
+{{ range $timeline }}{{ partial "agents/line.md" . }}
+{{ end }}
+## For agents
+
+{{ partial "agents/endpoints.md" . | strings.TrimSpace }}
+
+## Blog posts
+
+{{ range $blogs }}{{ partial "agents/line.md" (dict "page" . "tags" true) }}
+{{ end }}
+{{- range $blogs }}
+---
+
+# {{ .Title }}
+
+Source: {{ .Permalink }}
+Published: {{ .Date.Format "2006-01-02" }}{{ with .Params.canonical }}
+Originally published at: {{ . }}{{ end }}
+{{ with partial "apps/doc/links.md" . }}
+{{ . }}
+{{ end }}
+{{ partial "agents/body.md" . }}
+
+{{ end -}}

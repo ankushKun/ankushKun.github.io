@@ -1,0 +1,50 @@
+{{- /*
+/feed.json - JSON Feed 1.1 (https://www.jsonfeed.org/version/1.1/).
+Same items as the home RSS feed (layouts/_default/rss.xml): blog posts,
+projects and timeline entries, newest first, at most 50; every item carries
+its full text as HTML, with the links bar first, like content:encoded there.
+*/ -}}
+{{- $pages := where site.RegularPages "Section" "in" (slice "blogs" "projects" "timeline") -}}
+{{- $pages = $pages.ByDate.Reverse | first 50 -}}
+{{- $authorName := site.Params.profile.name | default site.Params.author.name -}}
+{{- $author := dict "name" $authorName "url" site.Home.Permalink -}}
+{{- with site.Params.profile.image }}{{ $author = merge $author (dict "avatar" (. | absURL)) }}{{ end -}}
+{{- $items := slice -}}
+{{- range $pages -}}
+    {{- $item := dict
+        "id" .Permalink
+        "url" .Permalink
+        "title" .Title
+        "date_published" (.Date.Format "2006-01-02T15:04:05Z07:00")
+    -}}
+    {{- with .Params.canonical }}{{ $item = merge $item (dict "external_url" .) }}{{ end -}}
+    {{- if .Lastmod.After .Date }}{{ $item = merge $item (dict "date_modified" (.Lastmod.Format "2006-01-02T15:04:05Z07:00")) }}{{ end -}}
+    {{- /* A front-matter summary may carry inline markdown; the feed wants plain text */ -}}
+    {{- $summary := .Description -}}
+    {{- if not $summary }}{{ with .Params.summary }}{{ $summary = . | markdownify }}{{ end }}{{ end -}}
+    {{- with $summary }}{{ $item = merge $item (dict "summary" (. | plainify | htmlUnescape)) }}{{ end -}}
+    {{- with .Params.og_image }}{{ $item = merge $item (dict "image" (. | absURL)) }}{{ end -}}
+    {{- $tags := slice .Section -}}
+    {{- with .Params.tags }}{{ $tags = $tags | append . }}{{ end -}}
+    {{- $item = merge $item (dict "tags" $tags) -}}
+    {{- /* Same full text as content:encoded in rss.xml: links bar + body */ -}}
+    {{- with printf "%s%s" (partial "apps/doc/links-feed.html" .) .Content | strings.TrimSpace -}}
+        {{- /* Root-relative links and images mean nothing outside the site */ -}}
+        {{- $item = merge $item (dict "content_html" (. | replaceRE `(src|href|poster)="/([^/])` (printf `$1="%s$2` site.BaseURL) | string)) -}}
+    {{- else -}}
+        {{- $item = merge $item (dict "content_text" .Title) -}}
+    {{- end -}}
+    {{- $items = $items | append $item -}}
+{{- end -}}
+{{- $feed := dict
+    "version" "https://jsonfeed.org/version/1.1"
+    "title" site.Title
+    "home_page_url" site.Home.Permalink
+    "feed_url" (.OutputFormats.Get "jsonfeed").Permalink
+    "description" (printf "Blog posts, projects and timeline entries from %s" $authorName)
+    "language" "en-US"
+    "authors" (slice $author)
+    "items" $items
+-}}
+{{- with site.Params.profile.image }}{{ $feed = merge $feed (dict "icon" (. | absURL)) }}{{ end -}}
+{{- $feed | jsonify -}}

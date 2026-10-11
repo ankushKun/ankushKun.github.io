@@ -1,0 +1,23 @@
+{{/*
+Resolve a site-relative image path (e.g. "/media/cover.jpg", a file under
+static/) or an absolute URL to what the social and JSON-LD tags need.
+
+Usage: {{ $img := partial "seo/image.html" "/og-image.jpg" }}
+Returns: dict "url" (absolute) "width" "height" (0 when unknown) and
+"jsonld" (an ImageObject dict; width/height only when they could be read).
+*/}}
+{{- $src := . -}}
+{{- $w := 0 -}}
+{{- $h := 0 -}}
+{{- if not (findRE `^(https?:)?//` $src) -}}
+{{- $file := printf "static/%s" (strings.TrimPrefix "/" $src) -}}
+{{- if and (fileExists $file) (findRE `(?i)\.(jpe?g|png|gif|webp)$` $src) -}}
+{{- with try (imageConfig $file) -}}
+{{- with .Value }}{{ $w = .Width }}{{ $h = .Height }}{{ end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- $url := $src | absURL -}}
+{{- $ld := dict "@type" "ImageObject" "url" $url -}}
+{{- if and $w $h }}{{ $ld = merge $ld (dict "width" $w "height" $h) }}{{ end -}}
+{{- return (dict "url" $url "width" $w "height" $h "jsonld" $ld) -}}
