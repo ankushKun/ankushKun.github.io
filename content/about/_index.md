@@ -7,7 +7,8 @@ description = "About Ankush Singh, Co-founder of Construct Computer. Previously 
 # The front page (layouts/partials/apps/about/window.html, the About window
 # and /about/) is built from these; the body below is "the longer story".
 tagline = "Co-founder of Construct Computer. I build AI agents and developer tools, and I ship a lot."
-now = "Building [Construct Computer](https://construct.computer): a workforce of AI employees that each get their own cloud computer, so they can actually finish work instead of just talking about it. Browser, terminal, files, memory, the whole desk, not another chat window."
+now = "Building [Construct Computer](https://construct.computer/?utm_source=ankush.one&utm_medium=referral&utm_campaign=about_now): a workforce of AI employees that each get their own cloud computer, so they can actually finish work instead of just talking about it. Browser, terminal, files, memory, the whole desk, not another chat window."
+cta = { text = "See what Construct can do", url = "https://construct.computer/?utm_source=ankush.one&utm_medium=referral&utm_campaign=about_cta" }
 facts = [
   "50+ hackathons since 2017, more than a dozen prizes, and one project that grew into [Arlink](https://arlink.arweave.net), Arweave's deployment tool.",
   "Built [BetterIDEa](https://betteridea.arweave.net), acquired by Forward Research, and the AO Package Manager, which now loads in every aos process.",
@@ -18,7 +19,7 @@ facts = [
 ]
 +++
 
-Right now I'm building my startup - [Construct Computer](https://construct.computer). It's a workforce of AI employees that each get their own cloud computer, so they can actually finish work instead of just talking about it. Think browser, terminal, files, memory, the whole desk, not another chat window.
+Right now I'm building my startup, [Construct Computer](https://construct.computer/?utm_source=ankush.one&utm_medium=referral&utm_campaign=about_story). It's a workforce of AI employees that each get their own cloud computer, so they can actually finish work instead of just talking about it. Think browser, terminal, files, memory, the whole desk, not another chat window.
 
 That's the latest chapter. Before this I was deep in developer tools, blockchain infrastructure, communities, and a ridiculous number of hackathons. I like building things that ship, breaking stuff for fun, and being the kind of nerd who will stay up all night to make something cool work.
 

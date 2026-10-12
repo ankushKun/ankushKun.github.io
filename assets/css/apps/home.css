@@ -52,6 +52,66 @@
     color: var(--text-secondary);
 }
 
+/* ---------- Call to action (front matter `cta`, under Now) ---------- */
+
+/* The Now text, then the pill centred under it. */
+.home-cta {
+    margin: 14px 0 0;
+    text-align: center;
+}
+
+/* The BetaCta pill from construct.computer's blog, toned down: an outline in
+   Construct's teal (#01b4c8) instead of a filled chip. */
+.home a.home-cta-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 14px 5px 10px;
+    border: 1px solid rgba(1, 180, 200, 0.35);
+    border-radius: 999px;
+    background: transparent;
+    font-size: 13px;
+    font-weight: 500;
+    color: #017b89;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.home a.home-cta-link:hover {
+    border-color: rgba(1, 180, 200, 0.6);
+    background: rgba(1, 180, 200, 0.07);
+}
+
+.home a.home-cta-link:focus-visible {
+    outline: 2px solid #01b4c8;
+    outline-offset: 2px;
+}
+
+/* The mascot is taller than the text line and overflows the pill on purpose,
+   so the pill keeps the height of its text. */
+.home-cta-link img {
+    display: block;
+    width: auto;
+    height: 28px;
+    margin: -8px 0;
+    flex-shrink: 0;
+}
+
+.home-cta-link span {
+    color: #01b4c8;
+}
+
+html[data-appearance="dark"] .home a.home-cta-link {
+    border-color: rgba(1, 180, 200, 0.3);
+    color: #8fd9e2;
+}
+
+html[data-appearance="dark"] .home a.home-cta-link:hover {
+    border-color: rgba(1, 180, 200, 0.55);
+    background: rgba(1, 180, 200, 0.08);
+}
+
 /* ---------- Sections ---------- */
 
 .home-section {

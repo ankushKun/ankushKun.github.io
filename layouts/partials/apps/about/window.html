@@ -32,6 +32,21 @@ content/about/_index.md front matter, data/contact.yaml, data/wins.yaml. */}}
         <section class="home-section" aria-labelledby="home-now-{{ $.id }}">
             <h2 class="home-label" id="home-now-{{ $.id }}">Now</h2>
             <div class="home-text">{{ . | markdownify }}</div>
+            {{- /* The call to action, from `cta` in content/about/_index.md. The
+            same pill and mascot as the CTAs on Construct's own blog. Construct
+            refuses framing, so the link always opens in a real tab. */}}
+            {{ with $about.Params.cta }}
+            <p class="home-cta">
+                <a class="home-cta-link" href="{{ .url }}" data-open="tab" target="_blank" rel="noopener">
+                    <picture>
+                        <source srcset="/media/construct/mascot-eyes-static.webp" media="(prefers-reduced-motion: reduce)">
+                        <img src="/media/construct/mascot-eyes.webp" alt="" width="34" height="36" decoding="async">
+                    </picture>
+                    {{ .text }}
+                    <span aria-hidden="true">&rarr;</span>
+                </a>
+            </p>
+            {{ end }}
         </section>
         {{ end }}{{ end }}
 
