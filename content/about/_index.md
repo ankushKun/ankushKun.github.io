@@ -2,7 +2,7 @@
 title = "About Ankush Singh"
 # The Contacts page was folded into About (same links, plus Book Meeting)
 aliases = ["/contact/"]
-description = "About Ankush Singh, Co-founder and CTO of Construct Computer. Previously Entrepreneur in Residence at Forward Research, DevRel Engineer at Arweave India and Software Engineer Intern at Physics Wallah."
+description = "About Ankush Singh, Co-founder and CTO of Construct Computer. Previously Entrepreneur in Residence at Forward Research, Developer Relations Engineer at Arweave India and Software Engineer Intern at Physics Wallah."
 +++
 
 Right now I'm building my startup - [Construct Computer](https://construct.computer). It's a workforce of AI employees that each get their own cloud computer, so they can actually finish work instead of just talking about it. Think browser, terminal, files, memory, the whole desk, not another chat window.

@@ -168,9 +168,9 @@ current = true
 [[params.profile.experience]]
 role = "Entrepreneur in Residence"
 org = "Forward Research"
-url = "https://forward.arweave.net/"
+url = "https://fwd.arweave.net/"
 [[params.profile.experience]]
-role = "Devrel Engineer + Community Manager"
+role = "Developer Relations Engineer"
 org = "Arweave India"
 url = "https://arweaveindia.com"
 [[params.profile.experience]]
