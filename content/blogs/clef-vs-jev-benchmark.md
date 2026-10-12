@@ -30,7 +30,7 @@ We build Construct, an AI employee with its own computer. Every number below com
 
 Clef and Clef-flash are decision models from Cloudflare: you send a state and a set of typed questions, and they return a probability for each allowed answer instead of generating text. Clef is a 27 billion parameter model built on Qwen3.8, and Clef-flash is a 9 billion parameter model built on Qwen3.5. Both are released under Apache 2.0 with weights on Hugging Face, both run on Workers AI, and both accept the same request format as Jev ([Cloudflare](https://blog.cloudflare.com/clef-decision-models/)).
 
-If decision models are new to you: they are the fast, cheap judgment calls around a language model. Is this the same person? Does this email need a reply? Should this tool call wait for a human? TypeSafe calls the category System One models, after Kahneman's fast, intuitive System 1. Our [first post on Jev](https://construct.computer/blog/jev-ai-agents/) explains the idea and how we put one inside an AI agent's memory.
+If decision models are new to you: they are the fast, cheap judgment calls around a language model. Is this the same person? Does this email need a reply? Should this tool call wait for a human? TypeSafe calls the category System One models, after Kahneman's fast, intuitive System 1. Our [first post on Jev](https://construct.computer/blog/jev-ai-agents/?utm_source=ankush.one&utm_medium=referral&utm_campaign=crosspost) explains the idea and how we put one inside an AI agent's memory.
 
 | | Jev 1.13 | Clef | Clef-flash |
 | --- | --- | --- | --- |
@@ -130,7 +130,7 @@ We do not know why the scores moved. Our first suspect was our own route: we cal
 
 ## Entity matching: where the three models differ most
 
-Entity matching is the decision where a mistake is permanent. A wrong merge fuses two real people in the agent's memory, so precision matters more than recall. [AI agent memory](https://construct.computer/blog/ai-agent-memory/) covers what that memory holds and how you can correct it.
+Entity matching is the decision where a mistake is permanent. A wrong merge fuses two real people in the agent's memory, so precision matters more than recall. [AI agent memory](https://construct.computer/blog/ai-agent-memory/?utm_source=ankush.one&utm_medium=referral&utm_campaign=crosspost) covers what that memory holds and how you can correct it.
 
 ![Bar chart for entity matching at a 0.70 threshold. Correct merges made: Jev 44%, Clef 80%, Clef-flash 80%. Merges that were right: Jev 100%, Clef 92%, Clef-flash 80%.](/media/construct/clef-vs-jev-benchmark/03-entity-match.webp "Entity matching at the production threshold of 0.70: 15 pairs that should merge and 15 that should not.")
 
@@ -202,7 +202,7 @@ The broader field is moving fast. Besides Jev and Clef there are open decision m
 
 ## What we are switching, and why Cloudflare makes it easy
 
-Construct already runs on Cloudflare: Workers, Durable Objects, AI Gateway, and Workers AI for the small models. [How our agents get computers we mostly do not pay for](https://construct.computer/blog/running-ai-agents-on-cloudflare-not-vms/) describes that stack. So Clef is not a new vendor for us. It is a new model ID on a binding we already call.
+Construct already runs on Cloudflare: Workers, Durable Objects, AI Gateway, and Workers AI for the small models. [How our agents get computers we mostly do not pay for](https://construct.computer/blog/running-ai-agents-on-cloudflare-not-vms/?utm_source=ankush.one&utm_medium=referral&utm_campaign=crosspost) describes that stack. So Clef is not a new vendor for us. It is a new model ID on a binding we already call.
 
 - **Entity matching goes to Clef in shadow first, starting at 0.80.** Jev keeps deciding while Clef's answers are recorded beside it. The threshold we ship will come from that data, and we switch only if real traffic agrees with this benchmark.
 - **Background decisions default to Clef,** each with its own threshold measured in shadow.
@@ -213,7 +213,7 @@ There is a quieter benefit. In our Jev post we said that decisions which read yo
 
 We are also watching Cloudflare's new fine-tuning work, which it calls Reinforcement Learning for Calibrated Decisions. Our decision layer already records the label, the probability and what the product did for every decision, with no user text. That is close to the dataset such a system wants.
 
-*Read next: [We put Jev inside our AI employee](https://construct.computer/blog/jev-ai-agents/)*
+*Read next: [We put Jev inside our AI employee](https://construct.computer/blog/jev-ai-agents/?utm_source=ankush.one&utm_medium=referral&utm_campaign=crosspost)*
 ## How to try Clef
 
 - **On Workers AI:** call `@cf/cloudflare/clef` or `@cf/cloudflare/clef-flash` through the AI binding or the REST API. The request is a `state` plus a map of `questions`, the same as Jev.
@@ -264,8 +264,8 @@ Construct is an AI employee with its own computer: a workspace filesystem, long-
 
 Two boundaries, stated plainly. As of this post, Jev still makes the live entity-matching decision and Clef has only run in this benchmark; this page will say when that changes. And the other four decisions in this benchmark are built but switched off in production until shadow data supports them.
 
-If decision models are new to you, start with [we put Jev inside our AI employee](https://construct.computer/blog/jev-ai-agents/). For why small, repeatable judgments matter so much in long tasks, read [your agent has a half-life](https://construct.computer/blog/agent-task-half-life/). And if the category itself is new, begin with [what is an AI employee](https://construct.computer/blog/what-is-an-ai-employee/).
+If decision models are new to you, start with [we put Jev inside our AI employee](https://construct.computer/blog/jev-ai-agents/?utm_source=ankush.one&utm_medium=referral&utm_campaign=crosspost). For why small, repeatable judgments matter so much in long tasks, read [your agent has a half-life](https://construct.computer/blog/agent-task-half-life/?utm_source=ankush.one&utm_medium=referral&utm_campaign=crosspost). And if the category itself is new, begin with [what is an AI employee](https://construct.computer/blog/what-is-an-ai-employee/?utm_source=ankush.one&utm_medium=referral&utm_campaign=crosspost).
 
 ---
 
-*Originally posted on [construct.computer](https://construct.computer/blog/clef-vs-jev-benchmark/).*
+*Originally posted on [construct.computer](https://construct.computer/blog/clef-vs-jev-benchmark/?utm_source=ankush.one&utm_medium=referral&utm_campaign=crosspost).*

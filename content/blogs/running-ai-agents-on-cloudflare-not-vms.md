@@ -160,7 +160,7 @@ Workers. Durable Objects with SQLite storage. Containers through the Sandbox SDK
 
 No KV. No Hyperdrive. No machines of our own. Just Construct users with computers that mostly sleep.
 
-[construct.computer](https://construct.computer) is Cloudflare too: Pages, Functions, D1, Turnstile, and the WAF.
+[construct.computer](https://construct.computer/?utm_source=ankush.one&utm_medium=referral&utm_campaign=crosspost) is Cloudflare too: Pages, Functions, D1, Turnstile, and the WAF.
 
 All our Agents get computers, we pay for almost none.
 
@@ -168,8 +168,8 @@ We like edging. So we put the whole stack on the edge.
 
 That is how an AI employee can feel always-on without an always-on bill.
 
-If you want the product side rather than the plumbing, [what an AI employee actually does](https://construct.computer/blog/ai-employee/) covers the work it completes, [inspectable agent memory](https://construct.computer/blog/ai-agent-memory/) covers what it remembers and how you correct it, and [building your own agent stack](https://construct.computer/blog/construct-vs-diy/) is the honest version of what you would be operating instead.
+If you want the product side rather than the plumbing, [what an AI employee actually does](https://construct.computer/blog/ai-employee/?utm_source=ankush.one&utm_medium=referral&utm_campaign=crosspost) covers the work it completes, [inspectable agent memory](https://construct.computer/blog/ai-agent-memory/?utm_source=ankush.one&utm_medium=referral&utm_campaign=crosspost) covers what it remembers and how you correct it, and [building your own agent stack](https://construct.computer/blog/construct-vs-diy/?utm_source=ankush.one&utm_medium=referral&utm_campaign=crosspost) is the honest version of what you would be operating instead.
 
 ---
 
-*Originally posted on [construct.computer](https://construct.computer/blog/running-ai-agents-on-cloudflare-not-vms/).*
+*Originally posted on [construct.computer](https://construct.computer/blog/running-ai-agents-on-cloudflare-not-vms/?utm_source=ankush.one&utm_medium=referral&utm_campaign=crosspost).*

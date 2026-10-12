@@ -41,13 +41,13 @@ contact:
 
 experience:
   - org: Construct Computer
-    url: https://construct.computer
+    url: "https://construct.computer/?utm_source=ankush.one&utm_medium=referral&utm_campaign=resume"
     role: Co-founder
     start: "2026-02"
     highlights:
       - "**Built the agent platform**: a runtime on Cloudflare Workers and Durable Objects, a React desktop to watch agents work live, MCP apps, long-term memory and sandboxed tools."
       - "Migrated from a container-per-user VPS to Workers, Durable Objects, Containers, R2 and D1 in **~10 days**."
-      - "Shipped the Jev decision model into agent memory **5 days after release** (1 call instead of up to 3 LLM-judge calls) and **first-authored** a [1,053-call model-swap study](https://construct.computer/blog/clef-vs-jev-benchmark/)."
+      - "Shipped the Jev decision model into agent memory **5 days after release** (1 call instead of up to 3 LLM-judge calls) and **first-authored** a [1,053-call model-swap study](https://construct.computer/blog/clef-vs-jev-benchmark/?utm_source=ankush.one&utm_medium=referral&utm_campaign=resume)."
       - "Open-sourced [CWAB](https://github.com/construct-computer/cloud-workspace-agent-benchmark), an agent benchmark vs OpenClaw and Hermes, and [Foxwatch](https://github.com/hypervoid-inc/foxwatch), our status monitor."
 
   - org: Forward Research

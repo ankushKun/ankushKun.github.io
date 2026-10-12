@@ -89,4 +89,4 @@ A team piloting inbound lead qualification, for example, would run this scorecar
 
 ---
 
-*Originally posted on [construct.computer](https://construct.computer/blog/how-to-choose-an-ai-agent-platform-for-your-team/).*
+*Originally posted on [construct.computer](https://construct.computer/blog/how-to-choose-an-ai-agent-platform-for-your-team/?utm_source=ankush.one&utm_medium=referral&utm_campaign=crosspost).*

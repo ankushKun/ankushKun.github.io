@@ -47,7 +47,7 @@ There is no diff for an email. There is no staging environment for a CRM. No tes
 
 So when an agent produces that kind of work, the verification cost lands entirely on a human with no instruments, and it lands per unit of output. Double the output, double the checking. That is the whole story of why the demo felt like magic and the rollout felt like a second job.
 
-*Read next: [Your agent has a half-life](https://construct.computer/blog/agent-task-half-life/)*
+*Read next: [Your agent has a half-life](https://construct.computer/blog/agent-task-half-life/?utm_source=ankush.one&utm_medium=referral&utm_campaign=crosspost)*
 ## The check has to be cheaper than the doing
 
 Here is the arithmetic nobody puts in the pitch deck.
@@ -74,7 +74,7 @@ Run it on the Friday nine. Writing one yourself is about six minutes, so D is 54
 
 Notice what happens in the bottom row. When C is unbounded, people do not pay it. They either check nothing and silently accept **p x R**, or they stop using the agent for that work. Both look like "the agent did not work out". Neither is about the agent.
 
-This is the same shape as [the half-life problem](https://construct.computer/blog/agent-task-half-life/): a per-step property that looks fine up close and decides everything at scale. There, it was reliability compounding over a long run. Here, it is verification cost compounding over volume. Both get fixed by changing the structure of the run, not the intelligence inside it.
+This is the same shape as [the half-life problem](https://construct.computer/blog/agent-task-half-life/?utm_source=ankush.one&utm_medium=referral&utm_campaign=crosspost): a per-step property that looks fine up close and decides everything at scale. There, it was reliability compounding over a long run. Here, it is verification cost compounding over volume. Both get fixed by changing the structure of the run, not the intelligence inside it.
 
 ## Nobody is measuring this, including you
 
@@ -114,7 +114,7 @@ A draft turns an irreversible action into a reviewable artifact, which moves it 
 
 Half of checking is not "is this right", it is "where did this come from". An agent that says the client's renewal is in March is unverifiable. An agent that says the renewal is in March, learned from the contract PDF you uploaded on 14 August, can be checked in four seconds.
 
-That is why [agent memory needs provenance and correction](https://construct.computer/blog/ai-agent-memory/) rather than a vector blob. Memory you cannot audit is a claim you have to re-derive, which is verification cost with extra steps.
+That is why [agent memory needs provenance and correction](https://construct.computer/blog/ai-agent-memory/?utm_source=ankush.one&utm_medium=referral&utm_campaign=crosspost) rather than a vector blob. Memory you cannot audit is a claim you have to re-derive, which is verification cost with extra steps.
 
 ### A bounded record of what it touched
 
@@ -128,7 +128,7 @@ Some actions can be undone, and those should be cheap to approve. Some cannot, a
 
 ## How Construct is built around the check
 
-We build [an AI employee](https://construct.computer/blog/ai-employee/) with a real computer, so this is the problem we live in. A few things follow directly from the argument above.
+We build [an AI employee](https://construct.computer/blog/ai-employee/?utm_source=ankush.one&utm_medium=referral&utm_campaign=crosspost) with a real computer, so this is the problem we live in. A few things follow directly from the argument above.
 
 Work lands in a workspace filesystem as files, not as messages in a thread. That is the artifacts rule, and it is also why a run that dies partway through leaves usable output behind rather than a transcript to excavate.
 
@@ -148,4 +148,4 @@ The rest of the company is waiting for someone to build them the other column.
 
 ---
 
-*Originally posted on [construct.computer](https://construct.computer/blog/agent-verification-gap/).*
+*Originally posted on [construct.computer](https://construct.computer/blog/agent-verification-gap/?utm_source=ankush.one&utm_medium=referral&utm_campaign=crosspost).*

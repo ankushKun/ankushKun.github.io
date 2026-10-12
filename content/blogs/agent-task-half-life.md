@@ -86,9 +86,9 @@ Concretely, the reporting job becomes one scheduled workflow rather than eight:
 
 The important line is the third one. Because the instruction is scoped to clients without a report on disk, a run that dies at client six is not a disaster that needs unwinding. The next run reads the directory, sees five reports, and works on the remaining three. Nothing is sent twice, and nobody has to remember where it stopped.
 
-Two honest boundaries. Construct's workflows are linear today: branching, fan-out, and subworkflows are not supported, so the clients are worked through inside a run rather than dispatched as eight parallel jobs. And the schedule interval is your retry cadence, so a job that must finish within the hour needs an on-demand rerun rather than patience. The infrastructure that makes a per-user filesystem cheap enough to leave lying around between runs is in [how our agents get real computers we mostly do not pay for](https://construct.computer/blog/running-ai-agents-on-cloudflare-not-vms/).
+Two honest boundaries. Construct's workflows are linear today: branching, fan-out, and subworkflows are not supported, so the clients are worked through inside a run rather than dispatched as eight parallel jobs. And the schedule interval is your retry cadence, so a job that must finish within the hour needs an on-demand rerun rather than patience. The infrastructure that makes a per-user filesystem cheap enough to leave lying around between runs is in [how our agents get real computers we mostly do not pay for](https://construct.computer/blog/running-ai-agents-on-cloudflare-not-vms/?utm_source=ankush.one&utm_medium=referral&utm_campaign=crosspost).
 
-*Read next: [AI Workflow Automation](https://construct.computer/blog/ai-workflow-automation/)*
+*Read next: [AI Workflow Automation](https://construct.computer/blog/ai-workflow-automation/?utm_source=ankush.one&utm_medium=referral&utm_campaign=crosspost)*
 ## A checklist for building a resumable agent job
 
 The pattern generalizes past client reports. Anything shaped as "for each X, do a few things" is a candidate.
@@ -110,7 +110,7 @@ If your steps are genuinely order-dependent all the way through, with no natural
 
 Memory has a boundary too. Construct keeps workspace files and selected long-term memories across sessions, but automatic memory does not currently index uploaded files, private app results, terminal output, or live browser runs. Context that has to carry across a seam should be written to a file or stored explicitly, not assumed to survive because it appeared once in a transcript.
 
-And if the work is genuinely deterministic, the same trigger and the same transformation every time with no judgment anywhere in the middle, a rule-based automation platform will do it more cheaply and more predictably than any agent. We laid out where that line falls in [AI agent vs Zapier automation](https://construct.computer/blog/ai-agent-vs-zapier/).
+And if the work is genuinely deterministic, the same trigger and the same transformation every time with no judgment anywhere in the middle, a rule-based automation platform will do it more cheaply and more predictably than any agent. We laid out where that line falls in [AI agent vs Zapier automation](https://construct.computer/blog/ai-agent-vs-zapier/?utm_source=ankush.one&utm_medium=referral&utm_campaign=crosspost).
 
 ## Ask this instead of "which model should I use"
 
@@ -118,8 +118,8 @@ And if the work is genuinely deterministic, the same trigger and the same transf
 
 Ask instead: when this job fails at step thirty, what is left on disk, and what does the retry have to redo? If the answer is "nothing" and "all of it," the model is not your problem. You do not need the right man in the wrong place. You need a workspace that outlives the turn.
 
-Start with [AI workflow automation](https://construct.computer/blog/ai-workflow-automation/) for how reusable steps and schedules fit together, [AI agent memory](https://construct.computer/blog/ai-agent-memory/) for what carries across runs and how to correct it, and [how to choose an AI agent platform](https://construct.computer/blog/how-to-choose-an-ai-agent-platform-for-your-team/) if you are evaluating this against other tools. If the underlying idea is new, [what is an AI employee](https://construct.computer/blog/what-is-an-ai-employee/) is the place to begin.
+Start with [AI workflow automation](https://construct.computer/blog/ai-workflow-automation/?utm_source=ankush.one&utm_medium=referral&utm_campaign=crosspost) for how reusable steps and schedules fit together, [AI agent memory](https://construct.computer/blog/ai-agent-memory/?utm_source=ankush.one&utm_medium=referral&utm_campaign=crosspost) for what carries across runs and how to correct it, and [how to choose an AI agent platform](https://construct.computer/blog/how-to-choose-an-ai-agent-platform-for-your-team/?utm_source=ankush.one&utm_medium=referral&utm_campaign=crosspost) if you are evaluating this against other tools. If the underlying idea is new, [what is an AI employee](https://construct.computer/blog/what-is-an-ai-employee/?utm_source=ankush.one&utm_medium=referral&utm_campaign=crosspost) is the place to begin.
 
 ---
 
-*Originally posted on [construct.computer](https://construct.computer/blog/agent-task-half-life/).*
+*Originally posted on [construct.computer](https://construct.computer/blog/agent-task-half-life/?utm_source=ankush.one&utm_medium=referral&utm_campaign=crosspost).*
