@@ -480,19 +480,9 @@
     <noscript><link rel="preload" as="image" href="/wallpapers/wallpaper.webp"></noscript>
 
     <!-- Styles -->
-    {{/* One minified, fingerprinted bundle: main -> mavericks -> partials, then
-    every assets/css/apps/*.css in name order. New per-app stylesheets only need
-    to be dropped into css/apps/. resources.Match returns an empty slice when
-    the directory has no files, so the range is a no-op then. */}}
-    {{- $cssParts := slice -}}
-    {{- range slice "css/main.css" "css/mavericks.css" "css/partials.css" -}}
-    {{- with resources.Get . -}}{{- $cssParts = $cssParts | append . -}}{{- else -}}{{- errorf "Core stylesheet %q not found" . -}}{{- end -}}
-    {{- end -}}
-    {{- range sort (resources.Match "css/apps/*.css") "Name" -}}
-    {{- $cssParts = $cssParts | append . -}}
-    {{- end -}}
-    {{- $css := $cssParts | resources.Concat "css/site.css" | resources.Minify | resources.Fingerprint }}
-    <link rel="stylesheet" href="{{ $css.RelPermalink }}">
+    {{/* The render-blocking bundle, print CSS, and the CSS of an app whose own
+    page this is. App windows fetch theirs when they open (os/app-styles.html). */}}
+    {{ partial "os/stylesheets.html" . }}
     <link rel="preconnect" href="https://p1.ankush.one" crossorigin>
     <link rel="dns-prefetch" href="https://gun.ankush.one">
 
@@ -843,6 +833,16 @@
         {{ else -}}
         {{- warnf "Lazy asset %q not found; the app that needs it will be unavailable." $path -}}
         {{- end -}}
+        {{- end }}
+        {{- if .IsHome }}
+        {{- /* Each app's own stylesheet, fetched when its window first opens
+        (os/app-styles.html). Listed here, the service worker saves them with
+        the desktop, so apps opened offline are styled too. */ -}}
+        {{- $appStyles := dict -}}
+        {{- range $name, $css := (partialCached "os/app-styles.html" . "app-styles").groups -}}
+        {{- $appStyles = merge $appStyles (dict $name $css.RelPermalink) -}}
+        {{- end }}
+        window.APP_STYLES = {{ $appStyles }};
         {{- end }}
     </script>
 

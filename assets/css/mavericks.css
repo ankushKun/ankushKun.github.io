@@ -2579,6 +2579,18 @@ html[data-appearance="dark"] .widget-blog-item {
     animation: windowClose 0.15s ease-in forwards;
 }
 
+/* An app window whose own stylesheet is still on its way (holdUntilStyled in
+   mavericks.js): invisible at first, then, on a slow connection, the frame
+   with a spinner (.window-style-loader) in place of its unstyled contents. */
+.window.is-styling:not(.is-styling-slow) {
+    opacity: 0 !important;
+    pointer-events: none;
+}
+
+.window.is-styling-slow > .window-content {
+    visibility: hidden;
+}
+
 /* ================================================
    Shortcodes
    ================================================ */

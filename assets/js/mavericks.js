@@ -2820,7 +2820,9 @@
     }
 
     function initLazyApp(app, win) {
-        loadLazyApp(app).then(() => {
+        // Script and stylesheet download side by side; the app starts once
+        // both are in, so it never lays itself out against missing CSS
+        Promise.all([loadLazyApp(app), windowStylesReady(win)]).then(() => {
             // The window may have been closed while the bundle was in flight
             if (!win.isConnected || win.classList.contains('closing')) return;
             if (typeof window[app.init] === 'function') window[app.init](win);
@@ -2831,9 +2833,151 @@
         });
     }
 
+    // ================================================
+    // Per-app stylesheets
+    // The render-blocking bundle only carries the shell, the desktop and the
+    // document layout. Each app's own CSS (window.APP_STYLES, app id -> URL,
+    // from layouts/partials/os/app-styles.html) is fetched the first time
+    // its window opens, and the window is held back until it is in (see
+    // holdUntilStyled), so an app never paints unstyled.
+    // ================================================
+
+    const APP_STYLES = window.APP_STYLES || {};
+    const styleLoads = new Map(); // absolute URL -> Promise
+    const stylesIn = new Set();   // absolute URLs whose rules apply
+
+    function styleUrl(href) {
+        return new URL(href, window.location.href).href;
+    }
+
+    /** True when a stylesheet is already applied, e.g. linked in <head>. */
+    function hasStyle(url) {
+        if (stylesIn.has(url)) return true;
+        const link = [...document.querySelectorAll('link[rel="stylesheet"]')].find(l => l.href === url);
+        if (!link || !link.sheet) return false;
+        stylesIn.add(url);
+        return true;
+    }
+
+    function loadStyleOnce(href) {
+        const url = styleUrl(href);
+        if (hasStyle(url)) return Promise.resolve();
+        if (styleLoads.has(url)) return styleLoads.get(url);
+
+        const p = new Promise((resolve, reject) => {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = url;
+            link.onload = () => {
+                stylesIn.add(url);
+                resolve();
+            };
+            link.onerror = () => {
+                styleLoads.delete(url);
+                link.remove();
+                reject(new Error('Failed to load ' + url));
+            };
+            document.head.appendChild(link);
+        });
+
+        styleLoads.set(url, p);
+        return p;
+    }
+
+    /** A promise for an app's stylesheet, or null when there is nothing to wait for. */
+    function appStylesPending(id) {
+        const href = id && Object.prototype.hasOwnProperty.call(APP_STYLES, id) ? APP_STYLES[id] : null;
+        if (!href || hasStyle(styleUrl(href))) return null;
+        return loadStyleOnce(href);
+    }
+
+    /**
+     * The window's app stylesheet, as a promise. A window already on screen
+     * (Retry after a failed load) shows a spinner over its contents meanwhile.
+     */
+    function windowStylesReady(win) {
+        const pending = appStylesPending(win.dataset.windowId);
+        if (!pending) return Promise.resolve();
+        if (!win.classList.contains('is-styling')) holdUntilStyled(win, pending, null);
+        return pending;
+    }
+
+    /** For an app with a stylesheet and no script to report a failed load. */
+    function reportStylesFailure(win, pending) {
+        pending.catch((err) => {
+            console.error(err);
+            trackError(err, 'app-styles');
+            if (!win.isConnected || win.classList.contains('closing')) return;
+            showAppLoadError(win, () => {
+                const again = appStylesPending(win.dataset.windowId);
+                if (again) {
+                    holdUntilStyled(win, again, null);
+                    reportStylesFailure(win, again);
+                }
+            });
+        });
+    }
+
+    /** Start fetching an app's stylesheet when the visitor points at it. */
+    function warmAppStyles(idOrAlias) {
+        const app = resolveApp(idOrAlias);
+        const pending = app && !openWindows.has(app.id) && appStylesPending(app.id);
+        if (pending) pending.catch(() => { /* reported when the window opens */ });
+    }
+
+    if (IS_DESKTOP && Object.keys(APP_STYLES).length) {
+        // Desktop icons, Dock items, Spotlight rows, menu items and links that
+        // name an app: by the time of the click the stylesheet is usually in
+        const warm = (e) => {
+            const el = e.target && e.target.closest
+                ? e.target.closest('[data-window], [data-dock-key], [data-app]')
+                : null;
+            if (el) warmAppStyles(el.dataset.window || el.dataset.dockKey || el.dataset.app);
+        };
+        document.addEventListener('pointerover', warm, { passive: true });
+        document.addEventListener('focusin', warm);
+    }
+
+    // Shown frameless for this long while the stylesheet loads; after that the
+    // window frame appears with a spinner in place of its contents
+    const STYLE_HOLD_MS = 150;
+    const WINDOW_STYLE_LOADER_HTML = '<div class="window-loader window-style-loader" role="status" aria-label="Loading"><div class="mac-spinner spinner"></div></div>';
+
+    /**
+     * Keep a new window invisible until `pending` settles, then call `open`
+     * (the opening animation). On a slow connection the frame shows after
+     * STYLE_HOLD_MS with a spinner over its hidden contents; without `open`
+     * (a window already on screen) it does so at once. A failed stylesheet
+     * reveals the window too: whoever awaits the same promise (the app's
+     * init, or reportStylesFailure) puts up the error state.
+     */
+    function holdUntilStyled(win, pending, open) {
+        let framed = false;
+        const frame = () => {
+            if (framed || !win.classList.contains('is-styling')) return;
+            framed = true;
+            win.classList.add('is-styling-slow');
+            win.insertAdjacentHTML('beforeend', WINDOW_STYLE_LOADER_HTML);
+            if (open) open();
+        };
+        win.classList.add('is-styling');
+        const timer = open ? setTimeout(frame, STYLE_HOLD_MS) : 0;
+        if (!open) frame();
+        const reveal = () => {
+            clearTimeout(timer);
+            win.classList.remove('is-styling', 'is-styling-slow');
+            win.querySelectorAll(':scope > .window-style-loader').forEach(el => el.remove());
+            if (!framed && open && win.isConnected) open();
+        };
+        pending.then(reveal, reveal);
+    }
+
     /** Terminal and Portal share one lazily loaded emulator bundle. */
     function startV86Terminal(id, win) {
-        const ready = window.setupV86Terminal ? Promise.resolve() : loadScriptOnce('V86_TERMINAL_URL');
+        const ready = Promise.all([
+            window.setupV86Terminal ? Promise.resolve() : loadScriptOnce('V86_TERMINAL_URL'),
+            windowStylesReady(win)
+        ]);
         ready.then(() => {
             if (!win.isConnected || win.classList.contains('closing')) return;
             if (window.setupV86Terminal) window.setupV86Terminal(id);
@@ -3412,7 +3556,12 @@
                 const doc = new DOMParser().parseFromString(html, 'text/html');
                 const fetchedContent = doc.querySelector('.window-content');
                 if (!fetchedContent) throw new Error('Could not find content in fetched page');
-                return fetchedContent.innerHTML;
+                // A page that is an app's document (/resume/) links that app's
+                // stylesheet; the body goes in once it has been applied here
+                const styles = [...doc.querySelectorAll('link[rel="stylesheet"][data-app-css]')]
+                    .map(link => link.getAttribute('href'))
+                    .filter(Boolean);
+                return Promise.all(styles.map(loadStyleOnce)).then(() => fetchedContent.innerHTML);
             });
 
         // A failed request must not poison the cache - Retry has to refetch
@@ -3464,6 +3613,7 @@
      */
     function schedulePrefetch(id, permalink) {
         clearTimeout(prefetchTimer);
+        if (id && IS_DESKTOP) warmAppStyles(id);
         if (!id || !permalink || openWindows.has(id) || hasLocalWindowContent(id)) return;
         if (!IS_DESKTOP && appIds.has(id)) return;
         if (navigator.connection && navigator.connection.saveData) return;
@@ -3618,10 +3768,21 @@
         // Games bring their own soundtrack: keep the ambient mix out of it
         setAudioWindow(id, true);
 
-        // Animate
-        setOpenOrigin(win, origin);
-        win.classList.add('opening');
-        setTimeout(() => win.classList.remove('opening'), 200);
+        // Animate, once the app's own stylesheet is in (the first open only).
+        // A page fetched into the window shows its spinner meanwhile instead:
+        // its body is only put in once the stylesheet has arrived too.
+        const styling = appStylesPending(id);
+        const playOpening = () => {
+            setOpenOrigin(win, origin);
+            win.classList.add('opening');
+            setTimeout(() => win.classList.remove('opening'), 200);
+        };
+        if (styling && !shouldFetchContent) {
+            holdUntilStyled(win, styling, playOpening);
+        } else {
+            if (styling) styling.catch(() => { /* reported by loadWindowContent */ });
+            playOpening();
+        }
 
         // Setup interactions
         setupWindowDrag(win);
@@ -3650,6 +3811,9 @@
         const lazyApp = LAZY_APPS[id];
         if (lazyApp) {
             initLazyApp(lazyApp, win);
+        } else if (styling && !shouldFetchContent && id !== 'terminal' && id !== 'portal') {
+            // No script of its own (Quake III's launcher) to report a stylesheet that failed
+            reportStylesFailure(win, styling);
         }
 
         // Newly opened window gets its own history entry; refocusing an

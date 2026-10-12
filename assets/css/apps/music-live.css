@@ -1,7 +1,7 @@
 /* Music window: listen along. The share toggle and "N listening" count sit in
    the status bar; one row per track other visitors are playing sits just
    above it. Colours come from the Music window's own --mu-* properties (set
-   on .mu-app in partials.css), so these follow whatever that window does. */
+   on .mu-app in music.css), so these follow whatever that window does. */
 
 .mu-app {
     --mu-live-line: color-mix(in srgb, var(--mu-ink) 24%, transparent);

@@ -1,0 +1,58 @@
+{{- /*
+Stylesheets kept out of the render-blocking bundle (os/stylesheets.html).
+
+The bundle carries what the first paint of any page needs: the shell, the
+desktop, the Dock, menus, Spotlight, notifications, the About window, the
+Blogs / Projects / Timeline lists and the document layout of posts, projects
+and timeline entries. Everything listed here is one app's (or one kind of
+page's) own CSS. Each group is concatenated, minified and fingerprinted into
+/css/app-<group>.min.<hash>.css (directly under /css/, where the service
+worker's precache looks for bundles), and is
+
+  - fetched on the desktop the first time the app's window opens. The key is
+    the app id from data/apps.yaml; mavericks.js reads window.APP_STYLES
+    (baseof.html) and holds the window back until the file is in.
+  - linked in <head> of a page that is that app (/resume/, a TextEdit page,
+    the 404 page; see os/stylesheets.html), with data-app-css, so a desktop
+    window that lifts the page's body (fetchWindowContent) loads it too.
+  - "print" and "noscript" are linked with media="print" and inside
+    <noscript>: neither ever blocks rendering.
+
+Paths are under assets/css/. List a group's files in the order they had in
+the bundle (the base file first): every group loads after the bundle, so its
+rules keep beating the shared ones exactly as before. A css/apps/*.css file
+not named here is part of the bundle.
+
+Returns dict "groups" (name -> resource) and "files" (the paths claimed).
+*/ -}}
+{{- $manifest := dict
+    "activity"        (slice "apps/activity.css")
+    "daily-puzzle"    (slice "apps/puzzle.css")
+    "guestbook"       (slice "apps/guestbook.css" "apps/guestbook-extras.css" "apps/on-this-day.css")
+    "irc-chat"        (slice "apps/irc.css")
+    "music"           (slice "apps/music.css" "apps/music-fixes.css" "apps/music-live.css")
+    "paint"           (slice "apps/paint.css" "apps/paint-daily.css" "apps/paint-extras.css")
+    "passport"        (slice "apps/passport.css")
+    "preferences"     (slice "apps/preferences.css")
+    "quake3"          (slice "apps/quake.css")
+    "resume"          (slice "apps/resume.css")
+    "software-update" (slice "apps/updates.css")
+    "terminal"        (slice "apps/terminal-shell.css")
+    "textedit"        (slice "apps/textedit.css")
+    "notfound"        (slice "apps/alert.css" "apps/notfound-suggest.css")
+    "print"           (slice "apps/print.css")
+    "noscript"        (slice "apps/noscript.css")
+-}}
+{{- $groups := dict -}}
+{{- $files := slice -}}
+{{- range $name, $paths := $manifest -}}
+{{- $parts := slice -}}
+{{- range $paths -}}
+{{- $path := printf "css/%s" . -}}
+{{- with resources.Get $path -}}{{- $parts = $parts | append . -}}{{- else -}}{{- errorf "App stylesheet %q not found (layouts/partials/os/app-styles.html)" $path -}}{{- end -}}
+{{- $files = $files | append $path -}}
+{{- end -}}
+{{- $css := $parts | resources.Concat (printf "css/app-%s.css" $name) | resources.Minify | resources.Fingerprint -}}
+{{- $groups = merge $groups (dict $name $css) -}}
+{{- end -}}
+{{- return dict "groups" $groups "files" $files -}}

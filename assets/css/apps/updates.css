@@ -1,62 +1,13 @@
 /* ================================================
    Software Update
    Markup: layouts/partials/apps/updates/window.html (shell),
-           assets/js/software-update.js (rows),
-           layouts/partials/apps/updates/menu-item.html (Apple menu item)
+           assets/js/software-update.js (rows)
    Laid out after the App Store's Updates pane in OS X Mavericks: a plain
    list of updates, each with its icon, what changed and an Open button.
    Colours come from the shared tokens, so both appearances are covered.
+   Fetched when the window first opens (layouts/partials/os/app-styles.html);
+   the Apple menu item and the --su-* tokens are in updates-menu.css.
    ================================================ */
-
-:root {
-    /* The "new" marker and the Apple menu badge */
-    --su-new: var(--accent-fill);
-    --su-new-tint: var(--accent-blue-subtle);
-    --su-badge: var(--error);
-}
-
-/* ---------- Apple menu ---------- */
-
-/* Beats shell-a11y.css's `a.dropdown-item { display: block }` */
-a.dropdown-item.su-menu-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    /* The dropdown is shrink-to-fit with a 200px floor: an unbreakable row
-       widens the whole menu instead of wrapping "Software Update…" */
-    white-space: nowrap;
-}
-
-.su-menu-badge {
-    flex: none;
-    padding: 1px 7px;
-    border-radius: 9px;
-    font-size: 11px;
-    line-height: 1.4;
-    white-space: nowrap;
-    /* A tint of the item's own text colour: reads on the dark menu and on
-       the highlighted row alike */
-    background: color-mix(in srgb, currentColor 24%, transparent);
-}
-
-.su-menu-badge[hidden] {
-    display: none;
-}
-
-/* A dot on the Apple logo while there is something new */
-.menu-trigger.has-update::after {
-    content: "";
-    position: absolute;
-    top: 2px;
-    right: 3px;
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--su-badge);
-    box-shadow: 0 0 0 1px var(--hairline-strong);
-    pointer-events: none;
-}
 
 /* ---------- Window ---------- */
 

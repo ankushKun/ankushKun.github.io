@@ -1,0 +1,940 @@
+/* =========================================================
+   Music - iTunes 11-style window
+   Markup: layouts/partials/apps/music/player.html, behaviour:
+   assets/js/music-player.js. Loaded with music-fixes.css and music-live.css
+   when the Music window first opens (layouts/partials/os/app-styles.html).
+   The menubar Now Playing item is on screen without the window, so its
+   styles stay in partials.css.
+   ========================================================= */
+
+/* Live windows clone .mu-app only (not the template wrapper), so target
+   the window chrome + .mu-app for fill height. */
+[data-window-id="music"] .window-content,
+[data-music-window] {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--surface-sunken);
+    padding: 0;
+}
+
+.mu-app {
+    --mu-ink: #1e1e1e;
+    /* 4.5:1 on the selected (playing) row too */
+    --mu-muted: #575757;
+    --mu-accent: var(--accent-text);
+    --mu-row-alt: #f2f3f5;
+    --mu-row-sel: #cfe0f5;
+    --mu-toolbar-h: 64px;
+    --mu-status-h: 22px;
+    --mu-sidebar-w: 150px;
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface-sunken);
+    color: var(--mu-ink);
+    font-family: var(--font-system);
+    font-size: 12px;
+}
+
+/* Light only: in the dark appearance this outranked the dark row colour
+   below and left pale text on a pale row */
+html:not([data-appearance="dark"])[data-accent]:not([data-accent="blue"]) .mu-app {
+    --mu-row-sel: color-mix(in srgb, var(--accent-blue) 22%, white);
+}
+
+html[data-appearance="dark"] .mu-app {
+    --mu-ink: #E6E7E9;
+    --mu-muted: #B4B8BE;
+    --mu-row-alt: #25272A;
+    --mu-row-sel: color-mix(in srgb, var(--accent-blue) 30%, #1F2023);
+}
+
+/* ----- Toolbar ----- */
+
+.mu-toolbar {
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: minmax(150px, 0.9fr) minmax(280px, 1.6fr) minmax(120px, 0.85fr);
+    align-items: center;
+    gap: 12px;
+    min-height: var(--mu-toolbar-h);
+    padding: 8px 12px;
+    background: var(--metal-bg);
+    border-bottom: 1px solid var(--metal-border);
+    box-shadow: inset 0 1px 0 var(--bevel);
+}
+
+.mu-toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.mu-toolbar-right {
+    display: flex;
+    justify-content: flex-end;
+    min-width: 0;
+}
+
+.mu-transport {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.mu-btn {
+    appearance: none;
+    border: 1px solid rgba(0, 0, 0, 0.28);
+    border-radius: 50%;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--header-bg);
+    box-shadow:
+        inset 0 1px 0 var(--bevel),
+        0 1px 1px rgba(0, 0, 0, 0.12);
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.mu-btn.primary {
+    width: 32px;
+    height: 32px;
+}
+
+.mu-btn:hover:not(:disabled) {
+    background: var(--header-bg-hover);
+}
+
+.mu-btn:active:not(:disabled) {
+    background: var(--header-bg-pressed);
+}
+
+.mu-btn:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.mu-btn svg {
+    display: block;
+}
+
+.mu-btn svg[hidden] {
+    display: none !important;
+}
+
+.mu-btn.mu-play .mu-icon-play {
+    display: block;
+}
+
+.mu-btn.mu-play .mu-icon-pause {
+    display: none;
+}
+
+.mu-btn.mu-play.is-playing .mu-icon-play {
+    display: none;
+}
+
+.mu-btn.mu-play.is-playing .mu-icon-pause {
+    display: block;
+}
+
+.mu-btn.mu-play.is-playing .mu-icon-pause[hidden] {
+    display: block !important;
+}
+
+.mu-btn.mu-play:not(.is-playing) .mu-icon-play[hidden] {
+    display: block !important;
+}
+
+.mu-vol {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--text-secondary);
+    min-width: 0;
+}
+
+.mu-vol .mu-app-range {
+    width: 70px;
+}
+
+.mu-search {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 160px;
+    width: 100%;
+    padding: 4px 9px;
+    border-radius: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border-chrome);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+    color: var(--text-quiet);
+}
+
+.mu-filter {
+    appearance: none;
+    border: 0;
+    outline: none;
+    background: transparent;
+    width: 100%;
+    min-width: 0;
+    font: inherit;
+    font-size: 11px;
+    color: var(--mu-ink);
+}
+
+.mu-filter::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+}
+
+/* Shared thin range (toolbar volume + LCD seek) */
+.mu-app-range {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    margin: 0;
+    border-radius: 999px;
+    background: linear-gradient(
+        90deg,
+        var(--slider-fill) 0%,
+        var(--slider-fill) var(--mu-fill, 0%),
+        var(--slider-track) var(--mu-fill, 0%)
+    );
+    outline: none;
+    cursor: pointer;
+}
+
+.mu-app-range::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 999px;
+    background: transparent;
+}
+
+.mu-app-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 11px;
+    height: 11px;
+    margin-top: -3.5px;
+    border-radius: 50%;
+    background: #f4f4f6;
+    border: 1px solid rgba(0, 0, 0, 0.25);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.mu-app-range::-moz-range-track {
+    height: 4px;
+    border-radius: 999px;
+    background: var(--slider-track);
+    border: 0;
+}
+
+.mu-app-range::-moz-range-progress {
+    height: 4px;
+    border-radius: 999px;
+    background: #8a9098;
+}
+
+.mu-app-range::-moz-range-thumb {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: #f4f4f6;
+    border: 1px solid rgba(0, 0, 0, 0.25);
+}
+
+.mu-app-range:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+/* ----- Recessed LCD — inset into the silver chrome, not a dark pod ----- */
+
+.mu-lcd {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 8px;
+    align-items: stretch;
+    min-width: 0;
+    min-height: 48px;
+    padding: 5px 8px 6px;
+    border-radius: 6px;
+    background:
+        linear-gradient(180deg, #d0d3d8 0%, #b8bcc2 45%, #aeb2b8 100%);
+    border: 1px solid rgba(70, 76, 86, 0.55);
+    box-shadow:
+        inset 0 2px 3px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(0, 0, 0, 0.12),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.45),
+        0 1px 0 rgba(255, 255, 255, 0.55);
+    color: #1e1e1e;
+    overflow: hidden;
+}
+
+.mu-lcd-artwrap {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    align-self: center;
+    border-radius: 3px;
+    overflow: hidden;
+    background: #8a9098;
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    flex-shrink: 0;
+}
+
+/* Beat .window-content img { margin: 12px 0 } which left a gray gap above LCD art */
+.window-content .mu-lcd-art,
+.mu-lcd-art {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    margin: 0;
+    object-fit: cover;
+    object-position: center center;
+    display: block;
+}
+
+.mu-lcd-art[hidden] {
+    display: none !important;
+}
+
+.mu-lcd-art-ph {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.55);
+    background: linear-gradient(145deg, #9aa0a8, #6a7078);
+}
+
+.mu-lcd-meta {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+}
+
+.mu-lcd-topline {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    min-width: 0;
+}
+
+.mu-lcd-text {
+    min-width: 0;
+    flex: 1;
+}
+
+.mu-lcd-title {
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #1a1a1a;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.mu-lcd-sub {
+    font-size: 9px;
+    line-height: 1.2;
+    margin-top: 1px;
+    color: rgba(30, 30, 30, 0.8);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mu-lcd-scrub {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) 32px;
+    align-items: center;
+    gap: 5px;
+}
+
+.mu-lcd-time-cur,
+.mu-lcd-time-rem {
+    font-size: 9px;
+    font-variant-numeric: tabular-nums;
+    color: rgba(30, 30, 30, 0.78);
+    line-height: 1;
+}
+
+.mu-lcd-time-rem {
+    text-align: right;
+}
+
+.mu-lcd .mu-app-range {
+    background: linear-gradient(
+        90deg,
+        #5a6068 0%,
+        #5a6068 var(--mu-fill, 0%),
+        rgba(0, 0, 0, 0.16) var(--mu-fill, 0%)
+    );
+}
+
+.mu-lcd .mu-app-range::-webkit-slider-thumb {
+    background: #f7f7f9;
+    border-color: rgba(0, 0, 0, 0.28);
+}
+
+.mu-shuffle {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: rgba(30, 30, 30, 0.4);
+    padding: 0;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 2px;
+    margin-top: 1px;
+}
+
+.mu-shuffle.is-on {
+    color: #0066d6;
+}
+
+.mu-shuffle:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.mu-shuffle:hover:not(:disabled) {
+    color: #1a1a1a;
+}
+
+/* ----- Body: sidebar + main ----- */
+
+.mu-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    background: var(--surface);
+}
+
+.mu-sidebar {
+    flex: 0 0 var(--mu-sidebar-w);
+    width: var(--mu-sidebar-w);
+    background: var(--surface-sunken);
+    border-right: 1px solid var(--border-chrome);
+    padding: 8px 0;
+    overflow: auto;
+}
+
+.mu-sidebar-section {
+    padding: 4px 12px 6px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--text-quiet);
+}
+
+.mu-sidebar-item {
+    appearance: none;
+    border: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    background: transparent;
+    font: inherit;
+    font-size: 12px;
+    color: var(--mu-ink);
+    text-align: left;
+    cursor: default;
+}
+
+/* The source-list selection is the Aqua gel, so it follows the highlight
+   colour and its legible label (see --btn-primary-* in mavericks.css). */
+.mu-sidebar-item.is-selected {
+    background: var(--btn-primary-bg);
+    color: var(--btn-primary-text);
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+}
+
+.mu-sidebar-icon {
+    opacity: 0.85;
+    width: 1em;
+    text-align: center;
+}
+
+.mu-main {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: #111;
+}
+
+/* ----- Cover Flow (iTunes-style 3D + mirror floor) ----- */
+
+.mu-coverflow {
+    --mu-cf-ms: 480ms;
+    --mu-cf-ease: cubic-bezier(0.22, 0.7, 0.25, 1);
+    --mu-cf-size: 150px;
+    container-type: size;
+    container-name: coverflow;
+    flex: 0 1 42%;
+    min-height: 168px;
+    max-height: 320px;
+    position: relative;
+    outline: none;
+    background:
+        radial-gradient(ellipse 90% 50% at 50% 36%, #242424 0%, #0a0a0a 70%, #000 100%);
+    border-bottom: 1px solid #000;
+    overflow: hidden;
+}
+
+.mu-coverflow[hidden] {
+    display: none !important;
+}
+
+.mu-coverflow:focus-visible {
+    box-shadow: inset 0 0 0 2px rgba(0, 122, 255, 0.55);
+}
+
+.mu-coverflow.is-snap .mu-cf-cover,
+.mu-coverflow.is-snap .mu-coverflow-caption {
+    transition: none !important;
+}
+
+.mu-coverflow-stage {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 10px;
+    bottom: 44px;
+    perspective: 1200px;
+    perspective-origin: 50% 45%;
+    transform-style: preserve-3d;
+    overflow: visible;
+    pointer-events: auto;
+}
+
+/* Thin caption scrim only — not a %-height floor that creeps up when short */
+.mu-coverflow-floor {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 48px;
+    pointer-events: none;
+    z-index: 0;
+    background: linear-gradient(
+        180deg,
+        transparent 0%,
+        rgba(0, 0, 0, 0.35) 45%,
+        rgba(0, 0, 0, 0.72) 100%
+    );
+}
+
+/*
+ * Cover node is strictly square. Only the centered cover gets a CSS reflection —
+ * reflecting rotated side covers makes them read as tall portrait posters.
+ */
+.mu-cf-cover {
+    position: absolute;
+    /* Center in the stage (caption already reserved via stage bottom) */
+    top: 50%;
+    left: 50%;
+    width: min(var(--mu-cf-size), 58cqh);
+    height: min(var(--mu-cf-size), 58cqh);
+    margin: 0;
+    transform-style: flat;
+    transition: transform var(--mu-cf-ms) var(--mu-cf-ease);
+    cursor: pointer;
+    pointer-events: auto;
+    -webkit-user-select: none;
+    user-select: none;
+    z-index: 1;
+    will-change: transform;
+    overflow: visible;
+}
+
+.mu-cf-face {
+    position: relative;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 1px;
+    overflow: hidden;
+    background: #111;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    box-shadow:
+        0 10px 28px rgba(0, 0, 0, 0.7),
+        0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.mu-coverflow.is-reduced .mu-cf-cover.is-center .mu-cf-face {
+    -webkit-box-reflect: none;
+}
+
+.mu-cf-face::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.32);
+    opacity: 1;
+    pointer-events: none;
+    transition: opacity calc(var(--mu-cf-ms) * 0.7) ease;
+}
+
+.mu-cf-cover.is-center .mu-cf-face::after {
+    opacity: 0;
+}
+
+.mu-cf-cover:not(.is-center):hover .mu-cf-face::after {
+    opacity: 0.14;
+}
+
+.mu-cf-cover img,
+.mu-cf-ph {
+    width: 100%;
+    height: 100%;
+    display: block;
+    pointer-events: none;
+}
+
+/* Same global window img margin was breaking Cover Flow faces */
+.window-content .mu-cf-cover img,
+.mu-cf-cover img {
+    max-width: none;
+    margin: 0;
+    object-fit: cover;
+    object-position: center center;
+}
+
+.mu-cf-ph {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 42px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.35);
+    background: linear-gradient(145deg, #4a4a4a, #222);
+}
+
+.mu-cf-cover.is-center {
+    cursor: default;
+}
+
+.mu-cf-cover.is-center .mu-cf-face {
+    box-shadow:
+        0 16px 40px rgba(0, 0, 0, 0.85),
+        0 0 0 1px rgba(255, 255, 255, 0.18);
+    -webkit-box-reflect: below 3px
+        linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.5) 40%, transparent 100%);
+}
+
+.mu-cf-cover:not(.is-center) .mu-cf-face {
+    box-shadow:
+        0 8px 22px rgba(0, 0, 0, 0.65),
+        0 0 0 1px rgba(255, 255, 255, 0.06);
+    -webkit-box-reflect: none;
+}
+
+.mu-coverflow-caption {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 6px;
+    text-align: center;
+    color: #f5f5f5;
+    pointer-events: none;
+    z-index: 40;
+    padding: 0 24px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+        opacity 160ms ease,
+        transform 160ms ease;
+}
+
+.mu-coverflow-caption.is-swap {
+    opacity: 0;
+    transform: translateY(6px);
+}
+
+.mu-coverflow-title {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mu-coverflow-artist {
+    font-size: 11px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.7);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+}
+
+/* Short Cover Flow: keep covers centered with top breathing room */
+@container coverflow (max-height: 220px) {
+    .mu-cf-cover {
+        width: min(112px, 52cqh);
+        height: min(112px, 52cqh);
+        top: 50%;
+    }
+
+    .mu-cf-cover.is-center .mu-cf-face {
+        -webkit-box-reflect: none;
+    }
+
+    .mu-coverflow-floor {
+        height: 40px;
+    }
+
+    .mu-coverflow-stage {
+        top: 8px;
+        bottom: 36px;
+    }
+
+    .mu-coverflow-caption {
+        bottom: 4px;
+    }
+
+    .mu-coverflow-title {
+        font-size: 12px;
+    }
+
+    .mu-coverflow-artist {
+        font-size: 10px;
+    }
+}
+
+@container coverflow (max-height: 170px) {
+    .mu-cf-cover {
+        width: min(92px, 48cqh);
+        height: min(92px, 48cqh);
+        top: 50%;
+    }
+
+    .mu-coverflow-floor {
+        height: 34px;
+    }
+
+    .mu-coverflow-stage {
+        top: 6px;
+        bottom: 30px;
+    }
+}
+
+/* ----- Songs table ----- */
+
+.mu-table-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    background: var(--surface);
+    position: relative;
+}
+
+.mu-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.mu-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--header-bg);
+    border-bottom: 1px solid var(--border-chrome);
+    border-right: 1px solid var(--border-strong);
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    text-align: left;
+    color: var(--text-color);
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.mu-table thead th:last-child {
+    border-right: 0;
+}
+
+.mu-table thead th.is-sorted {
+    background: var(--header-bg-active);
+}
+
+.mu-col-status {
+    width: 24px;
+    cursor: default !important;
+}
+
+.mu-col-time {
+    width: 58px;
+    text-align: right !important;
+}
+
+.mu-col-artist {
+    width: 30%;
+}
+
+.mu-table tbody tr {
+    cursor: pointer;
+}
+
+.mu-table tbody tr:nth-child(even) {
+    background: var(--mu-row-alt);
+}
+
+.mu-table tbody tr.is-browse {
+    background: var(--accent-blue-light);
+}
+
+.mu-table tbody tr.is-playing {
+    background: var(--mu-row-sel);
+}
+
+.mu-table tbody td {
+    padding: 4px 8px;
+    border-bottom: 1px solid transparent;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 12px;
+    vertical-align: middle;
+}
+
+.mu-table .mu-cell-status {
+    text-align: center;
+    color: var(--mu-accent);
+    font-size: 9px;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+
+.mu-table .mu-cell-time {
+    font-variant-numeric: tabular-nums;
+    color: var(--mu-muted);
+    text-align: right;
+}
+
+.mu-empty {
+    display: none;
+    position: absolute;
+    inset: 40px 0 0;
+    padding: 28px 16px;
+    text-align: center;
+    color: var(--mu-muted);
+    background: var(--surface);
+}
+
+.mu-empty.is-visible {
+    display: block;
+}
+
+.mu-empty p {
+    margin: 0 0 4px;
+    font-weight: 600;
+    color: var(--mu-ink);
+}
+
+.mu-empty-hint {
+    font-weight: 400 !important;
+    color: var(--mu-muted) !important;
+    font-size: 12px;
+}
+
+/* ----- Status bar ----- */
+
+.mu-statusbar {
+    flex: 0 0 var(--mu-status-h);
+    height: var(--mu-status-h);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--statusbar-bg);
+    border-top: 1px solid var(--border-chrome);
+    font-size: 10px;
+    color: var(--text-secondary);
+}
+
+@media (max-width: 720px) {
+    .mu-toolbar {
+        grid-template-columns: 1fr;
+        min-height: 0;
+        padding: 8px 10px;
+        gap: 8px;
+    }
+
+    .mu-toolbar-left,
+    .mu-toolbar-right {
+        justify-content: space-between;
+    }
+
+    .mu-sidebar {
+        display: none;
+    }
+
+    .mu-coverflow {
+        --mu-cf-size: 108px;
+        flex-basis: 38%;
+        min-height: 150px;
+        max-height: 200px;
+    }
+
+    .mu-cf-cover {
+        top: 50%;
+    }
+
+    .mu-coverflow-floor {
+        height: 40px;
+    }
+
+    .mu-coverflow-caption {
+        bottom: 4px;
+    }
+
+    .mu-coverflow-title {
+        font-size: 12px;
+    }
+
+    .mu-coverflow-artist {
+        font-size: 10px;
+    }
+}

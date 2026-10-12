@@ -1,0 +1,57 @@
+/* ================================================
+   Software Update: the Apple menu item, its badge and the dot on the Apple
+   logo (layouts/partials/apps/updates/menu-item.html, filled in by
+   apps/updates/boot.html). They are on screen before the window is ever
+   opened, so they ship in the main stylesheet; the window itself is
+   updates.css, fetched when it first opens.
+   ================================================ */
+
+:root {
+    /* The "new" marker and the Apple menu badge */
+    --su-new: var(--accent-fill);
+    --su-new-tint: var(--accent-blue-subtle);
+    --su-badge: var(--error);
+}
+
+/* ---------- Apple menu ---------- */
+
+/* Beats shell-a11y.css's `a.dropdown-item { display: block }` */
+a.dropdown-item.su-menu-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    /* The dropdown is shrink-to-fit with a 200px floor: an unbreakable row
+       widens the whole menu instead of wrapping "Software Update…" */
+    white-space: nowrap;
+}
+
+.su-menu-badge {
+    flex: none;
+    padding: 1px 7px;
+    border-radius: 9px;
+    font-size: 11px;
+    line-height: 1.4;
+    white-space: nowrap;
+    /* A tint of the item's own text colour: reads on the dark menu and on
+       the highlighted row alike */
+    background: color-mix(in srgb, currentColor 24%, transparent);
+}
+
+.su-menu-badge[hidden] {
+    display: none;
+}
+
+/* A dot on the Apple logo while there is something new */
+.menu-trigger.has-update::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    right: 3px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--su-badge);
+    box-shadow: 0 0 0 1px var(--hairline-strong);
+    pointer-events: none;
+}

@@ -10,8 +10,8 @@ every build gets a fresh worker.
 
 - **First visit**: the page loads normally. Once it has finished loading and
   the browser is idle, the worker installs and saves a small shell: the home
-  page, the stylesheet and script bundles (including the ones apps load only
-  when opened), the Software Update changelog and the Music catalog, the
+  page, the stylesheet and script bundles (including the per-app stylesheets
+  and scripts that load only when an app is opened), the Software Update changelog and the Music catalog, the
   default wallpaper, the icons and the offline page. Apps that need the
   network anyway (the realtime ones, Music playback, emulators not opened
   before) still need it; Music covers not seen before show their letter tile. That is about 1.6 MB of saved files

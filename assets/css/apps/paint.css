@@ -1,0 +1,242 @@
+/* ==========================================================================
+   Paint - shared canvas
+   Markup: layouts/partials/apps/paint/, behaviour: assets/js/paint.js.
+   Loaded with paint-daily.css and paint-extras.css when the Paint window
+   first opens (layouts/partials/os/app-styles.html), not at first paint.
+   ========================================================================== */
+
+.paint-window {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    background: var(--surface-sunken);
+    font-family: var(--font-system);
+}
+
+/* ---- Toolbar ---- */
+
+.paint-toolbar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 8px 12px;
+    /* Skin: shared app chrome (mavericks.css) */
+    /* Own stacking layer so tooltips hanging below a tool render over the
+       canvas stage instead of behind it. */
+    position: relative;
+    z-index: 2;
+}
+
+.paint-sep {
+    width: 1px;
+    height: 22px;
+    background: var(--border-strong);
+    box-shadow: 1px 0 0 var(--bevel);
+}
+
+.paint-tools,
+.paint-sizes {
+    display: flex;
+    gap: 3px;
+    padding: 2px;
+    background: var(--gray-200);
+    border-radius: 6px;
+}
+
+.paint-tool,
+.paint-size {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 26px;
+    color: var(--gray-800);
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.paint-tool:hover,
+.paint-size:hover {
+    background: color-mix(in srgb, var(--control-raised) 75%, transparent);
+}
+
+.paint-tool.is-selected,
+.paint-size.is-selected {
+    background: var(--control-raised);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+}
+
+.paint-size span {
+    display: block;
+    background: var(--gray-800);
+    border-radius: 50%;
+}
+
+.paint-palette {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.paint-swatch {
+    width: 22px;
+    height: 22px;
+    border: 1px solid rgba(0, 0, 0, 0.28);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform 0.08s ease;
+}
+
+.paint-swatch:hover {
+    transform: translateY(-1px);
+}
+
+/* Inset ring: the toolbar sits flush against the top of the window, which is
+   overflow:hidden, so an outward ring gets clipped. */
+.paint-swatch.is-selected {
+    box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 4px #2f6fd0;
+}
+
+.paint-toolbar-end {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+}
+
+/* Skin: shared Aqua button rules in mavericks.css (.mac-btn group) */
+.paint-clear {
+    padding: 5px 12px;
+    font-size: 12px;
+}
+
+/* ---- Stage ----
+   The canvas carries width/height attributes, so it has an intrinsic 960x600
+   aspect just like an <img>. Letting max-width/max-height do the work keeps
+   the element box exactly equal to the drawing box, which pointer-to-logical
+   mapping depends on. A CSS aspect-ratio here fought the intrinsic size and
+   let the canvas overflow the window. */
+
+.paint-stage {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+    background:
+        repeating-conic-gradient(#e2e5e9 0% 25%, #edeff2 0% 50%) 50% / 14px 14px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* Direct flex child of .paint-stage, with align-items:center so it is never
+   stretched. Because the stage has a definite height, the percentage maxima
+   resolve, and width/height:auto let the intrinsic 960x600 ratio drive the
+   fit - the element box then stays exactly equal to the drawing box, which
+   pointer-to-logical mapping depends on. */
+.paint-canvas {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    /* A flex item's automatic minimum size is its intrinsic size, which would
+       stop the canvas shrinking below 960px wide on a narrow window. */
+    min-width: 0;
+    min-height: 0;
+    /* The shared drawing is on white paper in either appearance */
+    background: #fff;
+    border-radius: 2px;
+    box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.22),
+        0 4px 14px rgba(0, 0, 0, 0.22);
+    cursor: crosshair;
+    touch-action: none;
+}
+
+.paint-canvas.is-eraser {
+    cursor: cell;
+}
+
+.paint-loading {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: rgba(255, 255, 255, 0.9);
+    font-size: 12px;
+    color: #7a808a;
+}
+
+.paint-loading[hidden] {
+    display: none;
+}
+
+/* ---- Status bar ---- */
+
+/* .paint-statusbar: shared .app-statusbar look (mavericks.css) */
+
+.paint-hint {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.paint-status {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #2f7a32;
+    font-weight: 600;
+}
+
+.paint-status::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.paint-status.is-offline {
+    color: #c0392b;
+}
+
+html[data-appearance="dark"] .paint-status {
+    color: #6cc070;
+}
+
+html[data-appearance="dark"] .paint-status.is-offline {
+    color: var(--danger-text);
+}
+
+@media (max-width: 640px) {
+    .paint-toolbar {
+        gap: 8px;
+        padding: 7px 8px;
+    }
+
+    .paint-sep {
+        display: none;
+    }
+
+    .paint-stage {
+        padding: 8px;
+    }
+
+    .paint-hint {
+        display: none;
+    }
+
+    .paint-statusbar {
+        justify-content: flex-end;
+    }
+}

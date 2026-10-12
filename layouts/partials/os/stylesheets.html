@@ -1,0 +1,37 @@
+{{- /*
+Every stylesheet in <head>. Context: the page.
+
+One render-blocking, minified, fingerprinted bundle: main -> mavericks ->
+partials, then every assets/css/apps/*.css in name order except the ones
+os/app-styles.html claims. New stylesheets dropped into css/apps/ join the
+bundle; an app's own CSS goes in os/app-styles.html instead, so it is only
+fetched when that app opens. resources.Match returns an empty slice when the
+directory has no files, so the range is a no-op then.
+*/ -}}
+{{- $appStyles := partialCached "os/app-styles.html" . "app-styles" -}}
+{{- $cssParts := slice -}}
+{{- range slice "css/main.css" "css/mavericks.css" "css/partials.css" -}}
+{{- with resources.Get . -}}{{- $cssParts = $cssParts | append . -}}{{- else -}}{{- errorf "Core stylesheet %q not found" . -}}{{- end -}}
+{{- end -}}
+{{- range sort (resources.Match "css/apps/*.css") "Name" -}}
+{{- if not (in $appStyles.files (strings.TrimPrefix "/" .Name)) -}}{{- $cssParts = $cssParts | append . -}}{{- end -}}
+{{- end -}}
+{{- $css := $cssParts | resources.Concat "css/site.css" | resources.Minify | resources.Fingerprint }}
+<link rel="stylesheet" href="{{ $css.RelPermalink }}">
+{{- with $appStyles.groups.print }}
+<link rel="stylesheet" href="{{ .RelPermalink }}" media="print">
+{{- end }}
+{{- /* A page that is an app's own document gets that app's CSS up front, like
+the bundle. data-app-css: the desktop loads the same file when it lifts this
+page's body into a window (fetchWindowContent in mavericks.js). */ -}}
+{{- $page := "" -}}
+{{- if eq .Kind "404" -}}{{- $page = "notfound" -}}
+{{- else if eq .Layout "textedit" -}}{{- $page = "textedit" -}}
+{{- else if eq .Type "resume" -}}{{- $page = "resume" -}}
+{{- end -}}
+{{- with $page }}{{ with index $appStyles.groups . }}
+<link rel="stylesheet" href="{{ .RelPermalink }}" data-app-css>
+{{- end }}{{ end }}
+{{- if .IsHome }}{{ with $appStyles.groups.noscript }}
+<noscript><link rel="stylesheet" href="{{ .RelPermalink }}"></noscript>
+{{- end }}{{ end }}
