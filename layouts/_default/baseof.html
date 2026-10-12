@@ -214,7 +214,7 @@
     {{- $is404 := eq .Kind "404" -}}
     {{- $isTagList := in (slice "term" "taxonomy") .Kind -}}
     {{- $authorName := site.Params.profile.name | default site.Params.author.name | default "Ankush Singh" -}}
-    {{- /* "Co-founder and CTO, Construct Computer": same role the Person JSON-LD and About window state */ -}}
+    {{- /* "Co-founder, Construct Computer": same role the Person JSON-LD and About window state */ -}}
     {{- $role := site.Params.profile.jobTitle | default "Software Engineer" -}}
     {{- with site.Params.profile.worksFor }}{{ $role = printf "%s, %s" $role .name }}{{ end -}}
     {{- $pageTitle := .Title -}}
