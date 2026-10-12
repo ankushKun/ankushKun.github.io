@@ -660,3 +660,9 @@ html[data-appearance="dark"] {
         animation: none;
     }
 }
+
+/* The graph cell steps aside while GitHub is rate-limiting and nothing is
+   saved (activity-monitor.js fail()); .am-cell sets display, so say it here */
+.am-cell[hidden] {
+    display: none;
+}

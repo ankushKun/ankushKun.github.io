@@ -1,37 +1,49 @@
-{{/* Games Grid - macOS Finder-style icon view for games */}}
-{{/*
+{{/* Folder window - Finder-style icon view of the apps in one group.
+Used for the Games folder and, with "all", the Launchpad (every app).
 Usage:
-{{ partial "games-grid.html" (dict
-"id" "games"
+{{ partial "apps/games/grid.html" (dict
+"id" "games"            window id, also the app whose icon heads the toolbar
 "title" "Games"
+"group" "games"         `group:` in data/apps.yaml that lists an app here
+"all" true              every app instead (except this one and the games)
+"intro" "One line…"     optional: what this folder is, in plain words
+"itch" true             optional: the itch.io link under the intro
+"data" hugo.Data.apps
 ) }}
 */}}
-
+{{- $group := .group | default .id -}}
+{{- $items := where .data.apps "group" $group -}}
+{{- /* "all": every app but this one and the games (they have their folder) */ -}}
+{{- if .all -}}
+{{- $self := .id -}}
+{{- $items = slice -}}
+{{- range .data.apps }}{{ if and (ne .id $self) (ne .group "games") }}{{ $items = $items | append . }}{{ end }}{{ end -}}
+{{- end -}}
 <div id="content-{{ .id }}">
-    {{- $games := where .data.apps "group" "games" -}}
     <div class="games-window" id="games-container-{{ .id }}">
         <div class="games-toolbar">
             <div class="games-title">
-                {{ with (index (where .data.apps "id" "games") 0) }}
+                {{ with (index (where .data.apps "id" .id) 0) }}
                 {{ partial "os/app-icon.html" (dict "app" . "context" "chrome" "class" "games-title-icon") }}
                 {{ end }}
                 <span>{{ .title }}</span>
             </div>
             <div class="games-controls">
-                <span class="games-count">{{ len $games }} items</span>
+                <span class="games-count">{{ len $items }} items</span>
             </div>
         </div>
 
-
         <div class="games-content">
-            <!-- Itch.io Link -->
+            {{ with .intro }}<p class="games-intro">{{ . | markdownify }}</p>{{ end }}
+            {{ if .itch }}
             <a class="itchio-banner" href="https://ankushkun.itch.io/" target="_blank" rel="noopener">
                 <span class="itchio-text">Check out my games on itch.io →</span>
             </a>
+            {{ end }}
 
             <div class="games-icon-grid">
-                {{ range $games }}
-                <div class="game-icon-cell">
+                {{ range $items }}
+                <div class="game-icon-cell{{ if .mine }} is-mine{{ end }}">
                     <button class="game-icon-item" type="button"
                         onclick="window.openContentWindow('{{ .id }}', '{{ .title | safeJS }}', null);">
                         <span class="game-icon-image">
@@ -39,13 +51,16 @@ Usage:
                         </span>
                         <span class="game-icon-label">{{ .label }}</span>
                     </button>
-                    {{/* Optional per-game credit: `author` and `source` in data/apps.yaml */}}
+                    {{/* Optional per-game credit: `author` and `source` in data/apps.yaml.
+                    `mine: true` marks the one Ankush made. */}}
                     {{- $author := .author -}}
-                    {{- with .source }}
+                    {{- if .mine }}
+                    <a class="game-icon-credit game-icon-mine" href="{{ .source }}" target="_blank" rel="noopener">made by me</a>
+                    {{- else }}{{ with .source }}
                     <a class="game-icon-credit" href="{{ . }}" target="_blank" rel="noopener">{{ with $author }}by {{ . }}{{ else }}Source{{ end }}</a>
                     {{- else }}{{ with $author }}
                     <span class="game-icon-credit">by {{ . }}</span>
-                    {{- end }}{{ end }}
+                    {{- end }}{{ end }}{{ end }}
                 </div>
                 {{ end }}
             </div>
@@ -53,4 +68,4 @@ Usage:
     </div>
 </div>
 
-{{/* Styles moved to assets/css/partials.css */}}
+{{/* Styles: assets/css/partials.css (.games-*) */}}

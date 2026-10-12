@@ -65,6 +65,83 @@
     display: none;
 }
 
+/* ---------- Who is online (the top of the popover) ---------- */
+
+.people {
+    margin: 0 2px 8px;
+    padding-bottom: 7px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.people-title {
+    margin-bottom: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.people-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 160px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    font-size: 12px;
+}
+
+.people-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 0;
+    white-space: nowrap;
+}
+
+.people-row::before {
+    content: "";
+    flex: none;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #34c84a;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+.people-row.is-you {
+    font-weight: 600;
+}
+
+.people-row.is-guests,
+.people-row.is-guest {
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 400;
+}
+
+.people-row.is-guests::before {
+    background: #9a9a9e;
+}
+
+.people-name-btn {
+    margin-left: 2px;
+    padding: 1px 8px;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 16px;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 9px;
+    cursor: pointer;
+}
+
+.people-name-btn:hover {
+    background: rgba(255, 255, 255, 0.24);
+}
+
 .reactions-row {
     display: grid;
     grid-template-columns: repeat(8, 32px);

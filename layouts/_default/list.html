@@ -12,21 +12,20 @@ Each section maps to a specific content partial.
 {{ if eq .Section "about" }}
 {{/* Same partial as the About window on the desktop */}}
 {{ $contentPartial = "apps/about/window.html" }}
-{{ $contentData = dict "id" "about-page" "title" "About Ankush" }}
+{{/* On /about/ itself the longer story is open; the desktop window folds it */}}
+{{ $contentData = dict "id" "about-page" "title" "About Ankush" "storyOpen" true }}
 
 {{ else if eq .Section "schedule" }}
 {{ $contentPartial = "apps/contact/schedule.html" }}
 {{ $contentData = dict }}
 
 {{ else if eq .Section "timeline" }}
+{{/* Life and work events only: projects and posts have lists of their own */}}
 {{ $contentPartial = "apps/timeline/calendar.html" }}
-{{ $projectPages := where .Site.RegularPages "Section" "projects" }}
-{{ $blogPages := where .Site.RegularPages "Section" "blogs" }}
-{{ $allPages := .Pages | union $projectPages | union $blogPages }}
 {{ $contentData = dict
 "id" "timeline-page"
 "title" "Timeline"
-"pages" $allPages.ByDate.Reverse
+"pages" .Pages.ByDate.Reverse
 "prefix" "timeline"
 "standalone" true
 "intro" .Content

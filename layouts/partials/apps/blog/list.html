@@ -46,21 +46,6 @@ Usage:
             </div>
         </div>
 
-        {{/* Tag chips: every tag used by a post in this list, most used first */}}
-        {{ $tagCounts := dict }}
-        {{ range $pages }}{{ range .Params.tags }}
-        {{ $tagCounts = merge $tagCounts (dict (lower .) (add 1 (index $tagCounts (lower .) | default 0))) }}
-        {{ end }}{{ end }}
-        {{ $tagList := slice }}
-        {{ range $tag, $n := $tagCounts }}{{ $tagList = $tagList | append (dict "tag" $tag "n" $n) }}{{ end }}
-        {{ with sort $tagList "n" "desc" }}
-        <div class="filter-chips blogs-chips" role="group" aria-label="Filter by tag">
-            {{ range . }}
-            <button type="button" class="filter-chip blogs-chip" data-tag="{{ .tag }}" aria-pressed="false">{{ .tag }}</button>
-            {{ end }}
-        </div>
-        {{ end }}
-
         <div class="blogs-content" id="blogs-scroll-{{ .id }}">
             {{ with .intro }}<div class="section-intro">{{ . }}</div>{{ end }}
             <div class="blogs-list">
@@ -85,6 +70,24 @@ Usage:
                 </a>
                 {{ end }}
             </div>
+            {{/* Tag chips under the list: every tag used by a post, most used first */}}
+        {{ $tagCounts := dict }}
+        {{ range $pages }}{{ range .Params.tags }}
+        {{ $tagCounts = merge $tagCounts (dict (lower .) (add 1 (index $tagCounts (lower .) | default 0))) }}
+        {{ end }}{{ end }}
+        {{ $tagList := slice }}
+        {{ range $tag, $n := $tagCounts }}{{ $tagList = $tagList | append (dict "tag" $tag "n" $n) }}{{ end }}
+        {{ with sort $tagList "n" "desc" }}
+        <div class="blogs-chips-wrap">
+            <span class="blogs-chips-label">Filter by tag</span>
+        <div class="filter-chips blogs-chips" role="group" aria-label="Filter by tag">
+            {{ range . }}
+            <button type="button" class="filter-chip blogs-chip" data-tag="{{ .tag }}" aria-pressed="false">{{ .tag }}</button>
+            {{ end }}
+        </div>
+        </div>
+        {{ end }}
+
             <div class="window-empty blogs-empty" hidden>
                 <div class="window-empty-title">No posts found</div>
                 <div class="window-empty-text">Nothing matches that search.</div>

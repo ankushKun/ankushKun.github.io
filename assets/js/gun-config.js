@@ -1,12 +1,12 @@
 (function () {
     'use strict';
 
-    // Primary relay plus a public fallback, so one relay going down does not
-    // take every realtime feature offline with it.
+    // One relay, our own. (There used to be a public fallback; it meant a
+    // third party saw every visitor's IP, so it is gone. If gun.ankush.one is
+    // down the realtime features wait for it, see the revive loop below.)
     const GUN_RELAY = 'https://gun.ankush.one/gun';
-    const GUN_FALLBACK_RELAYS = ['https://relay.peer.ooo/gun'];
     const ROOT = 'ankush-one';
-    const RELAYS = [GUN_RELAY].concat(GUN_FALLBACK_RELAYS);
+    const RELAYS = [GUN_RELAY];
     const REVIVE_MIN_MS = 4000;   // after Gun's own single retry has had its turn
     const REVIVE_MAX_MS = 30000;
 

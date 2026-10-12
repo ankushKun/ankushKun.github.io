@@ -908,20 +908,6 @@ hr {
     padding: 20px;
 }
 
-/* Desktop Widget */
-.desktop-widget {
-    position: absolute;
-    left: 20px;
-    top: 20px;
-    width: 280px;
-    background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.2);
-    overflow: hidden;
-}
-
 /* Live communal sticky note */
 .desktop-sticky-note {
     position: absolute;
@@ -1083,141 +1069,6 @@ hr {
 
 .menubar-sticky-icon svg {
     display: block;
-}
-
-.widget-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 14px;
-    background: var(--hover-tint);
-    border-bottom: 1px solid var(--hairline);
-}
-
-.widget-icon {
-    font-size: 16px;
-}
-
-/* The colour-cycling NEW text: part of the site's personality, kept exactly
-   as it always was (the owner asked for it). Reduced motion holds it on red,
-   see the end of this block. */
-.widget-icon.blink-new {
-    font-size: 10px;
-    font-weight: 800;
-    font-family: 'Arial Black', 'Impact', sans-serif;
-    padding: 2px 5px;
-    border-radius: 3px;
-    animation: blink-colors 0.5s linear infinite;
-    text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
-}
-
-@keyframes blink-colors {
-
-    0%,
-    100% {
-        color: #FF0000;
-    }
-
-    25% {
-        color: #FF00FF;
-    }
-
-    50% {
-        color: #00FF00;
-    }
-
-    75% {
-        color: #FFFF00;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .widget-icon.blink-new {
-        animation: none;
-        color: #FF0000;
-    }
-}
-
-html[data-motion="reduce"] .widget-icon.blink-new {
-    animation: none;
-    color: #FF0000;
-}
-
-.widget-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-color);
-}
-
-.widget-content {
-    padding: 8px;
-}
-
-.widget-blog-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 12px;
-    border-radius: 8px;
-    text-decoration: none;
-    transition: background 0.15s ease;
-    cursor: pointer;
-}
-
-.widget-blog-item:hover {
-    background: color-mix(in srgb, var(--accent-blue) 10%, transparent);
-}
-
-.widget-blog-title {
-    flex: 1;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text-color);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.widget-blog-type {
-    font-size: 9px;
-    font-weight: 600;
-    text-transform: uppercase;
-    padding: 2px 6px;
-    border-radius: 4px;
-    letter-spacing: 0.5px;
-}
-
-/* The chip ink is its fill colour pulled towards the page ink (dark in the
-   light appearance, light in the dark one) so 9px caps stay at 4.5:1. */
-.widget-blog-item {
-    --chip-ink-pull: black;
-    --chip-ink-keep: 52%;
-}
-
-html[data-appearance="dark"] .widget-blog-item {
-    --chip-ink-pull: white;
-    --chip-ink-keep: 60%;
-}
-
-.widget-type-blogs {
-    background: color-mix(in srgb, var(--info) 15%, transparent);
-    color: color-mix(in srgb, var(--info) var(--chip-ink-keep), var(--chip-ink-pull));
-}
-
-.widget-type-projects {
-    background: color-mix(in srgb, var(--accent-blue) 15%, transparent);
-    color: color-mix(in srgb, var(--accent-blue) var(--chip-ink-keep), var(--chip-ink-pull));
-}
-
-.widget-type-timeline {
-    background: color-mix(in srgb, var(--warning) 15%, transparent);
-    color: color-mix(in srgb, var(--warning) var(--chip-ink-keep), var(--chip-ink-pull));
-}
-
-.widget-blog-date {
-    font-size: 10px;
-    color: var(--text-secondary);
-    flex-shrink: 0;
 }
 
 .desktop-icons {
@@ -1575,16 +1426,15 @@ html[data-appearance="dark"] .widget-blog-item {
     cursor: pointer;
     position: relative;
     text-decoration: none;
-    color: rgba(0, 0, 0, 0.5);
+    color: rgba(0, 0, 0, 0.58);
     line-height: 0;
 }
 
 .traffic-light-face {
+    position: relative;
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    display: grid;
-    place-items: center;
     box-sizing: border-box;
 }
 
@@ -1603,24 +1453,32 @@ html[data-appearance="dark"] .widget-blog-item {
     border: 1px solid var(--traffic-green-border);
 }
 
+/* The glyph is drawn over the whole face (border included), on a 12-unit
+   grid that maps 1:1 onto the 12px light, so the strokes sit on whole
+   pixels instead of blurring across two. Shown while the titlebar is hovered,
+   as on a Mac. */
 .traffic-light-symbol {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: absolute;
+    inset: -1px;
+    display: block;
     line-height: 0;
     opacity: 0;
     transition: opacity 0.12s ease;
 }
 
-/* Symmetric viewBox + half-pixel nudge counters stroke/baseline bias in tiny circles */
 .traffic-light-symbol svg {
     display: block;
-    transform: translate(0.5px, 0.5px);
+    width: 100%;
+    height: 100%;
     shape-rendering: geometricPrecision;
 }
 
 .window-titlebar:hover .traffic-light .traffic-light-symbol {
     opacity: 1;
+}
+
+.traffic-light:hover {
+    color: rgba(0, 0, 0, 0.75);
 }
 
 .window-title {
@@ -2221,14 +2079,14 @@ html[data-appearance="dark"] .widget-blog-item {
 /* Component headings that carry their own class (year headers, section
    headers, the About name) are styled by that class alone, whether
    the tag is a div or a heading. :where() keeps the specificity unchanged. */
-.window-content h1:where(:not(.sidebar-name)) {
+.window-content h1:where(:not(.home-name)) {
     font-size: 24px;
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 16px;
 }
 
-.window-content h2:where(:not(.year-header, .projects-year-header, .sidebar-name)) {
+.window-content h2:where(:not(.year-header, .projects-year-header, .home-label)) {
     font-size: 18px;
     font-weight: 600;
     color: var(--text-primary);
@@ -2368,7 +2226,7 @@ html[data-appearance="dark"] .widget-blog-item {
 /* Plain prose links are underlined so they are not told apart by colour alone.
    Buttons and shortcode pills carry a class and are left out. */
 .markdown-body a:not([class]),
-.info-text a:not([class]) {
+.home-text a:not([class]) {
     color: var(--link);
     text-decoration: underline;
     text-decoration-thickness: 1px;
@@ -2613,162 +2471,6 @@ html[data-appearance="dark"] .widget-blog-item {
 }
 
 /* ================================================
-   About Section - macOS Finder Style
-   ================================================ */
-.about-finder {
-    height: 100%;
-}
-
-.about-finder .finder-toolbar {
-    border-radius: 0;
-}
-
-.finder-split {
-    display: flex;
-    /* Fills what the toolbar leaves in the .finder-window flex column */
-    flex: 1;
-    min-height: 0;
-}
-
-/* Sidebar */
-.finder-sidebar {
-    width: 180px;
-    background: var(--sidebar-bg);
-    padding: 20px 16px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    border-right: 1px solid var(--border-strong);
-    flex-shrink: 0;
-    /* A short window scrolls the sidebar rather than squashing its rows */
-    overflow-y: auto;
-    overscroll-behavior: contain;
-}
-
-.sidebar-avatar {
-    width: 80px;
-    height: 80px;
-    flex-shrink: 0;
-    border-radius: 50%;
-    overflow: hidden;
-    background: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 40px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    margin-bottom: 12px;
-}
-
-.sidebar-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.sidebar-name {
-    font-weight: 600;
-    font-size: 14px;
-    color: var(--text-primary);
-    margin-bottom: 16px;
-    text-align: center;
-}
-
-.sidebar-section {
-    width: 100%;
-    margin-bottom: 12px;
-}
-
-.sidebar-label {
-    font-size: 11px;
-    font-weight: bold;
-    color: var(--text-quiet);
-    letter-spacing: 0.5px;
-    margin-top: 12px;
-    margin-bottom: 6px;
-    padding-left: 10px;
-    text-shadow: 0 1px 0 var(--emboss);
-}
-
-.sidebar-value {
-    font-size: 12px;
-    color: var(--text-color);
-}
-
-/* Main Content */
-.finder-main {
-    flex: 1;
-    padding: 16px;
-    overflow-y: auto;
-    background: var(--surface-alt);
-}
-
-/* Info Panels */
-.info-panel {
-    background: var(--surface-alt);
-    border-radius: 8px;
-    padding: 12px 16px;
-    margin-bottom: 12px;
-}
-
-.info-header {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 10px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid var(--border);
-}
-
-.info-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 6px 0;
-    font-size: 13px;
-}
-
-.info-row:not(:last-child) {
-    border-bottom: 1px solid var(--border-subtle);
-}
-
-.info-label {
-    color: var(--text-color);
-    font-weight: 500;
-}
-
-.info-row a {
-    color: var(--accent-text);
-    text-decoration: none;
-}
-
-.info-row a:hover {
-    text-decoration: underline;
-}
-
-.info-text {
-    font-size: 13px;
-    line-height: 1.6;
-    color: var(--text-body);
-    margin: 0 0 8px 0;
-}
-
-.info-text:last-child {
-    margin-bottom: 0;
-}
-
-.info-text a {
-    color: var(--accent-text);
-    text-decoration: none;
-}
-
-.info-text a:hover {
-    text-decoration: underline;
-}
-
-/* ================================================
    Responsive
    ================================================ */
 /* ================================================
@@ -2793,18 +2495,6 @@ html[data-appearance="dark"] .widget-blog-item {
        .desktop, .windows-container, #online-count) via the --sa* tokens;
        padding on body never moved those. */
 
-    /* ===== Desktop Widget on Mobile ===== */
-    .desktop-widget {
-        position: relative;
-        left: auto;
-        top: auto;
-        width: calc(100% - 56px);
-        max-width: 320px;
-        margin: 12px auto;
-        order: 2;
-        flex: none;
-    }
-
     .desktop-sticky-note {
         position: relative;
         left: auto !important;
@@ -2823,18 +2513,6 @@ html[data-appearance="dark"] .widget-blog-item {
 
     .sticky-close {
         display: none;
-    }
-
-    .desktop-widget .widget-header {
-        padding: 10px 14px;
-    }
-
-    .desktop-widget .widget-content {
-        padding: 6px;
-    }
-
-    .desktop-widget .widget-blog-item {
-        padding: 8px 10px;
     }
 
     /* ===== Desktop Layout on Mobile ===== */
@@ -2941,10 +2619,10 @@ html[data-appearance="dark"] .widget-blog-item {
         /* Use svh (small viewport height) for mobile Safari - this ensures
            content fits even when Safari's bottom toolbar is visible.
            --vvh is set by the shell while the on-screen keyboard is open. */
-        height: calc(100vh - var(--menubar-total) - 16px - var(--sab)) !important;
-        height: calc(var(--vvh, 100svh) - var(--menubar-total) - 16px - var(--sab)) !important;
-        max-height: calc(100vh - var(--menubar-total) - 16px - var(--sab)) !important;
-        max-height: calc(var(--vvh, 100svh) - var(--menubar-total) - 16px - var(--sab)) !important;
+        height: calc(100vh - var(--menubar-total) - 16px - var(--sab) - var(--dock-height)) !important;
+        height: calc(var(--vvh, 100svh) - var(--menubar-total) - 16px - var(--sab) - var(--dock-height)) !important;
+        max-height: calc(100vh - var(--menubar-total) - 16px - var(--sab) - var(--dock-height)) !important;
+        max-height: calc(var(--vvh, 100svh) - var(--menubar-total) - 16px - var(--sab) - var(--dock-height)) !important;
         border-radius: 6px;
     }
 
@@ -2959,101 +2637,16 @@ html[data-appearance="dark"] .widget-blog-item {
         margin-right: 40px;
     }
 
-    /* Make traffic lights more touch-friendly. 14px face + 6px padding each
-       side = 26px hit box, so a 12px gap keeps neighbours from overlapping. */
+    /* No traffic lights on a phone: the Back control at the left of the
+       titlebar closes the window (.titlebar-back), and a phone has nothing
+       to minimise to or zoom into. */
     .traffic-lights {
-        gap: 12px;
-    }
-
-    .traffic-light-face {
-        width: 14px;
-        height: 14px;
-    }
-
-    .traffic-light-symbol {
-        opacity: 1 !important;
+        display: none;
     }
 
     /* Disable window dragging and resizing on mobile */
     .window-resize {
         display: none;
-    }
-
-    /* ===== Finder Layouts ===== */
-    .finder-split {
-        flex-direction: column;
-        height: 100%;
-    }
-
-    .finder-sidebar {
-        width: 100%;
-        max-height: auto;
-        padding: 16px 12px;
-        border-right: none;
-        border-bottom: 1px solid var(--border-strong);
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 12px;
-    }
-
-    .sidebar-avatar {
-        width: 60px;
-        height: 60px;
-        margin-bottom: 0;
-    }
-
-    .sidebar-name {
-        width: 100%;
-        margin-bottom: 8px;
-        font-size: 13px;
-    }
-
-    .sidebar-section {
-        width: auto;
-        margin-bottom: 0;
-    }
-
-    .sidebar-label {
-        font-size: 10px;
-        margin-top: 8px;
-        margin-bottom: 4px;
-        padding-left: 0;
-        text-align: center;
-    }
-
-    .sidebar-value {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 4px;
-        justify-content: center;
-    }
-
-    .connect-item {
-        height: auto;
-        text-align: center;
-        min-width: 36px;
-        min-height: 36px;
-        justify-content: center;
-        padding: 8px;
-        font-size: 12px;
-    }
-
-    .connect-item img.icon {
-        width: 18px;
-        height: 18px;
-        margin-right: 0px !important;
-        margin: 0px;
-    }
-
-    .connect-item .connect-item-label {
-        display: none !important;
-    }
-
-    .finder-main {
-        padding: 12px;
-        overflow-y: visible;
-        flex: none;
     }
 
     /* ===== Finder List View ===== */
@@ -3085,34 +2678,6 @@ html[data-appearance="dark"] .widget-blog-item {
 
     .col-icon {
         width: 20px;
-    }
-
-    /* ===== Info Panels ===== */
-    .info-panel {
-        padding: 10px 12px;
-        margin-bottom: 10px;
-    }
-
-    .info-header {
-        font-size: 10px;
-        margin-bottom: 8px;
-    }
-
-    .info-row {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px;
-        padding: 8px 0;
-        font-size: 12px;
-    }
-
-    .info-label {
-        font-size: 12px;
-    }
-
-    .info-text {
-        font-size: 15px;
-        line-height: 1.6;
     }
 
     /* ===== Project Links ===== */
@@ -3282,10 +2847,6 @@ html[data-appearance="dark"] .widget-blog-item {
     .window-title {
         font-size: 11px;
     }
-
-    .finder-sidebar {
-        padding: 12px 8px;
-    }
 }
 
 /* Static Window Styles for Direct Links */
@@ -3328,8 +2889,8 @@ html[data-appearance="dark"] .widget-blog-item {
         max-width: calc(100vw - 16px - var(--sal) - var(--sar)) !important;
         left: calc(8px + var(--sal)) !important;
         top: calc(var(--menubar-total) + 8px) !important;
-        height: calc(100vh - var(--menubar-total) - 16px - var(--sab)) !important;
-        height: calc(var(--vvh, 100svh) - var(--menubar-total) - 16px - var(--sab)) !important;
+        height: calc(100vh - var(--menubar-total) - 16px - var(--sab) - var(--dock-height)) !important;
+        height: calc(var(--vvh, 100svh) - var(--menubar-total) - 16px - var(--sab) - var(--dock-height)) !important;
         transform: none !important;
     }
 }
@@ -3341,76 +2902,6 @@ a.finder-row {
     display: flex;
 }
 
-/* Sidebar Connect Items */
-
-.connect-item {
-    display: flex;
-    align-items: center;
-    height: 26px;
-    /* Fixed height for finder items */
-    padding: 0 10px;
-    margin-bottom: 0px;
-    border-radius: 4px;
-    text-decoration: none;
-    color: var(--text-primary);
-    cursor: pointer;
-    transition: none;
-    /* Finder items are snappy */
-}
-
-.connect-item:hover {
-    background-color: var(--hover-tint);
-}
-
-.connect-item:active {
-    background-color: var(--press-tint);
-}
-
-.connect-item img.icon {
-    width: 17px;
-    /* Standard sidebar icon size */
-    height: 17px;
-    margin-right: 8px;
-    /* Mavericks (10.9) had grey sidebar icons */
-    filter: grayscale(100%);
-    opacity: 0.65;
-    transition: all 0.2s ease;
-}
-
-.connect-item:hover img.icon {
-    filter: none;
-    opacity: 1;
-}
-
-/* Grey glyphs would sink into the dark sidebar; lift them to a light grey */
-html[data-appearance="dark"] .connect-item:not(:hover) img.icon {
-    filter: grayscale(100%) brightness(1.8);
-    opacity: 0.75;
-}
-
-/* Badges with white detail (Telegram's plane, Reddit's alien) would wash out
-   to one flat disc under that lift; a light touch keeps the detail readable */
-html[data-appearance="dark"] .connect-item:not(:hover) img.icon:is([src$="/telegram.svg"], [src$="/reddit.svg"]) {
-    filter: grayscale(100%) brightness(1.1);
-}
-
-/* Medium's mark is plain black: no brightness lifts it, so turn it white */
-html[data-appearance="dark"] .connect-item img.icon[src$="/medium.svg"] {
-    filter: invert(1);
-}
-
-.connect-item-label {
-    /* The link text itself */
-    flex: 1;
-    color: var(--text-color);
-    font-size: 13px;
-    /* Standard system size */
-    text-decoration: none;
-    font-weight: 400;
-    letter-spacing: -0.2px;
-    text-align: left;
-    /* Make the whole row clickable via main element if possible, or just style the a to fill */
-}
 
 /* ================================================
    Notification System - macOS Mavericks Style
@@ -4523,24 +4014,8 @@ button.dropdown-item {
         min-width: 40px;
     }
 
-    /* 16px faces in 36px hit boxes that no longer overlap */
-    .traffic-lights {
-        gap: 20px;
-        margin: 0 10px;
-    }
-
-    .traffic-light {
-        padding: 10px;
-        margin: -10px;
-    }
-
-    .traffic-light-face {
-        width: 16px;
-        height: 16px;
-    }
-
     .window-title {
-        margin-right: 108px;
+        margin-right: 40px;
     }
 
     .paint-tool,
@@ -4570,11 +4045,6 @@ button.dropdown-item {
 }
 
 @media (pointer: coarse) and (max-width: 768px), (pointer: coarse) and (max-height: 500px) {
-    .traffic-light {
-        padding: 14px 10px;
-        margin: -14px -10px;
-    }
-
     /* Share and Full Screen keep their 20px look but get a 36x44 hit area;
        the wider gap keeps two neighbouring hit areas from overlapping */
     .titlebar-link {
@@ -4634,128 +4104,10 @@ button.dropdown-item {
 }
 
 /* ================================================
-   Window switcher sheet (compact mode)
-   Markup contract for the shell:
-     .window-switcher-backdrop[.open] > .window-switcher[role=dialog]
-       .window-switcher-title
-       button.window-switcher-item[aria-current="true"]  (icon + label)
-         .window-switcher-label
-       button.window-switcher-close   (optional, per row or sheet)
-   plus button.titlebar-back for a text Back control in a phone titlebar.
+   Phone titlebar: button.titlebar-back, the Finder-style Back control
+   (hidden on the desktop layout). The window list on a phone is the app
+   name's ordinary dropdown, like the Apple menu next to it.
    ================================================ */
-.window-switcher-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 100050;
-    display: none;
-    align-items: flex-end;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.35);
-}
-
-.window-switcher-backdrop.open {
-    display: flex;
-}
-
-.window-switcher {
-    width: 100%;
-    max-width: 480px;
-    max-height: 70vh;
-    max-height: 70svh;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    padding: 6px 0 calc(8px + var(--sab));
-    padding-left: var(--sal);
-    padding-right: var(--sar);
-    background: var(--window-bg-solid);
-    border: 1px solid var(--window-border);
-    border-bottom: 0;
-    border-radius: 12px 12px 0 0;
-    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.3);
-    font-family: var(--font-system);
-    animation: window-switcher-in 0.18s ease-out;
-}
-
-@keyframes window-switcher-in {
-    from {
-        transform: translateY(24px);
-        opacity: 0;
-    }
-}
-
-.window-switcher-title {
-    padding: 8px 16px 6px;
-    font-size: 11px;
-    font-weight: bold;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    color: var(--text-tertiary);
-}
-
-.window-switcher-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-    min-height: 48px;
-    padding: 6px 16px;
-    font: inherit;
-    font-size: 15px;
-    text-align: left;
-    color: var(--text-primary);
-    background: transparent;
-    border: 0;
-    cursor: pointer;
-}
-
-.window-switcher-item + .window-switcher-item {
-    border-top: 1px solid var(--gray-150);
-}
-
-.window-switcher-item:active {
-    background: var(--accent-blue-subtle);
-}
-
-.window-switcher-item[aria-current="true"],
-.window-switcher-item.active {
-    font-weight: 600;
-    background: var(--accent-blue-light);
-}
-
-.window-switcher-item .app-icon {
-    --app-icon-size: 24px;
-    flex: none;
-}
-
-.window-switcher-label {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.window-switcher-close {
-    flex: none;
-    min-width: 44px;
-    min-height: 44px;
-    margin: -6px -12px -6px 0;
-    font: inherit;
-    font-size: 18px;
-    line-height: 1;
-    color: var(--text-tertiary);
-    background: transparent;
-    border: 0;
-    cursor: pointer;
-}
-
-.window-switcher-empty {
-    padding: 20px 16px;
-    font-size: 13px;
-    text-align: center;
-    color: var(--text-tertiary);
-}
-
 /* Text "Back" control for a phone titlebar; hidden on the desktop layout. */
 .titlebar-back {
     display: none;
@@ -4765,32 +4117,63 @@ button.dropdown-item {
     .titlebar-back {
         display: inline-flex;
         align-items: center;
-        gap: 2px;
+        gap: 7px;
         flex: none;
         min-width: 44px;
         height: 44px;
-        margin-left: -6px;
-        padding: 0 8px 0 4px;
+        margin-left: -4px;
+        padding: 0 8px 0 2px;
         font: inherit;
         font-size: 15px;
-        /* The link shade nudged towards the ink, for 4.5:1 on the grey
-           titlebar gradient rather than on white */
-        color: color-mix(in srgb, var(--link) 82%, black);
+        color: var(--titlebar-text, var(--text-primary));
         background: transparent;
         border: 0;
+        text-decoration: none;
         cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
     }
 
-    html[data-appearance="dark"] .titlebar-back {
-        color: color-mix(in srgb, var(--link) 72%, white);
+    /* The Finder's back button: a Mavericks toolbar capsule with a chevron */
+    .titlebar-back-icon {
+        display: grid;
+        place-items: center;
+        width: 30px;
+        height: 22px;
+        border-radius: 4px;
+        color: rgba(0, 0, 0, 0.62);
+        background: linear-gradient(180deg, #fdfdfd 0%, #ececec 55%, #dcdcdc 100%);
+        border: 1px solid rgba(0, 0, 0, 0.28);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+
+    .titlebar-back-icon svg {
+        display: block;
+        width: 12px;
+        height: 12px;
+    }
+
+    .titlebar-back:active .titlebar-back-icon {
+        background: linear-gradient(180deg, #d6d6d6 0%, #c4c4c4 100%);
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    html[data-appearance="dark"] .titlebar-back-icon {
+        color: rgba(255, 255, 255, 0.82);
+        background: linear-gradient(180deg, #6a6a6a 0%, #525252 55%, #444 100%);
+        border-color: rgba(0, 0, 0, 0.6);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    }
+
+    html[data-appearance="dark"] .titlebar-back:active .titlebar-back-icon {
+        background: linear-gradient(180deg, #3c3c3c 0%, #303030 100%);
+    }
+
+    .window.inactive .titlebar-back {
+        color: var(--titlebar-text-inactive);
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .window-switcher {
-        animation: none;
-    }
-
     .window-toolbar .toolbar-btn.is-loading > * {
         animation: none;
     }
@@ -4887,7 +4270,6 @@ html[data-contrast="more"] {
 
     .window,
     .static-window,
-    .desktop-widget,
     .apple-dropdown,
     .finder-dropdown,
     .notification,

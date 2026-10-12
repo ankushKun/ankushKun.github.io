@@ -2,23 +2,21 @@
  * Personal desktop: what one visitor makes of the desktop, kept in their own
  * browser and never sent anywhere.
  *
- *   - Icon arrangement: drag desktop icons onto a grid; View > Clean Up,
- *     Sort Icons by Name and Restore Default Arrangement.
- *   - Private sticky notes: File > New Sticky Note (or the desktop's context
- *     menu). Unlike the shared note, only this browser ever sees them.
- *   - The welcome tour, shown once on a first visit; Help > Welcome Tour
- *     replays it.
+ *   - Icon arrangement: drag desktop icons onto a grid; Clean Up, Sort Icons
+ *     by Name and Restore Default Arrangement in the desktop's context menu.
+ *     (No app has a desktop icon at the moment, see data/apps.yaml; the
+ *     machinery stays for the day one does.)
+ *   - Private sticky notes: New Sticky Note in the desktop's context menu.
+ *     Unlike the shared note, only this browser ever sees them.
  *
  * It extends the shell through window.SiteShell (assets/js/mavericks.js), and
  * the shell's menus call back through window.DesktopPersonal. Loaded on the
  * home page only, deferred after mavericks.js (layouts/_default/baseof.html).
- * Styles: assets/css/apps/desktop-personal.css and first-run.css.
+ * Styles: assets/css/apps/desktop-personal.css.
  *
  * localStorage:
  *   desktop-icons-v1     { v: 1, cells: { <app id>: [column from the right, row] } }
  *   desktop-stickies-v1  [{ id, x, y, w, h, color, text }]  (at most 12 notes, 2000 characters each)
- *   site-welcome-v1      "done" once the tour was finished or skipped, "pending"
- *                        when a first visit landed on a deep link
  */
 (function () {
     'use strict';
@@ -32,7 +30,6 @@
 
     const ICONS_KEY = 'desktop-icons-v1';
     const STICKIES_KEY = 'desktop-stickies-v1';
-    const WELCOME_KEY = 'site-welcome-v1';
 
     const track = (name, props) => {
         if (typeof window.track === 'function') window.track(name, props || {});
@@ -743,336 +740,6 @@
     }
 
     // ================================================
-    // Welcome tour
-    // A few help tags, each pointing at the thing it explains. Shown once,
-    // on a first visit; skipping counts as seen. Help > Welcome Tour (and
-    // the Apple menu on phones) replays it.
-    // ================================================
-
-    let tour = null;
-    let touredThisVisit = false;
-
-    function searchChord() {
-        return shell.formatShortcut ? shell.formatShortcut('mod+K') : 'Ctrl+K';
-    }
-
-    function tourSteps() {
-        const compact = isCompact();
-        // A tablet: the desktop layout, but a finger (no icon dragging, no
-        // keyboard shortcuts, no cursor to share)
-        const touch = !compact && window.matchMedia('(pointer: coarse)').matches;
-        const tapping = compact || touch;
-        const visible = (selector) => {
-            const el = document.querySelector(selector);
-            return el && el.getClientRects().length > 0 ? el : null;
-        };
-        // Laid out and not hidden under a window. About opens on every visit
-        // and fills a phone's screen, so the icons are usually behind it there.
-        const uncovered = (selector) => {
-            const el = visible(selector);
-            if (!el) return null;
-            const r = el.getBoundingClientRect();
-            const x = r.left + r.width / 2;
-            const y = r.top + r.height / 2;
-            if (x < 0 || y < 0 || x >= window.innerWidth || y >= window.innerHeight) return null;
-            const hit = document.elementFromPoint(x, y);
-            return hit && (el.contains(hit) || hit.closest('.tour-card, .tour-ring')) ? el : null;
-        };
-        const iconTarget = () => uncovered('.desktop-icon[data-window="about"]') || uncovered('.desktop-icon');
-        const steps = [
-            {
-                id: 'welcome',
-                title: 'Welcome to Ankush’s desktop',
-                body: compact
-                    ? 'It works like a Mac from 2013, shrunk to fit your phone. Everything here opens: the about page, projects, blog posts and games.'
-                    : 'It works like a Mac from 2013. Everything here opens: the about page, projects, blog posts, games, even a terminal.',
-                next: 'Show Me Around',
-                skip: 'Skip'
-            },
-            {
-                id: 'icons',
-                target: iconTarget,
-                // Still worth saying when the icons are behind a window:
-                // the card then sits in the middle and says how to reach them
-                optional: true,
-                title: tapping ? 'Tap to open' : 'One click opens anything',
-                body: () => {
-                    if (iconTarget()) {
-                        return tapping
-                            ? 'Tap an icon to open it. Press and hold one for more options.'
-                            : 'Icons open with a single click. Drag them wherever you like and they stay there next time.';
-                    }
-                    if (touch) return 'The icons behind this window open with a single tap. Press and hold one for more options.';
-                    return compact
-                        ? 'Behind this window is the home screen. Tap Back to see it, then tap an icon to open it. Press and hold one for more options.'
-                        : 'The icons behind this window open with a single click. Drag them wherever you like and they stay there next time.';
-                }
-            },
-            !compact && {
-                id: 'dock',
-                target: () => visible('#dock .dock-shelf'),
-                title: 'The Dock',
-                body: 'Every app lives down here too. A light under an icon means it is open, and minimized windows wait here.'
-            },
-            {
-                id: 'people',
-                target: () => visible('#online-count'),
-                title: 'Other people are here',
-                body: tapping
-                    ? 'This counts who is on the site right now. Tap it to send a reaction everyone sees.'
-                    : 'Visitors show up as live cursors. Press 1 to 8 to send a reaction everyone sees, or click this counter.'
-            },
-            {
-                id: 'search',
-                target: () => visible('#menubar-spotlight'),
-                title: 'Search everything',
-                body: tapping
-                    ? 'Find any post, project or app from here.'
-                    : `Press ${searchChord()} to find any post, project or app.`,
-                action: { label: 'Search Now', run: () => shell.openSearch() }
-            },
-            {
-                id: 'done',
-                target: () => (compact ? visible('#apple-menu-trigger') : visible('#menu-help-trigger')),
-                title: 'That’s the tour',
-                body: compact
-                    ? 'Find it again in the Apple menu. If you enjoy your visit, sign the Guestbook.'
-                    : 'Find it again under Help. If you enjoy your visit, sign the Guestbook.',
-                next: 'Done',
-                action: shell.resolveApp('guestbook')
-                    ? { label: 'Sign the Guestbook', run: () => shell.openApp('guestbook', null, 'tour') }
-                    : null
-            }
-        ];
-        return steps.filter(Boolean);
-    }
-
-    function startTour() {
-        if (tour) return;
-        touredThisVisit = true;
-        if (typeof shell.closeMenu === 'function') shell.closeMenu(false);
-
-        const card = document.createElement('div');
-        card.className = 'tour-card';
-        card.setAttribute('role', 'dialog');
-        card.setAttribute('aria-modal', 'false');
-        card.setAttribute('aria-labelledby', 'tour-title');
-        card.setAttribute('aria-describedby', 'tour-body');
-        card.innerHTML =
-            '<span class="tour-arrow" aria-hidden="true"></span>' +
-            '<div class="tour-title" id="tour-title"></div>' +
-            '<p class="tour-body" id="tour-body"></p>' +
-            '<div class="tour-footer">' +
-            '<span class="tour-progress" aria-live="polite"></span>' +
-            '<button type="button" class="tour-link" data-tour="skip"></button>' +
-            '<button type="button" class="mac-btn small" data-tour="action" hidden></button>' +
-            '<button type="button" class="mac-btn small primary" data-tour="next"></button>' +
-            '</div>';
-
-        const ring = document.createElement('div');
-        ring.className = 'tour-ring';
-        ring.setAttribute('aria-hidden', 'true');
-
-        document.body.append(ring, card);
-
-        tour = {
-            card,
-            ring,
-            steps: tourSteps(),
-            index: -1,
-            returnFocus: document.activeElement && document.activeElement !== document.body ? document.activeElement : null
-        };
-
-        card.addEventListener('click', (e) => {
-            const button = e.target.closest('[data-tour]');
-            if (!button) return;
-            const kind = button.dataset.tour;
-            if (kind === 'skip') endTour('skipped');
-            else if (kind === 'next') showStep(tour.index + 1);
-            else if (kind === 'action') {
-                const step = tour.steps[tour.index];
-                endTour('action:' + step.id);
-                if (step.action) step.action.run();
-            }
-        });
-        card.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                e.preventDefault();
-                e.stopPropagation();
-                endTour('skipped');
-            }
-        });
-
-        tour.onResize = () => positionTour();
-        window.addEventListener('resize', tour.onResize);
-
-        track('welcome_tour', { action: 'start', compact: isCompact() });
-        showStep(0);
-    }
-
-    function showStep(index) {
-        if (!tour) return;
-        // Steps whose subject is not on screen (no realtime, no Dock) are left out
-        let next = index;
-        const shown = (s) => !s.target || s.optional || s.target();
-        while (next < tour.steps.length && !shown(tour.steps[next])) next++;
-        if (next >= tour.steps.length) {
-            endTour('finished');
-            return;
-        }
-        tour.index = next;
-        const step = tour.steps[next];
-        const remaining = tour.steps.slice(next + 1).filter(shown).length;
-        const last = remaining === 0;
-        const total = next + 1 + remaining;
-
-        const { card } = tour;
-        card.dataset.step = step.id;
-        card.querySelector('.tour-title').textContent = step.title;
-        card.querySelector('.tour-body').textContent = typeof step.body === 'function' ? step.body() : step.body;
-        card.querySelector('.tour-progress').textContent = next === 0 ? '' : `${next + 1} of ${total}`;
-
-        const skip = card.querySelector('[data-tour="skip"]');
-        skip.textContent = step.skip || 'Skip Tour';
-        skip.hidden = last;
-
-        const action = card.querySelector('[data-tour="action"]');
-        action.hidden = !step.action;
-        if (step.action) action.textContent = step.action.label;
-
-        const nextBtn = card.querySelector('[data-tour="next"]');
-        nextBtn.textContent = step.next || (last ? 'Done' : 'Next');
-
-        if (!reducedMotion()) {
-            card.classList.remove('is-stepping');
-            void card.offsetWidth; // restart the fade for each step
-            card.classList.add('is-stepping');
-        }
-        positionTour();
-        nextBtn.focus({ preventScroll: true });
-        track('welcome_tour', { action: 'step', step: step.id });
-    }
-
-    /** Beside the subject, with the arrow pointing at it; centred under the menubar without one. */
-    function positionTour() {
-        if (!tour) return;
-        const { card, ring } = tour;
-        const step = tour.steps[tour.index];
-        const target = step && step.target ? step.target() : null;
-        const margin = 12;
-        const width = card.offsetWidth;
-        const height = card.offsetHeight;
-        const vw = window.innerWidth;
-        const vh = window.innerHeight;
-        const top = (shell.menubarHeight ? shell.menubarHeight() : 24) + margin;
-
-        if (!target) {
-            ring.hidden = true;
-            card.dataset.placement = 'center';
-            card.style.left = `${Math.round((vw - width) / 2)}px`;
-            card.style.top = `${Math.round(Math.max(top, vh * 0.2))}px`;
-            return;
-        }
-
-        const rect = target.getBoundingClientRect();
-        ring.hidden = false;
-        const pad = 6;
-        ring.style.left = `${Math.round(rect.left - pad)}px`;
-        ring.style.top = `${Math.round(rect.top - pad)}px`;
-        ring.style.width = `${Math.round(rect.width + pad * 2)}px`;
-        ring.style.height = `${Math.round(rect.height + pad * 2)}px`;
-        ring.classList.toggle('is-round', target.id === 'online-count' || target.closest('.menubar') !== null);
-
-        // Prefer below, then above, then to the left, then to the right
-        const room = {
-            below: vh - rect.bottom - margin,
-            above: rect.top - top,
-            left: rect.left - margin,
-            right: vw - rect.right - margin
-        };
-        let placement = 'below';
-        if (room.below < height + 16) placement = room.above >= height + 16 ? 'above' : (room.left >= width + 16 ? 'left' : 'right');
-
-        let x;
-        let y;
-        if (placement === 'below' || placement === 'above') {
-            x = rect.left + rect.width / 2 - width / 2;
-            y = placement === 'below' ? rect.bottom + 14 : rect.top - height - 14;
-        } else {
-            x = placement === 'left' ? rect.left - width - 14 : rect.right + 14;
-            y = rect.top + rect.height / 2 - height / 2;
-        }
-        x = clamp(x, margin, vw - width - margin);
-        y = clamp(y, top, vh - height - margin);
-        card.dataset.placement = placement;
-        card.style.left = `${Math.round(x)}px`;
-        card.style.top = `${Math.round(y)}px`;
-
-        // The arrow still points at the subject after the card was nudged on screen
-        const arrow = card.querySelector('.tour-arrow');
-        if (placement === 'below' || placement === 'above') {
-            arrow.style.left = `${clamp(rect.left + rect.width / 2 - x, 18, width - 18)}px`;
-            arrow.style.removeProperty('top');
-        } else {
-            arrow.style.top = `${clamp(rect.top + rect.height / 2 - y, 18, height - 18)}px`;
-            arrow.style.removeProperty('left');
-        }
-    }
-
-    function endTour(how) {
-        if (!tour) return;
-        const { card, ring, returnFocus, steps, index } = tour;
-        window.removeEventListener('resize', tour.onResize);
-        tour = null;
-        store.write(WELCOME_KEY, 'done');
-        const hadFocus = card.contains(document.activeElement);
-        card.remove();
-        ring.remove();
-        if (hadFocus && returnFocus && returnFocus.isConnected) {
-            try { returnFocus.focus({ preventScroll: true }); } catch (e) { /* gone */ }
-        }
-        track('welcome_tour', { action: how, step: steps[index] ? steps[index].id : '' });
-    }
-
-    /** First visit: once the boot screen has gone and the greeting window is up. */
-    function scheduleFirstRunTour() {
-        const state = store.read(WELCOME_KEY);
-        if (state === 'done') return;
-        // Not location.search: the boot About has already reset the address
-        // to "/" by now. The shell kept what the visitor arrived with.
-        let deepLinked = shell.bootDeepLinked;
-        if (typeof deepLinked !== 'boolean') {
-            let arrived = window.location.href;
-            try {
-                const nav = performance.getEntriesByType('navigation')[0];
-                if (nav && nav.name) arrived = nav.name;
-            } catch (e) { /* no navigation timing: the address will do */ }
-            const params = new URL(arrived, window.location.href).searchParams;
-            deepLinked = !!((params.get('open') || '').trim() || (params.get('q') || '').trim());
-        }
-        if (state !== 'pending' && !window.__firstBoot) return;
-        if (deepLinked) {
-            // They came for something in particular: show it on a later visit
-            store.write(WELCOME_KEY, 'pending');
-            return;
-        }
-
-        const loader = document.getElementById('macos-boot-loader');
-        let waited = 0;
-        const ready = () => {
-            const booting = loader && loader.isConnected && getComputedStyle(loader).display !== 'none' &&
-                getComputedStyle(loader).visibility !== 'hidden' && parseFloat(getComputedStyle(loader).opacity) > 0;
-            const busy = document.getElementById('spotlight-overlay') || document.querySelector('.context-menu');
-            if ((booting || busy) && (waited += 400) < 15000) {
-                setTimeout(ready, 400);
-                return;
-            }
-            startTour();
-        };
-        setTimeout(ready, 1400);
-    }
-
-    // ================================================
     // Wiring
     // ================================================
 
@@ -1082,8 +749,6 @@
         sortByName,
         resetArrangement,
         hasArrangement: () => !!arrangement,
-        startTour,
-        touredThisVisit: () => touredThisVisit,
         /** The shell asks this for anything it does not have a menu for itself */
         contextMenu(node) {
             return node && node.closest && node.closest('.private-sticky') ? noteMenu(node) : null;
@@ -1124,6 +789,4 @@
 
     // Typing is saved within a moment; a closing tab must not lose that moment
     window.addEventListener('pagehide', () => { if (saveTimer) saveNotesNow(); });
-
-    scheduleFirstRunTour();
 })();

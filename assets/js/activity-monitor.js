@@ -339,6 +339,7 @@
             table: root.querySelector('.am-table'),
             rows: root.querySelector('.am-rows'),
             state: root.querySelector('.am-state'),
+            graph: root.querySelector('.am-graph'),
             bars: root.querySelector('.am-bars'),
             axisFrom: root.querySelector('.am-axis-from'),
             graphSum: root.querySelector('.am-graph-sum'),
@@ -559,6 +560,14 @@
             problem = cache.rows ? note : '';
             if (cache.rows) {
                 render();           // keep showing what we have, explain in the status line
+            } else if (/rate-limiting/.test(title)) {
+                // Nothing saved and GitHub is counting requests: not an error
+                // on the visitor's side, so no alert, no retry button, and no
+                // empty graph well. The rest of the window (what is playing,
+                // who is online, the build) is still worth opening.
+                setState('quiet', 'GitHub activity is taking a break', text, false);
+                if (els.graph) els.graph.hidden = true;
+                renderStatus();
             } else {
                 setState('error', title, text, true);
                 renderGraph();
@@ -619,6 +628,7 @@
                 writeCache(user, cache);
                 problem = '';
                 loading = false;
+                if (els.graph) els.graph.hidden = false;
                 render();
             }).catch((err) => {
                 if (disposed) return;

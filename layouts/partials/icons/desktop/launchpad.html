@@ -1,0 +1,133 @@
+{{/* All Apps (Launchpad) Desktop Icon - 64x64 SVG - Ultra Skeuomorphic Style
+     The Lion / Mavericks Launchpad icon: a brushed aluminium disc with a
+     chrome rocket set into it, nose to the upper right, red cone and fins,
+     a blue porthole and a short exhaust flame. A free-floating object like
+     the vinyl record and the calendar, not an app tile. */}}
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" aria-hidden="true">
+    <defs>
+        <!-- Aluminium: bright at the top, darker below, like a lit disc -->
+        <linearGradient id="lpDisc" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#fafafb" />
+            <stop offset="30%" style="stop-color:#e3e4e7" />
+            <stop offset="70%" style="stop-color:#b9bbc0" />
+            <stop offset="100%" style="stop-color:#8e9096" />
+        </linearGradient>
+        <!-- Bevel ring: light on top, dark underneath -->
+        <linearGradient id="lpRim" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#ffffff" />
+            <stop offset="50%" style="stop-color:#c8cacf" />
+            <stop offset="100%" style="stop-color:#5f6167" />
+        </linearGradient>
+        <!-- Soft sheen across the upper left of the disc -->
+        <radialGradient id="lpSheen" cx="36%" cy="24%" r="55%">
+            <stop offset="0%" style="stop-color:rgba(255,255,255,0.75)" />
+            <stop offset="60%" style="stop-color:rgba(255,255,255,0.08)" />
+            <stop offset="100%" style="stop-color:rgba(255,255,255,0)" />
+        </radialGradient>
+        <!-- Chrome body: highlight down one side, shadow on the other -->
+        <linearGradient id="lpChrome" x1="0%" y1="0%" x2="100%" y2="0%" gradientUnits="objectBoundingBox">
+            <stop offset="0%" style="stop-color:#6f737a" />
+            <stop offset="22%" style="stop-color:#d3d6db" />
+            <stop offset="42%" style="stop-color:#ffffff" />
+            <stop offset="68%" style="stop-color:#c2c6cc" />
+            <stop offset="100%" style="stop-color:#5d6168" />
+        </linearGradient>
+        <linearGradient id="lpRed" x1="0%" y1="0%" x2="100%" y2="0%" gradientUnits="objectBoundingBox">
+            <stop offset="0%" style="stop-color:#8f1510" />
+            <stop offset="35%" style="stop-color:#ff6a5e" />
+            <stop offset="60%" style="stop-color:#e2362b" />
+            <stop offset="100%" style="stop-color:#8a130e" />
+        </linearGradient>
+        <linearGradient id="lpFin" x1="0%" y1="0%" x2="0%" y2="100%" gradientUnits="objectBoundingBox">
+            <stop offset="0%" style="stop-color:#f0574b" />
+            <stop offset="100%" style="stop-color:#9e1a12" />
+        </linearGradient>
+        <linearGradient id="lpNozzle" x1="0%" y1="0%" x2="100%" y2="0%" gradientUnits="objectBoundingBox">
+            <stop offset="0%" style="stop-color:#3b3e44" />
+            <stop offset="50%" style="stop-color:#8d9198" />
+            <stop offset="100%" style="stop-color:#2f3237" />
+        </linearGradient>
+        <radialGradient id="lpGlass" cx="38%" cy="32%" r="70%">
+            <stop offset="0%" style="stop-color:#bfefff" />
+            <stop offset="45%" style="stop-color:#39a7e8" />
+            <stop offset="100%" style="stop-color:#0b4f8c" />
+        </radialGradient>
+        <linearGradient id="lpFlame" x1="0%" y1="0%" x2="0%" y2="100%" gradientUnits="objectBoundingBox">
+            <stop offset="0%" style="stop-color:#fff3b0" />
+            <stop offset="35%" style="stop-color:#ffb020" />
+            <stop offset="75%" style="stop-color:#f0481c" />
+            <stop offset="100%" style="stop-color:rgba(220,40,20,0)" />
+        </linearGradient>
+        <!-- The disc's drop shadow onto the desktop -->
+        <filter id="lpDropShadow" x="-25%" y="-25%" width="150%" height="160%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="1.7" />
+            <feOffset dx="0" dy="2" />
+            <feComponentTransfer>
+                <feFuncA type="linear" slope="0.38" />
+            </feComponentTransfer>
+            <feMerge>
+                <feMergeNode />
+                <feMergeNode in="SourceGraphic" />
+            </feMerge>
+        </filter>
+        <!-- The rocket's contact shadow on the metal, so it reads as set in -->
+        <filter id="lpCarve" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="0.9" />
+            <feOffset dx="0.8" dy="1.4" />
+            <feComponentTransfer>
+                <feFuncA type="linear" slope="0.5" />
+            </feComponentTransfer>
+            <feMerge>
+                <feMergeNode />
+                <feMergeNode in="SourceGraphic" />
+            </feMerge>
+        </filter>
+        <clipPath id="lpDiscClip">
+            <circle cx="32" cy="32" r="25.5" />
+        </clipPath>
+    </defs>
+
+    <g filter="url(#lpDropShadow)">
+        <!-- Bevel ring, then the disc face -->
+        <circle cx="32" cy="32" r="27" fill="url(#lpRim)" stroke="rgba(0,0,0,0.5)" stroke-width="0.6" />
+        <circle cx="32" cy="32" r="25.5" fill="url(#lpDisc)" stroke="rgba(0,0,0,0.22)" stroke-width="0.5" />
+
+        <!-- Brushed grain: faint concentric rings -->
+        <g fill="none" clip-path="url(#lpDiscClip)">
+            <circle cx="32" cy="32" r="23.5" stroke="rgba(255,255,255,0.35)" stroke-width="0.5" />
+            <circle cx="32" cy="32" r="22" stroke="rgba(0,0,0,0.07)" stroke-width="0.6" />
+            <circle cx="32" cy="32" r="20" stroke="rgba(255,255,255,0.22)" stroke-width="0.5" />
+            <circle cx="32" cy="32" r="17.5" stroke="rgba(0,0,0,0.06)" stroke-width="0.6" />
+            <circle cx="32" cy="32" r="15" stroke="rgba(255,255,255,0.2)" stroke-width="0.5" />
+            <circle cx="32" cy="32" r="12" stroke="rgba(0,0,0,0.06)" stroke-width="0.6" />
+            <circle cx="32" cy="32" r="9" stroke="rgba(255,255,255,0.18)" stroke-width="0.5" />
+            <circle cx="32" cy="32" r="6" stroke="rgba(0,0,0,0.05)" stroke-width="0.6" />
+        </g>
+        <circle cx="32" cy="32" r="25.5" fill="url(#lpSheen)" />
+
+        <!-- The rocket, lifting off to the upper right -->
+        <g transform="translate(31.5 32.5) rotate(45)" filter="url(#lpCarve)">
+            <!-- exhaust flame -->
+            <path d="M-3.4 14 Q-1.8 20 0 25 Q1.8 20 3.4 14 Z" fill="url(#lpFlame)" />
+            <path d="M-1.6 14 Q0 18.5 0 21 Q0 18.5 1.6 14 Z" fill="#fff6c8" opacity="0.9" />
+            <!-- fins -->
+            <path d="M-5.3 2 L-12.5 13.5 L-12.2 15.4 L-5.3 11.6 Z" fill="url(#lpFin)" stroke="#6c0f0a" stroke-width="0.4" stroke-linejoin="round" />
+            <path d="M5.3 2 L12.5 13.5 L12.2 15.4 L5.3 11.6 Z" fill="url(#lpFin)" stroke="#6c0f0a" stroke-width="0.4" stroke-linejoin="round" />
+            <!-- nozzle -->
+            <path d="M-4 11.6 L4 11.6 L3.4 14.6 L-3.4 14.6 Z" fill="url(#lpNozzle)" stroke="#1f2126" stroke-width="0.4" stroke-linejoin="round" />
+            <!-- body -->
+            <path d="M0 -21 C4.9 -16 6 -8 5.6 4 L5.4 11.6 L-5.4 11.6 L-5.6 4 C-6 -8 -4.9 -16 0 -21 Z" fill="url(#lpChrome)" stroke="#2c2f35" stroke-width="0.5" stroke-linejoin="round" />
+            <!-- body seam line -->
+            <path d="M-5.5 5.5 Q0 7 5.5 5.5" fill="none" stroke="rgba(0,0,0,0.28)" stroke-width="0.5" />
+            <!-- nose cone -->
+            <path d="M0 -21 C3.7 -17.2 5 -13 5.4 -9.4 L-5.4 -9.4 C-5 -13 -3.7 -17.2 0 -21 Z" fill="url(#lpRed)" stroke="#5e0d08" stroke-width="0.45" stroke-linejoin="round" />
+            <path d="M-5.3 -9.4 L5.3 -9.4" stroke="rgba(255,255,255,0.55)" stroke-width="0.5" />
+            <!-- porthole -->
+            <circle cx="0" cy="-2.2" r="3.4" fill="#2b2f36" />
+            <circle cx="0" cy="-2.2" r="2.6" fill="url(#lpGlass)" />
+            <ellipse cx="-0.9" cy="-3.3" rx="1.1" ry="0.7" fill="rgba(255,255,255,0.85)" />
+            <!-- chrome highlight streak -->
+            <path d="M-2.4 -16 C-3.4 -9 -3.6 -1 -3.2 9" fill="none" stroke="rgba(255,255,255,0.75)" stroke-width="0.7" stroke-linecap="round" />
+        </g>
+    </g>
+</svg>

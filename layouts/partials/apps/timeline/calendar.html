@@ -1,4 +1,7 @@
-{{/* Calendar View - Simple scrollable timeline list */}}
+{{/* Timeline - life and work events by year and month. Recent years are
+open; older ones fold up (details). A hackathon prize from data/wins.yaml is
+shown on its row. Projects and posts are not in here: they have lists of
+their own. */}}
 {{/*
 Usage:
 {{ partial "calendar-view.html" (dict
@@ -16,6 +19,11 @@ Set "standalone" to false for desktop window (events open in window)
 {{ $pages := .pages }}
 {{ $prefix := .prefix }}
 {{ $standalone := default false .standalone }}
+{{/* Years open by default: this one and the three before */}}
+{{ $openFrom := sub now.Year 3 }}
+{{/* Prizes keyed by the timeline entry they belong to (data/wins.yaml `timeline`) */}}
+{{ $wins := dict }}
+{{ range hugo.Data.wins.wins }}{{ $win := . }}{{ with .timeline }}{{ $wins = merge $wins (dict (strings.TrimSuffix "/" .) $win) }}{{ end }}{{ end }}
 
 {{/* Group pages by year and month */}}
 {{ $yearData := dict }}
@@ -90,10 +98,16 @@ Set "standalone" to false for desktop window (events open in window)
             {{ with .intro }}<div class="section-intro">{{ . }}</div>{{ end }}
             {{/* All years in a single scrollable list */}}
             {{ range $i, $year := $years }}
-            <div class="timeline-year-section" data-year="{{ $year }}" id="year-section-{{ $.id }}-{{ $year }}">
-                <h2 class="year-header">{{ $year }}</h2>
+            {{ $open := ge (int $year) $openFrom }}
+            {{ $months := index $yearData $year }}
+            {{ $yearCount := 0 }}{{ range $months }}{{ $yearCount = add $yearCount (len .events) }}{{ end }}
+            <details class="timeline-year-section" data-year="{{ $year }}" id="year-section-{{ $.id }}-{{ $year }}"
+                data-open="{{ $open }}"{{ if $open }} open{{ end }}>
+                <summary class="timeline-year-summary">
+                    <h2 class="year-header">{{ $year }}</h2>
+                    <span class="timeline-year-count">{{ $yearCount }} {{ cond (eq $yearCount 1) "event" "events" }}</span>
+                </summary>
                 <div class="months-list">
-                    {{ $months := index $yearData $year }}
                     {{/* Get sorted months */}}
                     {{ $monthKeys := slice }}
                     {{ range $monthNum, $_ := $months }}
@@ -125,6 +139,9 @@ Set "standalone" to false for desktop window (events open in window)
                                 data-title="{{ .page.Title }}" data-permalink="{{ .page.Permalink }}"{{ end }}>
                                 <time class="event-date" datetime="{{ .page.Date.Format (cond (eq .day "") "2006" "2006-01-02") }}">{{ .day | default "–" }}</time>
                                 <span class="event-title">{{ .page.Title }}</span>
+                                {{ with index $wins (strings.TrimSuffix "/" .page.RelPermalink) }}
+                                <span class="event-medal" title="{{ .prize }}, {{ .competition }}"><span aria-hidden="true">{{ .medal }}</span> {{ .prize }}</span>
+                                {{ end }}
                                 {{ with $type }}
                                 <span class="event-type {{ . }}">{{ . }}</span>
                                 {{ end }}
@@ -139,7 +156,7 @@ Set "standalone" to false for desktop window (events open in window)
                     </div>
                     {{ end }}
                 </div>
-            </div>
+            </details>
             {{ end }}
         </div>
     </div>
@@ -164,6 +181,13 @@ Set "standalone" to false for desktop window (events open in window)
             // CSS does the hiding from data-filter (see partials.css)
             if (filter) container.dataset.filter = filter;
             else delete container.dataset.filter;
+
+            // A folded year opens while it has a match and goes back after
+            container.querySelectorAll('details.timeline-year-section').forEach(section => {
+                section.open = filter
+                    ? !!section.querySelector('.event-item[data-type="' + filter + '"]')
+                    : section.dataset.open === 'true';
+            });
 
             container.querySelectorAll('.filter-chip').forEach(other => {
                 other.setAttribute('aria-pressed', other === chip ? 'true' : 'false');
@@ -191,6 +215,7 @@ Set "standalone" to false for desktop window (events open in window)
                     const all = container.querySelector('.filter-chip[data-filter=""]');
                     if (all) all.click();
                 }
+                if (section.tagName === 'DETAILS') section.open = true;
                 section.scrollIntoView({ block: 'start' });
             }
             jump.value = '';

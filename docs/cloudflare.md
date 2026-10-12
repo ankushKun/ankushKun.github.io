@@ -29,7 +29,7 @@ style-src 'self' 'unsafe-inline';
 img-src 'self' data: blob: https:;
 media-src 'self' blob: https:;
 font-src 'self' data:;
-connect-src 'self' https://gun.ankush.one wss://gun.ankush.one https://relay.peer.ooo wss://relay.peer.ooo https://p1.ankush.one https://api.klipy.com https://api.github.com https://cdn.jsdelivr.net <LINK_PROXY_ORIGIN>;
+connect-src 'self' https://gun.ankush.one wss://gun.ankush.one https://p1.ankush.one https://api.klipy.com https://api.github.com https://cdn.jsdelivr.net <LINK_PROXY_ORIGIN>;
 frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://cal.com https://app.cal.com https://itch.io https://*.itch.io https://html-classic.itch.zone https://thelongestyard.link https://*.arweave.net https://platform.twitter.com <LINK_PROXY_ORIGIN>;
 worker-src 'self' blob:;
 frame-ancestors 'self';

@@ -36,13 +36,14 @@
 <!-- Live communal sticky note -->
 {{ partial "os/desktop/sticky-note.html" . }}
 
-<!-- Desktop Widget - Recent Blogs -->
-{{ partial "os/desktop/recent-blogs-widget.html" . }}
-
 <!-- Desktop Icons -->
-{{- /* Balanced columns of about five: 10 icons -> 5+5, 13 -> 5+5+3 (the
-short column is the leftmost), 9 -> 5+4. desktop-personal.js applies the same
-rule (columnCounts), and also handles short screens and stragglers. */ -}}
+{{- /* None at the moment: the Dock is the one launcher, so the first screen
+is the About window on an empty desktop (data/apps.yaml, `desktop: false`).
+The grid stays, empty, for private sticky notes (desktop-personal.js) and so
+an app can be put back on the desktop with one flag. Balanced columns of
+about five: 10 icons -> 5+5, 13 -> 5+5+3 (the short column is the leftmost),
+9 -> 5+4. desktop-personal.js applies the same rule (columnCounts), and also
+handles short screens and stragglers. */ -}}
 {{- $desktopApps := where hugo.Data.apps.apps "desktop" true -}}
 {{- $iconCols := math.Max 1 (math.Ceil (div (float (len $desktopApps)) 5)) -}}
 {{- $iconRows := int (math.Max 1 (math.Ceil (div (float (len $desktopApps)) $iconCols))) }}
@@ -86,14 +87,14 @@ rule (columnCounts), and also handles short screens and stragglers. */ -}}
     ) }}
     {{ end }}
 
-    <!-- TIMELINE CALENDAR VIEW -->
+    <!-- TIMELINE CALENDAR VIEW - life and work events only; projects and
+    posts have windows of their own -->
     {{ $timeline := .Site.GetPage "/timeline" }}
     {{ with $timeline }}
     {{ partial "apps/timeline/calendar.html" (dict
     "id" "timeline"
     "title" "Timeline"
-    "pages" (union (union .Pages (where .Site.RegularPages "Section" "projects")) (where .Site.RegularPages "Section"
-    "blogs")).ByDate.Reverse
+    "pages" .Pages.ByDate.Reverse
     "prefix" "timeline"
     ) }}
     {{ end }}
@@ -119,11 +120,25 @@ rule (columnCounts), and also handles short screens and stragglers. */ -}}
     {{/* RESUME: no template. The window body is fetched from /resume/
     (data/apps.yaml contentPermalink, layouts/resume/list.html). */}}
 
+    <!-- LAUNCHPAD - every app on the site in one grid -->
+    <template id="tpl-launchpad">
+    {{ partial "apps/games/grid.html" (dict
+        "id" "launchpad"
+        "title" "All Apps"
+        "all" true
+        "intro" "Everything on this desktop. The terminal runs, the chat is live, the canvas and the guestbook are shared with everyone else here."
+        "data" hugo.Data.apps
+    ) }}
+    </template>
+
     <!-- GAMES FOLDER CONTENT - Finder Icon View -->
     <template id="tpl-games">
     {{ partial "apps/games/grid.html" (dict
         "id" "games"
         "title" "Games"
+        "group" "games"
+        "intro" "Things I like playing in a browser, plus one I made."
+        "itch" true
         "data" hugo.Data.apps
     ) }}
     </template>

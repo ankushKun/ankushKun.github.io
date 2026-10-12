@@ -200,9 +200,10 @@
                 setTimeout(hideLoader, 100);
             });
 
-            // Safety timeout. First visit gets the full boot sequence but is
-            // capped well below the old 8s; repeat visits never see it.
-            setTimeout(hideLoader, seenBoot ? 0 : 2500);
+            // Safety timeout. A first visit gets the boot screen for about a
+            // second (the chord carries on under the desktop); repeat visits
+            // never see it.
+            setTimeout(hideLoader, seenBoot ? 0 : 1200);
 
             // Expose global function for manual trigger
             window.completeBootLoader = hideLoader;
@@ -553,6 +554,18 @@
     </div>
     {{ end }}
 
+
+    <!-- Desktop -->
+    <main class="desktop" id="desktop" data-cursor-anchor="desktop" tabindex="-1">
+        {{ block "main" . }}{{ end }}
+    </main>
+
+    <!-- Window Container -->
+    <div class="windows-container" id="windows-container"></div>
+
+    {{/* The menubar comes after the desktop and the windows in the markup
+    (it is position: fixed, so it still paints at the top): the first text on
+    the page is then the About window, not a list of menu labels. */}}
     <!-- macOS Menu Bar -->
     <header class="menubar" data-nosnippet>
         <div class="menubar-left">
@@ -576,16 +589,16 @@
                     <a class="dropdown-item" role="menuitem" tabindex="-1" href="/?open=preferences"
                         data-menu-action="open-app" data-app="preferences">System Preferences…</a>
                     {{- end }}
-                    {{/* .menu-compact-only: phones have no File/Window/Help menus
-                    (os/menubar-menus.html), so the essentials stay here for them. */}}
+                    {{/* There is no Window menu (os/menubar-menus.html has Go and
+                    Help only), so the two window commands worth a menu live here.
+                    .menu-compact-only: phones have no Help menu either, so its
+                    essentials stay here for them. */}}
+                    <div class="dropdown-divider" role="separator"></div>
+                    <button type="button" class="dropdown-item" role="menuitem" tabindex="-1"
+                        data-menu-action="close-all" data-menu-needs="windows">Close All Windows</button>
+                    <button type="button" class="dropdown-item" role="menuitem" tabindex="-1"
+                        data-menu-action="tile" data-menu-needs="windows">Tile Windows</button>
                     <div class="dropdown-divider menu-compact-only" role="separator"></div>
-                    <button type="button" class="dropdown-item menu-compact-only" role="menuitem" tabindex="-1"
-                        data-menu-action="close-all">Close All Windows</button>
-                    <button type="button" class="dropdown-item menu-compact-only" role="menuitem" tabindex="-1"
-                        data-menu-action="tile">Tile Windows</button>
-                    <div class="dropdown-divider menu-compact-only" role="separator"></div>
-                    <button type="button" class="dropdown-item menu-compact-only" role="menuitem" tabindex="-1"
-                        data-menu-action="tour" data-menu-needs="tour">Welcome Tour</button>
                     <button type="button" class="dropdown-item menu-compact-only" role="menuitem" tabindex="-1"
                         data-menu-action="shortcuts">Keyboard Shortcuts</button>
                     <div class="dropdown-divider" role="separator"></div>
@@ -610,6 +623,10 @@
                     <div id="finder-windows-list" role="none">
                         <div class="dropdown-item empty" role="menuitem" aria-disabled="true">No windows open</div>
                     </div>
+                    {{/* Hidden while nothing is open (data-menu-needs, see updateMenuState) */}}
+                    <div class="dropdown-divider" role="separator" data-menu-needs="any-window"></div>
+                    <button type="button" class="dropdown-item" role="menuitem" tabindex="-1" data-menu-action="show-desktop"
+                        data-menu-needs="any-window">Show Desktop</button>
                 </div>
             </div>
             {{ partial "os/menubar-menus.html" . }}
@@ -719,14 +736,6 @@
             <time class="menu-status" id="clock"></time>
         </div>
     </header>
-
-    <!-- Desktop -->
-    <main class="desktop" id="desktop" data-cursor-anchor="desktop" tabindex="-1">
-        {{ block "main" . }}{{ end }}
-    </main>
-
-    <!-- Window Container -->
-    <div class="windows-container" id="windows-container"></div>
 
     {{ partial "os/dock.html" . }}
 

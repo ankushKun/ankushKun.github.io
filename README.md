@@ -49,7 +49,8 @@ Analytics is skipped on localhost and on non-production builds.
      title: My App         # window title
      type: app             # or "game" (+ group: games) to list it in the Games folder
      description: Shown in Spotlight
-     desktop: true         # show an icon on the desktop
+     desktop: false        # an icon on the desktop (none have one: the Dock is the launcher)
+     dock: false           # in the Dock (the content apps and All Apps live there)
      searchable: true      # show in Spotlight search
      contentPermalink: /my-app/   # optional, see step 2
      defaultSize: { width: 900, height: 650 }

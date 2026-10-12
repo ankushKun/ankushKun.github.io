@@ -1,106 +1,150 @@
-{{/* About Window - macOS Finder Style */}}
+{{/* The About window: the site's front page. One column that reads top to
+bottom in half a minute: who, what now, where I have worked, a few facts, the
+strongest work, what is new, how to reach me. The essay from
+content/about/_index.md is folded underneath as "the longer story".
+
+Opens on every visit (mavericks.js openBootAbout) and is also /about/.
+Usage: {{ partial "apps/about/window.html" (dict "id" "about" "title" "About Ankush") }}
+  "standalone" true   on /about/: links navigate instead of opening windows
+  "storyOpen" true    the longer story starts open
+Styles: assets/css/apps/home.css. Data: hugo.toml [params.profile],
+content/about/_index.md front matter, data/contact.yaml, data/wins.yaml. */}}
+{{- $about := site.GetPage "/about" -}}
+{{- $profile := site.Params.profile -}}
+{{- $contact := hugo.Data.contact -}}
+{{- $standalone := .standalone | default false -}}
+{{- $projects := where site.RegularPages "Section" "projects" -}}
+{{- $featured := where $projects "Params.featured" true -}}
+{{- $latest := first 3 ((where site.RegularPages "Section" "in" (slice "blogs" "projects" "timeline")).ByDate.Reverse) -}}
 <div id="content-{{ .id }}">
-    <div class="finder-window about-finder">
-        <!-- Finder Toolbar -->
-        <div class="finder-toolbar">
-            <span class="finder-title">{{ partial "icons/ui/glyph.html" "person" }} {{ .title }}</span>
-            <span class="finder-count">{{ site.Params.profile.jobTitle | default "Software Engineer" }}</span>
-        </div>
-
-        <!-- Two-column Finder layout -->
-        <div class="finder-split">
-            <!-- Sidebar -->
-            <div class="finder-sidebar">
-                <div class="sidebar-avatar">
-                    <img src="/pfp-128.webp" alt="Ankush" width="128" height="128" loading="lazy" decoding="async"
-                        onerror="this.parentElement.innerHTML='👨‍💻'" />
-                </div>
+    <div class="home">
+        <header class="home-head">
+            <img class="home-avatar" src="{{ $contact.profile.avatar | default "/pfp-128.webp" }}" alt="" width="72" height="72"
+                loading="lazy" decoding="async">
+            <div class="home-id">
                 {{/* The page heading on both pages that render this: home and /about/ */}}
-                <h1 class="sidebar-name">Ankush Singh</h1>
-
-                <div class="sidebar-section">
-                    <div class="sidebar-label">SOCIALS</div>
-                    <div class="sidebar-value">
-                        <a class="connect-item" href="https://github.com/ankushKun" target="_blank" rel="noopener">
-                            <img src="/icons/github.svg" alt="GitHub" class="icon" />
-                            <span class="connect-item-label">GitHub</span>
-                        </a>
-                        <a class="connect-item" href="https://x.com/ankushKun_" target="_blank" rel="noopener">
-                            <img src="/icons/twitter.svg" alt="Twitter" class="icon" />
-                            <span class="connect-item-label">Twitter</span>
-                        </a>
-                        <a class="connect-item" href="https://t.me/ankushKun" target="_blank" rel="noopener">
-                            <img src="/icons/telegram.svg" alt="Telegram" class="icon" />
-                            <span class="connect-item-label">Telegram</span>
-                        </a>
-                        <a class="connect-item" href="https://youtube.com/@ankushkun" target="_blank" rel="noopener">
-                            <img src="/icons/youtube.svg" alt="YouTube" class="icon" />
-                            <span class="connect-item-label">YouTube</span>
-                        </a>
-                        <a class="connect-item" href="https://linkedin.com/in/ankushkun" target="_blank" rel="noopener">
-                            <img src="/icons/linkedin.svg" alt="LinkedIn" class="icon" />
-                            <span class="connect-item-label">LinkedIn</span>
-                        </a>
-                        <a class="connect-item" href="https://instagram.com/ankushkun_" target="_blank" rel="noopener">
-                            <img src="/icons/instagram.png" alt="Instagram" class="icon" />
-                            <span class="connect-item-label">Instagram</span>
-                        </a>
-                        <a class="connect-item" href="https://reddit.com/user/TECHIE6023" target="_blank" rel="noopener">
-                            <img src="/icons/reddit.svg" alt="Reddit" class="icon" />
-                            <span class="connect-item-label">Reddit</span>
-                        </a>
-                        <a class="connect-item" href="https://ankushkun.medium.com" target="_blank" rel="noopener">
-                            <img src="/icons/medium.svg" alt="Medium" class="icon" />
-                            <span class="connect-item-label">Medium</span>
-                        </a>
-                        <a class="connect-item" href="https://discord.com/users/666578281142812673" target="_blank" rel="noopener">
-                            <img src="/icons/discord.svg" alt="Discord" class="icon" />
-                            <span class="connect-item-label">@ankushkun</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="sidebar-section">
-                    <div class="sidebar-label">CONTACT</div>
-                    <div class="sidebar-value">
-                        <a class="connect-item" href="mailto:ankush4singh@gmail.com">
-                            <img src="/icons/email.svg" alt="Email" class="icon" />
-                            <span class="connect-item-label">Email</span>
-                        </a>
-                        <a class="connect-item" href="/schedule/"
-                            onclick="if (document.getElementById('window-contents') &amp;&amp; window.openContentWindow) { event.preventDefault(); window.openContentWindow('book-a-call', 'Schedule Call', '/schedule/'); }">
-                            <img src="/icons/meet.svg" alt="Meeting" class="icon" />
-                            <span class="connect-item-label">Book Meeting</span>
-                        </a>
-                    </div>
-                </div>
+                <h1 class="home-name">{{ $profile.name | default site.Params.author.name }}</h1>
+                <p class="home-tagline">{{ with $about }}{{ .Params.tagline | default $profile.description }}{{ else }}{{ $profile.description }}{{ end }}</p>
             </div>
+        </header>
 
-            <!-- Main Content -->
-            <div class="finder-main">
-                <!-- Info Sections -->
-                <div class="info-panel">
-                    <h2 class="info-header">Experience</h2>
-                    {{/* Roles come from hugo.toml [params.profile.experience] */}}
-                    {{ range site.Params.profile.experience }}
-                    <div class="info-row">
-                        <span class="info-label">{{ .role }}</span>
-                        <a href="{{ .url }}" target="_blank" rel="noopener">{{ .org }}</a>
-                    </div>
-                    {{ end }}
-                </div>
+        {{ with $about }}{{ with .Params.now }}
+        <section class="home-section" aria-labelledby="home-now-{{ $.id }}">
+            <h2 class="home-label" id="home-now-{{ $.id }}">Now</h2>
+            <div class="home-text">{{ . | markdownify }}</div>
+        </section>
+        {{ end }}{{ end }}
 
-                <div class="info-panel about-expanded">
-                    <h2 class="info-header">About</h2>
-                    {{/* The bio is the body of content/about/_index.md, so the
-                    window, /about/, its markdown twin and llms-full.txt share one
-                    source. Paragraphs and links get the classes and attributes the
-                    hand-written markup had. */}}
-                    {{ with site.GetPage "/about" }}
-                    {{ .Content | replaceRE `<p>` `<p class="info-text">` | replaceRE `<a href="(https?:)` `<a target="_blank" rel="noopener" href="$1` | safeHTML }}
-                    {{ end }}
-                </div>
+        {{ with $profile.experience }}
+        <section class="home-section" aria-labelledby="home-roles-{{ $.id }}">
+            <h2 class="home-label" id="home-roles-{{ $.id }}">Experience</h2>
+            <ul class="home-roles">
+                {{ range . }}
+                <li class="home-role">
+                    <span class="home-role-title">{{ .role }}</span>
+                    <a class="home-role-org" href="{{ .url }}" target="_blank" rel="noopener">{{ .org }}</a>
+                    {{ if .current }}<span class="home-role-now">now</span>{{ end }}
+                </li>
+                {{ end }}
+            </ul>
+        </section>
+        {{ end }}
+
+        {{ with $about }}{{ with .Params.facts }}
+        <section class="home-section" aria-labelledby="home-facts-{{ $.id }}">
+            <h2 class="home-label" id="home-facts-{{ $.id }}">Quick facts</h2>
+            <ul class="home-facts">
+                {{ range . }}<li>{{ . | markdownify }}</li>{{ end }}
+            </ul>
+        </section>
+        {{ end }}{{ end }}
+
+        {{ with $featured }}
+        <section class="home-section" aria-labelledby="home-work-{{ $.id }}">
+            <h2 class="home-label" id="home-work-{{ $.id }}">Work</h2>
+            <ul class="home-rows">
+                {{ range .ByDate.Reverse }}
+                <li>
+                    {{/* A real link. In a desktop window the data-* attributes
+                    open it in the same window the Projects list would. */}}
+                    <a href="{{ .RelPermalink }}" class="home-row"
+                        {{- if not $standalone }} data-window="project-{{ .File.UniqueID }}" data-title="{{ .Title }}"
+                        data-permalink="{{ .Permalink }}"{{ end }}>
+                        <span class="home-row-main">
+                            <span class="home-row-title">{{ .Title }}</span>
+                            {{ with .Params.summary | default .Summary }}<span class="home-row-text">{{ . | plainify | htmlUnescape | truncate 110 }}</span>{{ end }}
+                        </span>
+                        <time class="home-row-meta" datetime="{{ .Date.Format "2006" }}">{{ .Date.Format "2006" }}</time>
+                    </a>
+                </li>
+                {{ end }}
+            </ul>
+            <p class="home-more"><a href="/projects/">All {{ len $projects }} projects</a></p>
+        </section>
+        {{ end }}
+
+        {{ with $latest }}
+        <section class="home-section home-latest" aria-labelledby="home-latest-{{ $.id }}">
+            <h2 class="home-label" id="home-latest-{{ $.id }}"><span class="widget-icon blink-new" aria-hidden="true">NEW</span> Latest</h2>
+            <div class="home-rows">
+                {{ range . }}
+                {{ $prefix := "post" }}{{ $label := "blog" }}
+                {{ if eq .Section "projects" }}{{ $prefix = "project" }}{{ $label = "project" }}{{ end }}
+                {{ if eq .Section "timeline" }}{{ $prefix = "timeline" }}{{ $label = "timeline" }}{{ end }}
+                {{/* .widget-blog-item: retention.js marks what is new since this
+                visitor's last visit, as it did on the old desktop widget */}}
+                <a href="{{ .RelPermalink }}" class="home-row widget-blog-item"
+                    {{- if not $standalone }} data-window="{{ $prefix }}-{{ .File.UniqueID }}" data-title="{{ .Title }}"
+                    data-permalink="{{ .Permalink }}"{{ end }}>
+                    <span class="home-row-main">
+                        <span class="home-row-title widget-blog-title">{{ .Title }}</span>
+                        <span class="home-row-text"><span class="home-kind home-kind-{{ .Section }}">{{ $label }}</span>{{ with .Params.summary | default .Summary }} {{ . | plainify | htmlUnescape | truncate 90 }}{{ end }}</span>
+                    </span>
+                    {{- /* "Jul 31" this year, "Jan 18, 2025" for older entries, "2019" when only the year is known */}}
+                    {{ $dateText := .Date.Format "Jan 2" }}
+                    {{ if eq .Params.date_precision "year" }}{{ $dateText = .Date.Format "2006" }}
+                    {{ else if ne .Date.Year now.Year }}{{ $dateText = .Date.Format "Jan 2, 2006" }}{{ end }}
+                    <time class="home-row-meta widget-blog-date" datetime="{{ .Date.Format "2006-01-02" }}">{{ $dateText }}</time>
+                </a>
+                {{ end }}
             </div>
-        </div>
+        </section>
+        {{ end }}
+
+        <section class="home-section" aria-labelledby="home-contact-{{ $.id }}">
+            <h2 class="home-label" id="home-contact-{{ $.id }}">Contact</h2>
+            {{/* Every place at once, two columns: glyph, name, handle. Email and
+            the call link first, then data/contact.yaml in its own order. */}}
+            <ul class="home-contact">
+                {{ with $contact.profile.email }}
+                <li><a class="home-contact-link" href="mailto:{{ . }}"><img class="home-link-icon" src="{{ $contact.profile.email_icon | default "/icons/email.svg" }}" alt="" width="16" height="16" loading="lazy"><span class="home-contact-name">Email</span><span class="home-contact-handle">{{ . }}</span></a></li>
+                {{ end }}
+                {{ with $contact.profile.schedule }}
+                <li><a class="home-contact-link" href="/schedule/"><img class="home-link-icon" src="{{ $contact.profile.schedule_icon | default "/icons/meet.svg" }}" alt="" width="16" height="16" loading="lazy"><span class="home-contact-name">Book a call</span><span class="home-contact-handle">{{ $contact.profile.schedule_label | default . }}</span></a></li>
+                {{ end }}
+                {{ range $contact.socials }}
+                <li><a class="home-contact-link" href="{{ .url }}" target="_blank" rel="noopener"><img class="home-link-icon" src="{{ .icon }}" alt="" width="16" height="16" loading="lazy"><span class="home-contact-name">{{ .platform }}</span><span class="home-contact-handle">{{ .handle }}</span></a></li>
+                {{ end }}
+            </ul>
+        </section>
+
+        {{ with $about }}{{ with .Content }}
+        <details class="home-fold home-story"{{ if $.storyOpen }} open{{ end }}>
+            <summary>The longer story</summary>
+            {{/* The bio is the body of content/about/_index.md, so the window,
+            /about/, its markdown twin and llms-full.txt share one source. */}}
+            <div class="home-text">{{ . | replaceRE `<a href="(https?:)` `<a target="_blank" rel="noopener" href="$1` | safeHTML }}</div>
+        </details>
+        {{ end }}{{ end }}
+
+        {{ if not $standalone }}
+        <footer class="home-foot">
+            <span class="home-foot-hint">It works like a Mac from 2013. Click things.</span>
+            <span class="home-foot-links">
+                <a href="/?open=guestbook">Sign the guestbook</a>
+                <a href="/?open=launchpad">All apps</a>
+            </span>
+        </footer>
+        {{ end }}
     </div>
 </div>

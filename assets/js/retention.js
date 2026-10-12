@@ -619,9 +619,12 @@
         return dates;
     }
 
+    /** The Latest list of the About window (and any copy of it in an open window). */
     function markWidget(dates) {
-        const widget = document.querySelector('.recent-blogs-widget');
-        if (!widget) return;
+        document.querySelectorAll('.home-latest').forEach((widget) => markLatest(widget, dates));
+    }
+
+    function markLatest(widget, dates) {
         let any = false;
         widget.querySelectorAll('.widget-blog-item').forEach((item) => {
             let ms = dates[pathOf(item.getAttribute('href'))] || 0;
@@ -640,8 +643,8 @@
             label.className = 'visually-hidden';
             label.textContent = 'New: ';
             dot.appendChild(label);
-            const title = item.querySelector('.widget-blog-title');
-            if (title) item.insertBefore(dot, title);
+            // At the row's left edge, ahead of the title and its wrapper
+            item.insertBefore(dot, item.firstChild);
         });
         const badge = widget.querySelector('.blink-new');
         if (badge) badge.classList.toggle('is-live', any);

@@ -15,10 +15,12 @@
     const STATE_KEY = 'music-player-v1';
     const CATALOG_URL = '/music/music.json';
     const DEFAULT_VOLUME = 80;
-    const AMBIENT_VOLUME = 32;
+    // Background music: quiet, a random track, from the top, every visit.
+    // Nothing about playback is remembered (track, position or volume).
+    const AMBIENT_VOLUME = 20;
     const PREV_RESTART_SEC = 3;
-    const AMBIENT_DELAY_MIN_MS = 3000;
-    const AMBIENT_DELAY_SPAN_MS = 4000;
+    const AMBIENT_DELAY_MIN_MS = 600;
+    const AMBIENT_DELAY_SPAN_MS = 900;
     const CF_WINDOW = 6; // covers each side of center
     const CF_SIZE = 150;
     const CF_SIZE_NARROW = 108;
@@ -30,7 +32,6 @@
     const CF_MS = 480;
     const MARQUEE_DEBOUNCE_MS = 180;
     const TICK_MS = 250;
-    const PERSIST_EVERY_MS = 5000;
     const HISTORY_MAX = 50;
     const REPEAT_MODES = ['off', 'all', 'one'];
     const CF_SWIPE_STEP = 40; // px of horizontal drag per cover
@@ -208,13 +209,6 @@
         return a;
     }
 
-    /** Same track for everyone on a given (local) day. */
-    function pickOfTheDay(count) {
-        const d = new Date();
-        const key = d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
-        return (Math.imul(key, 2654435761) >>> 0) % count;
-    }
-
     function prefersReducedMotion() {
         try {
             return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -246,9 +240,7 @@
         ambientSuppressed: false,
         userPaused: false,
         catalogPromise: null,
-        _volumeSaved: false,
         _userStarted: false,
-        _hasSavedTrack: false,
         _ambientHold: false,
         _ambientPlayback: false,
         _ambientHeld: false,
@@ -258,7 +250,6 @@
         _history: [],
         _tick: null,
         _lastPositionSync: 0,
-        _lastPersist: 0,
         _resumeTime: 0,
         _resumeApplied: false,
         _seekTarget: null,
@@ -312,7 +303,6 @@
                 this._lastPositionSync = now;
                 this._updateMediaSessionPosition();
             }
-            if (now - this._lastPersist >= PERSIST_EVERY_MS) this.persist();
             Live.heartbeat(now);
         },
 
@@ -413,21 +403,9 @@
                     this.manifestHash = data.manifestHash || 'empty';
                     this.mixTitle = data.title || this.mixTitle;
 
+                    // Only the listening preferences come back; the track,
+                    // position and volume start fresh on every visit
                     const saved = readState();
-                    if (saved && saved.manifestHash === this.manifestHash && saved.trackId) {
-                        const found = this.tracks.findIndex((t) => t.id === saved.trackId);
-                        if (found >= 0) {
-                            this.index = found;
-                            this._hasSavedTrack = true;
-                            if (typeof saved.currentTime === 'number' && saved.currentTime > 0) {
-                                this._resumeTime = saved.currentTime;
-                            }
-                        }
-                    }
-                    if (saved && typeof saved.volume === 'number') {
-                        this.volume = clamp(saved.volume, 0, 100);
-                        this._volumeSaved = true;
-                    }
                     if (saved && typeof saved.shuffle === 'boolean') {
                         this.shuffle = saved.shuffle;
                     }
@@ -450,22 +428,9 @@
             return pending;
         },
 
+        /** Shuffle and repeat only: what plays, where and how loud is never saved. */
         persist() {
-            this._lastPersist = Date.now();
-            const state = {
-                volume: this.volume,
-                shuffle: this.shuffle,
-                repeat: this.repeat
-            };
-            // Before the catalog arrives there is no track to save; writing
-            // one here would wipe the visitor's saved track and position.
-            const t = this.tracks[this.index];
-            if (t) {
-                state.manifestHash = this.manifestHash;
-                state.trackId = t.id;
-                state.currentTime = this._currentTime();
-            }
-            writeState(state);
+            writeState({ shuffle: this.shuffle, repeat: this.repeat });
         },
 
         setShuffle(on) {
@@ -536,7 +501,6 @@
 
         setVolume(v) {
             this.volume = clamp(Number(v) || 0, 0, 100);
-            this._volumeSaved = true;
             if (this.player && this.ready) {
                 try {
                     this.player.setVolume(this.volume);
@@ -948,8 +912,7 @@
         },
 
         /**
-         * Ambient start: resume the visitor's saved track, position and volume.
-         * First-time visitors get the pick of the day at the quiet default.
+         * Ambient start: a random track from the top, at background volume.
          * Goes through select(auto) so a Stop/pause choice is never cleared.
          */
         _startAmbient() {
@@ -961,9 +924,9 @@
             }
             this.ambientStarted = true;
             this._ambientPlayback = true;
-            if (!this._volumeSaved) this.volume = AMBIENT_VOLUME;
-            const i = this._hasSavedTrack ? this.index : pickOfTheDay(this.tracks.length);
-            this.select(i, true, 0, { auto: true });
+            this.volume = AMBIENT_VOLUME;
+            this._resumeTime = 0;
+            this.select(Math.floor(Math.random() * this.tracks.length), true, 0, { auto: true });
         },
 
         /**
@@ -3020,16 +2983,6 @@
         initMenubarMusic();
         SiteMusic.loadCatalog();
         SiteMusic.armAmbientAutoplay();
-
-        // Save the listening position when the page goes away, not just on
-        // play/pause (the progress tick also saves every few seconds).
-        const saveIfStarted = () => {
-            if (SiteMusic.player && SiteMusic.ready) SiteMusic.persist();
-        };
-        window.addEventListener('pagehide', saveIfStarted);
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'hidden') saveIfStarted();
-        });
     }
 
     if (document.readyState === 'loading') {

@@ -40,114 +40,197 @@
 }
 
 .projects-year-header {
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 700;
     color: var(--text-primary);
-    padding: 12px 0;
+    padding: 8px 0;
     margin-bottom: 12px;
     border-bottom: 2px solid var(--accent-blue-muted);
-    position: sticky;
-    top: -16px;
-    background: var(--gray-100);
-    z-index: 10;
 }
 
-.projects-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 16px;
+/* One row per project: a cover when there is one, title and sentence, date */
+.projects-list {
+    display: flex;
+    flex-direction: column;
 }
 
 .project-card {
     display: flex;
-    flex-direction: row;
-    align-items: flex-start;
+    align-items: center;
     gap: 12px;
-    padding: 16px;
-    background: var(--window-bg-solid);
-    border-radius: 12px;
-    border: 1px solid var(--gray-200);
-    box-shadow: var(--shadow-card);
+    padding: 8px 10px;
+    border-radius: 6px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    color: inherit;
+}
+
+.project-card + .project-card {
+    border-top: 1px solid var(--gray-150);
+    border-radius: 0 0 6px 6px;
 }
 
 .project-card:hover {
-    background: var(--gray-50);
-    border-color: var(--gray-300);
-    box-shadow: var(--shadow-card-hover);
-    transform: translateY(-2px);
+    background: var(--hover-tint);
 }
 
 .project-card:focus {
     outline: none;
-    border-color: var(--accent-blue-muted);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-blue-muted) 25%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-blue-muted) 45%, transparent);
 }
 
 a.project-card {
     text-decoration: none;
     color: inherit;
-    display: flex;
 }
 
 .project-card:active {
-    transform: translateY(0);
-    background: var(--accent-blue-light);
+    background: var(--press-tint);
 }
 
-.project-card-icon {
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 6px;
-    min-width: 60px;
-}
-
-.project-card-icon svg {
+.project-card-cover {
+    flex: none;
     width: 48px;
-    height: 48px;
+    height: 30px;
+    border-radius: 3px;
+    object-fit: cover;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
 }
 
 .project-card-content {
     flex: 1;
     min-width: 0;
     display: flex;
-    flex-direction: column;
-    gap: 4px;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 8px;
 }
 
 .project-card-title {
-    font-size: 14px;
+    font-size: 13.5px;
     font-weight: 600;
     color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .project-card-summary {
-    font-size: 12px;
-    color: var(--gray-700);
+    font-size: 12.5px;
+    color: var(--text-secondary);
     line-height: 1.4;
-    display: -webkit-box;
-    line-clamp: 2;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
 }
 
 .project-card-date {
-    font-size: 10px;
+    flex: none;
+    font-size: 11px;
     color: var(--text-tertiary);
-    background: var(--gray-150);
-    padding: 2px 6px;
-    border-radius: 8px;
+    font-variant-numeric: tabular-nums;
     white-space: nowrap;
-    text-align: center;
 }
+
+/* ---------- Folded years (Projects and Timeline) ---------- */
+
+details.projects-year-section > summary,
+details.timeline-year-section > summary {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+}
+
+details.projects-year-section > summary::-webkit-details-marker,
+details.timeline-year-section > summary::-webkit-details-marker {
+    display: none;
+}
+
+details.projects-year-section > summary::before,
+details.timeline-year-section > summary::before {
+    content: "";
+    align-self: center;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 5px 0 5px 7px;
+    border-color: transparent transparent transparent var(--text-tertiary);
+    transition: transform 0.15s ease;
+}
+
+details[open].projects-year-section > summary::before,
+details[open].timeline-year-section > summary::before {
+    transform: rotate(90deg);
+}
+
+details.projects-year-section > summary > .projects-year-header,
+details.timeline-year-section > summary > .year-header {
+    flex: 1;
+    position: static;
+    margin-bottom: 0;
+}
+
+details.projects-year-section > summary:focus-visible,
+details.timeline-year-section > summary:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.projects-year-count,
+.timeline-year-count {
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+details[open].projects-year-section > summary,
+details[open].timeline-year-section > summary {
+    margin-bottom: 8px;
+}
+
+/* "Filter by tag" fold above a list */
+.list-filter {
+    margin: 0 0 14px;
+    font-size: 12px;
+}
+
+.list-filter > summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    list-style: none;
+    color: var(--text-secondary);
+    user-select: none;
+}
+
+.list-filter > summary::-webkit-details-marker {
+    display: none;
+}
+
+.list-filter > summary::before {
+    content: "\25B8";
+    font-size: 13px;
+    line-height: 1;
+    transition: transform 0.15s ease;
+}
+
+.list-filter[open] > summary::before {
+    transform: rotate(90deg);
+}
+
+.list-filter > summary:hover {
+    color: var(--text-primary);
+}
+
+.list-filter > .filter-chips {
+    margin-top: 8px;
+}
+
+/* A hackathon prize on a timeline row (data/wins.yaml) */
+.event-medal {
+    flex: none;
+    font-size: 11px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
 
 @media (max-width: 640px) {
     .projects-controls {
@@ -164,59 +247,35 @@ a.project-card {
     }
 
     .projects-year-header {
-        top: -10px;
         font-size: 18px;
         padding: 8px 0;
         margin-bottom: 8px;
         border-bottom-width: 1px;
     }
 
-    .projects-grid {
-        grid-template-columns: 1fr;
-        gap: 8px;
-    }
-
-    .project-card.finder-row,
     .project-card {
-        flex-direction: row;
-        align-items: center;
-        text-align: left;
-        gap: 10px;
-        padding: 10px 12px;
-        border-radius: 8px;
-        min-height: 76px;
+        flex-wrap: wrap;
+        gap: 4px 10px;
+        padding: 10px 8px;
     }
 
-    .project-card-icon {
-        min-width: 44px;
-        gap: 4px;
-    }
-
-    .project-card-icon svg {
-        width: 34px;
-        height: 34px;
+    .project-card-cover {
+        order: -1;
     }
 
     .project-card-date {
-        font-size: 9px;
-        padding: 1px 5px;
-    }
-
-    .project-card-content {
-        align-items: flex-start;
-        gap: 3px;
+        width: 100%;
+        order: -2;
+        font-size: 10px;
     }
 
     .project-card-title {
-        white-space: nowrap;
-        width: 100%;
         font-size: 14px;
     }
 
     .project-card-summary {
         font-size: 12px;
         line-height: 1.35;
-        -webkit-line-clamp: 2;
     }
 }
 
@@ -669,6 +728,19 @@ a.event-item.event-link {
 }
 
 /* .games-toolbar / -title / -icon / -count: shared app chrome (mavericks.css) */
+.games-intro {
+    margin: 0 0 18px;
+    max-width: 600px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+.game-icon-cell.is-mine .game-icon-mine {
+    color: var(--accent-text);
+    font-weight: 600;
+}
+
 .games-controls {
     display: flex;
     align-items: center;

@@ -1,16 +1,23 @@
-{{/* Projects Grid - macOS Finder-style grid view */}}
-{{/*
+{{/* Projects - one line per project, Featured first, then by year.
+The last three years are open; older years fold up (details), so 40+
+projects read as a short list. A search or a tag filter opens every year
+that has a match. Tags live behind "Filter by tag" rather than as a wall of
+chips above the list.
 Usage:
-{{ partial "projects-grid.html" (dict
+{{ partial "apps/projects/grid.html" (dict
 "id" "projects"
 "title" "Projects"
 "pages" $pages
 "prefix" "project"
+"standalone" false
+"intro" .Content
 ) }}
 */}}
 
 {{ $pages := .pages }}
 {{ $prefix := .prefix }}
+{{/* Years open by default: this one and the two before */}}
+{{ $openFrom := sub now.Year 2 }}
 
 {{/* Group pages by year */}}
 {{ $yearData := dict }}
@@ -49,47 +56,60 @@ Usage:
             </div>
         </div>
 
-        {{/* Tag chips: every tag used by a project in this list, most used first */}}
-        {{ $tagCounts := dict }}
-        {{ range $pages }}{{ range .Params.tags }}
-        {{ $tagCounts = merge $tagCounts (dict (lower .) (add 1 (index $tagCounts (lower .) | default 0))) }}
-        {{ end }}{{ end }}
-        {{ $tagList := slice }}
-        {{ range $tag, $n := $tagCounts }}{{ $tagList = $tagList | append (dict "tag" $tag "n" $n) }}{{ end }}
-        {{ with sort $tagList "n" "desc" }}
-        <div class="filter-chips projects-chips" role="group" aria-label="Filter by tag">
-            {{ range . }}
-            <button type="button" class="filter-chip projects-chip" data-tag="{{ .tag }}" aria-pressed="false">{{ .tag }}</button>
-            {{ end }}
-        </div>
-        {{ end }}
-
         <div class="projects-content" id="projects-scroll-{{ .id }}">
             {{ with .intro }}<div class="section-intro">{{ . }}</div>{{ end }}
             {{ $standalone := .standalone }}
-            {{/* Pinned row: `featured = true` projects, newest first. They are
-            listed again under their year, so this row hides while a search or
+
+            {{/* Tag chips: every tag used by a project in this list, most used first,
+            folded away until wanted */}}
+            {{ $tagCounts := dict }}
+            {{ range $pages }}{{ range .Params.tags }}
+            {{ $tagCounts = merge $tagCounts (dict (lower .) (add 1 (index $tagCounts (lower .) | default 0))) }}
+            {{ end }}{{ end }}
+            {{ $tagList := slice }}
+            {{ range $tag, $n := $tagCounts }}{{ $tagList = $tagList | append (dict "tag" $tag "n" $n) }}{{ end }}
+            {{ with sort $tagList "n" "desc" }}
+            <details class="list-filter projects-filter">
+                <summary>Filter by tag</summary>
+                <div class="filter-chips projects-chips" role="group" aria-label="Filter by tag">
+                    {{ range . }}
+                    <button type="button" class="filter-chip projects-chip" data-tag="{{ .tag }}" aria-pressed="false">{{ .tag }}</button>
+                    {{ end }}
+                </div>
+            </details>
+            {{ end }}
+
+            {{/* Pinned list: `featured = true` projects, newest first. They are
+            listed again under their year, so this list hides while a search or
             tag filter is active and is left out of the count. */}}
             {{ with where $pages "Params.featured" true }}
-            <div class="projects-year-section projects-featured">
+            <section class="projects-year-section projects-featured">
                 <h2 class="projects-year-header">Featured</h2>
-                <div class="projects-grid">
+                <div class="projects-list">
                     {{ range . }}
                     {{ partial "apps/projects/card.html" (dict "page" . "prefix" $prefix "standalone" $standalone "showYear" true) }}
                     {{ end }}
                 </div>
-            </div>
+            </section>
             {{ end }}
-            {{/* All years in a single scrollable list */}}
+
+            {{/* One fold per year. data-open: whether it starts open; the filter
+            script opens every year with a match and puts this back after. */}}
             {{ range $i, $year := $years }}
-            <div class="projects-year-section" data-year="{{ $year }}" id="year-section-{{ $.id }}-{{ $year }}">
-                <h2 class="projects-year-header">{{ $year }}</h2>
-                <div class="projects-grid">
-                    {{ range index $yearData $year }}
+            {{ $open := ge (int $year) $openFrom }}
+            {{ $items := index $yearData $year }}
+            <details class="projects-year-section" data-year="{{ $year }}" id="year-section-{{ $.id }}-{{ $year }}"
+                data-open="{{ $open }}"{{ if $open }} open{{ end }}>
+                <summary class="projects-year-summary">
+                    <h2 class="projects-year-header">{{ $year }}</h2>
+                    <span class="projects-year-count">{{ len $items }} {{ cond (eq (len $items) 1) "project" "projects" }}</span>
+                </summary>
+                <div class="projects-list">
+                    {{ range $items }}
                     {{ partial "apps/projects/card.html" (dict "page" . "prefix" $prefix "standalone" $standalone) }}
                     {{ end }}
                 </div>
-            </div>
+            </details>
             {{ end }}
             <div class="window-empty projects-empty" hidden>
                 <div class="window-empty-title">No projects found</div>
@@ -98,13 +118,14 @@ Usage:
         </div>
     </div>
 </div>
-{{/* Styles: assets/css/partials.css, assets/css/apps/projects-filter.css */}}
+{{/* Styles: assets/css/partials.css, assets/css/apps/doc-chips.css */}}
 
 <script>
     (function () {
         // Delegated, id-free: the same markup is cloned into desktop windows.
-        // A card shows when it matches the search box (title, summary or tags)
-        // and carries every active tag chip.
+        // A row shows when it matches the search box (title, summary or tags)
+        // and carries every active tag chip. A year opens while it has a
+        // match and goes back to its default once the filter is cleared.
         function applyFilter(container) {
             const input = container.querySelector('.search-input');
             const query = input ? input.value.trim().toLowerCase() : '';
@@ -139,6 +160,9 @@ Usage:
                 });
 
                 section.hidden = visibleInYear === 0;
+                if (section.tagName === 'DETAILS') {
+                    section.open = filtering ? visibleInYear > 0 : section.dataset.open === 'true';
+                }
                 visibleCount += visibleInYear;
             });
 

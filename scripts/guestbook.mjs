@@ -25,7 +25,7 @@ const SNAPSHOT = path.join(REPO, 'data', 'guestbook.json');
 const HIDDEN = path.join(REPO, 'data', 'guestbook-hidden.yaml');
 
 // Keep in step with assets/js/gun-config.js
-const RELAYS = (process.env.GUESTBOOK_RELAYS || 'https://gun.ankush.one/gun,https://relay.peer.ooo/gun')
+const RELAYS = (process.env.GUESTBOOK_RELAYS || 'https://gun.ankush.one/gun')
     .split(',').map((s) => s.trim()).filter(Boolean);
 const ENTRIES_SOUL = 'ankush-one/apps/guestbook/entries';
 

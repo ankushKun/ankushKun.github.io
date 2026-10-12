@@ -1,36 +1,52 @@
+# Socials and contact links: the About window's Contact row, the Activity
+# Monitor, /about/index.md and the Person structured data.
+#   icon            the glyph next to the name (static/icons/)
+# The About window lists them in this order.
 profile:
   name: Ankush Singh
-  role: Software Engineer
-  avatar: /pfp-128.webp
+  role: Co-founder, Construct Computer
+  # The About window's portrait (the dock and app icon keep /pfp-128.webp)
+  avatar: /pfp-blue-256.webp
   email: ankush4singh@gmail.com
+  email_icon: /icons/email.svg
   schedule: https://cal.com/ankushkun/call
   schedule_label: "cal.com/ankushkun/call"
+  schedule_icon: /icons/meet.svg
 
 socials:
-  - platform: Twitter
-    handle: "@ankushKun_"
-    url: "https://x.com/ankushKun_"
   - platform: GitHub
     handle: "ankushKun"
     url: "https://github.com/ankushKun"
-  - platform: Telegram
-    handle: "@ankushKun"
-    url: "https://t.me/ankushKun"
-  - platform: Discord
-    handle: "@ankushkun"
-    url: "https://discord.com/users/666578281142812673"
-  - platform: Instagram
+    icon: /icons/github.svg
+  - platform: Twitter
     handle: "@ankushKun_"
-    url: "https://instagram.com/ankushKun_"
-  - platform: Reddit
-    handle: "u/TECHIE6023"
-    url: "https://reddit.com/user/TECHIE6023"
-  - platform: Medium
-    handle: "ankushkun.medium.com"
-    url: "https://ankushkun.medium.com"
+    url: "https://x.com/ankushKun_"
+    icon: /icons/twitter.svg
   - platform: LinkedIn
     handle: "Ankush Singh"
     url: "https://linkedin.com/in/ankushkun"
+    icon: /icons/linkedin.svg
   - platform: YouTube
     handle: "@AnkushKun"
     url: "https://youtube.com/@ankushkun"
+    icon: /icons/youtube.svg
+  - platform: Telegram
+    handle: "@ankushKun"
+    url: "https://t.me/ankushKun"
+    icon: /icons/telegram.svg
+  - platform: Discord
+    handle: "@ankushkun"
+    url: "https://discord.com/users/666578281142812673"
+    icon: /icons/discord.svg
+  - platform: Instagram
+    handle: "@ankushKun_"
+    url: "https://instagram.com/ankushKun_"
+    icon: /icons/instagram.png
+  - platform: Reddit
+    handle: "u/TECHIE6023"
+    url: "https://reddit.com/user/TECHIE6023"
+    icon: /icons/reddit.svg
+  - platform: Medium
+    handle: "ankushkun.medium.com"
+    url: "https://ankushkun.medium.com"
+    icon: /icons/medium.svg

@@ -1,17 +1,46 @@
+# Every window on the desktop. Order matters: it is the order of the Dock,
+# the desktop icons and the Go menu.
+#
+#   desktop: true   an icon on the desktop: IRC Chat and Music
+#   dock: true      in the Dock (phones included): the content apps and All Apps
+#   group: games    listed in the Games folder
+#   searchable      in Spotlight
+# Everything is also in All Apps (the Launchpad), whatever the flags.
 apps:
+  # Every app in one grid, Mavericks' Launchpad (layouts/partials/apps/
+  # games/grid.html with "all"). In the Dock.
+  - id: launchpad
+    label: All Apps
+    title: All Apps
+    type: app
+    description: Every app on this site in one place
+    desktop: false
+    dock: true
+    searchable: true
+    aliases: [apps, all-apps, fun, toys, extras]
+    defaultSize:
+      width: 760
+      height: 560
+    icon:
+      type: partial
+      partial: icons/desktop/launchpad.html
+
   # The retired Contacts and Now apps live on as aliases, so old
   # /?open=contact and /?open=now links land here (and /contact/ redirects).
+  # The window is the front page: who this is, what is going on now, the
+  # strongest work, what is new, and how to get in touch.
   - id: about
     label: About Me
     title: About Me
     type: app
     description: About Ankush
-    desktop: true
+    desktop: false
+    dock: true
     searchable: true
     contentPermalink: /about/
-    aliases: [contact, contacts, now]
+    aliases: [contact, contacts, now, home, me]
     defaultSize:
-      width: 1000
+      width: 860
       height: 700
     icon:
       type: image
@@ -25,7 +54,8 @@ apps:
     title: Resume
     type: app
     description: Experience, projects, skills and education, with the PDF to download
-    desktop: true
+    desktop: false
+    dock: true
     searchable: true
     contentPermalink: /resume/
     aliases: [cv, resume.pdf]
@@ -36,27 +66,13 @@ apps:
       type: image
       src: /icons/resume.png
 
-  - id: projects
-    label: Projects
-    title: Projects
-    type: app
-    description: Project portfolio
-    desktop: true
-    searchable: true
-    contentPermalink: /projects/
-    defaultSize:
-      width: 1000
-      height: 700
-    icon:
-      type: partial
-      partial: icons/desktop/folder.html
-
   - id: blogs
     label: Blogs
     title: Blogs
     type: app
     description: Blog posts
-    desktop: true
+    desktop: false
+    dock: true
     searchable: true
     contentPermalink: /blogs/
     defaultSize:
@@ -66,6 +82,22 @@ apps:
       type: partial
       partial: icons/desktop/document.html
 
+  - id: projects
+    label: Projects
+    title: Projects
+    type: app
+    description: Project portfolio
+    desktop: false
+    dock: true
+    searchable: true
+    contentPermalink: /projects/
+    defaultSize:
+      width: 1000
+      height: 700
+    icon:
+      type: partial
+      partial: icons/desktop/folder.html
+
   # The hackathons are timeline entries; the retired Wins app's old
   # /?open=wins links land here (and /wins/ redirects).
   - id: timeline
@@ -73,7 +105,8 @@ apps:
     title: Timeline
     type: app
     description: Career timeline
-    desktop: true
+    desktop: false
+    dock: true
     searchable: true
     contentPermalink: /timeline/
     aliases: [wins]
@@ -89,7 +122,8 @@ apps:
     title: Games
     type: app
     description: Games folder
-    desktop: true
+    desktop: false
+    dock: false
     searchable: true
     defaultSize:
       width: 1000
@@ -103,7 +137,8 @@ apps:
     title: Terminal
     type: app
     description: Terminal emulator
-    desktop: true
+    desktop: false
+    dock: false
     searchable: true
     defaultSize:
       width: 900
@@ -118,6 +153,7 @@ apps:
     type: app
     description: IRC chat client - mIRC v6.35
     desktop: true
+    dock: false
     searchable: true
     defaultSize:
       width: 900
@@ -131,7 +167,8 @@ apps:
     title: Guestbook
     type: app
     description: Sign the guestbook and see everyone who has passed through
-    desktop: true
+    desktop: false
+    dock: false
     searchable: true
     defaultSize:
       width: 880
@@ -145,7 +182,8 @@ apps:
     title: Paint
     type: app
     description: Shared canvas - draw together in real time
-    desktop: true
+    desktop: false
+    dock: false
     searchable: true
     defaultSize:
       width: 900
@@ -154,12 +192,45 @@ apps:
       type: partial
       partial: icons/desktop/paint.html
 
+  - id: music
+    label: Music
+    title: Music
+    type: app
+    description: iTunes-style player — Cover Flow, songs, and a mix to play
+    desktop: true
+    dock: false
+    searchable: true
+    defaultSize:
+      width: 920
+      height: 640
+    icon:
+      type: partial
+      partial: icons/desktop/music.html
+
+  # The visitor's own achievements and visit streak (kept in their browser).
+  - id: passport
+    label: Passport
+    title: Passport
+    type: app
+    description: Your achievements and visit streak on this site
+    desktop: false
+    dock: false
+    searchable: true
+    aliases: [achievements, game-center, streak]
+    defaultSize:
+      width: 760
+      height: 640
+    icon:
+      type: image
+      src: /icons/passport.webp
+
   - id: activity
     label: Activity Monitor
     title: Activity Monitor
     type: app
     description: Live GitHub activity, what is playing, who is online and the current build
-    desktop: true
+    desktop: false
+    dock: false
     searchable: true
     aliases:
       - activity-monitor
@@ -169,6 +240,8 @@ apps:
     icon:
       type: image
       src: /icons/activity.webp
+
+  # ---- Opened from menus, Spotlight or other windows ---------------------
 
   - id: daily-puzzle
     label: Daily Puzzle
@@ -190,36 +263,6 @@ apps:
       type: image
       src: /icons/daily-puzzle.webp
 
-  - id: music
-    label: Music
-    title: Music
-    type: app
-    description: iTunes-style player — Cover Flow, songs, and a mix to play
-    desktop: true
-    searchable: true
-    defaultSize:
-      width: 920
-      height: 640
-    icon:
-      type: partial
-      partial: icons/desktop/music.html
-
-  # The visitor's own achievements and visit streak (kept in their browser).
-  - id: passport
-    label: Passport
-    title: Passport
-    type: app
-    description: Your achievements and visit streak on this site
-    desktop: true
-    searchable: true
-    aliases: [achievements, game-center, streak]
-    defaultSize:
-      width: 760
-      height: 640
-    icon:
-      type: image
-      src: /icons/passport.webp
-
   # The site's changelog, from git history (data/changelog.json,
   # scripts/changelog.mjs). Opened from the Apple menu and Spotlight.
   - id: software-update
@@ -228,6 +271,7 @@ apps:
     type: app
     description: What changed on this site, and what is new since your last visit
     desktop: false
+    dock: false
     searchable: true
     aliases: [updates, changelog, whats-new]
     defaultSize:
@@ -246,6 +290,7 @@ apps:
   #   type: app
   #   description: The hardware, software and services Ankush uses
   #   desktop: false
+  #   dock: false
   #   searchable: true
   #   contentPermalink: /uses/
   #   defaultSize:
@@ -261,6 +306,7 @@ apps:
     type: app
     description: Book a call
     desktop: false
+    dock: false
     searchable: true
     defaultSize:
       width: 1000
@@ -275,6 +321,7 @@ apps:
     type: app
     description: What this site collects and shares
     desktop: false
+    dock: false
     searchable: true
     contentPermalink: /privacy/
     defaultSize:
@@ -290,6 +337,7 @@ apps:
     type: app
     description: Acknowledgements and third-party licences
     desktop: false
+    dock: false
     searchable: true
     contentPermalink: /credits/
     defaultSize:
@@ -299,12 +347,15 @@ apps:
       type: image
       src: /icons/credits.webp
 
+  # ---- The Games folder --------------------------------------------------
+
   - id: portal
     label: Portal
     title: Portal
     type: game
     description: Portal game - Aperture Science
     desktop: false
+    dock: false
     searchable: true
     group: games
     defaultSize:
@@ -322,6 +373,7 @@ apps:
     author: id Software
     source: https://thelongestyard.link/q3a-demo/
     desktop: false
+    dock: false
     searchable: true
     group: games
     defaultSize:
@@ -335,10 +387,12 @@ apps:
     label: Last Cat Standing
     title: Last Cat Standing
     type: game
-    description: Play Last Cat Standing game
+    description: Play Last Cat Standing, a game Ankush made
     author: Ankush Singh
     source: https://ankushkun.itch.io/cat
+    mine: true
     desktop: false
+    dock: false
     searchable: true
     group: games
     defaultSize:
@@ -355,6 +409,7 @@ apps:
     description: Play DOOM game
     author: id Software
     desktop: false
+    dock: false
     searchable: true
     group: games
     defaultSize:
@@ -370,6 +425,7 @@ apps:
     type: game
     description: Crysis game - Can it run?
     desktop: false
+    dock: false
     searchable: true
     group: games
     defaultSize:
@@ -387,6 +443,7 @@ apps:
     author: Tom Fulp and Dan Paladin
     source: https://www.alienhominid.com/
     desktop: false
+    dock: false
     searchable: true
     group: games
     defaultSize:
@@ -404,6 +461,7 @@ apps:
     author: Trevor Van Meter
     source: http://www.trevorvanmeter.com/flyguy/
     desktop: false
+    dock: false
     searchable: true
     group: games
     defaultSize:
@@ -419,6 +477,7 @@ apps:
     type: game
     description: Flash game - Marvin Spectrum
     desktop: false
+    dock: false
     searchable: true
     group: games
     defaultSize:
@@ -434,6 +493,7 @@ apps:
     type: game
     description: Flash game - Wasted Sky
     desktop: false
+    dock: false
     searchable: true
     group: games
     defaultSize:
@@ -445,15 +505,15 @@ apps:
 
   # The visitor's settings for this site (assets/js/preferences.js,
   # layouts/partials/apps/preferences/). Opened from the Apple menu, the
-  # desktop's right-click menu and Spotlight; panes via SitePrefs.openPane().
+  # desktop's right-click menu, All Apps and Spotlight; panes via
+  # SitePrefs.openPane().
   - id: preferences
     label: System Preferences
     title: System Preferences
     type: app
     description: Desktop picture, light or dark appearance, highlight colour, sounds and motion
     desktop: false
-    # Kept in the Dock, at the end of the apps, as on a Mac
-    dock: true
+    dock: false
     searchable: true
     aliases: [settings, prefs, appearance, dark-mode, theme, wallpaper, desktop-background, accessibility]
     defaultSize:

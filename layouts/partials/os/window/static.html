@@ -17,6 +17,10 @@ into its own window and the padding has to travel with it)
 <div class="static-window">
     {{/* Window Titlebar */}}
     <div class="window-titlebar">
+        {{/* Phones hide the traffic lights; this is the way back to the desktop
+        there (hidden on the desktop layout). Same markup as the control
+        mavericks.js adds to its windows. */}}
+        <a class="titlebar-back" href="/" aria-label="Back to the desktop"><span class="titlebar-back-icon" aria-hidden="true"><svg viewBox="0 0 12 12" focusable="false"><path d="M7.5 2.5 L4 6 L7.5 9.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Back</a>
         {{ partial "os/window/controls.html" (dict "closeLink" "/") }}
         {{/* "h1" true: the window title is the page heading (list pages
         whose content partial has no h1 of its own) */}}

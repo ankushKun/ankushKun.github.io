@@ -476,26 +476,11 @@ html.has-dock .menubar-minimized {
     display: none;
 }
 
-/* ---------- Compact layouts: no Dock ----------
-   A phone's desktop is already a launcher grid and every window is
-   fullscreen with a Back button, so a Dock would only cover content. */
-@media (max-width: 768px), (pointer: coarse) and (max-height: 500px) {
-    :root:has(#dock) {
-        --dock-height: 0px;
-    }
-
-    :root.has-dock {
-        --dock-height: 0px;
-    }
-
-    .dock {
-        display: none;
-    }
-
-    html.has-dock .menubar-minimized {
-        display: flex;
-    }
-}
+/* ---------- Compact layouts ----------
+   Phones get the Dock too: six icons fit across a phone, and every window
+   stops above it (mavericks.css subtracts --dock-height from the fullscreen
+   window height). layoutDock() in mavericks.js shrinks the icons to fit the
+   width, with a smaller side margin on a compact viewport. */
 
 @media (prefers-reduced-motion: reduce) {
     .dock-shelf,

@@ -9,9 +9,6 @@
     // URL reflects the focused window, so a window can be linked and bookmarked
     // and the browser Back button steps back through them.
     const ENABLE_DEEP_LINKING = true;
-    const ENABLE_GUESTBOOK_NOTIFICATION = true; // Nudge unsigned visitors after first interaction
-    const GUESTBOOK_SIGNED_KEY = 'guestbook-signed';
-    const VISITOR_ID_KEY = 'multiplayer-cursor-id';
 
     // The desktop (home) is the only page that carries the app templates.
     // Article and section pages render a single static window instead.
@@ -101,12 +98,11 @@
     const PROXIED_IFRAME_SANDBOX = 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation allow-downloads';
 
     const SOUND_KEY = 'site-sound';                 // 'off' when sound effects are muted
-    const NUDGE_SNOOZE_KEY = 'guestbook-nudge-dismissed';
-    const NUDGE_SNOOZE_MS = 7 * 24 * 60 * 60 * 1000;
     // Open windows and their positions are not remembered between visits
     // (every visit starts on About, as it always did). Earlier builds stored
-    // them under these keys; they are cleared once at boot.
-    const RETIRED_KEYS = ['desktop-session', 'window-geometry'];
+    // them under these keys; they are cleared once at boot. The guestbook
+    // nudge and the welcome tour are gone too: the front page says it all.
+    const RETIRED_KEYS = ['desktop-session', 'window-geometry', 'guestbook-nudge-dismissed', 'site-welcome-v1'];
 
     /**
      * Analytics event. A no-op unless PostHog is on the page (it is skipped on
@@ -147,136 +143,6 @@
     const appMetadata = new Map();
     // Short names accepted in /?open=<alias>; the registry may add more
     const appAliases = new Map([['irc', 'irc-chat']]);
-
-    function getOrCreateVisitorId() {
-        let id = SiteStore.get(VISITOR_ID_KEY);
-        if (!id) {
-            id = Math.random().toString(36).slice(2, 11);
-            SiteStore.set(VISITOR_ID_KEY, id);
-        }
-        return id;
-    }
-
-    /** True when this visitor already has a guestbook entry (local flag or Gun). */
-    function checkGuestbookSigned(visitorId) {
-        return new Promise((resolve) => {
-            if (!visitorId) return resolve(false);
-            if (SiteStore.get(GUESTBOOK_SIGNED_KEY) === visitorId) {
-                return resolve(true);
-            }
-            if (!window.SiteGun || !window.SiteGun.paths || !window.SiteGun.paths.apps.guestbook) {
-                return resolve(false);
-            }
-
-            let settled = false;
-            const done = (signed) => {
-                if (settled) return;
-                settled = true;
-                clearTimeout(timer);
-                resolve(signed);
-            };
-
-            const timer = setTimeout(() => done(false), 1500);
-
-            try {
-                window.SiteGun.paths.apps.guestbook().get(visitorId).once((data) => {
-                    if (data && data.name) {
-                        SiteStore.set(GUESTBOOK_SIGNED_KEY, visitorId);
-                        done(true);
-                    } else {
-                        done(false);
-                    }
-                });
-            } catch (e) {
-                done(false);
-            }
-        });
-    }
-
-    function getGuestbookNotificationIconHtml() {
-        const iconEl = document.querySelector('.desktop-icon[data-window="guestbook"] .icon-image');
-        return iconEl ? iconEl.innerHTML : '';
-    }
-
-    /** The nudge shows once per tab session, and not at all for a week after it is dismissed. */
-    function isGuestbookNudgeSnoozed() {
-        try {
-            if (sessionStorage.getItem(NUDGE_SNOOZE_KEY)) return true;
-        } catch (e) { /* storage blocked */ }
-        const dismissedAt = parseInt(SiteStore.get(NUDGE_SNOOZE_KEY), 10);
-        return !!dismissedAt && Date.now() - dismissedAt < NUDGE_SNOOZE_MS;
-    }
-
-    let guestbookNudgeDone = false;
-
-    async function maybeShowGuestbookNotification() {
-        if (guestbookNudgeDone) return;
-        guestbookNudgeDone = true;
-
-        if (openWindows.has('guestbook') || isGuestbookNudgeSnoozed()) return;
-        // A first visit gets the welcome tour instead, which ends on the Guestbook
-        const personal = personalDesktop();
-        if (personal && personal.touredThisVisit()) return;
-
-        const visitorId = getOrCreateVisitorId();
-        if (SiteStore.get(GUESTBOOK_SIGNED_KEY) === visitorId) return;
-
-        const signed = await checkGuestbookSigned(visitorId);
-        if (signed || openWindows.has('guestbook')) return;
-
-        try { sessionStorage.setItem(NUDGE_SNOOZE_KEY, '1'); } catch (e) { /* storage blocked */ }
-
-        showNotification({
-            title: 'Guestbook',
-            message: 'Got a minute? Sign the book before you go.',
-            iconHtml: getGuestbookNotificationIconHtml(),
-            duration: 8000,
-            onClick: () => {
-                openWindowFrom('nudge', 'guestbook', 'Guestbook');
-            },
-            // Closed or swiped away: leave the visitor alone for a week
-            onDismiss: () => SiteStore.set(NUDGE_SNOOZE_KEY, String(Date.now()))
-        });
-    }
-
-    // Windows the visitor opened themselves (not the boot About or a restored session)
-    let userOpenedWindows = 0;
-    let guestbookNudgeArmed = false;
-    let guestbookNudgeTimer = null;
-
-    function scheduleGuestbookNudge(delay) {
-        if (guestbookNudgeDone) return;
-        clearTimeout(guestbookNudgeTimer);
-        guestbookNudgeTimer = setTimeout(maybeShowGuestbookNotification, delay);
-    }
-
-    /** Called for every window the visitor opens: two of them counts as engaged. */
-    function noteUserOpenedWindow() {
-        userOpenedWindows++;
-        if (guestbookNudgeArmed && userOpenedWindows === 2) scheduleGuestbookNudge(2000);
-    }
-
-    function setupGuestbookNotification() {
-        if (!ENABLE_GUESTBOOK_NOTIFICATION || isGuestbookNudgeSnoozed()) return;
-
-        // Wait until the visitor has been around: 45 seconds after their first
-        // interaction, or sooner once they have opened a second window. (A
-        // gesture has to come first anyway or the chime cannot play.)
-        const onFirstInteraction = () => {
-            if (guestbookNudgeArmed) return;
-            guestbookNudgeArmed = true;
-
-            document.removeEventListener('click', onFirstInteraction);
-            document.removeEventListener('keydown', onFirstInteraction);
-            document.removeEventListener('touchstart', onFirstInteraction);
-
-            scheduleGuestbookNudge(userOpenedWindows >= 2 ? 2000 : 45000);
-        };
-
-        document.addEventListener('click', onFirstInteraction);
-        document.addEventListener('keydown', onFirstInteraction);
-        document.addEventListener('touchstart', onFirstInteraction);
-    }
 
     function init() {
         setupClock();
@@ -347,6 +213,7 @@
             pushOnOpen = false;
             openWindowFrom('deeplink', app.id, app.title, app.size, app.permalink);
             pushOnOpen = true;
+            placeBesideBootAbout(app.id);
         } else if (openApp && pathForOpenToken(openApp)) {
             // /?open=blogs/some-post: a page, opened as a window once the
             // search index (its id and title) is in
@@ -359,6 +226,7 @@
                 pushOnOpen = false;
                 openWindowFrom('deeplink', target.id, target.title, target.size, target.permalink);
                 pushOnOpen = true;
+                placeBesideBootAbout(target.id);
             };
             loadSearchIndex().then(openPage, openPage);
         } else if (query) {
@@ -369,7 +237,6 @@
         if (openApp && !app && !pathForOpenToken(openApp)) resetUrlToDesktop();
 
         RETIRED_KEYS.forEach(key => SiteStore.remove(key));
-        setupGuestbookNotification();
     }
 
     /**
@@ -506,7 +373,6 @@
                     closeSpotlight();
                     return;
                 }
-                if (closeWindowSwitcher()) return;
                 if (closeContextMenu(true)) return;
 
                 // Close any open dropdowns, handing focus back to the trigger
@@ -1591,9 +1457,9 @@
     function getTrafficLightsMarkup() {
         return `
                 <div class="traffic-lights">
-                    <div class="traffic-light close" role="button" tabindex="0" aria-label="Close window"><span class="traffic-light-face"><span class="traffic-light-symbol" aria-hidden="true"><svg width="8" height="8" viewBox="0 0 10 10" focusable="false"><path d="M2.5 2.5 L7.5 7.5 M7.5 2.5 L2.5 7.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></span></span></div>
-                    <div class="traffic-light minimize" role="button" tabindex="0" aria-label="Minimize window"><span class="traffic-light-face"><span class="traffic-light-symbol" aria-hidden="true"><svg width="8" height="8" viewBox="0 0 10 10" focusable="false"><line x1="2.5" y1="5" x2="7.5" y2="5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></span></span></div>
-                    <div class="traffic-light maximize" role="button" tabindex="0" aria-label="Zoom window"><span class="traffic-light-face"><span class="traffic-light-symbol" aria-hidden="true"><svg width="8" height="8" viewBox="0 0 10 10" focusable="false"><line x1="5" y1="2.5" x2="5" y2="7.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><line x1="2.5" y1="5" x2="7.5" y2="5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></span></span></div>
+                    <div class="traffic-light close" role="button" tabindex="0" aria-label="Close window"><span class="traffic-light-face"><span class="traffic-light-symbol" aria-hidden="true"><svg viewBox="0 0 12 12" focusable="false"><path d="M4 4 L8 8 M8 4 L4 8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></span></div>
+                    <div class="traffic-light minimize" role="button" tabindex="0" aria-label="Minimize window"><span class="traffic-light-face"><span class="traffic-light-symbol" aria-hidden="true"><svg viewBox="0 0 12 12" focusable="false"><path d="M3.5 6 H8.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></span></div>
+                    <div class="traffic-light maximize" role="button" tabindex="0" aria-label="Zoom window"><span class="traffic-light-face"><span class="traffic-light-symbol" aria-hidden="true"><svg viewBox="0 0 12 12" focusable="false"><path d="M6 3.5 V8.5 M3.5 6 H8.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span></span></div>
                 </div>`;
     }
 
@@ -1812,12 +1678,6 @@
     }
 
     function toggleMenu(dropdownId, opts) {
-        // On a phone the window list is a sheet with finger-sized rows
-        if (dropdownId === 'finder-dropdown' && isCompactViewport()) {
-            window.closeDropdowns();
-            openWindowSwitcher();
-            return;
-        }
         setMenuOpen(dropdownId, !isMenuOpen(dropdownId), opts);
     }
 
@@ -2017,9 +1877,10 @@
             !!commandWindow().querySelector('.traffic-light.maximize')],
         'window-app': () => [IS_DESKTOP, !!commandWindow() && !!infoSubjectFor(commandWindow().dataset.windowId, commandWindow())],
         'windows': () => [IS_DESKTOP, openWindows.size > 0],
+        // Hidden, not just disabled, while nothing is open (the app name's window list)
+        'any-window': () => [IS_DESKTOP && openWindows.size > 0, true],
         'link': () => [true, !!commandLink()],
         'personal': () => [IS_DESKTOP && !!personalDesktop() && !isCompactViewport(), true],
-        'tour': () => [IS_DESKTOP && !!personalDesktop(), true],
         'arranged': () => [IS_DESKTOP && !!personalDesktop() && !isCompactViewport(),
             !!personalDesktop() && personalDesktop().hasArrangement()],
         'shared-sticky': () => [!!sharedSticky(), !!sharedSticky() && sharedSticky().available],
@@ -2123,8 +1984,7 @@
         'new-sticky': () => { if (personalDesktop()) personalDesktop().newSticky(); },
         'clean-up': () => { if (personalDesktop()) personalDesktop().cleanUp(); },
         'sort-icons': () => { if (personalDesktop()) personalDesktop().sortByName(); },
-        'reset-icons': () => { if (personalDesktop()) personalDesktop().resetArrangement(); },
-        'tour': () => { if (personalDesktop()) personalDesktop().startTour(); }
+        'reset-icons': () => { if (personalDesktop()) personalDesktop().resetArrangement(); }
     };
 
     function runMenuAction(item, e) {
@@ -3108,7 +2968,8 @@
             back.type = 'button';
             back.className = 'titlebar-back';
             back.setAttribute('aria-label', 'Close window');
-            back.innerHTML = '<span aria-hidden="true">‹</span> Back';
+            // A Finder-style back capsule (os/window/static.html carries the same markup)
+            back.innerHTML = '<span class="titlebar-back-icon" aria-hidden="true"><svg viewBox="0 0 12 12" focusable="false"><path d="M7.5 2.5 L4 6 L7.5 9.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Back';
             back.addEventListener('click', () => closeWindow(win, win.dataset.windowId));
             titlebar.insertBefore(back, titlebar.firstChild);
         }
@@ -3230,13 +3091,9 @@
 
         const onChange = () => {
             const compact = mq.matches;
-            const trigger = menuTrigger('finder-dropdown');
-            if (trigger) trigger.setAttribute('aria-haspopup', compact ? 'dialog' : 'menu');
-
             if (compact) {
                 window.closeDropdowns();
             } else {
-                closeWindowSwitcher();
                 // Windows opened while compact carry the fullscreen geometry
                 // inline; give them a real size and place now there is room
                 let step = 0;
@@ -3263,98 +3120,6 @@
         if (mq.addEventListener) mq.addEventListener('change', onChange);
         else if (mq.addListener) mq.addListener(onChange);
         onChange();
-    }
-
-    let windowSwitcher = null;
-
-    /** @returns {boolean} true when a sheet was open */
-    function closeWindowSwitcher(restoreFocus) {
-        if (!windowSwitcher) return false;
-        const sheet = windowSwitcher;
-        windowSwitcher = null;
-        sheet.remove();
-        const target = sheet._returnFocus;
-        if (restoreFocus !== false && target && target.isConnected) {
-            try { target.focus({ preventScroll: true }); } catch (e) { /* ignore */ }
-        }
-        return true;
-    }
-
-    /** Bottom sheet listing the open windows (the compact window list). */
-    function openWindowSwitcher() {
-        if (windowSwitcher) return;
-
-        const entries = [...openWindows].filter(([, win]) => !win.classList.contains('closing'));
-        const rows = entries.map(([id, win]) => {
-            const current = win === activeWindow && isWindowShown(win);
-            const icon = getWindowIconHtml(id, win.dataset.path) || GENERIC_WINDOW_ICON;
-            return `<button type="button" class="window-switcher-item" data-window-id="${escapeHtml(id)}"${current ? ' aria-current="true"' : ''}>` +
-                `<span class="window-switcher-icon" aria-hidden="true">${icon}</span>` +
-                `<span class="window-switcher-label">${escapeHtml(windowTitleOf(win).trim())}</span>` +
-                '</button>';
-        });
-        const anyShown = entries.some(([, win]) => isWindowShown(win));
-
-        const backdrop = document.createElement('div');
-        backdrop.className = 'window-switcher-backdrop open';
-        backdrop.innerHTML = `
-            <div class="window-switcher" role="dialog" aria-modal="true" aria-labelledby="window-switcher-title">
-                <div class="window-switcher-title" id="window-switcher-title">Windows</div>
-                ${rows.join('') || '<div class="window-switcher-empty">No windows open</div>'}
-                ${anyShown ? '<button type="button" class="window-switcher-item" data-switcher-action="desktop"><span class="window-switcher-label">Show Desktop</span></button>' : ''}
-                <button type="button" class="window-switcher-item" data-switcher-action="close"><span class="window-switcher-label">Cancel</span></button>
-            </div>
-        `;
-        backdrop._returnFocus = document.activeElement;
-
-        backdrop.addEventListener('click', (e) => {
-            if (e.target === backdrop) {
-                closeWindowSwitcher();
-                return;
-            }
-            const item = e.target.closest('.window-switcher-item');
-            if (!item) return;
-            const action = item.dataset.switcherAction;
-            if (action === 'close') {
-                closeWindowSwitcher();
-                return;
-            }
-            // Focus goes to the chosen window (or stays put for the desktop)
-            closeWindowSwitcher(false);
-            if (action === 'desktop') {
-                showDesktop();
-                return;
-            }
-            const win = openWindows.get(item.dataset.windowId);
-            if (win) activateWindow(win);
-        });
-
-        backdrop.addEventListener('keydown', (e) => {
-            const items = [...backdrop.querySelectorAll('.window-switcher-item')];
-            const index = items.indexOf(document.activeElement);
-            let target = null;
-
-            if (e.key === 'Escape') {
-                e.preventDefault();
-                e.stopPropagation();
-                closeWindowSwitcher();
-                return;
-            }
-            if (e.key === 'ArrowDown' || (e.key === 'Tab' && !e.shiftKey)) target = items[(index + 1) % items.length];
-            else if (e.key === 'ArrowUp' || (e.key === 'Tab' && e.shiftKey)) target = items[(index - 1 + items.length) % items.length];
-            else return;
-
-            // Modal: Tab cycles inside the sheet
-            e.preventDefault();
-            if (target) target.focus();
-        });
-
-        document.body.appendChild(backdrop);
-        windowSwitcher = backdrop;
-
-        const first = backdrop.querySelector('.window-switcher-item[aria-current="true"]')
-            || backdrop.querySelector('.window-switcher-item');
-        if (first) first.focus({ preventScroll: true });
     }
 
     /**
@@ -3485,6 +3250,64 @@
             win.style.left = `${left}px`;
             win.style.top = `${top}px`;
         }
+    }
+
+    /**
+     * A deep link opens its window on top of the boot About. Centred, the two
+     * would cover each other almost completely, so they are laid out as a
+     * cascade: the requested window a diagonal step down and right from
+     * About, and the pair centred on the desktop as one block. The step
+     * leaves most of About in view; when the screen is too small for the
+     * step the front window gives up size rather than cover more. Phones are
+     * fullscreen anyway.
+     */
+    function placeBesideBootAbout(frontId) {
+        if (isCompactViewport()) return;
+        const back = openWindows.get('about');
+        const front = openWindows.get(frontId);
+        if (!back || !front || back === front) return;
+
+        const bounds = getDesktopBounds();
+        const margin = 20;
+        const roomW = bounds.width - margin * 2;
+        const roomH = bounds.height - margin * 2;
+        const minFront = { width: 480, height: 360 };
+
+        const backW = Math.min(back.offsetWidth, roomW);
+        const backH = Math.min(back.offsetHeight, roomH);
+        let frontW = Math.min(front.offsetWidth, roomW);
+        let frontH = Math.min(front.offsetHeight, roomH);
+
+        // The step: 70% of About's width and 40% of its height, so the front
+        // window covers About's lower right corner and nothing more
+        let dx = Math.round(backW * 0.7);
+        let dy = Math.round(backH * 0.4);
+        // The step never shrinks below this; the front window shrinks instead
+        const minDx = Math.round(backW * 0.5);
+        const minDy = Math.round(backH * 0.25);
+
+        // Fit the pair's bounding box: shorten the step to its floor, then
+        // give up window size
+        if (dx + frontW > roomW) dx = Math.max(minDx, roomW - frontW);
+        if (dx + frontW > roomW) frontW = Math.max(minFront.width, roomW - dx);
+        if (dy + frontH > roomH) dy = Math.max(minDy, roomH - frontH);
+        if (dy + frontH > roomH) frontH = Math.max(minFront.height, roomH - dy);
+
+        const unionW = Math.max(backW, dx + frontW);
+        const unionH = Math.max(backH, dy + frontH);
+        const x0 = margin + Math.max(0, Math.round((roomW - unionW) / 2));
+        const y0 = margin + Math.max(0, Math.round((roomH - unionH) / 2));
+
+        back.style.width = `${backW}px`;
+        back.style.height = `${backH}px`;
+        back.style.left = `${x0}px`;
+        back.style.top = `${y0}px`;
+        front.style.width = `${frontW}px`;
+        front.style.height = `${frontH}px`;
+        front.style.left = `${x0 + dx}px`;
+        front.style.top = `${y0 + dy}px`;
+        clampWindowToViewport(back);
+        clampWindowToViewport(front);
     }
 
     /** Pull one window back inside the desktop after the viewport changed. */
@@ -3756,7 +3579,6 @@
         win._openedAt = Date.now();
         // Opened for the visitor rather than by them: leave the URL alone
         if (automatic) win._urlSilent = true;
-        else noteUserOpenedWindow();
         track('window_opened', { id, source });
 
         // Centre the About Me and IRC Chat windows; everything else cascades
@@ -4125,6 +3947,7 @@
     // Clear of the bottom corners (where the online pill sits if the shell
     // has not moved it to the menubar), mirrored on the right
     const DOCK_SIDE_MARGIN = 76;
+    const DOCK_SIDE_MARGIN_COMPACT = 12;
     const DOCK_MAX_SCALE = 1.6;
     // Reach of the magnification, in resting icon widths either side
     const DOCK_RANGE_ICONS = 3;
@@ -4137,7 +3960,7 @@
     const dockAppSet = new Set();
     const appBadges = new Map();    // app id -> true (see setAppBadge)
 
-    /** False on compact layouts, where the stylesheet hides the Dock. */
+    /** False where the stylesheet hides the Dock (print, no element). */
     function isDockVisible() {
         return !!dockEl && dockEl.getClientRects().length > 0;
     }
@@ -4368,7 +4191,9 @@
         if (!dockEl) return;
         const count = dockEl.querySelectorAll('.dock-item').length || 1;
         const fixed = DOCK_SHELF_PAD * 2 + (dockSeparatorEl.hidden ? 0 : DOCK_SEPARATOR);
-        const room = window.innerWidth - DOCK_SIDE_MARGIN * 2 - fixed;
+        // A phone has no room to spare at the sides
+        const margin = isCompactViewport() ? DOCK_SIDE_MARGIN_COMPACT : DOCK_SIDE_MARGIN;
+        const room = window.innerWidth - margin * 2 - fixed;
         const size = Math.max(DOCK_ICON_MIN, Math.min(DOCK_ICON_MAX, Math.floor(room / count) - DOCK_ITEM_PAD));
         if (size === dockIconSize) return;
         dockIconSize = size;

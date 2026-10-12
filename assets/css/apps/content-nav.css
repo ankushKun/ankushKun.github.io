@@ -212,11 +212,28 @@ html[data-appearance="dark"] .blogs-rss {
     --rss-tint: #3A2A1C;
 }
 
+/* Under the list, where the tags are a way to dig rather than a wall at the top */
+.blogs-chips-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin-top: 14px;
+    padding: 10px 12px 4px;
+    border-top: 1px solid var(--gray-150);
+}
+
+.blogs-chips-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+}
+
 .blogs-chips {
-    flex: none;
-    padding: 6px 12px;
-    background: var(--gray-50);
-    border-bottom: 1px solid var(--gray-150);
+    flex: 1;
+    min-width: 0;
 }
 
 .blog-reading-time {
@@ -243,8 +260,8 @@ html[data-appearance="dark"] .blogs-rss {
 
 /* ---------- Projects ---------- */
 
-/* Only the picture fades: the date below it stays at full contrast */
-.project-card.is-archived .project-card-icon > :not(.project-card-date) {
+/* Only the picture fades: the title and date stay at full contrast */
+.project-card.is-archived .project-card-cover {
     filter: grayscale(1);
     opacity: 0.7;
 }
@@ -301,25 +318,6 @@ html[data-appearance="dark"] .blogs-rss {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
-}
-
-/* ---------- About window ---------- */
-
-/* .info-header became an <h2>: keep the small-caps label look rather than
-   the generic .window-content h2 one */
-.window-content h2.info-header {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-muted);
-    margin-top: 0;
-    margin-bottom: 10px;
-}
-
-@media (max-width: 768px) {
-    .window-content h2.info-header {
-        font-size: 10px;
-        margin-bottom: 8px;
-    }
 }
 
 /* ---------- Post header ---------- */

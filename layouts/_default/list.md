@@ -17,6 +17,12 @@ author: {{ site.Params.profile.name | default site.Params.author.name | jsonify 
 {{ . }}
 {{ end -}}
 {{ if eq .Section "about" }}
+{{- with .Params.facts }}
+## Quick facts
+{{ range . }}
+- {{ . }}
+{{- end }}
+{{ end }}
 ## Experience
 {{ partial "agents/experience.md" . }}
 
@@ -24,15 +30,7 @@ author: {{ site.Params.profile.name | default site.Params.author.name | jsonify 
 {{ partial "agents/socials.md" . }}
 {{ else if eq .Section "schedule" }}
 {{ with hugo.Data.contact.profile.schedule }}Book a call: {{ . }}{{ end }}
-{{ else if eq .Section "timeline" }}
-{{- /* Same mix as the Timeline window: entries, projects and blog posts */ -}}
-{{- $pages := .RegularPages | union (where site.RegularPages "Section" "in" (slice "projects" "blogs")) }}
-{{ range $pages.ByDate.Reverse.GroupByDate "2006" }}
-## {{ .Key }}
-
-{{ range .Pages }}{{ partial "agents/line.md" . }}
-{{ end }}{{ end }}
-{{- else if .RegularPages }}
+{{ else if .RegularPages }}
 {{ range .RegularPages.ByDate.Reverse.GroupByDate "2006" }}
 ## {{ .Key }}
 

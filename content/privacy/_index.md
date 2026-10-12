@@ -24,7 +24,7 @@ How it runs:
 
 ## Shared, realtime apps
 
-The live cursors, sticky note, Guestbook, Paint, IRC Chat, the reactions under posts and projects, the Daily Puzzle leaderboard and Music's "listening now" are shared between everyone on the site. They sync through public [Gun](https://gun.eco) relays: `gun.ankush.one`, and `relay.peer.ooo`, a public relay run by someone else. Every page on this site, not only the desktop, connects to both relays when it loads, so both see your IP address. Anything you put into them is **public** and can be read by anyone, including people who are not using this site.
+The live cursors, sticky note, Guestbook, Paint, IRC Chat, the reactions under posts and projects, the Daily Puzzle leaderboard and Music's "listening now" are shared between everyone on the site. They sync through a [Gun](https://gun.eco) relay run by me, `gun.ankush.one`. Every page on this site, not only the desktop, connects to it when it loads, so it sees your IP address. Anything you put into them is **public** and can be read by anyone, including people who are not using this site.
 
 - **Cursors and presence:** while any page of the site is open, your pointer position and reactions are shared under a random id, and you are counted in the online badge.
 - **Sticky note and Paint:** the text you type and the strokes you draw. Paint starts a fresh canvas every day (UTC); earlier days stay readable in its gallery for as long as the relays keep them.

@@ -563,11 +563,29 @@
     // ------------------------------------------------------------------
 
     const presentPeers = new Map(); // id -> local time its last beat arrived
+    const peerNicks = new Map();    // id -> the name they joined IRC Chat with ('' for a guest)
     const presenceLive = livenessTracker(PRESENCE_TTL_MS);
+    const MAX_NICK = 10;            // same cap as the IRC app
     let lastCount = 0;
+    // The pill's popover and its people list (built on first open, see buildPopover)
+    let popover = null;
+    let peopleList = null;
 
+    /** The name this visitor joined IRC Chat with (assets/js/irc-chat.js keeps it), or ''. */
+    function myNick() {
+        let nick = '';
+        try { nick = localStorage.getItem('irc_nick') || ''; } catch (e) { /* storage blocked */ }
+        return cleanNick(nick);
+    }
+
+    function cleanNick(nick) {
+        return typeof nick === 'string' ? nick.trim().slice(0, MAX_NICK) : '';
+    }
+
+    /** The beat carries the name, so the online list can show who is who.
+        Always sent, so a name that was cleared clears for everyone too. */
     function announcePresence() {
-        presenceRef.get(myId).put({ ts: Date.now() });
+        presenceRef.get(myId).put({ ts: Date.now(), nick: myNick() });
     }
 
     function updateOnlineCount() {
@@ -584,20 +602,28 @@
         lastCount = count;
         onlineCountEl.textContent = count + ' Online';
         onlineCountEl.setAttribute('aria-label',
-            count + ' online. Reactions and cursor settings');
+            count + ' online. Who is here, reactions and cursor settings');
+        refreshPeople();
     }
 
     presenceRef.map().on((data, id) => {
         if (id === myId) return;
         if (!data || !data.ts) {
             presentPeers.delete(id);
+            peerNicks.delete(id);
             updateOnlineCount();
+            refreshPeople();
             return;
         }
         // A beat only counts when it is new to us - see livenessTracker.
         if (!presenceLive.touch(id, Number(data.ts) || 0)) return;
         if (presentPeers.size >= MAX_TRACKED_IDS && !presentPeers.has(id)) return;
         presentPeers.set(id, Date.now());
+        const nick = cleanNick(data.nick);
+        if (peerNicks.get(id) !== nick) {
+            peerNicks.set(id, nick);
+            refreshPeople();
+        }
         updateOnlineCount();
     });
 
@@ -640,7 +666,55 @@
     // touch screen could not do at all.
     // ------------------------------------------------------------------
 
-    let popover = null;
+    /**
+     * Who is online: everyone who joined IRC Chat by name, this visitor
+     * marked "(you)", and the rest folded into one "guests" row. A guest
+     * gets a nudge to pick a name, which opens IRC Chat.
+     */
+    function refreshPeople() {
+        if (!peopleList || !popover || popover.hidden) return;
+        const now = Date.now();
+        const named = [];
+        let guests = 0;
+        presentPeers.forEach((at, id) => {
+            if (id === myId || now - at > PRESENCE_TTL_MS) return;
+            const nick = peerNicks.get(id) || '';
+            if (nick) named.push(nick);
+            else guests++;
+        });
+        named.sort((a, b) => a.localeCompare(b));
+
+        peopleList.textContent = '';
+        const row = (text, cls) => {
+            const li = document.createElement('li');
+            li.className = 'people-row' + (cls ? ' ' + cls : '');
+            li.textContent = text;
+            peopleList.appendChild(li);
+            return li;
+        };
+
+        const mine = myNick();
+        if (mine) {
+            row(mine + ' (you)', 'is-you');
+        } else {
+            const li = row('', 'is-you is-guest');
+            li.appendChild(document.createTextNode('You, as a guest '));
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'people-name-btn';
+            btn.textContent = 'Pick a name';
+            btn.title = 'Join IRC Chat with a name and it shows here';
+            btn.addEventListener('click', () => {
+                closePopover();
+                const shell = window.SiteShell;
+                if (shell && shell.isDesktop && shell.openApp('irc-chat', onlineCountEl, 'presence')) return;
+                window.location.href = '/?open=irc-chat';
+            });
+            li.appendChild(btn);
+        }
+        named.forEach((nick) => row(nick));
+        if (guests) row(guests === 1 ? '1 guest' : guests + ' guests', 'is-guests');
+    }
 
     function setCursorsHidden(hidden) {
         cursorsHidden = hidden;
@@ -658,6 +732,17 @@
         el.setAttribute('role', 'dialog');
         el.setAttribute('aria-label', 'Reactions');
         el.hidden = true;
+
+        const people = document.createElement('div');
+        people.className = 'people';
+        const title = document.createElement('div');
+        title.className = 'people-title';
+        title.textContent = 'Online';
+        people.appendChild(title);
+        peopleList = document.createElement('ul');
+        peopleList.className = 'people-list';
+        people.appendChild(peopleList);
+        el.appendChild(people);
 
         const row = document.createElement('div');
         row.className = 'reactions-row';
@@ -711,6 +796,7 @@
         popover.style.bottom = Math.round(window.innerHeight - rect.top + 6) + 'px';
         popover.hidden = false;
         onlineCountEl.setAttribute('aria-expanded', 'true');
+        refreshPeople();
     }
 
     onlineCountEl.addEventListener('click', () => {
