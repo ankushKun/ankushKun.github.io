@@ -170,13 +170,20 @@ async function handleProxy(request, url, env, ctx, cfg) {
 
     // Gate 3: host allowlist. Not allowed is not an error for the visitor:
     // they most likely clicked onward inside a proxied page.
+    // Some hosts are on the allowlist (so the link checker still sees them)
+    // but must never be fetched or framed. Nothing is fetched for them.
+    if (isNeverProxied(target.hostname)) return interstitial(target, NEVER_PROXY_WHY);
     const allowlist = await loadAllowlist(env, ctx);
     if (!isAllowed(target.hostname, allowlist)) return interstitial(target);
 
     const result = await fetchTarget(request, target, allowlist, cfg.selfHost);
 
     // A redirect pointed off the allowlist; that hop was not requested.
-    if (result.kind === 'offlist') return interstitial(result.final);
+    if (result.kind === 'offlist') {
+        return isNeverProxied(result.final.hostname)
+            ? interstitial(result.final, NEVER_PROXY_WHY)
+            : interstitial(result.final);
+    }
     if (result.kind === 'unverified') {
         // Allowed, but only a browser can tell whether it loads: let it try.
         return new Response(null, {
@@ -316,7 +323,9 @@ async function fetchTarget(request, target, allowlist, selfHost) {
             // non-http scheme, itself) or a loop: the site is there, but not
             // for us.
             if (!next || hops >= MAX_REDIRECTS) return { kind: 'blocked', status: response.status, final };
-            if (!isAllowed(next.hostname, allowlist)) return { kind: 'offlist', status: 0, final: next };
+            if (isNeverProxied(next.hostname) || !isAllowed(next.hostname, allowlist)) {
+                return { kind: 'offlist', status: 0, final: next };
+            }
             if (!next.hash) next.hash = final.hash;
             final = next;
         }
@@ -487,6 +496,22 @@ function cleanHost(value) {
     if (typeof value !== 'string') return '';
     const host = hostOf(value.trim().toLowerCase());
     return /^(?=.{1,253}$)([a-z0-9]([a-z0-9_-]*[a-z0-9])?\.)+[a-z][a-z0-9-]*$/.test(host) ? host : '';
+}
+
+/**
+ * Hosts the proxy never fetches, even when the allowlist has them. Mirrors the
+ * Construct entry of NEVER_PROXY_HOSTS in assets/js/mavericks.js, which only
+ * covers clicks on the desktop; this covers in-frame clicks and redirects.
+ * Construct (and every subdomain: app., os., status.) refuses to be framed,
+ * and Google sign-in plus the .construct.computer attribution cookie only work
+ * in a real tab.
+ */
+const NEVER_PROXY_HOSTS = ['construct.computer'];
+const NEVER_PROXY_WHY = 'only opens in a new tab, so it is not shown inside a window here.';
+
+function isNeverProxied(hostname) {
+    const host = hostOf(hostname.toLowerCase());
+    return NEVER_PROXY_HOSTS.some((blocked) => host === blocked || host.endsWith('.' + blocked));
 }
 
 /** A host is allowed when it, or a parent domain of it, is on the list. */
@@ -860,7 +885,7 @@ async function handleCheck(request, url, env, ctx, cfg) {
     if (!target) return json({ ok: false, error: 'bad-url' }, 400, cors);
 
     const allowlist = await loadAllowlist(env, ctx);
-    if (!isAllowed(target.hostname, allowlist)) {
+    if (isNeverProxied(target.hostname) || !isAllowed(target.hostname, allowlist)) {
         return json({ ok: false, error: 'not-allowed' }, 403, cors);
     }
 

@@ -90,7 +90,11 @@
     const NEVER_PROXY_HOSTS = [
         'youtube.com', 'youtu.be', 'x.com', 'twitter.com', 'instagram.com',
         'facebook.com', 'linkedin.com', 'discord.com', 'discord.gg',
-        'reddit.com', 't.me', 'telegram.me', 'medium.com', 'npmjs.com'
+        'reddit.com', 't.me', 'telegram.me', 'medium.com', 'npmjs.com',
+        // Construct (and every subdomain: app., os., status.) refuses to be
+        // framed, and Google sign-in plus the .construct.computer attribution
+        // cookie only work in a real tab, so it never goes through the proxy.
+        'construct.computer'
     ];
     const NEVER_PROXY_PATTERN = /(^|\.)amazon\.[a-z.]{2,6}$/;
     // Same permissions the server-rendered embeds get (no allow-top-navigation)
