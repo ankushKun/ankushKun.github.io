@@ -95,7 +95,12 @@ letter-size page.
 
             {{- with $r.projects }}
             <section class="resume-section" aria-labelledby="resume-projects">
-                <h2 class="resume-section-title" id="resume-projects">Projects</h2>
+                <div class="resume-section-head">
+                    <h2 class="resume-section-title" id="resume-projects">Projects</h2>
+                    {{- with $r.projectsMore }}
+                    <a class="resume-section-more" href="{{ absURL . }}" aria-label="View more projects">View more</a>
+                    {{- end }}
+                </div>
                 {{- range $project := . }}
                 <div class="resume-entry">
                     <h3 class="resume-entry-title">

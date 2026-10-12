@@ -320,6 +320,22 @@ html[data-appearance="dark"] {
     border-bottom: 1px solid var(--rs-ink);
 }
 
+/* A heading with a link on its right, sitting on the rule ("View more"
+   beside Projects). The link is outside the <h2>, so the heading text a
+   parser reads stays just "Projects". */
+.resume-section-head {
+    position: relative;
+}
+
+.resume-section-more {
+    position: absolute;
+    right: 0;
+    bottom: 0.3em;
+    font-size: 0.9em;
+    font-weight: 400;
+    white-space: nowrap;
+}
+
 .window-content .resume-sheet p.resume-summary,
 .resume-summary {
     font-size: 1em;
@@ -574,6 +590,13 @@ html[data-appearance="dark"] {
     .resume-sheet a,
     .window-content .resume-sheet a {
         text-decoration: none;
+    }
+
+    /* The one link that has nothing but the link to offer keeps its
+       underline, so it still reads as clickable in the PDF */
+    .resume-sheet a.resume-section-more,
+    .window-content .resume-sheet a.resume-section-more {
+        text-decoration: underline;
     }
 
     .resume-entry,

@@ -32,6 +32,10 @@ Usage: {{ partial "apps/resume/body.md" hugo.Data.resume }}
 {{- with $r.projects }}
 
 ## Projects
+{{- with $r.projectsMore }}
+
+More projects: {{ absURL . }}
+{{- end }}
 {{- range $project := . }}
 
 ### {{ with $project.url }}[{{ $project.name }}]({{ . }}){{ else }}{{ $project.name }}{{ end }}{{ with $project.tech }} | {{ delimit . ", " }}{{ end }}

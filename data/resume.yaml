@@ -83,7 +83,10 @@ experience:
     highlights:
       - "Built a live-class tool parsing real-time YouTube chat (10K+ messages) for **50K+ concurrent viewers**."
 
-# Live work only: every link here has to open.
+# Live work only: every link here has to open. `projectsMore` is the
+# "View more" link beside the Projects heading (made absolute, so it still
+# points at the site from the PDF).
+projectsMore: /projects/
 projects:
   - name: NepoNet
     url: https://nepotism.network
