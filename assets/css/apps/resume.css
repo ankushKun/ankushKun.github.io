@@ -5,9 +5,10 @@
    PDF button in the toolbar, one sheet of paper on the grey desk. There is
    no script: zoom is a radio group read with :has(:checked), and the sheet
    is set in em so a zoom step reflows the text instead of scaling it.
-   Printing /resume/ makes static/resume.pdf, which applicant tracking
-   systems read as text: one column, no grid or flex in the content, and
-   bullets and separators that are real characters in the markup.
+   The sheet follows Jake's Resume, the usual one-page format for software
+   engineers. Printing /resume/ makes static/resume.pdf, which applicant
+   tracking systems read as text: one column in reading order, and bullets
+   and separators that are real characters in the markup.
    ================================================ */
 
 :root {
@@ -238,33 +239,24 @@ html[data-appearance="dark"] {
     border-radius: 2px;
 }
 
-/* Name, headline and contact line, centred as on the PDF */
+/* Name and contact line, centred */
 .resume-head {
     text-align: center;
 }
 
 .window-content .resume-sheet h1.resume-name,
 .resume-name {
-    font-size: 2.15em;
+    font-size: 2.2em;
     font-weight: 700;
-    line-height: 1.15;
+    line-height: 1.1;
     letter-spacing: -0.01em;
-    color: var(--rs-ink);
-}
-
-.window-content .resume-sheet p.resume-headline,
-.resume-headline {
-    margin-top: 0.35em;
-    font-size: 1em;
-    font-weight: 600;
-    line-height: 1.35;
     color: var(--rs-ink);
 }
 
 .window-content .resume-sheet p.resume-contact,
 .resume-contact {
-    margin-top: 0.3em;
-    font-size: 0.9em;
+    margin-top: 0.35em;
+    font-size: 0.95em;
     line-height: 1.45;
     color: var(--rs-ink-soft);
 }
@@ -280,9 +272,9 @@ html[data-appearance="dark"] {
 }
 
 /* On screen the line wraps on narrow windows, where a bar would start the
-   next line. The bars give way to dots that hang after an item, as on the
-   old sheet; the item before the print-only link is the last one on screen.
-   Print keeps the bars, which is the text a parser reads in the PDF. */
+   next line. The bars give way to dots that hang after an item; the item
+   before the print-only link is the last one on screen. Print keeps the
+   bars, which is the text a parser reads in the PDF. */
 @media screen {
     .resume-contact {
         display: flex;
@@ -312,25 +304,20 @@ html[data-appearance="dark"] {
     display: none;
 }
 
-/* Section titles: centred between two hairlines */
+/* Section titles: left aligned capitals over a full-width rule. Real
+   uppercase, not small-caps: synthesised small caps come out of a PDF as
+   split words ("E ducation"). */
 .window-content .resume-sheet h2.resume-section-title,
 .resume-section-title {
-    display: flex;
-    align-items: center;
-    gap: 0.8em;
-    margin: 1.5em 0 0.7em;
-    font-size: 1.08em;
+    margin: 1.15em 0 0.45em;
+    padding-bottom: 0.15em;
+    font-size: 1em;
     font-weight: 700;
+    text-transform: uppercase;
     line-height: 1.2;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.04em;
     color: var(--rs-ink);
-}
-
-.resume-section-title::before,
-.resume-section-title::after {
-    content: "";
-    flex: 1;
-    border-top: 1px solid var(--rs-rule);
+    border-bottom: 1px solid var(--rs-ink);
 }
 
 .window-content .resume-sheet p.resume-summary,
@@ -341,74 +328,68 @@ html[data-appearance="dark"] {
 }
 
 .resume-entry + .resume-entry {
-    margin-top: 0.85em;
+    margin-top: 0.6em;
 }
 
-/* "Role, Company | Location | Dates" on one line in normal flow, the way a
-   parser expects it. The meta part wraps under it when the line is full. */
+/* Company (or project) on the left, its dates on the right of the same line */
 .window-content .resume-sheet h3.resume-entry-title,
 .resume-entry-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0 1em;
     font-size: 1em;
     font-weight: 400;
     line-height: 1.4;
     color: var(--rs-ink);
 }
 
-.resume-role {
+.resume-org {
     font-weight: 700;
 }
 
-.resume-meta {
-    color: var(--rs-ink-soft);
+.resume-dates {
+    white-space: nowrap;
+    color: var(--rs-ink-body);
 }
 
-/* One line on what the company or project is, under its heading */
-.window-content .resume-sheet :is(p.resume-about, p.resume-value),
-.resume-about,
-.resume-value {
-    margin-top: 0.1em;
-    font-size: 1em;
+.resume-stack {
     font-style: italic;
-    line-height: 1.4;
-    color: var(--rs-ink-soft);
 }
 
 .resume-more {
-    font-style: normal;
+    font-size: 0.9em;
     white-space: nowrap;
+}
+
+.resume-role {
+    font-style: italic;
+    color: var(--rs-ink-body);
 }
 
 /* The bullet is a character in the markup (it survives text extraction),
    hung in the gutter so wrapped lines align with the text */
 .window-content .resume-sheet ul.resume-points,
 .resume-points {
-    margin-top: 0.3em;
-    padding-left: 1em;
+    margin-top: 0.2em;
+    padding-left: 1.1em;
     list-style: none;
 }
 
 .window-content .resume-sheet .resume-points li,
 .resume-points li {
-    margin: 0 0 0.2em;
+    margin: 0 0 0.15em;
     font-size: 1em;
-    line-height: 1.45;
+    line-height: 1.4;
     color: var(--rs-ink-body);
 }
 
 .resume-bullet {
     display: inline-block;
-    width: 1em;
-    margin-left: -1em;
+    width: 0.9em;
+    margin-left: -0.9em;
     color: var(--rs-ink-soft);
-}
-
-.window-content .resume-sheet .resume-points li.resume-tech,
-.resume-tech {
-    color: var(--rs-ink-soft);
-}
-
-.resume-tech-label {
-    font-weight: 600;
 }
 
 /* Skills: "Label: item, item, item", one group per line */
@@ -421,9 +402,9 @@ html[data-appearance="dark"] {
 
 .window-content .resume-sheet .resume-skills li,
 .resume-skills li {
-    margin: 0 0 0.25em;
+    margin: 0 0 0.15em;
     font-size: 1em;
-    line-height: 1.45;
+    line-height: 1.4;
     color: var(--rs-ink-body);
 }
 
@@ -431,26 +412,19 @@ html[data-appearance="dark"] {
     color: var(--rs-ink);
 }
 
-.window-content .resume-sheet p.resume-education,
-.resume-education {
-    font-size: 1em;
-    line-height: 1.45;
-    color: var(--rs-ink-body);
-}
-
 /* The generic `.window-content p / li / h3` colours (0,1,1) outrank the
    single-class rules above and painted the themed (pale, in the dark
    appearance) body colour onto the white sheet. Restate the ink with the
    sheet as scope so the paper's own colours always win. */
-.resume-sheet :is(.resume-headline, .resume-entry-title, .resume-skill-label) {
+.resume-sheet :is(.resume-entry-title, .resume-skill-label) {
     color: var(--rs-ink);
 }
 
-.resume-sheet :is(.resume-contact, .resume-tech, .resume-meta, .resume-about, .resume-value) {
+.resume-sheet .resume-contact {
     color: var(--rs-ink-soft);
 }
 
-.resume-sheet :is(.resume-summary, .resume-points li, .resume-skills li, .resume-education) {
+.resume-sheet :is(.resume-summary, .resume-role, .resume-dates, .resume-points li, .resume-skills li) {
     color: var(--rs-ink-body);
 }
 
@@ -514,12 +488,11 @@ html[data-appearance="dark"] {
    the window stack (on /resume/ and for the active Resume window). This
    gives the sheet a named page and prints it black on white in either
    appearance, at one size whatever the zoom. Printing /resume/ is how a new
-   static/resume.pdf is made from data/resume.yaml; it runs to two pages, and
-   an entry never splits across the break. */
+   static/resume.pdf is made from data/resume.yaml, on one page. */
 @media print {
     @page resume {
         size: letter;
-        margin: 0.42in 0.5in;
+        margin: 0.5in;
     }
 
     /* A change of named page forces a page break, which would leave a blank
@@ -547,7 +520,7 @@ html[data-appearance="dark"] {
     }
 
     .resume .resume-sheet {
-        --rs-size: 8.9pt !important;
+        --rs-size: 10pt !important;
         --rs-ink: #000;
         --rs-ink-body: #1a1a1a;
         --rs-ink-soft: #444;
@@ -566,13 +539,14 @@ html[data-appearance="dark"] {
 
     .window-content .resume-sheet h2.resume-section-title,
     .resume-section-title {
-        margin: 1.05em 0 0.5em;
+        margin: 0.95em 0 0.4em;
+        border-bottom-color: #000;
         break-after: avoid;
         page-break-after: avoid;
     }
 
     .resume-entry + .resume-entry {
-        margin-top: 0.55em;
+        margin-top: 0.5em;
     }
 
     .window-content .resume-sheet ul.resume-points,

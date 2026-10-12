@@ -10,17 +10,18 @@ where an inline script would never run. Zoom is a radio group and
 assets/css/apps/resume.css sizes the sheet with :has(:checked); the sheet is
 set in em, so it reflows instead of being scaled.
 
-The markup is built for applicant tracking systems as much as for people,
+The sheet follows Jake's Resume, the usual one-page format for software
+engineers, and is built for applicant tracking systems as much as people,
 because printing /resume/ makes static/resume.pdf:
 - one column in reading order, with the standard section headings
-- each role on one line: "Role, Company | Location | Mon YYYY - Mon YYYY"
+- "Company | Role" in one line with the dates on the right of it
 - bullets and separators are real text, not list markers or CSS content,
   so they survive copying and PDF text extraction
-- links show their address as the text, so it is still there on paper
+- contact links show their address as the text, so it is still on paper
 
-`summary`, `about`, `highlights` and publication `detail` are inline
-markdown (rendered with RenderString). The print stylesheet in resume.css
-gives the sheet its own letter-size pages.
+`summary`, `highlights` and `awards` are inline markdown (rendered with
+RenderString). The print stylesheet in resume.css gives the sheet its own
+letter-size page.
 */}}
 {{- $page := .page -}}
 {{- $r := .data -}}
@@ -57,13 +58,9 @@ gives the sheet its own letter-size pages.
         <article class="resume-sheet" aria-labelledby="resume-name">
             <header class="resume-head">
                 <h1 class="resume-name" id="resume-name">{{ $r.name }}</h1>
-                {{- with $r.headline }}
-                <p class="resume-headline">{{ . }}</p>
-                {{- end }}
                 <p class="resume-contact">
-                    {{- with $r.location }}<span class="resume-contact-item resume-location">{{ . }}</span>{{ end }}
                     {{- range $i, $c := $r.contact }}
-                    <span class="resume-contact-item{{ if .printOnly }} resume-print-only{{ end }}">{{ if or $i $r.location }}{{ $bar }}{{ end }}<a href="{{ .url }}">{{ partial "apps/resume/link-text.html" (dict "url" .url "label" .label) }}</a></span>
+                    <span class="resume-contact-item{{ if .printOnly }} resume-print-only{{ end }}">{{ if $i }}{{ $bar }}{{ end }}<a href="{{ .url }}">{{ partial "apps/resume/link-text.html" (dict "url" .url "label" .label) }}</a></span>
                     {{- end }}
                 </p>
             </header>
@@ -81,21 +78,39 @@ gives the sheet its own letter-size pages.
                 {{- range $job := . }}
                 <div class="resume-entry">
                     <h3 class="resume-entry-title">
-                        <strong class="resume-role">{{ $job.role }}</strong>, <span class="resume-org">{{ with $job.url }}<a href="{{ . }}">{{ $job.org }}</a>{{ else }}{{ $job.org }}{{ end }}</span>
-                        <span class="resume-meta">
-                            {{- with $job.location }}{{ $bar }}{{ . }}{{ end -}}
-                            {{- with $job.start }}{{ $bar }}{{ partial "apps/resume/dates.html" (dict "start" . "end" $job.end "current" true) }}{{ end -}}
-                        </span>
+                        <span><span class="resume-org">{{ with $job.url }}<a href="{{ . }}">{{ $job.org }}</a>{{ else }}{{ $job.org }}{{ end }}</span>{{ $bar }}<em class="resume-role">{{ $job.role }}</em></span>
+                        {{- with $job.start }}
+                        <span class="resume-dates">{{ partial "apps/resume/dates.html" (dict "start" . "end" $job.end "current" true) }}</span>
+                        {{- end }}
                     </h3>
-                    {{- with $job.about }}
-                    <p class="resume-about">{{ $page.RenderString . }}</p>
-                    {{- end }}
                     <ul class="resume-points">
                         {{- range $job.highlights }}
                         <li>{{ $bullet }}{{ $page.RenderString . }}</li>
                         {{- end }}
-                        {{- with $job.tech }}
-                        <li class="resume-tech"><span class="resume-tech-label">Tech:</span> {{ delimit . ", " }}</li>
+                    </ul>
+                </div>
+                {{- end }}
+            </section>
+            {{- end }}
+
+            {{- with $r.projects }}
+            <section class="resume-section" aria-labelledby="resume-projects">
+                <h2 class="resume-section-title" id="resume-projects">Projects</h2>
+                {{- range $project := . }}
+                <div class="resume-entry">
+                    <h3 class="resume-entry-title">
+                        <span class="resume-project">
+                            <span class="resume-org">{{ with $project.url }}<a href="{{ . }}">{{ $project.name }}</a>{{ else }}{{ $project.name }}{{ end }}</span>
+                            {{- with $project.tech }}{{ $bar }}<em class="resume-stack">{{ delimit . ", " }}</em>{{ end }}
+                            {{- with $project.more }} <a class="resume-more" href="{{ . }}">Read more<span class="resume-sr"> about {{ $project.name }}</span></a>{{ end }}
+                        </span>
+                        {{- with $project.start }}
+                        <span class="resume-dates">{{ partial "apps/resume/dates.html" (dict "start" . "end" $project.end) }}</span>
+                        {{- end }}
+                    </h3>
+                    <ul class="resume-points">
+                        {{- range $project.highlights }}
+                        <li>{{ $bullet }}{{ $page.RenderString . }}</li>
                         {{- end }}
                     </ul>
                 </div>
@@ -114,55 +129,12 @@ gives the sheet its own letter-size pages.
             </section>
             {{- end }}
 
-            {{- with $r.projects }}
-            <section class="resume-section" aria-labelledby="resume-projects">
-                <h2 class="resume-section-title" id="resume-projects">Projects</h2>
-                {{- range $project := . }}
-                <div class="resume-entry">
-                    <h3 class="resume-entry-title">
-                        <strong class="resume-role">{{ $project.name }}</strong>
-                        <span class="resume-meta">
-                            {{- with $project.url }}{{ $bar }}<a href="{{ . }}">{{ $project.urlText | default (partial "apps/resume/link-text.html" (dict "url" .)) }}</a>{{ end -}}
-                            {{- with $project.context }}{{ $bar }}{{ . }}{{ end -}}
-                            {{- with $project.start }}{{ $bar }}{{ partial "apps/resume/dates.html" (dict "start" . "end" $project.end) }}{{ end -}}
-                        </span>
-                    </h3>
-                    {{- if or $project.summary $project.more }}
-                    <p class="resume-value">
-                        {{- with $project.summary }}{{ $page.RenderString . }}{{ end -}}
-                        {{- with $project.more }} <a class="resume-more" href="{{ . }}">Read more<span class="resume-sr"> about {{ $project.name }}</span></a>{{ end -}}
-                    </p>
-                    {{- end }}
-                    <ul class="resume-points">
-                        {{- range $project.highlights }}
-                        <li>{{ $bullet }}{{ $page.RenderString . }}</li>
-                        {{- end }}
-                        {{- with $project.tech }}
-                        <li class="resume-tech"><span class="resume-tech-label">Tech:</span> {{ delimit . ", " }}</li>
-                        {{- end }}
-                    </ul>
-                </div>
-                {{- end }}
-            </section>
-            {{- end }}
-
             {{- with $r.awards }}
             <section class="resume-section" aria-labelledby="resume-awards">
                 <h2 class="resume-section-title" id="resume-awards">Awards</h2>
                 <ul class="resume-points resume-list">
                     {{- range . }}
-                    <li>{{ $bullet }}<strong>{{ .title }}</strong>, {{ if .url }}<a href="{{ .url }}">{{ .event }}</a>{{ else }}{{ .event }}{{ end }}{{ with .date }}, {{ partial "apps/resume/dates.html" (dict "start" .) }}{{ end }}</li>
-                    {{- end }}
-                </ul>
-            </section>
-            {{- end }}
-
-            {{- with $r.publications }}
-            <section class="resume-section" aria-labelledby="resume-publications">
-                <h2 class="resume-section-title" id="resume-publications">Publications &amp; Talks</h2>
-                <ul class="resume-points resume-list">
-                    {{- range . }}
-                    <li>{{ $bullet }}<strong>{{ .title }}</strong>{{ with .detail }}: {{ $page.RenderString . }}.{{ end }}{{ with .url }} <a href="{{ . }}">{{ partial "apps/resume/link-text.html" (dict "url" .) }}</a>{{ end }}{{ with .date }}, {{ partial "apps/resume/dates.html" (dict "start" .) }}{{ end }}</li>
+                    <li>{{ $bullet }}{{ $page.RenderString . }}</li>
                     {{- end }}
                 </ul>
             </section>
@@ -172,10 +144,12 @@ gives the sheet its own letter-size pages.
             <section class="resume-section" aria-labelledby="resume-education">
                 <h2 class="resume-section-title" id="resume-education">Education</h2>
                 {{- range . }}
-                <p class="resume-education">
-                    <strong class="resume-role">{{ .degree }}{{ with .field }} in {{ . }}{{ end }}</strong>{{ with .school }}, {{ . }}{{ end }}{{ with .location }}, {{ . }}{{ end }}
-                    {{- if or .start .end .expected }}{{ $bar }}{{ partial "apps/resume/dates.html" (dict "start" .start "end" .end "expected" .expected) }}{{ end }}
-                </p>
+                <h3 class="resume-entry-title resume-education">
+                    <span><span class="resume-org">{{ .school }}</span>{{ with .degree }}{{ $bar }}{{ . }}{{ end }}{{ with .field }} in {{ . }}{{ end }}</span>
+                    {{- if or .start .end .expected }}
+                    <span class="resume-dates">{{ partial "apps/resume/dates.html" (dict "start" .start "end" .end "expected" .expected) }}</span>
+                    {{- end }}
+                </h3>
                 {{- end }}
             </section>
             {{- end }}

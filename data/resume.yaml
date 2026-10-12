@@ -3,33 +3,24 @@
 # (body.md) and as structured data (jsonld.html). Printing /resume/ makes
 # static/resume.pdf, so this file is the single source for both.
 #
-# `summary`, `about`, `highlights` and publication `detail` lines are inline
-# markdown: **bold** and [links](https://...) work. Links to pages of this
-# site are root-relative. In print, links show their visible text, so any URL
-# a recruiter must see is written out as text.
+# The layout follows Jake's Resume, the usual one-page format for software
+# engineers: US Letter, one column, "Company | Role" with the dates on the
+# right of the same line. Keep it to one page: short bullets, three or four
+# for the current role and one or two for older ones.
 #
-# Dates are "YYYY-MM" (or "YYYY" when only the year is known). The template
-# prints them as "Feb 2026" and keeps the raw value in <time datetime>. Leave
-# `end` out for a current role.
-#
-# The PDF is ATS-first: one column, standard headings, month-year dates, URLs
-# written out as text. Keep every claim checkable from a public source.
+# `summary`, `highlights` and `awards` are inline markdown: **bold** and
+# [links](https://...) work. Links to pages of this site are root-relative.
+# Dates are "YYYY-MM" (printed as "Feb 2026"); leave `end` out for a current
+# role.
 
 name: Ankush Singh
-headline: "Co-founder & CTO at Construct Computer | Full-Stack AI Agent Engineer | TypeScript, Cloudflare Workers, MCP"
-# Printed as plain text in front of the contact links
-location: "India | Remote"
 
 summary: >-
-  Co-founder and CTO who builds AI agent products end to end, from the agent
-  runtime and evals to the interface people use. Architected and wrote most of
-  Construct Computer, where each AI employee gets its own cloud computer, on
-  TypeScript, React, Cloudflare Workers, Durable Objects and the Model Context
-  Protocol (MCP); it launched as **#1 Product of the Day on Product Hunt**.
-  Shipping production software since 2022 across AI agents, LLM evals,
-  developer tools and Solana, with a product acquired by Forward Research
-  (BetterIDEa), 14 published npm packages (~19K downloads) and 13 hackathon
-  and coding-competition wins.
+  Co-founder of Construct Computer, a workforce of AI employees that each get
+  their own cloud computer, which launched as **#1 Product of the Day on
+  Product Hunt**. Full-stack engineer shipping AI agents, MCP servers,
+  Cloudflare backends and Solana programs since 2022. Previously built
+  BetterIDEa, a developer tool acquired by Forward Research.
 
 # The PDF made from this page, and the name it is saved under
 pdf: /resume.pdf
@@ -49,181 +40,84 @@ contact:
     url: https://ankush.one
     printOnly: true
 
-# Section order on the page and in the PDF:
-# Summary, Experience, Skills, Projects, Awards, Publications & Talks, Education.
-
 experience:
   - org: Construct Computer
     url: https://construct.computer
-    role: Co-founder & CTO
-    location: Remote, India
+    role: Co-founder
     start: "2026-02"
-    # One plain line under the role heading that says what the company is.
-    about: "A workforce of AI employees that each get their own cloud computer, on a desktop where you can watch them work and take over; paid plans from $9/month."
     highlights:
-      - "Architected and wrote most of the platform: a TypeScript monorepo with an agent runtime on Cloudflare Workers and Durable Objects, a React desktop where users watch agents live over WebSockets, MCP apps, long-term memory and reusable workflows."
-      - "Migrated the backend from a Docker-container-per-user VPS monolith to Cloudflare Workers, Durable Objects, Containers, R2 and D1 in ~10 days, retiring ~1,300 lines of container code so cost tracks work, not signups; later rebuilt it as v2 and moved every user."
-      - "Hardened agent tool use: commands run in disposable sandboxes as a least-privilege user (no sudo, per-command elevation) with live user takeover; open-sourced Foxwatch, the Cloudflare monitor behind status.construct.computer."
-      - "Shipped the Jev decision model into memory entity resolution 5 days after release: one 358 to 611 ms call replaced up to 3 calls to a JSON-schema-constrained Llama 4 Scout judge on Workers AI (now the fallback), at ~$0.017 per 1,000 decisions."
-      - "First-authored [Construct Technical Report 2026-01](https://construct.computer/blog/clef-vs-jev-benchmark/), a drop-in model-swap study of Clef and Clef-flash vs Jev (117 synthetic cases, 1,053 calls), and open-sourced CWAB, a deterministic benchmark running Construct, OpenClaw and Hermes Agent on 5 LLMs."
-      - "Built and launched NepoNet (nepotism.network) within four weeks of the Construct launch: a warm-intro finder for X with a remote MCP server (OAuth), an OpenAPI tools API, llms.txt and an Agent Skill for coding agents; #9 Product of the Day."
-    tech: [TypeScript, React, Hono, Cloudflare Workers, Durable Objects, Agents SDK, Sandboxes, Workers AI, Vectorize, D1, R2, MCP]
+      - "Built the agent platform: a runtime on Cloudflare Workers and Durable Objects, a React desktop to watch agents work live, MCP apps, long-term memory and sandboxed tools."
+      - "Moved the backend off a container-per-user VPS onto Workers, Durable Objects, Containers, R2 and D1 in ~10 days."
+      - "Shipped the Jev decision model into agent memory 5 days after release (1 call instead of up to 3 LLM-judge calls) and first-authored a [1,053-call model-swap study](https://construct.computer/blog/clef-vs-jev-benchmark/)."
+      - "Launched [NepoNet](https://nepotism.network), a warm-intro finder for X with a remote MCP server and OAuth (#9 Product of the Day)."
 
-  - org: Self-employed
-    role: Independent Developer
-    location: Remote, India
-    start: "2025-11"
-    end: "2026-02"
-    highlights:
-      - "Built PumpMyClaw, a platform that runs autonomous AI trading agents (OpenClaw with 5 skills) on Solana and Monad, each in its own isolated Docker container, a design later carried into Construct's first version."
-      - "Built pixels.earth, a real-time on-chain pixel canvas on Solana using MagicBlock ephemeral rollups and Anchor programs, and published create-magicblock, a CLI that scaffolds working MagicBlock apps (1,310 npm downloads)."
-    tech: [TypeScript, Rust, Anchor, Solana, MagicBlock, Docker, OpenClaw, React, Node.js]
-
-  - org: Forward Research (Arweave / AO)
+  - org: Forward Research
     url: https://fwd.arweave.net
     role: Entrepreneur in Residence
-    location: Remote, India
     start: "2024-11"
     end: "2025-10"
     highlights:
-      - "Joined after Forward Research, the team behind AO, acquired BetterIDEa; rewrote the IDE for HyperBEAM with a rebuilt terminal and a GraphQL explorer (its @betteridea/codecell package has 3,717 npm downloads)."
-      - "Made the AO Package Manager (APM) part of AO's core: 6 merged PRs to permaweb/aos (2024 to 2025), including #454, which loads APM by default in every new aos process; the apm-tool CLI has 2,104 npm downloads."
-      - "Built WAuth, a social-login SDK (Google, X, GitHub, Discord) with invisible non-custodial wallets (~5,300 npm downloads), later handed to ArLink Labs and rebuilt on Cloudflare Workers as ArlinkAuth."
-      - "Shipped Subspace (Discord-style chat on AO), Visual AO (flow-based programming) and the ao-fetch and LuaX developer libraries."
-    tech: [TypeScript, React, Next.js, Node.js, Lua, GraphQL, OAuth, Arweave, AO, HyperBEAM]
+      - "Rewrote BetterIDEa for HyperBEAM and made the AO Package Manager load by default in every aos process."
+      - "Built WAuth, a social-login SDK with invisible wallets (~5,300 npm downloads), later adopted by ArLink Labs."
 
   - org: Arweave India
     url: https://arweaveindia.com
     role: Developer Relations Engineer
-    location: Remote, India
     start: "2024-06"
     end: "2025-04"
     highlights:
-      - "Organised Arweave Day India 2025, a multi-day summit and hackerhouse, and gave ADI Tour talks in Gurgaon and Chandigarh."
-      - "Co-organised hackerhouse cohorts, built their cohort and agenda pages, mentored 100+ developers shipping on Arweave and AO, and judged 40+ builds at Longview Labs' Arweave Full Stack Hack."
-    tech: [React, Next.js, Express.js, Tailwind CSS, Arweave, AO]
+      - "Organised Arweave Day India 2025 and hackerhouses, mentored 100+ developers and judged 40+ hackathon builds."
 
   - org: BetterIDEa
     url: https://betteridea.arweave.net
     role: Founder
-    location: Remote, India
     start: "2023-12"
     end: "2024-10"
     highlights:
-      - "Built BetterIDEa, a web IDE for Arweave and AO, at Arweave India's first hackerhouse, where it won the Grand Prize, and debuted it alongside the AO testnet launch (Feb 2024)."
-      - "Grew it into a developer tooling suite with npm packages, a CLI, documentation and the AO Package Manager (APM) through the three-month Arweave India Launchpad, and demoed it at Demo Day (Jul 2024); Forward Research then acquired it."
-    tech: [TypeScript, React, Next.js, Lua, AO, Arweave]
+      - "Built a web IDE for Arweave and AO that won a hackerhouse Grand Prize and was acquired by Forward Research."
 
   - org: Physics Wallah
     url: https://www.pw.live
     role: Software Engineer Intern
-    location: India
     start: "2022-11"
     end: "2023-05"
     highlights:
-      - "Built a live-class tool for faculty (New Products Initiative) in Electron, React and TypeScript with in-class questions, real-time YouTube chat parsing (10K+ messages) and analytics, used in classes with 50K+ concurrent viewers."
-    tech: [Electron, React, TypeScript, Tauri, Python, Flask, YouTube Data API, AWS, Linux]
+      - "Built a live-class tool parsing real-time YouTube chat (10K+ messages) for classes with 50K+ concurrent viewers."
 
-# Printed as "Label: item, item, item", one line per group, most important first.
-# Every item is backed by a bullet above or a project below. Extra items for
-# tailored variants (Swift, C++/ESP-IDF, React Native, Expo, Sui, Walrus,
-# MongoDB, quantization, webhooks) are left out on purpose: each line should match what the postings ask for.
-skills:
-  - label: AI & Agents
-    items: [AI agents, Large language models (LLMs), Model Context Protocol (MCP), Tool calling (function calling), Agent memory & retrieval, Multi-agent orchestration, Sandboxed execution, Human-in-the-loop, Evals & benchmarks, LLM-as-judge, Structured outputs]
-  - label: Cloudflare
-    items: [Cloudflare Workers, Durable Objects, Agents SDK, Workers AI, AI Gateway, Vectorize, D1, R2, KV, Queues, Sandboxes]
-  - label: Languages
-    items: [TypeScript, JavaScript, Rust, Python, Lua, SQL]
-  - label: Full-Stack
-    items: [Node.js, Hono, Express.js, REST APIs, OpenAPI, GraphQL, WebSockets, React, Next.js, Tailwind CSS, Electron]
-  - label: Web3
-    items: [Solana, Anchor, Pinocchio, PDAs, SPL Token, MagicBlock, Arweave, AO, HyperBEAM, Solidity, EVM]
-  - label: ML & DevOps
-    items: [ONNX Runtime Web, TensorFlow.js, WebGPU, YOLO, CLIP embeddings, OpenCV, Docker, GitHub Actions, CI/CD, AWS]
-
-# The URL is printed as text in the PDF, so recruiters and parsers can see it.
 projects:
-  - name: TradeX (formerly PokePerps)
+  - name: TradeX
     url: https://tradex.cards
-    context: Side project
+    tech: [Rust, Solana, MCP]
     start: "2026-02"
     end: "2026-03"
-    summary: Non-custodial perpetual futures on Pokemon card prices on Solana mainnet, shut down in Mar 2026
     more: /projects/2026.pokeperps/
     highlights:
-      - "Wrote the USDC-margined Rust (Pinocchio) program with up to 20x leverage, a keeper oracle that published TCGplayer prices on-chain every 30 seconds, and an MCP server so AI agents could trade."
-      - "Took the smart contract through an independent security audit and fixed all 12 findings (1 high, 5 medium, 6 low); the report is public at tradex.cards/audit-032026.pdf."
-    tech: [Rust, Pinocchio, Solana, Bun, Elysia, SQLite, React, MCP]
+      - "Pokemon card perpetual futures with up to 20x leverage; passed an independent audit with all 12 findings fixed."
 
   - name: MyPokemonScanner
-    # mypokemonscanner.com is offline, so the URL is a Wayback Machine snapshot.
     url: https://web.archive.org/web/20260227180613/https://mypokemonscanner.com/
-    urlText: web.archive.org (mypokemonscanner.com)
+    tech: [ONNX Runtime Web, WebGPU, React]
     start: "2026-01"
-    summary: Pokemon card scanner that runs entirely in the browser, offline and without uploading images
     more: /projects/2026.pokemon-scanner/
     highlights:
-      - "Trained a YOLO11n card detector (~10 ms) and matched MobileCLIP-S2 embeddings against 40K English and Japanese cards (50 to 80 ms on desktop), after testing CLIP, SigLIP and FP16/Int8 quantization."
-    tech: [ONNX Runtime Web, TensorFlow.js, WebGPU, WASM, OpenCV, React, Vite]
+      - "Offline in-browser scanner matching photos to 40K cards with a custom YOLO11n detector and MobileCLIP-S2."
 
-  - name: Open source
-    url: https://github.com/ankushKun
-    summary: Packages, tools and upstream contributions
-    highlights:
-      - "Published 14 npm packages with ~19K downloads (top: @betteridea/codecell, @wauth/sdk, apm-tool, @construct-computer/app-sdk) and merged PRs to permaweb/aos (6), ao-cookbook, ar-io/docs, DefiLlama-Adapters and Wander."
-    tech: [TypeScript, Lua, Cloudflare Workers, Node.js]
+# One line per group, "Label: item, item, item"
+skills:
+  - label: Languages
+    items: [TypeScript, JavaScript, Rust, Python, Lua, SQL]
+  - label: AI & Agents
+    items: [AI agents, Model Context Protocol (MCP), Tool calling, Agent memory, Retrieval, Evals, Structured outputs]
+  - label: Backend & Cloud
+    items: [Node.js, Hono, GraphQL, WebSockets, Cloudflare Workers, Durable Objects, D1, R2, Docker, AWS]
+  - label: Frontend & Web3
+    items: [React, Next.js, Tailwind CSS, Electron, Solana, Anchor, Arweave, AO]
 
 awards:
-  - title: "#1 Product of the Day and #5 Product of the Week in Productivity"
-    event: Product Hunt, Construct Computer launch
-    date: "2026-08"
-  - title: "#9 Product of the Day"
-    event: Product Hunt, NepoNet (Nepotism Network) launch
-    date: "2026-09"
-  - title: Selected for the Build Sprint
-    event: TinyFish Accelerator, for founders building AI agents (Construct Computer)
-    date: "2026-03"
-  - title: "Coinbase Developer Platform 3rd place and 2 pool prizes"
-    event: ETHIndia 2024
-    date: "2024-12"
-  - title: 3rd prize
-    event: Weavers Raid III, for DumDumDeploy (later Arlink)
-    date: "2024-08"
-  - title: Grand Prize
-    event: Arweave India Hackerhouse Cohort 1, Bangalore, for BetterIDEa
-    date: "2023-12"
-  - title: Tableland pool prize
-    event: ETHOnline 2023 (ETHGlobal), for GitRaven
-    date: "2023-10"
-  - title: 2nd place
-    event: Hack-O-Octo 1.0, for GitRaven
-    date: "2023-10"
-  - title: 1st prize
-    event: C-DAC Vegathon finals at IIT Guwahati, flight controller on the VEGA processor
-    date: "2023-06"
-  - title: 1st place
-    event: IIT Roorkee Intel oneAPI hackathon
-    date: "2023-03"
-
-# "Publications & Talks". Each line is inline markdown.
-publications:
-  - title: "Construct Technical Report 2026-01, \"Compatible APIs, Incompatible Thresholds\""
-    url: https://construct.computer/blog/clef-vs-jev-benchmark/
-    detail: "First author, with Nischal Naik. Clef and Clef-flash vs Jev on five production decision specs, 1,053 calls"
-    date: "2026-10"
-  - title: Construct blog
-    url: https://construct.computer/blog
-    detail: "11 posts on agent infrastructure, evals and the product, including running agents on Cloudflare and Jev in memory"
-  - title: "Publish to npm from GitHub Actions using OIDC"
-    url: https://ankush.one/blogs/npm-oidc-publishing/
-    detail: "Tutorial on tokenless trusted publishing"
-  - title: Talks and video
-    url: https://youtube.com/@AnkushKun
-    detail: "ADI Tour developer talks (2025), product demos and tutorials"
+  - "**#1 Product of the Day** on Product Hunt (Aug 2026); TinyFish Accelerator Build Sprint (Mar 2026)."
+  - "**13 hackathon and competition wins**, including 1st at C-DAC Vegathon and prizes at ETHIndia and ETHOnline."
 
 education:
-  - degree: Bachelor of Engineering (B.E.)
+  - degree: Bachelor of Engineering
     field: Computer Science
     school: Chandigarh University
-    location: Punjab, India

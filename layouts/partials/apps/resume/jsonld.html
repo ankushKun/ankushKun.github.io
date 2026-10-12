@@ -3,8 +3,8 @@ Structured data for /resume/: a ProfilePage whose mainEntity is the site's
 Person (layouts/partials/seo/person.html, same @id) with what the resume adds,
 from data/resume.yaml:
 
-- hasOccupation  the current jobTitle from [params.profile] (the resume's
-                 headline only as a fallback), with every skill listed on it
+- hasOccupation  the current jobTitle from [params.profile], with every skill
+                 listed on it
 - alumniOf       past roles as OrganizationRole (role, years, organisation),
                  plus the school from Education
 - hasCredential  the degree
@@ -18,10 +18,9 @@ Usage: {{ partial "apps/resume/jsonld.html" . }}
 {{- $r := hugo.Data.resume -}}
 {{- $person := partial "seo/person.html" $page -}}
 
-{{- /* The occupation is named after the sitewide jobTitle, not the PDF's older
-headline, so this Person node (same @id as every other page) agrees with the
-rest of the site. */ -}}
-{{- with site.Params.profile.jobTitle | default $r.headline -}}
+{{- /* The occupation is named after the sitewide jobTitle, so this Person
+node (same @id as every other page) agrees with the rest of the site. */ -}}
+{{- with site.Params.profile.jobTitle -}}
 {{- $occupation := dict "@type" "Occupation" "name" . -}}
 {{- $skills := slice -}}
 {{- range $r.skills }}{{ range .items }}{{ $skills = $skills | append . }}{{ end }}{{ end -}}
@@ -47,11 +46,7 @@ rest of the site. */ -}}
 {{- with $alumniOf }}{{ $person = merge $person (dict "alumniOf" .) }}{{ end -}}
 {{- with $credentials }}{{ $person = merge $person (dict "hasCredential" .) }}{{ end -}}
 {{- $awards := slice -}}
-{{- range $r.awards -}}
-{{- $award := printf "%s, %s" .title .event -}}
-{{- with .date }}{{ $award = printf "%s (%s)" $award (partial "apps/resume/month.html" .) }}{{ end -}}
-{{- $awards = $awards | append $award -}}
-{{- end -}}
+{{- range $r.awards }}{{ $awards = $awards | append (. | markdownify | plainify | htmlUnescape) }}{{ end -}}
 {{- with $awards }}{{ $person = merge $person (dict "award" .) }}{{ end -}}
 
 {{- $node := dict
