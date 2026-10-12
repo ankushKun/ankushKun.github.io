@@ -34,11 +34,15 @@ defaults:
   run:
     shell: bash
 
+# Every job pins its runner image instead of ubuntu-latest, which starts
+# moving to Ubuntu 26.04 on 2026-10-19. Moving on is a deliberate one-line
+# change per job after a test run on ubuntu-26.04 (Dependabot does not bump
+# runner labels).
 jobs:
   # Build job
   build:
     if: github.event_name != 'schedule'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       # configure-pages only reads the Pages settings (enablement is off)
@@ -48,13 +52,18 @@ jobs:
       HUGO_VERSION: 0.163.3
     steps:
       - name: Install Hugo CLI
+        # Checked against the release's own checksum list before installing.
         run: |
-          wget -O ${{ runner.temp }}/hugo.deb https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-amd64.deb \
-          && sudo dpkg -i ${{ runner.temp }}/hugo.deb
+          base="https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}"
+          deb="hugo_extended_${HUGO_VERSION}_linux-amd64.deb"
+          cd "$RUNNER_TEMP"
+          wget -q "$base/$deb" "$base/hugo_${HUGO_VERSION}_checksums.txt"
+          grep " ${deb}\$" "hugo_${HUGO_VERSION}_checksums.txt" | sha256sum --check --strict
+          sudo dpkg -i "$deb"
         # run: sudo snap install dart-sass
       # - name: Install Dart Sass
       - name: Checkout
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
           # Nothing here pushes; keep the token out of .git/config
@@ -65,7 +74,7 @@ jobs:
       - name: Setup Pages
         id: pages
         if: github.event_name != 'pull_request'
-        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
       - name: Install Node.js dependencies
         run: "[[ -f package-lock.json || -f npm-shrinkwrap.json ]] && npm ci || true"
       - name: Read deploy commit date
@@ -174,22 +183,25 @@ jobs:
           printf '%s' "$INDEXNOW_KEY" > "public/${INDEXNOW_KEY}.txt"
       - name: Upload artifact
         if: github.event_name != 'pull_request'
-        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: ./public
+          # Since v4 dotfiles are left out unless asked for, and the site
+          # serves public/.well-known/ (CommentKit verification, MCP card).
+          include-hidden-files: true
 
   # Advisory lint: no-undef / no-unused-vars over assets/js (eslint.config.js).
   # Its own job with a read-only token kept out of .git/config, because npx
   # downloads ESLint and its dependencies at run time (there is no lockfile).
   lint:
     if: github.event_name != 'schedule'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     continue-on-error: true
     steps:
       - name: Checkout
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Lint JavaScript
@@ -200,7 +212,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: build
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     permissions:
@@ -209,7 +221,7 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
 
       # Post-deploy hooks. Each one is a no-op until its secrets exist and can
       # never fail the deploy (see docs/cloudflare.md for the setup).
@@ -257,7 +269,7 @@ jobs:
   # those runs skip the link check.
   links:
     if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.actor != 'github-actions[bot]')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
       issues: write
@@ -265,11 +277,16 @@ jobs:
       HUGO_VERSION: 0.163.3
     steps:
       - name: Install Hugo CLI
+        # Checked against the release's own checksum list before installing.
         run: |
-          wget -O ${{ runner.temp }}/hugo.deb https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-amd64.deb \
-          && sudo dpkg -i ${{ runner.temp }}/hugo.deb
+          base="https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}"
+          deb="hugo_extended_${HUGO_VERSION}_linux-amd64.deb"
+          cd "$RUNNER_TEMP"
+          wget -q "$base/$deb" "$base/hugo_${HUGO_VERSION}_checksums.txt"
+          grep " ${deb}\$" "hugo_${HUGO_VERSION}_checksums.txt" | sha256sum --check --strict
+          sudo dpkg -i "$deb"
       - name: Checkout
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
       - name: Build with Hugo

@@ -1,7 +1,14 @@
-# Workflow actions are pinned to commit SHAs; Dependabot keeps the pins current.
+# Workflow actions are pinned to commit SHAs; Dependabot keeps the pins (and
+# their version comments) current across .github/workflows/. It does not touch
+# runs-on labels, so the ubuntu-24.04 pin in the workflows is moved by hand.
 version: 2
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "monthly"
+    # One pull request a month for all the action bumps instead of one each.
+    groups:
+      actions:
+        patterns:
+          - "*"
