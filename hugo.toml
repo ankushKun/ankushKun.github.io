@@ -128,7 +128,7 @@ locale = "en_US"
 # Origin of the external-link proxy Worker (workers/site-worker), e.g.
 # "https://links.ankush.one". Empty = feature off: external links open in a new
 # tab unless their host is known to allow embedding. See docs/cloudflare.md.
-linkProxy = ""
+linkProxy = "https://ankush-site-worker.ankushkun.workers.dev"
 
 # Service worker (/sw.js, offline desktop, instant repeat visits). Production
 # builds only. Set enabled = false and deploy to switch it off for everyone:
