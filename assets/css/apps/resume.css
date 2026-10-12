@@ -520,7 +520,7 @@ html[data-appearance="dark"] {
     }
 
     .resume .resume-sheet {
-        --rs-size: 10pt !important;
+        --rs-size: 10.5pt !important;
         --rs-ink: #000;
         --rs-ink-body: #1a1a1a;
         --rs-ink-soft: #444;

@@ -8,7 +8,7 @@
 # right of the same line. Keep it to one page: short bullets, three or four
 # for the current role and one or two for older ones.
 #
-# `summary`, `highlights` and `awards` are inline markdown: **bold** and
+# `summary` and `highlights` are inline markdown: **bold** and
 # [links](https://...) work. Links to pages of this site are root-relative.
 # Dates are "YYYY-MM" (printed as "Feb 2026"); leave `end` out for a current
 # role.
@@ -20,7 +20,7 @@ summary: >-
   their own cloud computer, which launched as **#1 Product of the Day on
   Product Hunt**. Full-stack engineer shipping AI agents, MCP servers,
   Cloudflare backends and Solana programs since 2022. Previously built
-  BetterIDEa, a developer tool acquired by Forward Research.
+  BetterIDEa, acquired by Forward Research.
 
 # The PDF made from this page, and the name it is saved under
 pdf: /resume.pdf
@@ -47,9 +47,9 @@ experience:
     start: "2026-02"
     highlights:
       - "Built the agent platform: a runtime on Cloudflare Workers and Durable Objects, a React desktop to watch agents work live, MCP apps, long-term memory and sandboxed tools."
-      - "Moved the backend off a container-per-user VPS onto Workers, Durable Objects, Containers, R2 and D1 in ~10 days."
+      - "Migrated from a container-per-user VPS to Workers, Durable Objects, Containers, R2 and D1 in ~10 days."
       - "Shipped the Jev decision model into agent memory 5 days after release (1 call instead of up to 3 LLM-judge calls) and first-authored a [1,053-call model-swap study](https://construct.computer/blog/clef-vs-jev-benchmark/)."
-      - "Launched [NepoNet](https://nepotism.network), a warm-intro finder for X with a remote MCP server and OAuth (#9 Product of the Day)."
+      - "Open-sourced [CWAB](https://github.com/construct-computer/cloud-workspace-agent-benchmark), a reproducible benchmark of Construct vs OpenClaw and Hermes Agent on 5 LLMs, and [Foxwatch](https://github.com/hypervoid-inc/foxwatch), the monitor behind our status page."
 
   - org: Forward Research
     url: https://fwd.arweave.net
@@ -66,7 +66,7 @@ experience:
     start: "2024-06"
     end: "2025-04"
     highlights:
-      - "Organised Arweave Day India 2025 and hackerhouses, mentored 100+ developers and judged 40+ hackathon builds."
+      - "Organised Arweave Day India 2025 and hackerhouses; mentored 100+ developers and judged 40+ builds."
 
   - org: BetterIDEa
     url: https://betteridea.arweave.net
@@ -74,7 +74,7 @@ experience:
     start: "2023-12"
     end: "2024-10"
     highlights:
-      - "Built a web IDE for Arweave and AO that won a hackerhouse Grand Prize and was acquired by Forward Research."
+      - "Built a web IDE and package manager for AO, launched with its testnet and acquired by Forward Research."
 
   - org: Physics Wallah
     url: https://www.pw.live
@@ -84,38 +84,34 @@ experience:
     highlights:
       - "Built a live-class tool parsing real-time YouTube chat (10K+ messages) for classes with 50K+ concurrent viewers."
 
+# Live work only: every link here has to open.
 projects:
-  - name: TradeX
-    url: https://tradex.cards
-    tech: [Rust, Solana, MCP]
-    start: "2026-02"
-    end: "2026-03"
-    more: /projects/2026.pokeperps/
+  - name: NepoNet
+    url: https://nepotism.network
+    tech: [TypeScript, Hono, Cloudflare Workers, React, MCP]
+    start: "2026-09"
+    more: /projects/2026.neponet/
     highlights:
-      - "Pokemon card perpetual futures with up to 20x leverage; passed an independent audit with all 12 findings fixed."
+      - "Warm-intro finder for X that scores follow-graph routes and drafts the first message, with a remote MCP server (OAuth) so coding agents can use it; **#9 Product of the Day** on Product Hunt."
 
-  - name: MyPokemonScanner
-    url: https://web.archive.org/web/20260227180613/https://mypokemonscanner.com/
-    tech: [ONNX Runtime Web, WebGPU, React]
-    start: "2026-01"
-    more: /projects/2026.pokemon-scanner/
+  - name: create-magicblock
+    url: https://github.com/ankushKun/create-magicblock
+    tech: [TypeScript, Solana, Anchor, MagicBlock]
+    start: "2025-12"
+    more: /projects/2025.create-magicblock/
     highlights:
-      - "Offline in-browser scanner matching photos to 40K cards with a custom YOLO11n detector and MobileCLIP-S2."
+      - "CLI that scaffolds a working MagicBlock app (Solana ephemeral rollups) in seconds; 1,300+ npm downloads."
 
 # One line per group, "Label: item, item, item"
 skills:
   - label: Languages
     items: [TypeScript, JavaScript, Rust, Python, Lua, SQL]
   - label: AI & Agents
-    items: [AI agents, Model Context Protocol (MCP), Tool calling, Agent memory, Retrieval, Evals, Structured outputs]
+    items: [AI agents, Model Context Protocol (MCP), Tool calling, Agent memory, Evals, Structured outputs]
   - label: Backend & Cloud
-    items: [Node.js, Hono, GraphQL, WebSockets, Cloudflare Workers, Durable Objects, D1, R2, Docker, AWS]
+    items: [Node.js, Hono, WebSockets, Cloudflare Workers, Durable Objects, D1, R2, Docker, AWS]
   - label: Frontend & Web3
     items: [React, Next.js, Tailwind CSS, Electron, Solana, Anchor, Arweave, AO]
-
-awards:
-  - "**#1 Product of the Day** on Product Hunt (Aug 2026); TinyFish Accelerator Build Sprint (Mar 2026)."
-  - "**13 hackathon and competition wins**, including 1st at C-DAC Vegathon and prizes at ETHIndia and ETHOnline."
 
 education:
   - degree: Bachelor of Engineering
