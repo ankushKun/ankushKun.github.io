@@ -16,11 +16,10 @@
 name: Ankush Singh
 
 summary: >-
-  Co-founder of Construct Computer, a workforce of AI employees that each get
-  their own cloud computer, which launched as **#1 Product of the Day on
-  Product Hunt**. Full-stack engineer shipping AI agents, MCP servers,
+  Co-founder of Construct Computer, a workforce of AI employees with their own
+  cloud computers, launched as **#1 Product of the Day on Product Hunt**. Full-stack engineer shipping AI agents, MCP servers,
   Cloudflare backends and Solana programs since 2022. Previously built
-  BetterIDEa, acquired by Forward Research.
+  BetterIDEa, **acquired by Forward Research**.
 
 # The PDF made from this page, and the name it is saved under
 pdf: /resume.pdf
@@ -46,9 +45,9 @@ experience:
     role: Co-founder
     start: "2026-02"
     highlights:
-      - "Built the agent platform: a runtime on Cloudflare Workers and Durable Objects, a React desktop to watch agents work live, MCP apps, long-term memory and sandboxed tools."
-      - "Migrated from a container-per-user VPS to Workers, Durable Objects, Containers, R2 and D1 in ~10 days."
-      - "Shipped the Jev decision model into agent memory 5 days after release (1 call instead of up to 3 LLM-judge calls) and first-authored a [1,053-call model-swap study](https://construct.computer/blog/clef-vs-jev-benchmark/)."
+      - "**Built the agent platform**: a runtime on Cloudflare Workers and Durable Objects, a React desktop to watch agents work live, MCP apps, long-term memory and sandboxed tools."
+      - "Migrated from a container-per-user VPS to Workers, Durable Objects, Containers, R2 and D1 in **~10 days**."
+      - "Shipped the Jev decision model into agent memory **5 days after release** (1 call instead of up to 3 LLM-judge calls) and **first-authored** a [1,053-call model-swap study](https://construct.computer/blog/clef-vs-jev-benchmark/)."
       - "Open-sourced [CWAB](https://github.com/construct-computer/cloud-workspace-agent-benchmark), a reproducible benchmark of Construct vs OpenClaw and Hermes Agent on 5 LLMs, and [Foxwatch](https://github.com/hypervoid-inc/foxwatch), the monitor behind our status page."
 
   - org: Forward Research
@@ -57,8 +56,8 @@ experience:
     start: "2024-11"
     end: "2025-10"
     highlights:
-      - "Rewrote BetterIDEa for HyperBEAM and made the AO Package Manager load by default in every aos process."
-      - "Built WAuth, a social-login SDK with invisible wallets (~5,300 npm downloads), later adopted by ArLink Labs."
+      - "Rewrote BetterIDEa for HyperBEAM and made the AO Package Manager **load by default in every aos process**."
+      - "Built WAuth, a social-login SDK with invisible wallets (**~5,300 npm downloads**), later **adopted by ArLink Labs**."
 
   - org: Arweave India
     url: https://arweaveindia.com
@@ -66,7 +65,7 @@ experience:
     start: "2024-06"
     end: "2025-04"
     highlights:
-      - "Organised Arweave Day India 2025 and hackerhouses; mentored 100+ developers and judged 40+ builds."
+      - "Organised Arweave Day India 2025 and hackerhouses; **mentored 100+ developers** and judged 40+ builds."
 
   - org: BetterIDEa
     url: https://betteridea.arweave.net
@@ -74,7 +73,7 @@ experience:
     start: "2023-12"
     end: "2024-10"
     highlights:
-      - "Built a web IDE and package manager for AO, launched with its testnet and acquired by Forward Research."
+      - "Built a web IDE and package manager for AO, launched with its testnet and **acquired by Forward Research**."
 
   - org: Physics Wallah
     url: https://www.pw.live
@@ -82,7 +81,7 @@ experience:
     start: "2022-11"
     end: "2023-05"
     highlights:
-      - "Built a live-class tool parsing real-time YouTube chat (10K+ messages) for classes with 50K+ concurrent viewers."
+      - "Built a live-class tool parsing real-time YouTube chat (10K+ messages) for **50K+ concurrent viewers**."
 
 # Live work only: every link here has to open.
 projects:
@@ -100,7 +99,7 @@ projects:
     start: "2025-12"
     more: /projects/2025.create-magicblock/
     highlights:
-      - "CLI that scaffolds a working MagicBlock app (Solana ephemeral rollups) in seconds; 1,300+ npm downloads."
+      - "CLI that scaffolds a working MagicBlock app (Solana ephemeral rollups) in seconds; **1,300+ npm downloads**."
 
 # One line per group, "Label: item, item, item"
 skills:
