@@ -229,14 +229,20 @@ def build_cover(vid, blob):
     return f"/music/covers/{vid}.jpg"
 
 # Flat playlist entries often carry no artist (auto-generated "Topic" uploads),
-# so artists already filled in music.json - by hand or by an earlier sync - are
-# kept. The manifest hash is built from track ids only, so this never changes it.
+# and the artist a Topic channel is named after is not always the one the
+# release credits (C418's Minecraft tracks sit on "Daniel Rosenfeld - Topic").
+# So titles and artists already in music.json - checked by hand or kept from an
+# earlier sync - win over the playlist. The manifest hash is built from track
+# ids only, so this never changes it.
 known_artists = {}
+known_titles = {}
 try:
     with open(out_path, "r", encoding="utf-8") as f:
         for prev in (json.load(f).get("tracks") or []):
             if prev.get("videoId") and prev.get("artist"):
                 known_artists[prev["videoId"]] = prev["artist"]
+            if prev.get("videoId") and prev.get("title"):
+                known_titles[prev["videoId"]] = prev["title"]
 except (OSError, ValueError):
     pass
 
@@ -271,6 +277,8 @@ for entry in entries:
             artist, title = clean(left, 60), clean(right, 80)
     if vid in known_artists:
         artist = clean(known_artists[vid], 60)
+    if vid in known_titles:
+        title = clean(known_titles[vid], 80)
 
     dur = entry.get("duration")
     try:
