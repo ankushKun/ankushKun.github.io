@@ -1,0 +1,12 @@
+{{- /*
+A resume date as people read it: "2026-02" becomes "Feb 2026", and a bare
+year ("2025") stays as it is. Returns a string.
+
+Usage: {{ partial "apps/resume/month.html" "2026-02" }}
+*/ -}}
+{{- $d := string . -}}
+{{- $out := $d -}}
+{{- if findRE `^\d{4}-\d{2}$` $d -}}
+{{- $out = (time.AsTime (printf "%s-01" $d)) | time.Format "Jan 2006" -}}
+{{- end -}}
+{{- return $out -}}

@@ -8,6 +8,8 @@ from data/resume.yaml:
 - alumniOf       past roles as OrganizationRole (role, years, organisation),
                  plus the school from Education
 - hasCredential  the degree
+- award          the resume's Awards, in place of the site-wide list from
+                 data/wins.yaml, so the page's data matches what it shows
 
 Called from the <head> in baseof.html in place of the plain Person block.
 Usage: {{ partial "apps/resume/jsonld.html" . }}
@@ -44,6 +46,13 @@ rest of the site. */ -}}
 {{- end -}}
 {{- with $alumniOf }}{{ $person = merge $person (dict "alumniOf" .) }}{{ end -}}
 {{- with $credentials }}{{ $person = merge $person (dict "hasCredential" .) }}{{ end -}}
+{{- $awards := slice -}}
+{{- range $r.awards -}}
+{{- $award := printf "%s, %s" .title .event -}}
+{{- with .date }}{{ $award = printf "%s (%s)" $award (partial "apps/resume/month.html" .) }}{{ end -}}
+{{- $awards = $awards | append $award -}}
+{{- end -}}
+{{- with $awards }}{{ $person = merge $person (dict "award" .) }}{{ end -}}
 
 {{- $node := dict
     "@context" "https://schema.org"

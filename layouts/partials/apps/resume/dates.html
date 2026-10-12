@@ -1,0 +1,21 @@
+{{- /*
+A date range for the resume page, each end in a <time> with the raw value:
+"Feb 2026 - Present", "Nov 2024 - Oct 2025", "Expected May 2027" or a single
+date. Ranges use a plain hyphen, which every resume parser reads as a range.
+
+Usage: {{ partial "apps/resume/dates.html" (dict "start" .start "end" .end "expected" .expected "current" true) }}
+`current` prints "Present" when there is a start and no end.
+*/ -}}
+{{- $time := `<time datetime="%s">%s</time>` -}}
+{{- with .start -}}
+{{- printf $time (string .) (partial "apps/resume/month.html" .) | safeHTML -}}
+{{- end -}}
+{{- if .end -}}
+{{- if .start }} - {{ end -}}
+{{- printf $time (string .end) (partial "apps/resume/month.html" .end) | safeHTML -}}
+{{- else if .expected -}}
+{{- if .start }} - {{ end -}}
+Expected {{ printf $time (string .expected) (partial "apps/resume/month.html" .expected) | safeHTML -}}
+{{- else if and .start .current -}}
+{{- " - Present" -}}
+{{- end -}}

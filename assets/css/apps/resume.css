@@ -5,6 +5,9 @@
    PDF button in the toolbar, one sheet of paper on the grey desk. There is
    no script: zoom is a radio group read with :has(:checked), and the sheet
    is set in em so a zoom step reflows the text instead of scaling it.
+   Printing /resume/ makes static/resume.pdf, which applicant tracking
+   systems read as text: one column, no grid or flex in the content, and
+   bullets and separators that are real characters in the markup.
    ================================================ */
 
 :root {
@@ -196,6 +199,10 @@ html[data-appearance="dark"] {
     background: var(--rs-paper);
     box-shadow: var(--rs-sheet-shadow);
     overflow-wrap: break-word;
+    /* No fi/fl ligature glyphs: some parsers read them as one unknown
+       character and lose the word ("certified" -> "certi ed") */
+    font-variant-ligatures: none;
+    font-feature-settings: "liga" 0, "clig" 0;
 }
 
 .resume:has(.resume-zoom-out input:checked) .resume-sheet {
@@ -231,7 +238,7 @@ html[data-appearance="dark"] {
     border-radius: 2px;
 }
 
-/* Name and contact line, centred as on the PDF */
+/* Name, headline and contact line, centred as on the PDF */
 .resume-head {
     text-align: center;
 }
@@ -245,32 +252,58 @@ html[data-appearance="dark"] {
     color: var(--rs-ink);
 }
 
-.resume-contact {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.15em 0;
-    margin-top: 0.45em;
-    list-style: none;
-    font-size: 0.9em;
-    color: var(--rs-ink-soft);
-}
-
-/* The bullet hangs after an item, so a wrapped line never starts with one.
-   The item before the print-only link is the last one on screen. */
-.resume-contact li:not(:last-child)::after {
-    content: "\2022" / "";
-    margin: 0 0.55em;
-    color: var(--rs-ink-soft);
-}
-
-.resume-contact li:has(+ .resume-print-only:last-child)::after {
-    content: none;
-}
-
+.window-content .resume-sheet p.resume-headline,
 .resume-headline {
+    margin-top: 0.35em;
+    font-size: 1em;
     font-weight: 600;
+    line-height: 1.35;
     color: var(--rs-ink);
+}
+
+.window-content .resume-sheet p.resume-contact,
+.resume-contact {
+    margin-top: 0.3em;
+    font-size: 0.9em;
+    line-height: 1.45;
+    color: var(--rs-ink-soft);
+}
+
+/* An item (with the bar in front of it) only wraps as a whole, so an
+   address never splits across lines */
+.resume-contact-item {
+    white-space: nowrap;
+}
+
+.resume-sep {
+    color: var(--rs-ink-soft);
+}
+
+/* On screen the line wraps on narrow windows, where a bar would start the
+   next line. The bars give way to dots that hang after an item, as on the
+   old sheet; the item before the print-only link is the last one on screen.
+   Print keeps the bars, which is the text a parser reads in the PDF. */
+@media screen {
+    .resume-contact {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.15em 0;
+    }
+
+    .resume-contact .resume-sep {
+        display: none;
+    }
+
+    .resume-contact-item:not(:last-child)::after {
+        content: "\2022" / "";
+        margin: 0 0.55em;
+        color: var(--rs-ink-soft);
+    }
+
+    .resume-contact-item:has(+ .resume-print-only:last-child)::after {
+        content: none;
+    }
 }
 
 /* On paper the portfolio link points back at this site; on screen it would
@@ -285,7 +318,7 @@ html[data-appearance="dark"] {
     display: flex;
     align-items: center;
     gap: 0.8em;
-    margin: 1.7em 0 0.9em;
+    margin: 1.5em 0 0.7em;
     font-size: 1.08em;
     font-weight: 700;
     line-height: 1.2;
@@ -300,50 +333,58 @@ html[data-appearance="dark"] {
     border-top: 1px solid var(--rs-rule);
 }
 
+.window-content .resume-sheet p.resume-summary,
+.resume-summary {
+    font-size: 1em;
+    line-height: 1.45;
+    color: var(--rs-ink-body);
+}
+
 .resume-entry + .resume-entry {
     margin-top: 0.85em;
 }
 
-.resume-entry-head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0 1em;
-}
-
+/* "Role, Company | Location | Dates" on one line in normal flow, the way a
+   parser expects it. The meta part wraps under it when the line is full. */
 .window-content .resume-sheet h3.resume-entry-title,
 .resume-entry-title {
-    flex: 1 1 22em;
-    min-width: 0;
     font-size: 1em;
     font-weight: 400;
     line-height: 1.4;
     color: var(--rs-ink);
 }
 
-.resume-org {
+.resume-role {
     font-weight: 700;
 }
 
-.resume-role {
-    color: var(--rs-ink-body);
-}
-
-.resume-dates,
-.resume-more {
-    flex: none;
-    margin-left: auto;
-    font-size: 0.9em;
-    white-space: nowrap;
+.resume-meta {
     color: var(--rs-ink-soft);
-    font-variant-numeric: tabular-nums;
 }
 
+/* One line on what the company or project is, under its heading */
+.window-content .resume-sheet :is(p.resume-about, p.resume-value),
+.resume-about,
+.resume-value {
+    margin-top: 0.1em;
+    font-size: 1em;
+    font-style: italic;
+    line-height: 1.4;
+    color: var(--rs-ink-soft);
+}
+
+.resume-more {
+    font-style: normal;
+    white-space: nowrap;
+}
+
+/* The bullet is a character in the markup (it survives text extraction),
+   hung in the gutter so wrapped lines align with the text */
 .window-content .resume-sheet ul.resume-points,
 .resume-points {
     margin-top: 0.3em;
-    padding-left: 1.35em;
-    list-style: disc;
+    padding-left: 1em;
+    list-style: none;
 }
 
 .window-content .resume-sheet .resume-points li,
@@ -354,7 +395,10 @@ html[data-appearance="dark"] {
     color: var(--rs-ink-body);
 }
 
-.resume-points li::marker {
+.resume-bullet {
+    display: inline-block;
+    width: 1em;
+    margin-left: -1em;
     color: var(--rs-ink-soft);
 }
 
@@ -367,37 +411,24 @@ html[data-appearance="dark"] {
     font-weight: 600;
 }
 
-/* Skills & Interests: label column, then the items separated by dots */
+/* Skills: "Label: item, item, item", one group per line */
+.window-content .resume-sheet ul.resume-skills,
 .resume-skills {
-    display: grid;
-    grid-template-columns: max-content minmax(0, 1fr);
-    gap: 0.3em 1.1em;
+    margin: 0;
+    padding: 0;
+    list-style: none;
 }
 
-.resume-skill {
-    display: contents;
-}
-
-.resume-skills dt {
-    font-weight: 700;
-    color: var(--rs-ink);
-}
-
-.resume-skills dd {
+.window-content .resume-sheet .resume-skills li,
+.resume-skills li {
+    margin: 0 0 0.25em;
+    font-size: 1em;
+    line-height: 1.45;
     color: var(--rs-ink-body);
 }
 
-/* Items are separated by real spaces, so a line can only break between two
-   of them; the dot hangs after an item and never starts a line */
-.resume-skills dd span {
-    white-space: nowrap;
-}
-
-.resume-skills dd span:not(:last-child)::after {
-    content: "\00B7" / "";
-    margin-left: 0.4em;
-    margin-right: 0.15em;
-    color: var(--rs-ink-soft);
+.resume-skill-label {
+    color: var(--rs-ink);
 }
 
 .window-content .resume-sheet p.resume-education,
@@ -411,15 +442,15 @@ html[data-appearance="dark"] {
    single-class rules above and painted the themed (pale, in the dark
    appearance) body colour onto the white sheet. Restate the ink with the
    sheet as scope so the paper's own colours always win. */
-.resume-sheet :is(.resume-headline, .resume-entry-title) {
+.resume-sheet :is(.resume-headline, .resume-entry-title, .resume-skill-label) {
     color: var(--rs-ink);
 }
 
-.resume-sheet :is(.resume-contact li, .resume-tech, .resume-more) {
+.resume-sheet :is(.resume-contact, .resume-tech, .resume-meta, .resume-about, .resume-value) {
     color: var(--rs-ink-soft);
 }
 
-.resume-sheet :is(.resume-dates, .resume-points li) {
+.resume-sheet :is(.resume-summary, .resume-points li, .resume-skills li, .resume-education) {
     color: var(--rs-ink-body);
 }
 
@@ -451,23 +482,6 @@ html[data-appearance="dark"] {
         font-size: 1.8em;
     }
 
-    /* The headline gets a line of its own above the links */
-    .resume-contact .resume-headline {
-        flex-basis: 100%;
-    }
-
-    .resume-contact li.resume-headline::after {
-        content: none;
-    }
-
-    .resume-skills {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 0;
-    }
-
-    .resume-skills dd + dt {
-        margin-top: 0.5em;
-    }
 }
 
 /* Finger-sized cells on touch screens */
@@ -495,16 +509,17 @@ html[data-appearance="dark"] {
     }
 }
 
-/* --- Print: the sheet alone, on its own letter-size page ---
+/* --- Print: the sheet alone, on its own letter-size pages ---
    assets/css/apps/print.css already drops the desktop chrome and unfixes
    the window stack (on /resume/ and for the active Resume window). This
    gives the sheet a named page and prints it black on white in either
    appearance, at one size whatever the zoom. Printing /resume/ is how a new
-   static/resume.pdf can be made from data/resume.yaml. */
+   static/resume.pdf is made from data/resume.yaml; it runs to two pages, and
+   an entry never splits across the break. */
 @media print {
     @page resume {
         size: letter;
-        margin: 0.45in 0.55in;
+        margin: 0.42in 0.5in;
     }
 
     /* A change of named page forces a page break, which would leave a blank
@@ -532,7 +547,7 @@ html[data-appearance="dark"] {
     }
 
     .resume .resume-sheet {
-        --rs-size: 9pt !important;
+        --rs-size: 8.9pt !important;
         --rs-ink: #000;
         --rs-ink-body: #1a1a1a;
         --rs-ink-soft: #444;
@@ -545,12 +560,15 @@ html[data-appearance="dark"] {
         background: #fff;
         box-shadow: none;
         border: 0;
+        orphans: 2;
+        widows: 2;
     }
 
-    /* Tighter than on screen: the whole resume fits on one page, as the PDF does */
     .window-content .resume-sheet h2.resume-section-title,
     .resume-section-title {
-        margin: 1.05em 0 0.55em;
+        margin: 1.05em 0 0.5em;
+        break-after: avoid;
+        page-break-after: avoid;
     }
 
     .resume-entry + .resume-entry {
@@ -562,18 +580,21 @@ html[data-appearance="dark"] {
         margin-top: 0.15em;
     }
 
-    .window-content .resume-sheet .resume-points li,
-    .resume-points li {
+    .window-content .resume-sheet :is(.resume-points li, .resume-skills li),
+    .resume-points li,
+    .resume-skills li {
         margin-bottom: 0.05em;
         line-height: 1.32;
     }
 
     .resume-print-only {
-        display: block;
+        display: inline;
     }
 
-    .resume-contact li:has(+ .resume-print-only:last-child)::after {
-        content: "\2022" / "";
+    /* "Read more" points at this site's project pages, which a reader of the
+       PDF has no use for */
+    .resume-more {
+        display: none;
     }
 
     .resume-sheet a,
@@ -581,13 +602,10 @@ html[data-appearance="dark"] {
         text-decoration: none;
     }
 
-    .resume-entry {
+    .resume-entry,
+    .resume-skills li,
+    .resume-list li {
         break-inside: avoid;
         page-break-inside: avoid;
-    }
-
-    .resume-skills {
-        grid-template-columns: max-content 1fr !important;
-        gap: 0.2em 1.1em !important;
     }
 }

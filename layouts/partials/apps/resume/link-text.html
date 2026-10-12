@@ -1,0 +1,16 @@
+{{- /*
+The visible text for a resume link. Printed resumes are read by people and
+parsers that cannot follow a link, so the address itself is the text: the
+URL without its scheme, "www." or trailing slash. A label that is already an
+address (it contains "@") is used as it is. Returns a string.
+
+Usage: {{ partial "apps/resume/link-text.html" (dict "url" .url "label" .label) }}
+*/ -}}
+{{- $label := .label | default "" -}}
+{{- $out := "" -}}
+{{- if in $label "@" -}}
+{{- $out = $label -}}
+{{- else -}}
+{{- $out = .url | replaceRE `^[a-z]+://` "" | replaceRE `^www\.` "" | strings.TrimSuffix "/" -}}
+{{- end -}}
+{{- return $out -}}
