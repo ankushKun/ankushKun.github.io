@@ -17,8 +17,8 @@ name: Ankush Singh
 
 summary: >-
   Co-founder of Construct Computer, a workforce of AI employees with their own
-  cloud computers, launched as **#1 Product of the Day on Product Hunt**. Full-stack engineer shipping AI agents, MCP servers,
-  Cloudflare backends and Solana programs since 2022. Previously built
+  cloud computers, launched as **#1 Product of the Day on Product Hunt**. Full-stack engineer building AI agents, MCP servers,
+  Cloudflare backends, Solana programs and firmware. Previously built
   BetterIDEa, **acquired by Forward Research**.
 
 # The PDF made from this page, and the name it is saved under
@@ -48,7 +48,7 @@ experience:
       - "**Built the agent platform**: a runtime on Cloudflare Workers and Durable Objects, a React desktop to watch agents work live, MCP apps, long-term memory and sandboxed tools."
       - "Migrated from a container-per-user VPS to Workers, Durable Objects, Containers, R2 and D1 in **~10 days**."
       - "Shipped the Jev decision model into agent memory **5 days after release** (1 call instead of up to 3 LLM-judge calls) and **first-authored** a [1,053-call model-swap study](https://construct.computer/blog/clef-vs-jev-benchmark/)."
-      - "Open-sourced [CWAB](https://github.com/construct-computer/cloud-workspace-agent-benchmark), a reproducible benchmark of Construct vs OpenClaw and Hermes Agent on 5 LLMs, and [Foxwatch](https://github.com/hypervoid-inc/foxwatch), the monitor behind our status page."
+      - "Open-sourced [CWAB](https://github.com/construct-computer/cloud-workspace-agent-benchmark), an agent benchmark vs OpenClaw and Hermes, and [Foxwatch](https://github.com/hypervoid-inc/foxwatch), our status monitor."
 
   - org: Forward Research
     url: https://fwd.arweave.net
@@ -101,14 +101,23 @@ projects:
     highlights:
       - "CLI that scaffolds a working MagicBlock app (Solana ephemeral rollups) in seconds; **1,300+ npm downloads**."
 
+  - name: Quadcopter Flight Controller
+    url: https://github.com/ankushKun/vega-fc-sketch
+    tech: [C++, RISC-V, Embedded]
+    start: "2023-06"
+    highlights:
+      - "Drone firmware for the RISC-V VEGA board with IMU calibration and PID control; **won C-DAC Vegathon**."
+
 # One line per group, "Label: item, item, item"
 skills:
   - label: Languages
-    items: [TypeScript, JavaScript, Rust, Python, Lua, SQL]
+    items: [TypeScript, JavaScript, Rust, Python, C++, Lua, SQL]
   - label: AI & Agents
     items: [AI agents, Model Context Protocol (MCP), Tool calling, Agent memory, Evals, Structured outputs]
   - label: Backend & Cloud
     items: [Node.js, Hono, WebSockets, Cloudflare Workers, Durable Objects, D1, R2, Docker, AWS]
+  - label: Hardware
+    items: [ESP32 (ESP-IDF), Raspberry Pi, Arduino, RISC-V, PlatformIO, IMU sensors, PID control]
   - label: Frontend & Web3
     items: [React, Next.js, Tailwind CSS, Electron, Solana, Anchor, Arweave, AO]
 
