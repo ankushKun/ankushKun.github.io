@@ -12,15 +12,15 @@ matching *All incoming requests* for `ankush.one`. Add these with *Set static*:
 
 | Header | Value |
 | --- | --- |
-| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` |
+| `Strict-Transport-Security` | `max-age=31536000` |
 | `X-Content-Type-Options` | `nosniff` |
 | `Referrer-Policy` | `strict-origin-when-cross-origin` |
 | `Permissions-Policy` | `camera=(), microphone=(), geolocation=(), payment=()` |
-| `Content-Security-Policy-Report-Only` | see below |
+| `Content-Security-Policy` | see below |
 
-Start the CSP in **Report-Only**. The page still uses inline scripts and inline
-`onclick` handlers, so `'unsafe-inline'` is needed for now; the v86 terminal,
-Ruffle and Doom need `'wasm-unsafe-eval'`.
+The page still uses inline scripts and inline `onclick` handlers, so
+`'unsafe-inline'` is needed for now; the v86 terminal, Ruffle and Doom need
+`'wasm-unsafe-eval'`. This is the policy in use, on one line in the rule:
 
 ```
 default-src 'self';
@@ -29,30 +29,35 @@ style-src 'self' 'unsafe-inline';
 img-src 'self' data: blob: https:;
 media-src 'self' blob: https:;
 font-src 'self' data:;
-connect-src 'self' https://gun.ankush.one wss://gun.ankush.one https://p1.ankush.one https://api.klipy.com https://api.github.com https://cdn.jsdelivr.net <LINK_PROXY_ORIGIN>;
-frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://cal.com https://app.cal.com https://itch.io https://*.itch.io https://html-classic.itch.zone https://thelongestyard.link https://*.arweave.net https://platform.twitter.com <LINK_PROXY_ORIGIN>;
+connect-src 'self' https://gun.ankush.one wss://gun.ankush.one https://p1.ankush.one https://api.klipy.com https://api.github.com https://cdn.jsdelivr.net https://ankush-site-worker.ankushkun.workers.dev;
+frame-src 'self' https:;
 worker-src 'self' blob:;
 frame-ancestors 'self';
 base-uri 'self';
 form-action 'self'
 ```
 
-Replace `<LINK_PROXY_ORIGIN>` with the Worker origin from section 3 (drop it if
-the link proxy stays off). When `params.linkProxy` is set, every external link
-opens in a desktop window whose iframe points at that origin. The Worker
-answers frameable sites with a 302 to the real address, and `frame-src` is
-checked against that final address too. So with the proxy on, use
-`frame-src 'self' https:;` in place of the host list above (the Worker's
-allowlist is what limits which sites load). Keep the explicit host list only
-when the link proxy is off. The proxy origin must still be in `connect-src` for
-IRC GIF search (`<proxy>/gif/...`). Watch the browser console for violations
-for a week or two, then rename the header to `Content-Security-Policy`.
+It was checked by serving a local build with the header enforced and opening
+every app, a post, a project, Doom, a Flash game, the itch.io embed, the
+cal.com window and a proxied external link: no violations. Analytics is
+skipped locally, but all of it goes through `p1.ankush.one`, which is listed.
 
-`cdn.jsdelivr.net` is only used by IRC's optional image filter (omggif, tfjs,
-nsfwjs). Gun.js is self-hosted in `assets/js/vendor/gun.js`.
-
-VT323 for the Doom page is self-hosted at `/doom/vt323.woff2`, so no Google
-Fonts host is needed in `font-src`.
+- `frame-src 'self' https:` because the link proxy (section 3) answers
+  frameable sites with a 302 to the real address, and `frame-src` is checked
+  against that final address too; the Worker's allowlist is what limits which
+  sites load. If the link proxy is ever switched off, a host list would do.
+- The Worker origin is in `connect-src` for IRC GIF search (`<proxy>/gif/...`).
+  `api.klipy.com` stays for the direct fallback IRC uses if the Worker
+  answers 503.
+- `cdn.jsdelivr.net` is only used by IRC's optional image filter (omggif,
+  tfjs, nsfwjs). Gun.js is self-hosted in `assets/js/vendor/gun.js`.
+- VT323 for the Doom page is self-hosted at `/doom/vt323.woff2`, so no Google
+  Fonts host is needed in `font-src`.
+- Adding a new embed or API host? Add it here and to the rule, or it is
+  blocked. To test a change first, rename the header to
+  `Content-Security-Policy-Report-Only` and watch the browser console.
+- `includeSubDomains` is left off HSTS on purpose: add it only once every
+  subdomain of ankush.one serves HTTPS.
 
 ## 2. Cache rules
 
