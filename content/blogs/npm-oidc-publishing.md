@@ -1,5 +1,5 @@
 +++
-date = '2025-12-09'
+date = '2025-12-20'
 draft = false
 title = 'Publish to NPM from GitHub Actions using OIDC'
 description = "Step-by-step guide to automate npm package publishing through GitHub Actions using OpenID Connect (OIDC). Set up trusted publishing without API keys or access tokens for secure, provenance-verified releases."
@@ -19,7 +19,7 @@ Today we're having a look at how you can implement it for your packages as well.
 As an example, we'll create a fresh package which just logs "hello world" to console.
 
 > [!NOTE]
-> This package is only meant as a demo for this blog. It is not recommended to create such packages for yourself — you should just setup OIDC on your existing packages :)
+> This package is only meant as a demo for this blog. It is not recommended to create such packages for yourself. You should just setup OIDC on your existing packages :)
 
 ```bash
 mkdir npm-oidc-demo && cd npm-oidc-demo
@@ -137,7 +137,7 @@ Once created, the GitHub Action will automatically start running. You can monito
 
 ![successful workflow](https://miro.medium.com/v2/resize:fit:1400/format:webp/1*5vdxP7PcaEI51ntX42K5_A.png)
 
-When the workflow completes successfully, your package will be published to npm with provenance — proving it was built and published through your trusted CI/CD pipeline!
+When the workflow completes successfully, your package will be published to npm with provenance, proving it was built and published through your trusted CI/CD pipeline!
 
 ![published package](https://miro.medium.com/v2/resize:fit:1400/format:webp/1*CYJjIDfnPq3HfLTo8G37vA.png)
 

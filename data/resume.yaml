@@ -10,7 +10,7 @@
 # [links](https://...) work. Links to pages of this site are root-relative.
 
 name: Ankush Singh
-headline: Full-Stack Web3 Engineer
+headline: Co-founder & CTO at Construct Computer
 
 # The PDF this page transcribes, and the name it is saved under
 pdf: /resume.pdf
@@ -32,6 +32,15 @@ contact:
 
 # start/end are years as written in the PDF; leave `end` out for a current role.
 experience:
+  - org: Construct Computer
+    role: Co-founder & CTO
+    start: "2026"
+    highlights:
+      - "Building a workforce of AI employees that each get their own cloud computer. Launched on Product Hunt as **#1 Product of the Day**."
+      - "Built the agent runtime on Cloudflare (Durable Objects, Sandboxes, R2, D1) and shipped Zen Mode, long-term memory, reusable workflows and the agent's decision layer."
+      - "Co-authored [Construct Technical Report 2026-01](/blogs/clef-vs-jev-benchmark/) on swapping decision models in a production agent."
+    tech: [TypeScript, React, Cloudflare Workers, Durable Objects, D1, MCP]
+
   - org: Forward Research
     role: Entrepreneur in Residence
     start: "2024"
@@ -67,7 +76,7 @@ projects:
     more: /projects/2026.pokeperps/
     highlights:
       - "Realtime pricing from TCGplayer & on demand oracle uploads"
-      - "Live and trading enabled on Solana Mainnet"
+      - "Audited Solana mainnet program with up to 20x leverage and an MCP server for AI agents"
 
   - name: MyPokemonScanner
     # mypokemonscanner.com is offline (static/resume.pdf still links it), so the

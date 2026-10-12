@@ -119,7 +119,7 @@ weight = 100
 
 # Site params for SEO & SGO
 [params]
-description = "Ankush Singh — Co-founder and CTO of Construct Computer, building AI agents and developer tools. Portfolio, blog, and open-source projects."
+description = "Ankush Singh, Co-founder and CTO of Construct Computer, building AI agents and developer tools. Portfolio, blog, and open-source projects."
 twitter = "@ankushKun_"
 github = "ankushKun"
 linkedin = "ankushkun"
@@ -149,7 +149,7 @@ email = "ankush4singh@gmail.com"
 name = "Ankush Singh"
 alternateName = ["Ankush Kun", "ankushKun"]
 jobTitle = "Co-founder and CTO"
-description = "Co-founder and CTO of Construct Computer, an AI workforce where agents get their own cloud computers. Previously Entrepreneur in Residence at Forward Research, building developer tools for Arweave and AO."
+description = "Co-founder and CTO of Construct Computer, a workforce of AI employees that each get their own cloud computer. Previously Entrepreneur in Residence at Forward Research, building developer tools for Arweave and AO."
 image = "/pfp.png"
 knowsAbout = ["AI Agents", "Developer Tools", "Cloudflare Workers", "Arweave", "AO", "Solana", "DeFi", "TypeScript", "React", "Rust", "Lua", "WebAssembly", "Open Source"]
 [params.profile.worksFor]

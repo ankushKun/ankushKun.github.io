@@ -1,6 +1,6 @@
 wins:
   - year: 2024
-    prize: "Third prize + Pools"
+    prize: "Coinbase Developer Platform 3rd place + 2 pool prizes"
     medal: "🥉"
     competition: "ETHIndia '24"
     url: "https://devfolio.co/projects/hackadome-daf3"
@@ -8,7 +8,7 @@ wins:
   - year: 2024
     prize: "Third prize"
     medal: "🥉"
-    competition: "Weavers dev bounty III"
+    competition: "Weavers Raid III"
     url: "https://x.com/Weavers_Org/status/1821262463897075745"
     timeline: "/timeline/2024.weavers3"
   - year: 2023
@@ -25,7 +25,14 @@ wins:
     prize: "Second"
     medal: "🥈"
     competition: "Hack-O-Octo 1.0"
+    url: "https://devfolio.co/projects/gitraven-a6e7"
     timeline: "/timeline/2023.hack-o-octo"
+  - year: 2023
+    prize: "Tableland prize pool"
+    medal: "🏅"
+    competition: "ETHOnline 2023"
+    url: "https://ethglobal.com/showcase/gitraven-ighb8"
+    timeline: "/timeline/2023.ethg23"
   - year: 2023
     prize: "First"
     medal: "🥇"
@@ -48,9 +55,10 @@ wins:
     competition: "Hash It Out 1.0"
     timeline: "/timeline/2022.hash-it-out"
   - year: 2022
-    prize: "Track Prize"
+    prize: "Best Use of DeSo + Most Creative Use of GitHub"
     medal: "🏅"
     competition: "Neighbourhood Hacks 2.0"
+    url: "https://devpost.com/software/later-84pn17"
     timeline: "/timeline/2022.nh2"
   - year: 2022
     prize: "Track Prize"
@@ -68,8 +76,6 @@ participations:
     competition: "LFGHO '24"
   - year: 2023
     competition: "NASA CanSat '24 (cleared PDR round)"
-  - year: 2023
-    competition: "EthOnline 2023"
   - year: 2023
     competition: "SIH Tekathon 2.0"
   - year: 2023
