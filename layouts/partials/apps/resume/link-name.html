@@ -1,0 +1,16 @@
+{{- /*
+A short name for a resume contact link, for sheets too narrow to show the
+full addresses on one line: "Email", "GitHub", "LinkedIn", "X", or the
+link's own label for anything else. Returns a string.
+
+Usage: {{ partial "apps/resume/link-name.html" (dict "url" .url "label" .label) }}
+*/ -}}
+{{- $names := dict "github.com" "GitHub" "linkedin.com" "LinkedIn" "x.com" "X" "twitter.com" "X" -}}
+{{- $out := .label | default .url -}}
+{{- if hasPrefix .url "mailto:" -}}
+{{- $out = "Email" -}}
+{{- else -}}
+{{- $host := (urls.Parse .url).Host | replaceRE `^www\.` "" -}}
+{{- with index $names $host }}{{ $out = . }}{{ end -}}
+{{- end -}}
+{{- return $out -}}

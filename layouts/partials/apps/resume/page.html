@@ -60,7 +60,7 @@ letter-size page.
                 <h1 class="resume-name" id="resume-name">{{ $r.name }}</h1>
                 <p class="resume-contact">
                     {{- range $i, $c := $r.contact }}
-                    <span class="resume-contact-item{{ if .printOnly }} resume-print-only{{ end }}">{{ if $i }}{{ $bar }}{{ end }}<a href="{{ .url }}">{{ partial "apps/resume/link-text.html" (dict "url" .url "label" .label) }}</a></span>
+                    <span class="resume-contact-item{{ if .printOnly }} resume-print-only{{ end }}">{{ if $i }}{{ $bar }}{{ end }}<a href="{{ .url }}"><span class="resume-link-full">{{ partial "apps/resume/link-text.html" (dict "url" .url "label" .label) }}</span><span class="resume-link-short">{{ partial "apps/resume/link-name.html" (dict "url" .url "label" .label) }}</span></a></span>
                     {{- end }}
                 </p>
             </header>

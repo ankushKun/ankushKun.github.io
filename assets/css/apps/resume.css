@@ -204,6 +204,8 @@ html[data-appearance="dark"] {
        character and lose the word ("certified" -> "certi ed") */
     font-variant-ligatures: none;
     font-feature-settings: "liga" 0, "clig" 0;
+    /* The contact line sizes itself against the sheet's width */
+    container: resume-sheet / inline-size;
 }
 
 .resume:has(.resume-zoom-out input:checked) .resume-sheet {
@@ -271,16 +273,42 @@ html[data-appearance="dark"] {
     color: var(--rs-ink-soft);
 }
 
-/* On screen the line wraps on narrow windows, where a bar would start the
-   next line. The bars give way to dots that hang after an item; the item
+/* Each link carries its full address and a short name ("GitHub"). Paper
+   and wide sheets show the address; the short name only appears on screen
+   when the sheet is too narrow for the addresses on one line. */
+.resume-link-short {
+    display: none;
+}
+
+/* On screen the contact line stays on one line: the bars give way to dots,
+   and the text shrinks a little with the sheet (cqi is the sheet's width)
+   before a narrow sheet swaps the addresses for short names. The item
    before the print-only link is the last one on screen. Print keeps the
-   bars, which is the text a parser reads in the PDF. */
+   bars and the addresses, which is the text a parser reads in the PDF. */
 @media screen {
+    .window-content .resume-sheet p.resume-contact,
     .resume-contact {
         display: flex;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         justify-content: center;
-        gap: 0.15em 0;
+        white-space: nowrap;
+        /* The full line is about 47 times its font size wide */
+        font-size: min(0.9em, 2.05cqi);
+    }
+
+    @container resume-sheet (max-width: 500px) {
+        .window-content .resume-sheet p.resume-contact,
+        .resume-contact {
+            font-size: 0.9em;
+        }
+
+        .resume-link-full {
+            display: none;
+        }
+
+        .resume-link-short {
+            display: inline;
+        }
     }
 
     .resume-contact .resume-sep {
