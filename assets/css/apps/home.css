@@ -358,96 +358,123 @@ html[data-motion="reduce"] .widget-icon.blink-new {
 
 /* ---------- Contact ---------- */
 
-/* Two columns of rows: glyph, name, handle. Hairlines, no boxes. */
-.home-contact {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0 28px;
+/* One quiet line, then a row of small glyphs. Nothing boxed: the email is
+   plain text that underlines on hover, the glyphs are grey discs that take
+   their colour and unfold their handle when pointed at. */
+.home-reach-line {
+    margin: 0 0 10px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.home a.home-reach-mail,
+.home a.home-reach-call {
+    color: var(--text-primary);
+    text-decoration: none;
+    border-bottom: 1px solid var(--border-subtle);
+    transition: border-color 120ms ease, color 120ms ease;
+}
+
+.home a.home-reach-mail:hover,
+.home a.home-reach-call:hover {
+    color: var(--accent-text);
+    border-color: currentColor;
+    text-decoration: none;
+}
+
+.home-reach-sep {
+    margin: 0 8px;
+    color: var(--text-tertiary);
+}
+
+.home-glyphs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
     list-style: none;
     margin: 0;
     padding: 0;
 }
 
-.home-contact li {
-    min-width: 0;
-    border-bottom: 1px solid var(--border-subtle);
-}
-
-.home-contact li:nth-last-child(-n + 2) {
-    border-bottom: 0;
-}
-
-.home-contact-link {
-    display: flex;
+.home a.home-glyph {
+    display: inline-flex;
     align-items: center;
-    gap: 9px;
-    padding: 6px 6px;
-    margin: 0 -6px;
-    border-radius: 6px;
-    font-size: 13px;
-    line-height: 18px;
-    color: var(--text-primary);
+    height: 30px;
+    padding: 0 7px;
+    border-radius: 15px;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 12px;
+    line-height: 1;
+    transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease;
 }
 
-.home a.home-contact-link {
+.home a.home-glyph:hover,
+.home a.home-glyph:focus-visible {
+    border-color: var(--text-tertiary);
+    background: var(--hover-tint);
     color: var(--text-primary);
     text-decoration: none;
 }
 
-.home a.home-contact-link:hover {
-    background: var(--hover-tint);
-}
-
-.home-contact-name {
-    flex: none;
-    font-weight: 500;
-}
-
-.home-contact-handle {
-    flex: 1;
-    min-width: 0;
-    text-align: right;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 12px;
-    color: var(--text-tertiary);
-    font-variant-numeric: tabular-nums;
-}
-
-.home-contact-link:hover .home-contact-handle {
-    color: var(--text-secondary);
-}
-
-.home-link-icon {
+.home-glyph-icon {
     flex: none;
     width: 16px;
     height: 16px;
     /* Mavericks (10.9) had grey sidebar glyphs */
     filter: grayscale(100%);
-    opacity: 0.7;
+    opacity: 0.6;
+    transition: filter 140ms ease, opacity 140ms ease;
 }
 
-.home-contact-link:hover .home-link-icon {
+.home-glyph:hover .home-glyph-icon,
+.home-glyph:focus-visible .home-glyph-icon {
     filter: none;
     opacity: 1;
 }
 
+/* The handle unfolds to the right of the glyph */
+.home-glyph-handle {
+    max-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    opacity: 0;
+    padding-left: 0;
+    font-variant-numeric: tabular-nums;
+    transition: max-width 220ms ease, opacity 160ms ease, padding-left 220ms ease;
+}
+
+.home-glyph:hover .home-glyph-handle,
+.home-glyph:focus-visible .home-glyph-handle {
+    max-width: 180px;
+    opacity: 1;
+    padding-left: 7px;
+}
+
 /* Grey glyphs would sink into a dark surface; lift them to a light grey */
-html[data-appearance="dark"] .home-contact-link:not(:hover) .home-link-icon {
+html[data-appearance="dark"] .home-glyph:not(:hover):not(:focus-visible) .home-glyph-icon {
     filter: grayscale(100%) brightness(1.8);
-    opacity: 0.8;
+    opacity: 0.7;
 }
 
 /* Badges with white detail (Telegram's plane, Reddit's alien) would wash out
    to one flat disc under that lift */
-html[data-appearance="dark"] .home-contact-link:not(:hover) .home-link-icon:is([src$="/telegram.svg"], [src$="/reddit.svg"]) {
+html[data-appearance="dark"] .home-glyph:not(:hover):not(:focus-visible) .home-glyph-icon:is([src$="/telegram.svg"], [src$="/reddit.svg"]) {
     filter: grayscale(100%) brightness(1.1);
 }
 
 /* Medium's mark is plain black: no brightness lifts it, so turn it white */
-html[data-appearance="dark"] .home-link-icon[src$="/medium.svg"] {
+html[data-appearance="dark"] .home-glyph-icon[src$="/medium.svg"] {
     filter: invert(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .home-glyph-handle,
+    .home a.home-glyph,
+    .home-glyph-icon {
+        transition: none;
+    }
 }
 
 /* ---------- Folds: more places, the longer story ---------- */
@@ -556,13 +583,6 @@ html[data-appearance="dark"] .home-link-icon[src$="/medium.svg"] {
         width: 100%;
     }
 
-    .home-contact {
-        grid-template-columns: minmax(0, 1fr);
-    }
-
-    .home-contact li:nth-last-child(2) {
-        border-bottom: 1px solid var(--border-subtle);
-    }
 }
 
 /* ---------- Print ---------- */

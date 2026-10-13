@@ -64,15 +64,6 @@ content/about/_index.md front matter, data/contact.yaml, data/wins.yaml. */}}
         </section>
         {{ end }}
 
-        {{ with $about }}{{ with .Params.facts }}
-        <section class="home-section" aria-labelledby="home-facts-{{ $.id }}">
-            <h2 class="home-label" id="home-facts-{{ $.id }}">Quick facts</h2>
-            <ul class="home-facts">
-                {{ range . }}<li>{{ . | markdownify }}</li>{{ end }}
-            </ul>
-        </section>
-        {{ end }}{{ end }}
-
         {{ with $latest }}
         <section class="home-section home-latest" aria-labelledby="home-latest-{{ $.id }}">
             <h2 class="home-label" id="home-latest-{{ $.id }}"><span class="widget-icon blink-new" aria-hidden="true">NEW</span> Latest</h2>
@@ -101,19 +92,27 @@ content/about/_index.md front matter, data/contact.yaml, data/wins.yaml. */}}
         </section>
         {{ end }}
 
-        <section class="home-section" aria-labelledby="home-contact-{{ $.id }}">
+        {{ with $about }}{{ with .Params.facts }}
+        <section class="home-section" aria-labelledby="home-facts-{{ $.id }}">
+            <h2 class="home-label" id="home-facts-{{ $.id }}">Quick facts</h2>
+            <ul class="home-facts">
+                {{ range . }}<li>{{ . | markdownify }}</li>{{ end }}
+            </ul>
+        </section>
+        {{ end }}{{ end }}
+
+        <section class="home-section home-reach" aria-labelledby="home-contact-{{ $.id }}">
             <h2 class="home-label" id="home-contact-{{ $.id }}">Contact</h2>
-            {{/* Every place at once, two columns: glyph, name, handle. Email and
-            the call link first, then data/contact.yaml in its own order. */}}
-            <ul class="home-contact">
-                {{ with $contact.profile.email }}
-                <li><a class="home-contact-link" href="mailto:{{ . }}"><img class="home-link-icon" src="{{ $contact.profile.email_icon | default "/icons/email.svg" }}" alt="" width="16" height="16" loading="lazy"><span class="home-contact-name">Email</span><span class="home-contact-handle">{{ . }}</span></a></li>
-                {{ end }}
-                {{ with $contact.profile.schedule }}
-                <li><a class="home-contact-link" href="/schedule/"><img class="home-link-icon" src="{{ $contact.profile.schedule_icon | default "/icons/meet.svg" }}" alt="" width="16" height="16" loading="lazy"><span class="home-contact-name">Book a call</span><span class="home-contact-handle">{{ $contact.profile.schedule_label | default . }}</span></a></li>
-                {{ end }}
+            {{/* One quiet line for email and the call link, then a row of small
+            glyphs. A glyph shows its handle when hovered or focused; every
+            one carries the platform and handle for screen readers. */}}
+            <p class="home-reach-line">
+                {{ with $contact.profile.email }}<a class="home-reach-mail" href="mailto:{{ . }}">{{ . }}</a>{{ end }}
+                {{ with $contact.profile.schedule }}<span class="home-reach-sep" aria-hidden="true">·</span><a class="home-reach-call" href="/schedule/">Book a call</a>{{ end }}
+            </p>
+            <ul class="home-glyphs">
                 {{ range $contact.socials }}
-                <li><a class="home-contact-link" href="{{ .url }}" target="_blank" rel="noopener"><img class="home-link-icon" src="{{ .icon }}" alt="" width="16" height="16" loading="lazy"><span class="home-contact-name">{{ .platform }}</span><span class="home-contact-handle">{{ .handle }}</span></a></li>
+                <li><a class="home-glyph" href="{{ .url }}" target="_blank" rel="noopener" aria-label="{{ .platform }}: {{ .handle }}" title="{{ .platform }} · {{ .handle }}"><img class="home-glyph-icon" src="{{ .icon }}" alt="" width="16" height="16" loading="lazy"><span class="home-glyph-handle">{{ .handle }}</span></a></li>
                 {{ end }}
             </ul>
         </section>
