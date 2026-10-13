@@ -1,6 +1,7 @@
 +++
 date = '2026-10-13T09:00:00+05:30'
 draft = false
+og_image = "/media/animedoro-og.jpg"
 title = "The Animedoro Technique: How It Works vs Pomodoro"
 description = "Animedoro explained: 40 to 60 minutes of study, then one anime episode as the break. Origin, why the ratio works, Pomodoro and 52/17 compared, and a free timer."
 summary = "I built one of the first Animedoro timers back in 2021, and it is still the most used thing I have ever shipped. This is the full explanation of the technique: the origin, the 40/20 ratio, how it compares to Pomodoro, who it suits, and how to keep one episode from becoming four."
