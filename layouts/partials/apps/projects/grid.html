@@ -82,7 +82,7 @@ Usage:
             {{/* Pinned list: `featured = true` projects, newest first. They are
             listed again under their year, so this list hides while a search or
             tag filter is active and is left out of the count. */}}
-            {{ with where $pages "Params.featured" true }}
+            {{ with where (where $pages "Params.featured" true) "Params.status" "!=" "archived" }}
             <section class="projects-year-section projects-featured">
                 <h2 class="projects-year-header">Featured</h2>
                 <div class="projects-list">

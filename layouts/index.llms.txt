@@ -5,7 +5,7 @@ pages from content/, socials from data/contact.yaml.
 */ -}}
 {{- $blogs := (where site.RegularPages "Section" "blogs").ByDate.Reverse -}}
 {{- $projects := (where site.RegularPages "Section" "projects").ByDate.Reverse -}}
-{{- $featured := where $projects "Params.featured" true -}}
+{{- $featured := where (where $projects "Params.featured" true) "Params.status" "!=" "archived" -}}
 {{ partial "agents/intro.md" . | strings.TrimSpace }}
 
 ## About

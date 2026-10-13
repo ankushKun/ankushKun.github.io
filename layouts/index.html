@@ -21,7 +21,7 @@
                 {{ end }}
             </ul>
             {{ end }}
-            {{ with where (where site.RegularPages "Section" "projects") "Params.featured" true }}
+            {{ with where (where (where site.RegularPages "Section" "projects") "Params.featured" true) "Params.status" "!=" "archived" }}
             <h2>Featured projects</h2>
             <ul>
                 {{ range .ByDate.Reverse }}

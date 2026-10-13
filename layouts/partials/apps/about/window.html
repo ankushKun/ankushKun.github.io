@@ -14,7 +14,8 @@ content/about/_index.md front matter, data/contact.yaml, data/wins.yaml. */}}
 {{- $contact := hugo.Data.contact -}}
 {{- $standalone := .standalone | default false -}}
 {{- $projects := where site.RegularPages "Section" "projects" -}}
-{{- $featured := where $projects "Params.featured" true -}}
+{{/* Flagships that are still live: an archived project never sits under Work */}}
+{{- $featured := where (where $projects "Params.featured" true) "Params.status" "!=" "archived" -}}
 {{- $latest := first 3 ((where site.RegularPages "Section" "in" (slice "blogs" "projects" "timeline")).ByDate.Reverse) -}}
 <div id="content-{{ .id }}">
     <div class="home">
