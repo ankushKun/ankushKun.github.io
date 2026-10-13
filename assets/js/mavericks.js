@@ -85,18 +85,15 @@
         'thelongestyard.link',
         'ankush.one'
     ];
-    // Script-heavy or login-walled sites that come out blank, broken or with
-    // a false "not available" page through the proxy: always a new tab.
+    // Sites that always open in a new tab instead of going through the proxy.
+    // Construct (and every subdomain: app., os., status.) refuses to be
+    // framed, and Google sign-in plus the .construct.computer attribution
+    // cookie only work in a real tab. Everything else gets a window first;
+    // the worker shows its "opens in a new tab" page for sites that refuse.
     const NEVER_PROXY_HOSTS = [
-        'youtube.com', 'youtu.be', 'x.com', 'twitter.com', 'instagram.com',
-        'facebook.com', 'linkedin.com', 'discord.com', 'discord.gg',
-        'reddit.com', 't.me', 'telegram.me', 'medium.com', 'npmjs.com',
-        // Construct (and every subdomain: app., os., status.) refuses to be
-        // framed, and Google sign-in plus the .construct.computer attribution
-        // cookie only work in a real tab, so it never goes through the proxy.
         'construct.computer'
     ];
-    const NEVER_PROXY_PATTERN = /(^|\.)amazon\.[a-z.]{2,6}$/;
+    const NEVER_PROXY_PATTERN = /$^/;
     // Same permissions the server-rendered embeds get (no allow-top-navigation)
     const DIRECT_IFRAME_SANDBOX = 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-pointer-lock allow-modals allow-presentation allow-downloads';
     const PROXIED_IFRAME_SANDBOX = 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation allow-downloads';
