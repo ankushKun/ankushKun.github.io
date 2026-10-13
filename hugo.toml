@@ -67,6 +67,13 @@ mediaType = "application/json"
 baseName = "external-hosts"
 isPlainText = true
 notAlternative = true
+# /projects-latest.json (layouts/index.projectslatest.json): the newest
+# projects as a small list, read by the Animedoro timer's focus page.
+[outputFormats.projectslatest]
+mediaType = "application/json"
+baseName = "projects-latest"
+isPlainText = true
+notAlternative = true
 # /sw.js (layouts/index.sw.js) and /offline.html (layouts/index.offline.html):
 # the service worker and the page it shows offline. Root URLs with no
 # fingerprint; see docs/service-worker.md and [params.serviceWorker] below.
@@ -83,7 +90,7 @@ notAlternative = true
 
 # Output formats including JSON for search index
 [outputs]
-home = ["HTML", "JSON", "RSS", "jsonfeed", "llms", "llmsfull", "externalhosts", "sw", "offline"]
+home = ["HTML", "JSON", "RSS", "jsonfeed", "llms", "llmsfull", "externalhosts", "projectslatest", "sw", "offline"]
 # Every page and section also has a plain-markdown twin at <url>index.md
 # (layouts/_default/single.md, list.md) for agents that would rather not
 # parse the desktop chrome.

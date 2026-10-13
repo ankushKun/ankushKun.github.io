@@ -1,0 +1,27 @@
+{{- /*
+/projects-latest.json - the featured projects (featured = true, not archived)
+and the five newest blog posts, newest first: title, url, kind, date, summary,
+image and tags. The image is the first of: og_image, image (the banner some
+projects set), the first <img> in the body. Read by the Animedoro timer
+(ankush.one/animedoro-timer/timer/) for its "from ankush.one" card.
+*/ -}}
+{{- $projects := where (where (where site.RegularPages "Section" "projects") "Params.featured" true) "Params.status" "!=" "archived" -}}
+{{- $blogs := where site.RegularPages "Section" "blogs" | first 5 -}}
+{{- $pages := ($projects | union $blogs).ByDate.Reverse -}}
+{{- $items := slice -}}
+{{- range $pages -}}
+    {{- $item := dict "title" .Title "url" .Permalink "kind" (cond (eq .Section "blogs") "blog" "project") "date" (.Date.Format "2006-01-02") -}}
+    {{- $image := .Params.og_image | default .Params.image -}}
+    {{- if not $image -}}
+        {{- with findRE `<img[^>]+src="([^"]+)"` .Content 1 -}}
+            {{- $image = replaceRE `.*src="([^"]+)".*` "$1" (index . 0) -}}
+        {{- end -}}
+    {{- end -}}
+    {{- with $image }}{{ $item = merge $item (dict "image" (. | absURL)) }}{{ end -}}
+    {{- $summary := .Description -}}
+    {{- if not $summary }}{{ with .Params.summary }}{{ $summary = . | markdownify | plainify | htmlUnescape }}{{ end }}{{ end -}}
+    {{- with $summary }}{{ $item = merge $item (dict "summary" .) }}{{ end -}}
+    {{- with .Params.tags }}{{ $item = merge $item (dict "tags" .) }}{{ end -}}
+    {{- $items = $items | append $item -}}
+{{- end -}}
+{{- dict "items" $items | jsonify -}}
