@@ -1570,6 +1570,10 @@
         if (proxied) {
             let proxyOrigin = '';
             try { proxyOrigin = new URL(LINK_PROXY, window.location.href).origin; } catch (err) { /* bad config */ }
+            // The pages this window has shown, in order, so the proxy's Back
+            // button can return to the previous one, or close the window when
+            // there is none. A frame's own history cannot tell those apart.
+            const shownStack = [];
             const onProxyMessage = (e) => {
                 if (!win.isConnected) {
                     window.removeEventListener('message', onProxyMessage);
@@ -1577,10 +1581,23 @@
                 }
                 if (e.source !== iframe.contentWindow || e.origin !== proxyOrigin) return;
                 const data = e.data;
-                if (!data || data.source !== 'link-proxy' || typeof data.url !== 'string') return;
+                if (!data || data.source !== 'link-proxy') return;
+                if (data.action === 'back') {
+                    shownStack.pop(); // the page asking to go back
+                    const previous = shownStack.pop();
+                    if (previous) {
+                        begin();
+                        iframe.src = `${LINK_PROXY}/?url=${encodeURIComponent(previous)}`;
+                    } else {
+                        closeWindow(win, win.dataset.windowId);
+                    }
+                    return;
+                }
+                if (typeof data.url !== 'string') return;
                 let shown;
                 try { shown = new URL(data.url); } catch (err) { return; }
                 if (shown.protocol !== 'http:' && shown.protocol !== 'https:') return;
+                if (shownStack[shownStack.length - 1] !== shown.href) shownStack.push(shown.href);
 
                 win.querySelector('.url-text').textContent = shown.href;
                 win.querySelector('.url-icon').textContent = shown.protocol === 'https:' ? '🔒' : '🌐';

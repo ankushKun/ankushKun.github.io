@@ -814,8 +814,12 @@ function page(status, result, { title, heading, body, actions = [], back = false
         '<a class="btn' + (action.primary ? ' primary' : '') + '" href="' + esc(action.href) + '"' +
         (action.sameTab ? ' rel="noopener"' : ' target="_blank" rel="noopener"') + '>' + esc(action.label) + '</a>'
     ).join('');
+    // Back is the desktop's call: it knows whether the window has shown an
+    // earlier page to return to, and closes the window when it has not. In a
+    // frame, history.back() cannot tell those apart and may move the page
+    // behind the window instead.
     const backLink = back
-        ? '<a class="btn" href="#" onclick="history.back();return false">Back</a>'
+        ? '<a class="btn" href="#" onclick="try{parent!==window&&parent.postMessage({source:\'link-proxy\',action:\'back\'},\'*\')}catch(x){};return false">Back</a>'
         : '';
 
     const html = '<!doctype html><html lang="en"><head><meta charset="utf-8">' +
