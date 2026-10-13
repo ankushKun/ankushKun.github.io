@@ -14,8 +14,6 @@ content/about/_index.md front matter, data/contact.yaml, data/wins.yaml. */}}
 {{- $contact := hugo.Data.contact -}}
 {{- $standalone := .standalone | default false -}}
 {{- $projects := where site.RegularPages "Section" "projects" -}}
-{{/* Flagships that are still live: an archived project never sits under Work */}}
-{{- $featured := where (where $projects "Params.featured" true) "Params.status" "!=" "archived" -}}
 {{- $latest := first 3 ((where site.RegularPages "Section" "in" (slice "blogs" "projects" "timeline")).ByDate.Reverse) -}}
 <div id="content-{{ .id }}">
     <div class="home">
@@ -74,30 +72,6 @@ content/about/_index.md front matter, data/contact.yaml, data/wins.yaml. */}}
             </ul>
         </section>
         {{ end }}{{ end }}
-
-        {{ with $featured }}
-        <section class="home-section" aria-labelledby="home-work-{{ $.id }}">
-            <h2 class="home-label" id="home-work-{{ $.id }}">Work</h2>
-            <ul class="home-rows">
-                {{ range .ByDate.Reverse }}
-                <li>
-                    {{/* A real link. In a desktop window the data-* attributes
-                    open it in the same window the Projects list would. */}}
-                    <a href="{{ .RelPermalink }}" class="home-row"
-                        {{- if not $standalone }} data-window="project-{{ .File.UniqueID }}" data-title="{{ .Title }}"
-                        data-permalink="{{ .Permalink }}"{{ end }}>
-                        <span class="home-row-main">
-                            <span class="home-row-title">{{ .Title }}</span>
-                            {{ with .Params.summary | default .Summary }}<span class="home-row-text">{{ . | plainify | htmlUnescape | truncate 110 }}</span>{{ end }}
-                        </span>
-                        <time class="home-row-meta" datetime="{{ .Date.Format "2006" }}">{{ .Date.Format "2006" }}</time>
-                    </a>
-                </li>
-                {{ end }}
-            </ul>
-            <p class="home-more"><a href="/projects/">All {{ len $projects }} projects</a></p>
-        </section>
-        {{ end }}
 
         {{ with $latest }}
         <section class="home-section home-latest" aria-labelledby="home-latest-{{ $.id }}">
