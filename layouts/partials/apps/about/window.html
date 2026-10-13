@@ -14,7 +14,7 @@ content/about/_index.md front matter, data/contact.yaml, data/wins.yaml. */}}
 {{- $contact := hugo.Data.contact -}}
 {{- $standalone := .standalone | default false -}}
 {{- $projects := where site.RegularPages "Section" "projects" -}}
-{{- $latest := first 3 ((where site.RegularPages "Section" "in" (slice "blogs" "projects" "timeline")).ByDate.Reverse) -}}
+{{- $latest := first 5 ((where site.RegularPages "Section" "in" (slice "blogs" "projects" "timeline")).ByDate.Reverse) -}}
 <div id="content-{{ .id }}">
     <div class="home">
         <header class="home-head">
