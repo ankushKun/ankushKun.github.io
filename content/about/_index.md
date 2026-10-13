@@ -9,13 +9,13 @@ description = "About Ankush Singh, Co-founder of Construct Computer. Previously 
 tagline = "Co-founder of Construct Computer. I build AI agents and developer tools, and I ship a lot."
 now = "Building [Construct Computer](https://construct.computer/?utm_source=ankush.one&utm_medium=referral&utm_campaign=about_now): a workforce of AI employees that each get their own cloud computer, so they can actually finish work instead of just talking about it. Browser, terminal, files, memory, the whole desk, not another chat window."
 cta = { text = "See what Construct can do", url = "https://construct.computer/?utm_source=ankush.one&utm_medium=referral&utm_campaign=about_cta" }
-# In the order they happened; the YouTube line is ongoing, so it closes.
+# Latest first; the YouTube line is ongoing, so it closes.
 facts = [
-  "Before code it was robots, a mini-satellite, and making objects levitate with sound waves.",
-  "50+ hackathons since 2017, more than a dozen prizes, and one project that grew into [Arlink](https://arlink.arweave.net), Arweave's deployment tool.",
-  "Won the first Arweave India Hacker House in 2023. The story is in my [\"TEDx\" talk](https://www.youtube.com/watch?v=LWW4BCZPIUg).",
-  "Built [BetterIDEa](https://betteridea.arweave.net), acquired by Forward Research, and the AO Package Manager, which now loads in every aos process.",
   "Construct launched as #1 Product of the Day on Product Hunt in August 2026.",
+  "Built [BetterIDEa](https://betteridea.arweave.net), acquired by Forward Research, and the AO Package Manager, which now loads in every aos process.",
+  "Won the first Arweave India Hacker House in 2023. The story is in my [\"TEDx\" talk](https://www.youtube.com/watch?v=LWW4BCZPIUg).",
+  "50+ hackathons since 2017, more than a dozen prizes, and one project that grew into [Arlink](https://arlink.arweave.net), Arweave's deployment tool.",
+  "Before code it was robots, a mini-satellite, and making objects levitate with sound waves.",
   "Live builds, explainers and physics demos on [YouTube](https://youtube.com/@AnkushKun).",
 ]
 +++
