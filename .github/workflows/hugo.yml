@@ -252,10 +252,13 @@ jobs:
           [ -n "$INDEXNOW_KEY" ] || { echo "INDEXNOW_KEY not set, skipping"; exit 0; }
           [[ "$INDEXNOW_KEY" =~ ^[A-Za-z0-9-]{8,128}$ ]] || { echo "::warning::INDEXNOW_KEY is not a valid IndexNow key, skipping"; exit 0; }
           curl -sS --max-time 30 "https://${SITE_HOST}/sitemap.xml" -o sitemap.xml || { echo "::warning::could not fetch sitemap"; exit 0; }
+          # Project sites served on the same host from other repos (see robots.txt)
+          curl -sS --max-time 30 "https://${SITE_HOST}/animedoro-timer/sitemap.xml" -o sitemap-animedoro.xml || : > sitemap-animedoro.xml
           python3 - <<'PY' > indexnow.json || exit 0
           import json, os, re
           host, key = os.environ["SITE_HOST"], os.environ["INDEXNOW_KEY"]
-          urls = re.findall(r"<loc>([^<]+)</loc>", open("sitemap.xml", encoding="utf-8").read())
+          xml = "".join(open(f, encoding="utf-8").read() for f in ("sitemap.xml", "sitemap-animedoro.xml"))
+          urls = re.findall(r"<loc>([^<]+)</loc>", xml)
           urls = [u for u in urls if u.startswith(f"https://{host}/")][:10000]
           print(json.dumps({"host": host, "key": key, "keyLocation": f"https://{host}/{key}.txt", "urlList": urls}))
           PY

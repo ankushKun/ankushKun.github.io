@@ -221,7 +221,7 @@
     {{- $pageTitle := .Title -}}
     {{- $tagName := .Title -}}
     {{- if eq .Kind "term" }}{{ $tagName = .Data.Term }}{{ $pageTitle = printf "#%s — posts & projects" $tagName }}{{ end }}
-    <title>{{ if .IsHome }}{{ .Site.Title }} - {{ $role }}{{ else }}{{ $pageTitle }} | {{ .Site.Title }}{{ end }}</title>
+    <title>{{ if .IsHome }}{{ $authorName }} ({{ .Site.Title }}) - {{ $role }}{{ else }}{{ $pageTitle }} | {{ .Site.Title }}{{ end }}</title>
     {{- /* Description: front matter, then summary, then the site default.
     Always one line of plain text, at most 160 characters. */ -}}
     {{- $metaDesc := site.Params.description -}}
@@ -395,7 +395,7 @@
             "@type": "Person",
             "@id": "{{ $personId }}",
             "name": "{{ $authorName }}",
-            "url": "{{ .Site.BaseURL }}"
+            "url": "{{ .Site.BaseURL }}about/"
         },
         "publisher": { "@id": "{{ $personId }}" },
         "image": {{ $ogImage.jsonld | jsonify | safeJS }},
