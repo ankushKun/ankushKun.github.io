@@ -1,10 +1,11 @@
 +++
 date = '2025-02-19'
 draft = false
-title = "A Noob's Guide to Web APIs"
-description = "Learn what APIs are, how they work, and how to create your own simple API using Node.js and Express. A complete beginner-friendly tutorial with practical code examples covering REST principles, HTTP methods, and building GET/POST endpoints."
-summary = 'Learn what APIs are, how they work, and how to create your own simple API using Node.js and Express.'
-tags = ['web', 'tutorial']
+title = "What Is a Web API? A Beginner's Guide with a Node.js Example"
+description = "What a web API is, how REST, HTTP methods and status codes fit together, and how to build your first GET and POST endpoints with Node.js and Express. Beginner-friendly, with code."
+summary = 'What a web API actually is, how REST, HTTP methods and status codes fit together, and how to build your first GET and POST endpoints with Node.js and Express.'
+lastmod = '2026-10-13'
+tags = ['web', 'tutorial', 'api', 'nodejs', 'express']
 author = 'Ankush'
 +++
 

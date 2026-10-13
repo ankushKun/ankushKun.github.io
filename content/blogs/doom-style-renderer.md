@@ -1,10 +1,18 @@
 +++
 date = '2025-12-24'
+lastmod = '2026-10-13'
 draft = false
-title = "Building a DOOM-Style 3D Renderer from Scratch in JavaScript"
-description = "A deep dive into building a 3D renderer from scratch using JavaScript and HTML5 Canvas, inspired by the classic DOOM engine."
-summary = "Ever wondered how classic games like DOOM rendered their immersive 3D worlds? This post breaks down the math and logic behind a retro 3D engine."
-tags = ["graphics", "game-dev", "web", "tutorial"]
+title = "How Doom Rendering Works: A 2.5D Renderer in JavaScript"
+description = "How Doom's 2.5D rendering works, rebuilt in plain JavaScript on an HTML canvas: a grid map, wall projection, clipping, movement and collision. Live demo and full source."
+summary = "Ever wondered how DOOM drew a 3D world on a 1993 PC? It didn't do 3D at all. This post rebuilds the trick, 2.5D rendering, from scratch in JavaScript on a canvas, with a playable demo and the full source."
+tags = ["graphics", "game-dev", "web", "tutorial", "javascript", "doom", "2.5d"]
+faq = [
+  { q = "Is Doom really 3D?", a = "No. Doom (1993) is a 2.5D engine. The map is a flat 2D layout of walls and sectors; the engine projects those walls as vertical columns on screen and uses floor and ceiling heights to fake depth. That is why you cannot look up or down in the original game, and why there are no rooms stacked on top of rooms." },
+  { q = "What is 2.5D rendering?", a = "2.5D rendering draws a 3D-looking scene from 2D data. Each wall is a line segment on a top-down map. The renderer transforms the wall's endpoints relative to the player, projects them onto the screen with a perspective divide, and fills the vertical span between the projected top and bottom. Distance determines wall height on screen, which is what makes it read as 3D." },
+  { q = "How is Doom's renderer different from Wolfenstein 3D's raycasting?", a = "Wolfenstein 3D casts one ray per screen column through a grid of equal-height cubes. Doom instead sorts wall segments front to back using a BSP tree (binary space partition) and draws each wall as a projected polygon, which allows walls at any angle, sectors with different floor and ceiling heights, and varied lighting. The renderer in this post is closer to Doom's approach: it transforms and projects whole wall segments, sorted by distance, rather than casting rays." },
+  { q = "Why build a Doom-style renderer in JavaScript instead of Three.js or WebGL?", a = "Because the point is to understand the math. Three.js hides projection, clipping and depth sorting behind a scene graph. Doing it by hand on a 2D canvas, with no dependencies, means every step from map coordinates to pixels is yours, and the whole engine fits in a few hundred lines you can read in one sitting." },
+  { q = "How do I make a Doom-style game of my own?", a = "Start from the renderer here or from the source gist, then add in this order: textures (sample a texture column instead of a flat colour per wall), sectors with different floor and ceiling heights, sprites for enemies and items (billboarded quads sorted with the walls), and finally a game loop with enemies, pickups and doors. If you want a shipped game rather than an engine, GZDoom or a modern engine with a retro shader gets you there faster." },
+]
 og_image = "/media/doom-renderer-og.jpg"
 # The playable demo opens the post, so the social card is not repeated above it
 cover = false
@@ -21,6 +29,10 @@ Recently I have been adding games to my portfolio and DOOM is one of them. But i
 Turns out, classic games like **DOOM** didn't do real 3D at all. They used something called **2.5D rendering**,  basically faking 3D with clever 2D math. And it ran on hardware way worse (100x or more times worse) than what you are reading this on.
 
 Today I'll break down how I built my own DOOM-style renderer. No fancy tools required, just a code editor and a web browser.
+
+## How Doom rendering works, in one paragraph
+
+Doom stores its world as a flat, top-down 2D map of walls. Each frame, the engine moves and rotates that map so the player sits at the origin looking down one axis, projects every wall's endpoints onto the screen with a perspective divide (farther walls get shorter), then fills the vertical strip between each wall's projected top and bottom, drawing far walls first so near walls paint over them. There is no z-buffer, no polygon mesh and no real 3D camera. The whole illusion is distance turning into wall height. The rest of this post builds exactly that, step by step, on an HTML canvas.
 
 
 ## Is 3D actually 3D?
@@ -327,6 +339,20 @@ setInterval(loop, 1000 / 30)
 The engine we built covers the fundamentals, but classic DOOM had much more: texture mapping, sprites, variable height sectors for different floor/ceiling heights, lighting, enemy AI, sound, guns, an actual game!
 
 Feel free to extend this engine to add more features! &lt;3
+
+## Doom vs Wolfenstein 3D vs this renderer
+
+People keep asking how this compares to the raycasters most tutorials teach, so here is the short version.
+
+| | Wolfenstein 3D (1992) | Doom (1993) | This post |
+|---|---|---|---|
+| Map | Grid of equal cubes | Sectors and linedefs, any angle | Grid of cubes |
+| Visibility | One ray per screen column | BSP tree, walls sorted front to back | Walls sorted by weighted distance, far to near |
+| Floor and ceiling heights | Fixed | Per sector | Fixed |
+| Drawing unit | Vertical column per ray | Vertical column per wall segment | Filled polygon per wall face |
+| Look up and down | No | No (y-shearing in ports) | No |
+
+The approach here is wall-projection rather than raycasting: each wall face is transformed, clipped and drawn as a quad, which is closer to how Doom thinks about walls, with Wolfenstein's simple grid map so the code stays short.
 
 
 ## References
