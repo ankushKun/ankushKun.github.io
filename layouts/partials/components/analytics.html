@@ -9,20 +9,40 @@ elsewhere stay harmless no-ops. */ -}}
     (function () {
         var host = location.hostname;
         if (host === 'localhost' || host === '127.0.0.1' || host === '[::1]' || host === '') return;
-        // Honour Global Privacy Control and Do Not Track: the library is never
-        // loaded, so nothing is captured or sent.
-        if (navigator.globalPrivacyControl === true ||
-            navigator.doNotTrack === '1' || window.doNotTrack === '1') return;
+        // Honour Global Privacy Control, a legal opt-out signal in some places:
+        // the library is never loaded, so nothing is captured or sent.
+        if (navigator.globalPrivacyControl === true) return;
         function initPosthog() {
             posthog.init('phc_nBvIMuMmaqQkAXL36Bi6eyTRga0A04klevYFyZf4cfc', {
                 api_host: 'https://p1.ankush.one',
                 ui_host: 'https://eu.posthog.com',
                 defaults: '2026-05-30',
-                person_profiles: 'identified_only',
-                // Cookieless: no identifier is stored on the device, so no banner.
-                persistence: 'memory',
-                disable_session_recording: true,
+                // Default persistence (localStorage + cookie): the visitor id
+                // survives closing the tab, so return visits join up.
+                // Every visitor gets a person profile, anonymous or not.
+                person_profiles: 'always',
+                // Opening a window pushes a history entry, so each counts as
+                // a pageview, and leaving the page is always captured.
+                capture_pageview: 'history_change',
+                capture_pageleave: true,
+                autocapture: { capture_copied_text: true },
+                capture_dead_clicks: true,
+                capture_heatmaps: true,
+                rageclick: true,
+                capture_performance: { network_timing: true, web_vitals: true },
                 capture_exceptions: true,
+                // Session replay, with console logs and network calls.
+                // Headers, bodies and canvas capture also need the matching
+                // switches on in the PostHog project's Session replay settings.
+                disable_session_recording: false,
+                enable_recording_console_log: true,
+                session_recording: {
+                    maskAllInputs: false,
+                    maskInputOptions: { password: true },
+                    recordHeaders: true,
+                    recordBody: true,
+                    collectFonts: true,
+                },
             });
         }
         function whenIdle() {

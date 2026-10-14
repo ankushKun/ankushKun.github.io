@@ -107,7 +107,7 @@
 
     /**
      * Analytics event. A no-op unless PostHog is on the page (it is skipped on
-     * dev builds and for Do Not Track / Global Privacy Control visitors).
+     * dev builds and for Global Privacy Control visitors).
      * Other scripts may call window.track?.('name', {...}).
      */
     function track(name, props) {

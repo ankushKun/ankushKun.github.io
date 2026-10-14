@@ -1,9 +1,9 @@
 +++
 title = "Privacy"
-description = "What ankush.one collects when you visit: cookieless usage analytics, the shared realtime apps, third-party embeds, and what stays in your browser."
+description = "What ankush.one collects when you visit: usage analytics and session replay, the shared realtime apps, third-party embeds, and what stays in your browser."
 +++
 
-This is a personal website. There are no accounts, no ads and no cookies set by this site. This page lists everything that leaves your browser when you use it.
+This is a personal website. There are no accounts and no ads. The only cookie this site sets belongs to analytics, described below. This page lists everything that leaves your browser when you use it.
 
 *Last reviewed: October 2026.*
 
@@ -12,15 +12,16 @@ This is a personal website. There are no accounts, no ads and no cookies set by 
 Usage data is sent to [PostHog](https://posthog.com) (EU region) through a first-party proxy at `p1.ankush.one`. That covers:
 
 - **Pageviews and JavaScript errors**, with the usual request details (page address, referrer, browser and screen size, IP address).
-- **Clicks:** PostHog's automatic capture records which element you clicked, including the label of the button or link, and when you leave a page. It does not record what you type.
+- **Clicks:** PostHog's automatic capture records which element you clicked, including the label of the button or link, dead clicks and rage clicks, text you copy or cut, where on the page you click and scroll (for heatmaps), and when you leave a page.
+- **Session replay:** a recording of what your browser shows while you are on the site, rebuilt from the page's DOM: mouse movement, scrolling, clicks, and what you type into the site's fields (passwords never, and this site has no password fields). It also includes the browser console output and the network requests the page makes, with their headers and bodies.
+- **Performance:** page load timings and Web Vitals.
 - **What you use on the desktop:** which windows you open (and from where: an icon, the Dock, a menu, Spotlight or a link) and how long they stay open, fullscreen toggles, which Spotlight result you pick, or that a search found nothing, and how long the query was (not the text), opening Get Info on an icon (which item it was), the hostname of external links you open, shares of a page, starting a song in Music, sending your first IRC message (not its content) and signing the Guestbook (not the entry).
 - **Using the apps:** the name of each Terminal command you run (never its arguments) and switching the Terminal to Linux, reactions you leave under a post or project, Paint and Daily Puzzle actions (drawing, saving, starting and solving a puzzle, posting a time, copying your result, with the day they belong to), opening the Guestbook's "On This Day" (with how many entries it showed), refreshing Activity Monitor, the Preferences pane you open and the setting you change, Software Update views, the welcome tour's steps, rearranging desktop icons, creating or deleting a private sticky note (the count only, never the text), turning on music sharing and tuning in, and clicking a suggestion on the "page not found" screen.
 
 How it runs:
 
-- It runs cookieless: the visitor id is random, kept in memory only, and gone when you close the tab. Nothing is written to your device for analytics.
-- Session recording is turned off.
-- Analytics is not loaded at all when your browser sends **Global Privacy Control** or **Do Not Track**.
+- The visitor id is random and stored in your browser (localStorage and a first-party cookie) so return visits are recognised as the same visitor. It is never tied to a name or email, since there is nothing on this site to sign in to.
+- Analytics is not loaded at all when your browser sends **Global Privacy Control**.
 
 ## Shared, realtime apps
 
