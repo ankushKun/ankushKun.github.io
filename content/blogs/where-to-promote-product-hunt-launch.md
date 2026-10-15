@@ -1,6 +1,7 @@
 +++
 date = '2026-10-15T09:00:00+05:30'
 draft = false
+og_image = "/media/product-hunt-launch-og.jpg"
 title = "How to Promote Your Product Hunt Launch: 10 Places That Work"
 description = "Product Hunt featured only 4% of launches in 2026. Here are 10 places to promote yours, each one's rules, the best day and time, and copy you can paste."
 summary = "Most Product Hunt launches never get featured, so the traffic has to come from you. I took Construct to #1 Product of the Day this year, and this is where I would promote a launch, in order, with each place's rules, the best time to post and a message you can copy."
