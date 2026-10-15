@@ -8,6 +8,8 @@ Emits, when they apply:
 - project pages: SoftwareSourceCode when `github` is set, CreativeWork otherwise
 - /projects/: ItemList of every project
 - any page with a `faq = [{q, a}]` front-matter list: FAQPage
+- any page with an `itemlist = [{name, anchor}]` front-matter list (a ranked
+  list post): ItemList, each item pointing at its heading on the page
 */}}
 {{- $page := .page -}}
 {{- $personRef := dict "@id" .personId -}}
@@ -49,6 +51,20 @@ Emits, when they apply:
     "itemListElement" $items
 ) }}
     <script type="application/ld+json">{{ $node | jsonify | safeJS }}</script>
+{{- end -}}
+
+{{- with $page.Params.itemlist -}}
+{{- $items := slice -}}
+{{- range $i, $it := . -}}
+{{- if $it.name -}}
+{{- $item := dict "@type" "ListItem" "position" (add $i 1) "name" $it.name -}}
+{{- with $it.anchor }}{{ $item = merge $item (dict "url" (printf "%s#%s" $page.Permalink .)) }}{{ end -}}
+{{- $items = $items | append $item -}}
+{{- end -}}
+{{- end -}}
+{{- with $items }}
+    <script type="application/ld+json">{{ merge $ctx (dict "@type" "ItemList" "name" $page.Title "url" $page.Permalink "numberOfItems" (len .) "itemListElement" .) | jsonify | safeJS }}</script>
+{{- end -}}
 {{- end -}}
 
 {{- with $page.Params.faq -}}

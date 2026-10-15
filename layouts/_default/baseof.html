@@ -261,8 +261,9 @@
     {{- if not $ogImage }}{{ $ogImage = partial "seo/image.html" "/og-image.jpg" }}{{ end }}
     <meta name="description" content="{{ $metaDesc }}">
     <meta name="author" content="{{ $authorName }}">
-    {{- /* Keywords only where the page has tags of its own */}}
-    {{ with .Params.tags }}<meta name="keywords" content="{{ delimit . ", " }}">{{ end }}
+    {{- /* Keywords only where the page has its own: a `keywords` front-matter
+    list (the search phrases a post targets) wins over its tags */}}
+    {{ with .Params.keywords | default .Params.tags }}<meta name="keywords" content="{{ delimit . ", " }}">{{ end }}
     {{- /* A cross-posted article names its original with `canonical` in front matter */}}
     {{ if not $is404 }}<link rel="canonical" href="{{ $canonical }}">{{ end }}
     <meta name="robots" content="{{ if $is404 }}noindex{{ else if .Params.noindex }}noindex, nofollow{{ else if not $indexable }}noindex, follow{{ else }}index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1{{ end }}">
@@ -408,8 +409,15 @@
             "name": "{{ .Site.Title }}",
             "url": "{{ .Site.BaseURL }}"
         },
-        "wordCount": {{ .WordCount }}{{ if .Params.tags }},
-        "keywords": "{{ delimit .Params.tags ", " }}"{{ end }}
+        "wordCount": {{ .WordCount }}{{ with .Params.keywords | default .Params.tags }},
+        "keywords": {{ delimit . ", " | jsonify | safeJS }}{{ end }}
+        {{- /* Optional `about` / `mentions` = [{ name, sameAs }] front matter:
+        the entities a post is about or names, so search and AI engines can
+        resolve them (sameAs is usually the Wikipedia URL) */ -}}
+        {{- range $key := slice "about" "mentions" }}{{ with index $.Params $key }}
+        {{- $things := slice }}{{ range . }}{{ $t := dict "@type" "Thing" "name" .name }}{{ with .sameAs }}{{ $t = merge $t (dict "sameAs" .) }}{{ end }}{{ $things = $things | append $t }}{{ end }},
+        "{{ $key }}": {{ $things | jsonify | safeJS }}
+        {{- end }}{{ end }}
     }
     </script>
     {{ end }}
