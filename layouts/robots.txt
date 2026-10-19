@@ -43,6 +43,8 @@ Disallow: /xterm/
 Sitemap: {{ "sitemap.xml" | absURL }}
 # The Animedoro timer is published from github.com/ankushKun/animedoro-timer
 Sitemap: {{ "animedoro-timer/sitemap.xml" | absURL }}
+# sh23ds (Silent Hill 2 for Nintendo 3DS) is published from github.com/ankushKun/sh23ds
+Sitemap: {{ "sh23ds/sitemap.xml" | absURL }}
 
 # For language models (https://llmstxt.org). Every page and section also has
 # a markdown twin at <url>index.md.

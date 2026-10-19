@@ -7,7 +7,7 @@ summary = "I bought a New 3DS, got annoyed at pulling the SD card out, and ended
 tags = ["hardware", "game-dev"]
 og_image = "/media/3ds-homebrew-og.jpg"
 author = 'Ankush'
-related = ["/projects/2026.3dsfm", "/projects/2026.3dsdl"]
+related = ["/projects/2026.3dsfm", "/projects/2026.3dsdl", "/projects/2026.sh23ds"]
 links = [
   { label = "3dsFM", url = "https://ankush.one/3dsFM/", icon = "web", primary = true },
   { label = "3dsDL", url = "https://ankush.one/3dsDL/", icon = "web" },
