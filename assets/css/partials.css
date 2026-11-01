@@ -223,7 +223,7 @@ details[open].timeline-year-section > summary {
     margin-top: 8px;
 }
 
-/* A hackathon prize on a timeline row (data/wins.yaml) */
+/* A prize or other win on a timeline row (data/wins.yaml) */
 .event-medal {
     flex: none;
     font-size: 11px;
@@ -524,6 +524,7 @@ html[data-appearance="dark"] .filter-chip.active {
 .timeline-window .event-item[hidden],
 .timeline-window .month-section[hidden],
 .timeline-window .timeline-year-section[hidden],
+.timeline-window[data-filter="wins"] .event-item:not([data-win]),
 .timeline-window[data-filter="hackathon"] .event-item:not([data-type="hackathon"]),
 .timeline-window[data-filter="fellowship"] .event-item:not([data-type="fellowship"]),
 .timeline-window[data-filter="work"] .event-item:not([data-type="work"]),
@@ -539,6 +540,7 @@ html[data-appearance="dark"] .filter-chip.active {
    rule and still filters the rows. */
 .timeline-window .month-section:has(.event-item[hidden]):not(:has(.event-item:not([hidden]))),
 .timeline-window .timeline-year-section:has(.event-item[hidden]):not(:has(.event-item:not([hidden]))),
+.timeline-window[data-filter="wins"] :is(.month-section, .timeline-year-section):not(:has(.event-item[data-win])),
 .timeline-window[data-filter="hackathon"] :is(.month-section, .timeline-year-section):not(:has(.event-item[data-type="hackathon"])),
 .timeline-window[data-filter="fellowship"] :is(.month-section, .timeline-year-section):not(:has(.event-item[data-type="fellowship"])),
 .timeline-window[data-filter="work"] :is(.month-section, .timeline-year-section):not(:has(.event-item[data-type="work"])),

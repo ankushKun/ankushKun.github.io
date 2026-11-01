@@ -1,4 +1,16 @@
 wins:
+  - year: 2026
+    prize: "#1 Product of the Day"
+    medal: "🏆"
+    competition: "Product Hunt"
+    url: "https://www.producthunt.com/products/construct-computer"
+    timeline: "/timeline/2026.construct-product-hunt"
+  - year: 2026
+    prize: "Build Sprint"
+    medal: "🏅"
+    competition: "TinyFish Accelerator"
+    url: "https://www.tinyfish.ai/accelerator/founders/construct-computer"
+    timeline: "/timeline/2026.tinyfish-build-sprint"
   - year: 2024
     prize: "Coinbase Developer Platform 3rd place + 2 pool prizes"
     medal: "🥉"
@@ -11,6 +23,16 @@ wins:
     competition: "Weavers Raid III"
     url: "https://x.com/Weavers_Org/status/1821262463897075745"
     timeline: "/timeline/2024.weavers3"
+  - year: 2024
+    prize: "Top 5"
+    medal: "🏅"
+    competition: "UPES Hackathon 8.0"
+    timeline: "/timeline/2024.upes"
+  - year: 2023
+    prize: "Arweave Scholar"
+    medal: "🏅"
+    competition: "Arweave India"
+    timeline: "/timeline/2023.ar-scholar"
   - year: 2023
     prize: "Grand Prize"
     medal: "🥇"
@@ -42,7 +64,12 @@ wins:
     prize: "First"
     medal: "🥇"
     competition: "IIT Roorkee Intel OneAPI workshop & hackathon"
-    timeline: "/blogs/mendelbrot-intel-oneapi"
+    timeline: "/timeline/2023.cogni"
+  - year: 2023
+    prize: "₹50k funding"
+    medal: "🏅"
+    competition: "Gujarat Robofest Level 2"
+    timeline: "/timeline/2023.robofest"
   - year: 2023
     prize: "Track Prize"
     medal: "🏅"
@@ -54,6 +81,11 @@ wins:
     medal: "🥈"
     competition: "Hash It Out 1.0"
     timeline: "/timeline/2022.hash-it-out"
+  - year: 2022
+    prize: "Top 5, Education Track"
+    medal: "🏅"
+    competition: "IC Hack '22"
+    timeline: "/timeline/2022.ichack"
   - year: 2022
     prize: "Best Use of DeSo + Most Creative Use of GitHub"
     medal: "🏅"
@@ -84,8 +116,6 @@ participations:
     competition: "AWS Community Day Quizes"
   - year: 2022
     competition: "Hack The Mountains 3.0"
-  - year: 2022
-    competition: "IC Hack '22"
   - year: 2019
     competition: "Tinkerfest Junior Robotics competition"
   - year: 2019

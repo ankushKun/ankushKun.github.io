@@ -1,6 +1,6 @@
 {{- /*
 /llms-full.txt: the whole site as one markdown document - identity, bio,
-every project, hackathon win (data/wins.yaml) and timeline entry, and the
+every project, win (data/wins.yaml) and timeline entry, and the
 full text of every blog post.
 Generated, like /llms.txt (see layouts/index.llms.txt).
 */ -}}
@@ -44,7 +44,7 @@ Last updated {{ .Lastmod.Format "2006-01-02" }}.
 {{ range .Pages }}{{ partial "agents/line.md" (dict "page" . "tags" true) }}
 {{ end }}{{ end }}
 {{- with hugo.Data.wins.wins }}
-## Hackathon wins
+## Wins
 
 {{ range . }}- {{ .prize }}, {{ .competition }} ({{ .year }})
 {{- with .timeline }}{{ with site.GetPage . }}{{ $url := .Permalink }}{{ with .OutputFormats.Get "markdown" }}{{ $url = .Permalink }}{{ end }}: [{{ .Title | replaceRE `[\[\]]` "" }}]({{ $url }}){{ end }}

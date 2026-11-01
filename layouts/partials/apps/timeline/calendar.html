@@ -1,6 +1,6 @@
 {{/* Timeline - life and work events by year and month. Recent years are
-open; older ones fold up (details). A hackathon prize from data/wins.yaml is
-shown on its row. Projects and posts are not in here: they have lists of
+open; older ones fold up (details). A win from data/wins.yaml is shown on
+its row, and the "wins" chip (or ?filter=wins on /timeline/) shows only those. Projects and posts are not in here: they have lists of
 their own. */}}
 {{/*
 Usage:
@@ -75,11 +75,12 @@ Set "standalone" to false for desktop window (events open in window)
             <div class="timeline-controls">
                 {{/* Filter chips for the kinds that actually occur, in a fixed order */}}
                 {{ $present := dict }}
-                {{ range $pages }}{{ with partial "apps/timeline/event-type.html" . }}{{ $present = merge $present (dict . true) }}{{ end }}{{ end }}
+                {{ range $pages }}{{ with partial "apps/timeline/event-type.html" . }}{{ $present = merge $present (dict . true) }}{{ end }}
+                {{ if index $wins (strings.TrimSuffix "/" .RelPermalink) }}{{ $present = merge $present (dict "wins" true) }}{{ end }}{{ end }}
                 {{ if $present }}
                 <div class="filter-chips" role="group" aria-label="Filter by type">
                     <button type="button" class="filter-chip" data-filter="" aria-pressed="true">All</button>
-                    {{ range slice "hackathon" "work" "fellowship" "open-source" "speaking" "achievement" "project" "blog" }}
+                    {{ range slice "wins" "hackathon" "work" "fellowship" "open-source" "speaking" "achievement" "project" "blog" }}
                     {{ if index $present . }}
                     <button type="button" class="filter-chip" data-filter="{{ . }}" aria-pressed="false">{{ . }}</button>
                     {{ end }}
@@ -126,6 +127,7 @@ Set "standalone" to false for desktop window (events open in window)
                         <div class="events-list">
                             {{ range $monthData.events }}
                             {{ $type := partial "apps/timeline/event-type.html" .page }}
+                            {{ $win := index $wins (strings.TrimSuffix "/" .page.RelPermalink) }}
                             {{/* Same window id as the Blogs and Projects apps use, so a
                             page opened from here and from there is one window */}}
                             {{ $winPrefix := $prefix }}
@@ -135,11 +137,12 @@ Set "standalone" to false for desktop window (events open in window)
                             let mavericks.js open the page in a window on a plain click. */}}
                             <a href="{{ .page.RelPermalink }}" class="event-item {{ if $standalone }}event-link{{ else }}finder-row{{ end }}"
                                 {{- with $type }} data-type="{{ . }}"{{ end }}
+                                {{- if $win }} data-win{{ end }}
                                 {{- if not $standalone }} data-window="{{ $winPrefix }}-{{ .page.File.UniqueID }}"
                                 data-title="{{ .page.Title }}" data-permalink="{{ .page.Permalink }}"{{ end }}>
                                 <time class="event-date" datetime="{{ .page.Date.Format (cond (eq .day "") "2006" "2006-01-02") }}">{{ .day | default "–" }}</time>
                                 <span class="event-title">{{ .page.Title }}</span>
-                                {{ with index $wins (strings.TrimSuffix "/" .page.RelPermalink) }}
+                                {{ with $win }}
                                 <span class="event-medal" title="{{ .prize }}, {{ .competition }}"><span aria-hidden="true">{{ .medal }}</span> {{ .prize }}</span>
                                 {{ end }}
                                 {{ with $type }}
@@ -172,6 +175,11 @@ Set "standalone" to false for desktop window (events open in window)
         if (window.__timelineFilterBound) return;
         window.__timelineFilterBound = true;
 
+        // "wins" is a flag on the row (data-win), every other chip a type
+        const rows = (filter) => filter === 'wins'
+            ? '.event-item[data-win]'
+            : '.event-item[data-type="' + filter + '"]';
+
         document.addEventListener('click', (e) => {
             const chip = e.target.closest && e.target.closest('.timeline-window .filter-chip');
             if (!chip) return;
@@ -185,7 +193,7 @@ Set "standalone" to false for desktop window (events open in window)
             // A folded year opens while it has a match and goes back after
             container.querySelectorAll('details.timeline-year-section').forEach(section => {
                 section.open = filter
-                    ? !!section.querySelector('.event-item[data-type="' + filter + '"]')
+                    ? !!section.querySelector(rows(filter))
                     : section.dataset.open === 'true';
             });
 
@@ -196,11 +204,35 @@ Set "standalone" to false for desktop window (events open in window)
             const countEl = container.querySelector('.timeline-count');
             if (countEl) {
                 const shown = filter
-                    ? container.querySelectorAll('.event-item[data-type="' + filter + '"]').length
+                    ? container.querySelectorAll(rows(filter)).length
                     : Number(countEl.dataset.total);
                 countEl.textContent = shown + ' event' + (shown !== 1 ? 's' : '');
             }
+
+            // On the page itself the filter lives in the URL, so it can be shared
+            const page = container.parentElement;
+            if (page && page.dataset.permalink === location.pathname) {
+                const url = new URL(location.href);
+                if (filter) url.searchParams.set('filter', filter);
+                else url.searchParams.delete('filter');
+                history.replaceState(history.state, '', url);
+            }
         });
+
+        // /timeline/?filter=wins opens with that chip pressed
+        const applyUrlFilter = () => {
+            const filter = new URLSearchParams(location.search).get('filter');
+            if (!filter) return;
+            document.querySelectorAll('.timeline-window').forEach(container => {
+                const page = container.parentElement;
+                if (!page || page.dataset.permalink !== location.pathname) return;
+                const chip = Array.from(container.querySelectorAll('.filter-chip'))
+                    .find(c => c.dataset.filter === filter);
+                if (chip) chip.click();
+            });
+        };
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', applyUrlFilter);
+        else applyUrlFilter();
 
         document.addEventListener('change', (e) => {
             const jump = e.target;
