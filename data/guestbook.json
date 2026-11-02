@@ -1,6 +1,6 @@
 {
- "updated": "2026-10-28T09:38:08.984Z",
- "count": 19,
+ "updated": "2026-11-02T11:00:50.807Z",
+ "count": 20,
  "entries": [
   {
    "id": "8rz540vzu",
@@ -210,6 +210,17 @@
    "variant": 0,
    "ts": 1793159591020,
    "updatedTs": 1793159591020
+  },
+  {
+   "id": "isdomj50p",
+   "name": "Ante",
+   "from": "Sweden",
+   "blurb": "",
+   "x": "",
+   "ig": "",
+   "variant": 7,
+   "ts": 1793559496851,
+   "updatedTs": 1793559496851
   }
  ]
 }
