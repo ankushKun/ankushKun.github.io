@@ -399,10 +399,13 @@
 
             const modKey = e.metaKey || e.ctrlKey;
 
-            // Cmd/Ctrl + K, Ctrl + Space, or a bare "/": Spotlight search.
+            // Cmd/Ctrl + K or F, Ctrl + Space, or a bare "/": Spotlight search.
+            // F takes over the browser's find on the desktop, where Spotlight
+            // searches every post and project; in a text field it stays the
+            // browser's (the typing check above returns first).
             // (Cmd+Space never reaches the page - macOS keeps it.)
             const isSearchChord =
-                (modKey && !e.altKey && !e.shiftKey && e.code === 'KeyK') ||
+                (modKey && !e.altKey && !e.shiftKey && (e.code === 'KeyK' || e.code === 'KeyF')) ||
                 (e.ctrlKey && !e.metaKey && !e.altKey && e.code === 'Space') ||
                 (!modKey && !e.altKey && e.key === '/' && !inSpotlight);
             if (isSearchChord) {
@@ -461,6 +464,31 @@
             }
         });
 
+        // Close and minimize (Ctrl or Alt/Option + W / M) from inside a text
+        // field in a window: IRC's message box, a search field, the guestbook
+        // form. Acts on that window. Caught
+        // on the way down, because those fields stop their keystrokes from
+        // bubbling. Only a terminal keeps the chords (its shell needs them).
+        // Ctrl+H is not here: in a Mac text field it deletes backwards.
+        document.addEventListener('keydown', (e) => {
+            if (!(e.altKey || e.ctrlKey) || e.metaKey || e.shiftKey) return;
+            if (e.code !== 'KeyW' && e.code !== 'KeyM') return;
+            const target = e.target;
+            if (!isTypingContext(target) || isTerminalContext(target)) return;
+            // The window the field is in; a field outside any (the desktop's
+            // sticky note, Spotlight) closes nothing
+            const win = target && target.closest ? target.closest('#windows-container .window') : null;
+            if (!win || win.classList.contains('closing')) return;
+            e.preventDefault();
+            e.stopPropagation();
+            if (e.code === 'KeyW') {
+                closeWindow(win, win.dataset.windowId);
+            } else {
+                const minimizeBtn = win.querySelector('.traffic-light.minimize');
+                if (minimizeBtn) minimizeBtn.click();
+            }
+        }, true);
+
         // Letting go of Option/Ctrl ends a Tab cycle
         const endTabCycle = () => { tabCycleHeld = false; };
         document.addEventListener('keyup', (e) => {
@@ -472,9 +500,15 @@
     /** True when keystrokes belong to a text field, an editor or a terminal. */
     function isTypingContext(target) {
         if (target && target.closest &&
-            target.closest('.v86-xterm, .xterm, input, textarea, select, [contenteditable]:not([contenteditable="false"])')) {
+            target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])')) {
             return true;
         }
+        return isTerminalContext(target);
+    }
+
+    /** A terminal owns every chord: its shell needs Ctrl+W/H/M/K, and closing tears the VM down. */
+    function isTerminalContext(target) {
+        if (target && target.closest && target.closest('.v86-xterm, .xterm')) return true;
         // The emulators read the keyboard at document level, so an active
         // terminal owns it even when focus sits on the page body.
         const activeId = activeWindow && activeWindow.dataset.windowId;
@@ -998,6 +1032,15 @@
         return [...appMetadata.values()].filter(item => item.searchable !== false);
     }
 
+    /**
+     * A window with a page of its own is anchored by that page, the same key
+     * the article's own page uses (os/window/frame.html), so a cursor over a
+     * post lands on that post whether the viewer has it in a window or not.
+     */
+    function cursorAnchorFor(id, permalink) {
+        return permalink ? 'page:' + pathOf(permalink) : 'win:' + id;
+    }
+
     /** Pathname of a permalink, so absolute and relative forms compare equal. */
     function pathOf(permalink) {
         try {
@@ -1166,31 +1209,34 @@
     }
 
     // Desktop Icons - SINGLE CLICK to open
+    // Delegated: the adaptive desktop (adaptive-desktop.js) changes which
+    // icons are there after this has run
     function setupDesktopIcons() {
-        const icons = document.querySelectorAll('.desktop-icon');
-        icons.forEach(icon => {
-            icon.addEventListener('click', (e) => {
-                // If it has a window to open, open it
-                const windowId = icon.dataset.window;
-                const title = icon.dataset.title;
-                if (windowId && title) {
-                    // Icons may be real links for crawlers and no-JS visitors
-                    if (isModifiedClick(e)) return;
-                    e.preventDefault();
-                    const width = parseInt(icon.dataset.width, 10) || 1000;
-                    const height = parseInt(icon.dataset.height, 10) || 700;
-                    const permalink = icon.dataset.permalink || null;
-                    openWindow(windowId, title, { width, height }, permalink, icon);
-                }
-                // Else it might have an onclick handler (like Schedule Call)
-            });
+        const desktop = document.getElementById('desktop');
+        if (!desktop) return;
+        desktop.addEventListener('click', (e) => {
+            const icon = e.target.closest && e.target.closest('.desktop-icon');
+            if (!icon) return;
+            // If it has a window to open, open it
+            const windowId = icon.dataset.window;
+            const title = icon.dataset.title;
+            if (windowId && title) {
+                // Icons may be real links for crawlers and no-JS visitors
+                if (isModifiedClick(e)) return;
+                e.preventDefault();
+                const width = parseInt(icon.dataset.width, 10) || 1000;
+                const height = parseInt(icon.dataset.height, 10) || 700;
+                const permalink = icon.dataset.permalink || null;
+                openWindow(windowId, title, { width, height }, permalink, icon);
+            }
+            // Else it might have an onclick handler (like Schedule Call)
+        });
 
-            icon.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    icon.click();
-                }
-            });
+        desktop.addEventListener('keydown', (e) => {
+            const icon = e.target.closest && e.target.closest('.desktop-icon');
+            if (!icon || (e.key !== 'Enter' && e.key !== ' ')) return;
+            e.preventDefault();
+            icon.click();
         });
     }
 
@@ -2478,7 +2524,7 @@
             {
                 name: 'Navigation',
                 items: [
-                    [mod + ' K  or  /', 'Open search'],
+                    [mod + ' K  or  ' + mod + ' F  or  /', 'Open search'],
                     ['↑ ↓', 'Move through results'],
                     ['↵', 'Open the selected result'],
                     ['Esc', 'Close search or dismiss a dialog']
@@ -3523,6 +3569,17 @@
         nextOpenSource = null;
         const automatic = source === 'boot';
 
+        // All Apps is the Launchpad overlay (assets/js/launchpad.js), not a
+        // window; any other window asked for closes it, as on a Mac. Without
+        // the script (an article page) the request falls through to the
+        // desktop below.
+        const launchpad = IS_DESKTOP ? window.SiteLaunchpad : null;
+        if (launchpad && id === 'launchpad') {
+            launchpad.open(origin);
+            return;
+        }
+        if (launchpad && !automatic && launchpad.isOpen()) launchpad.close({ restoreFocus: false });
+
         // Check if window already exists
         if (openWindows.has(id)) {
             const existingWindow = openWindows.get(id);
@@ -3598,6 +3655,11 @@
         // Opened for the visitor rather than by them: leave the URL alone
         if (automatic) win._urlSilent = true;
         track('window_opened', { id, source });
+        // Asked for by the visitor (not the boot About): the adaptive desktop
+        // learns which apps people use from this (adaptive-desktop.js)
+        if (!automatic && appIds.has(id)) {
+            window.dispatchEvent(new CustomEvent('site:app-open', { detail: { id, source } }));
+        }
 
         // Centre the About Me and IRC Chat windows; everything else cascades
         placeWindow(win, size, { center: id === 'about' || id === 'irc-chat' });
@@ -3680,7 +3742,7 @@
         win.dataset.windowId = id;
         // Multiplayer cursor anchor. Set at runtime, never in the hidden
         // #window-contents template, so anchor lookups can't match an invisible copy.
-        win.dataset.cursorAnchor = 'win:' + id;
+        win.dataset.cursorAnchor = cursorAnchorFor(id, permalink);
 
         // Calculate URL path for deep linking
         let urlPath = '/';
@@ -4134,6 +4196,13 @@
 
     function activateDockItem(item) {
         if (!item) return;
+        // The Launchpad's own Dock icon opens and closes it, without a bounce
+        const launchpad = window.SiteLaunchpad;
+        if (launchpad && item.dataset.dockKey === 'launchpad') {
+            launchpad.toggle(item.querySelector('.dock-icon'));
+            return;
+        }
+        if (launchpad && launchpad.isOpen()) launchpad.close({ restoreFocus: false });
         const windowId = item.dataset.dockWindow || item.dataset.dockKey;
         const win = openWindows.get(windowId);
         if (win && !win.classList.contains('closing')) {
@@ -5864,8 +5933,8 @@
             if (openWindows.get(oldId) === win) openWindows.delete(oldId);
             openWindows.set(id, win);
             win.dataset.windowId = id;
-            win.dataset.cursorAnchor = 'win:' + id;
         }
+        win.dataset.cursorAnchor = cursorAnchorFor(id, permalink);
         // The pages this window has turned through: Back and Forward between
         // them turn the page here instead of opening a second window
         if (!win._pagedPaths) win._pagedPaths = new Set([win.dataset.path]);
@@ -6151,6 +6220,14 @@
             return true;
         },
         isOpen: (id) => openWindows.has(id),
+        /** Whether an app has its "new activity" dot (setBadge), for icons built later */
+        hasBadge: (id) => appBadges.has(id),
+        /** Resolves once the app's own stylesheet (window.APP_STYLES) is in. */
+        stylesReady: (id) => appStylesPending(id) || Promise.resolve(),
+        /** Page path of the focused window ('/blogs/foo/'), or null. The desktop's
+            address bar is /?open=<token>, so presence asks this instead. */
+        currentPath: () => (activeWindow && activeWindow.isConnected && !activeWindow.classList.contains('closing')
+            && activeWindow.dataset.path) || null,
         /** App icon markup in one of the app-icon size contexts (spotlight, grid, chrome, dock) */
         iconHtml(id, context) {
             const meta = appMetadata.get(id);

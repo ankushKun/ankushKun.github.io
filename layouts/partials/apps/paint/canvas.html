@@ -3,6 +3,36 @@
 <div id="content-{{ $id }}" class="window-content" data-paint-window="true">
     <div class="paint-window">
 
+        {{/* Sign in: a name and the content warning, like IRC Chat's. The name
+        is shared with IRC Chat (irc_nick); each app asks for its own warning.
+        Labels wrap their inputs: this markup is cloned out of a hidden
+        template, so id + for would point at the invisible copy. */}}
+        <div class="paint-signin" role="dialog" aria-label="Sign in to Paint" hidden>
+            <div class="paint-signin-dialog">
+                <div class="paint-signin-brand">
+                    {{- with index (where hugo.Data.apps.apps "id" "paint") 0 }}
+                    {{ partial "os/app-icon.html" (dict "app" . "context" "grid" "class" "paint-signin-icon") }}
+                    {{- end }}
+                    <span class="paint-signin-name">Paint</span>
+                </div>
+                <h2 class="paint-signin-title">Welcome!</h2>
+                <label class="paint-signin-field">
+                    <span class="paint-signin-label">Nickname</span>
+                    <input type="text" class="paint-signin-input" maxlength="10" autocomplete="off"
+                        autocapitalize="off" autocorrect="off" spellcheck="false">
+                </label>
+                <label class="paint-signin-terms">
+                    <input type="checkbox" class="paint-signin-accept">
+                    <span>I acknowledge that this canvas contains user-generated drawings which may include
+                        offensive or NSFW material.</span>
+                </label>
+                <div class="paint-signin-actions">
+                    <button type="button" class="paint-signin-btn" disabled>Start Drawing</button>
+                </div>
+                <p class="paint-signin-footer">Server Status: Connecting…</p>
+            </div>
+        </div>
+
         {{ partial "apps/paint/daybar.html" . }}
 
         <div class="paint-toolbar">
@@ -51,6 +81,8 @@
                 <button type="button" class="paint-btn paint-undo" data-tip="Undo your last stroke (⌘Z)" data-tip-align="end" disabled>Undo</button>
                 <button type="button" class="paint-btn paint-save" data-tip="Download this canvas as a PNG" data-tip-align="end">Save</button>
                 <button type="button" class="paint-clear" data-tip="Remove everything you drew today" data-tip-align="end" disabled>Clear Mine</button>
+                {{/* Past days only (paint-daily.css), and only once signed in */}}
+                <button type="button" class="paint-btn paint-delete-day" data-tip="Remove this day's drawings for everyone" data-tip-align="end" hidden>Delete Day</button>
                 <button type="button" class="paint-btn paint-today">Back to Today</button>
             </div>
         </div>
@@ -69,6 +101,7 @@
 
         <div class="paint-statusbar">
             <span class="paint-hint">Everyone here draws on the same canvas — be kind to each other's work.</span>
+            <button type="button" class="paint-me" data-tip="Change your name" data-tip-align="end" hidden></button>
             <span class="paint-status">Connecting…</span>
         </div>
     </div>

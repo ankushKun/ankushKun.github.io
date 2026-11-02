@@ -66,19 +66,29 @@
             // Start watching the connection (and reviving dropped relays)
             // even on pages where nothing asks for its status.
             setTimeout(getConnection, 0);
+            watchLoad(window.__siteGun);
         }
         return window.__siteGun;
     }
 
-    function gunRoot() {
-        return getGun().get(ROOT);
+    /**
+     * A node by its soul, e.g. node('apps/irc/general/messages').
+     *
+     * Not getGun().get(ROOT).get('apps').get('irc')...: a put on a chain like that makes
+     * Gun re-send every link above it with a fresh state, and the relay stored
+     * the root again on every cursor move (2 rows a put, 14 per chat message).
+     * Gun named these souls by joining the path, so the strings are the same
+     * ones the existing data already lives under.
+     */
+    function node(path, gun) {
+        return (gun || getGun()).get(ROOT + '/' + path);
     }
 
-    /**
-     * Cursors and presence are scoped per page. Anchor keys ("icon:terminal",
-     * "win:about") only mean anything within the page that renders them, and a
-     * blog reader should not paint a cursor onto the desktop.
-     */
+    // Cursors, presence and reactions are one room for the whole site, so a
+    // visitor on an article and one on the desktop see each other.
+    const SITE_ROOM = 'site';
+
+    /** A page as a key: '/blogs/foo/' -> 'blogs_foo'. Names post reactions and "reading now". */
     function roomKey(pathname) {
         const path = pathname || window.location.pathname || '/';
         const key = path.replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '').toLowerCase();
@@ -146,12 +156,13 @@
                 const mesh = gun.back('opt.mesh');
                 const graph = root.graph || {};
                 if (!mesh || !mesh.say) return;
-                // Walk the chains the page has open (they all hang off the
-                // site root) alongside the graph, and ask for each key a
-                // chain is waiting on that the graph still has no value for.
+                // Walk the chains the page has open (every soul of the site
+                // has the ROOT prefix) alongside the graph, and ask for each
+                // key a chain is waiting on that the graph still has no value for.
                 let budget = 60;
                 const seen = new Set();
-                (function walk(at, soul) {
+                const next = root.next || {};
+                const walk = function (at, soul) {
                     if (!at || seen.has(at)) return;
                     seen.add(at);
                     const have = graph[soul] || {};
@@ -172,7 +183,10 @@
                             walk(child && (child._ || child), value['#']);
                         }
                     });
-                })(root.next && root.next[ROOT], ROOT);
+                };
+                Object.keys(next).forEach((soul) => {
+                    if (soul === ROOT || soul.indexOf(ROOT + '/') === 0) walk(next[soul], soul);
+                });
             } catch (e) { /* internals moved: live updates still resume */ }
         }
 
@@ -208,58 +222,95 @@
         };
     }
 
+    /**
+     * The relay's daily request budget. Past 70% it sends {dam: "load",
+     * stage: "live-slow"} (and repeats it to every socket that says hi), and
+     * live traffic should back off: no cursor stream, slower beats. Gun drops
+     * dam types it has no handler for, so this is the only listener.
+     */
+    const load = { stage: 'ok', listeners: new Set() };
+
+    function setLoad(stage) {
+        if (stage === load.stage) return;
+        load.stage = stage;
+        load.listeners.forEach((fn) => {
+            try { fn(stage); } catch (e) { /* ignore */ }
+        });
+    }
+
+    function watchLoad(gun) {
+        try {
+            const mesh = gun.back('opt.mesh');
+            if (!mesh || !mesh.hear) return;
+            mesh.hear.load = function (msg) {
+                setLoad(msg && msg.stage === 'live-slow' ? 'live-slow' : 'ok');
+            };
+            // A relay that is still slow says so again right after hi. Gun's
+            // events run as a chain: pass hi on, or the connection watcher
+            // registered after this never hears it.
+            gun.on('hi', function (peer) {
+                setLoad('ok');
+                if (this.to && this.to.next) this.to.next(peer);
+            });
+        } catch (e) { /* internals moved: live traffic just never backs off */ }
+    }
+
+    const loadState = {
+        get slow() { return load.stage !== 'ok'; },
+        onChange(fn) {
+            load.listeners.add(fn);
+            return () => load.listeners.delete(fn);
+        }
+    };
+
     let sharedConnection = null;
     function getConnection() {
         if (!sharedConnection) sharedConnection = connection();
         return sharedConnection;
     }
 
+    const today = () => new Date().toISOString().slice(0, 10);
+
     const paths = {
         live: {
-            cursors: (room) =>
-                gunRoot().get('live').get('cursors').get(room || roomKey()),
-            presence: (room) =>
-                gunRoot().get('live').get('presence').get(room || roomKey()),
-            reactions: (room) =>
-                gunRoot().get('live').get('reactions').get(room || roomKey()),
-            ircPresence: (channel = 'general') =>
-                gunRoot().get('live').get('irc').get(channel).get('presence'),
+            cursors: () => node('live/cursors/' + SITE_ROOM),
+            // { ts, nick, p }: p is roomKey of the page the visitor is on.
+            presence: () => node('live/presence/' + SITE_ROOM),
+            reactions: () => node('live/reactions/' + SITE_ROOM),
+            ircPresence: (channel = 'general') => node('live/irc/' + channel + '/presence'),
             // Opt-in "listening now" records, one per visitor per UTC day
             // (`day` is YYYY-MM-DD) so the node cannot grow without bound.
-            music: (day) =>
-                gunRoot().get('live').get('music').get(day || new Date().toISOString().slice(0, 10)),
+            music: (day) => node('live/music/' + (day || today())),
         },
         apps: {
-            ircMessages: (channel = 'general') =>
-                gunRoot().get('apps').get('irc').get(channel).get('messages'),
+            ircMessages: (channel = 'general') => node('apps/irc/' + channel + '/messages'),
             // One number, overwritten: when the channel last had a message
             // (sender's clock, ms). Drives the unread dot on the IRC icon.
-            ircLatest: (channel = 'general') =>
-                gunRoot().get('apps').get('irc').get(channel).get('latest'),
-            sticky:() => gunRoot().get('apps').get('sticky').get('shared'),
+            ircLatest: (channel = 'general') => node('apps/irc/' + channel).get('latest'),
+            sticky: () => node('apps/sticky/shared'),
             // `gun` is only passed by the guestbook's read-back check, which
             // uses a second, empty instance to see what the relays really hold.
-            guestbook: (gun) =>
-                (gun || getGun()).get(ROOT).get('apps').get('guestbook').get('entries'),
-            paintStrokes: (board = 'main') =>
-                gunRoot().get('apps').get('paint').get(board).get('strokes'),
-            paintMeta: (board = 'main') =>
-                gunRoot().get('apps').get('paint').get(board).get('meta'),
+            guestbook: (gun) => node('apps/guestbook/entries', gun),
+            paintStrokes: (board = 'main') => node('apps/paint/' + board + '/strokes'),
+            paintMeta: (board = 'main') => node('apps/paint/' + board + '/meta'),
             // Parent of every board ('main', 'd-YYYY-MM-DD'); its keys are
-            // how the Paint gallery learns which days have a canvas.
-            paintBoards: () => gunRoot().get('apps').get('paint'),
+            // how the Paint gallery learns which days have a canvas. Strokes
+            // go straight to their board's node, so paint.js links each new
+            // board in here itself (registerBoard).
+            paintBoards: () => node('apps/paint'),
             // Reactions under a post or project: <reaction>/<visitor id> = true.
             // `key` is roomKey(the page's path), so a desktop window and the
             // article page share one node.
-            postReactions: (key) =>
-                gunRoot().get('apps').get('reactions').get(key || roomKey()),
+            postReactions: (key) => node('apps/reactions/' + (key || roomKey())),
+            // How popular each app is across everyone, for the adaptive
+            // desktop: <app id> = "<score>,<ms>", a count that halves every
+            // two weeks, as of the time after the comma (adaptive-desktop.js).
+            usage: () => node('apps/usage/popular'),
             // Leaderboard for one game on one UTC day (`day` is YYYY-MM-DD):
             // <visitor id> = { name, ms, hits, ts }, one row per visitor.
-            scores: (day, game = 'daily-puzzle') =>
-                gunRoot().get('apps').get('scores').get(game)
-                    .get(day || new Date().toISOString().slice(0, 10)),
+            scores: (day, game = 'daily-puzzle') => node('apps/scores/' + game + '/' + (day || today())),
         },
     };
 
-    window.SiteGun = { getGun, paths, roomKey, getConnection, store, visitorId, GUN_RELAY, ROOT };
+    window.SiteGun = { getGun, paths, roomKey, getConnection, store, visitorId, load: loadState, GUN_RELAY, ROOT };
 })();

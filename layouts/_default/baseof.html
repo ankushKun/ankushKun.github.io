@@ -772,6 +772,11 @@
     {{- if isset . "dock" -}}{{- $inDock = .dock -}}{{- end -}}
     {{- if $inDock -}}{{- $entry = merge $entry (dict "dock" true) -}}{{- end -}}
     {{- with .contentPermalink -}}{{- $entry = merge $entry (dict "contentPermalink" .) -}}{{- end -}}
+    {{- /* For the adaptive desktop (adaptive-desktop.js): the curated default
+    icons, the folder an app lives in, and apps it never puts on the desktop */ -}}
+    {{- if .desktop -}}{{- $entry = merge $entry (dict "desktop" true) -}}{{- end -}}
+    {{- with .group -}}{{- $entry = merge $entry (dict "group" .) -}}{{- end -}}
+    {{- if and (isset . "autoDesktop") (not .autoDesktop) -}}{{- $entry = merge $entry (dict "autoDesktop" false) -}}{{- end -}}
     {{- with .defaultSize -}}{{- $entry = merge $entry (dict "width" .width "height" .height) -}}{{- end -}}
     {{- $registry = $registry | append $entry -}}
     {{- end }}
@@ -802,6 +807,14 @@
         }, true);
     </script>
 
+    {{- /* All Apps as a Launchpad overlay (#launchpad-template in index.html).
+    Desktop only, idle until the Dock icon or F4. Before the shell: deferred
+    scripts run once the page is parsed, and the shell boots (and carries out
+    /?open=launchpad) as soon as it runs, so the Launchpad must be there. */ -}}
+    {{- if .IsHome }}{{ with resources.Get "js/launchpad.js" }}
+    {{ $launchpad := . | resources.Minify | resources.Fingerprint }}
+    <script src="{{ $launchpad.Permalink }}" defer></script>
+    {{- end }}{{ end }}
     <!-- Main JS -->
     {{ $js := resources.Get "js/mavericks.js" | resources.Minify | resources.Fingerprint }}
     <script src="{{ $js.Permalink }}" defer></script>
@@ -813,6 +826,12 @@
     {{- end }}
     {{- /* Personal desktop (icon arrangement, private stickies, welcome tour).
     Desktop only, deferred behind the shell it extends through window.SiteShell. */ -}}
+    {{- /* The desktop's icons: the apps this visitor (and everyone) opens most.
+    Before desktop-personal.js, which lays out whatever icons it finds. */ -}}
+    {{- if .IsHome }}{{ with resources.Get "js/adaptive-desktop.js" }}
+    {{ $adaptive := . | resources.Minify | resources.Fingerprint }}
+    <script src="{{ $adaptive.Permalink }}" defer></script>
+    {{- end }}{{ end }}
     {{- if .IsHome }}{{ with resources.Get "js/desktop-personal.js" }}
     {{ $personal := . | resources.Minify | resources.Fingerprint }}
     <script src="{{ $personal.Permalink }}" defer></script>

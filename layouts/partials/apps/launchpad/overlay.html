@@ -1,0 +1,56 @@
+{{/* All Apps, as the Lion to Mavericks Launchpad: a full-screen grid of every
+app over the blurred desktop picture, with a search field, pages and the games
+in a folder. Shipped in a <template> on the desktop and stamped out the first
+time it opens (assets/js/launchpad.js, styles in assets/css/apps/launchpad.css).
+
+.lp-source holds every item once; the script lays them out in pages of 7x5
+(4 across on a phone) and moves the folder's into the folder band. Items open
+their app through SiteShell.openApp, which knows each app's page, so apps whose
+window body is a page of the site (Privacy, Credits, Resume...) open too.
+Order and membership come from data/apps.yaml: everything except All Apps
+itself, with `group: games` inside the Games folder. */}}
+{{- $apps := .apps -}}
+{{- $folder := index (where $apps "id" "games") 0 -}}
+{{- $games := where $apps "group" "games" -}}
+<div class="lp" id="launchpad" role="dialog" aria-modal="true" aria-label="All Apps" tabindex="-1" hidden>
+    <div class="lp-backdrop" aria-hidden="true"></div>
+    <label class="lp-search">
+        <svg class="lp-search-glass" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+            <circle cx="6.5" cy="6.5" r="4.6" fill="none" stroke="currentColor" stroke-width="1.8" />
+            <path d="M10 10l4 4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" />
+        </svg>
+        <input type="search" class="lp-search-input" placeholder="Search" aria-label="Search apps"
+            autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go">
+    </label>
+    <div class="lp-pages">
+        <div class="lp-track"></div>
+    </div>
+    <p class="lp-empty" hidden>No Results</p>
+    <div class="lp-dots" hidden></div>
+    <div class="lp-band" role="group" aria-labelledby="lp-band-title" hidden>
+        <h2 class="lp-band-title" id="lp-band-title">{{ with $folder }}{{ .label }}{{ else }}Games{{ end }}</h2>
+        <div class="lp-band-grid"></div>
+    </div>
+
+    <div class="lp-source" hidden>
+        {{- range $apps }}
+        {{- if eq .id "launchpad" }}{{ continue }}{{ end }}
+        {{- $keys := slice .label .title }}{{ with .aliases }}{{ $keys = $keys | append . }}{{ end }}
+        {{- if and $folder (eq .id $folder.id) }}
+        <button type="button" class="lp-item lp-folder" data-open-folder="{{ .id }}" data-search="{{ lower (delimit $keys " ") }}"
+            data-cursor-anchor="lp:{{ .id }}" aria-expanded="false">
+            <span class="lp-icon"><span class="lp-folder-tile">
+                {{- range first 9 $games }}{{ partial "os/app-icon.html" (dict "app" . "context" "launchpad-mini") }}{{ end -}}
+            </span></span>
+            <span class="lp-label">{{ .label }}</span>
+        </button>
+        {{- else }}
+        <button type="button" class="lp-item" data-app="{{ .id }}" data-search="{{ lower (delimit $keys " ") }}"
+            data-cursor-anchor="lp:{{ .id }}"{{ if eq .group "games" }} data-folder="{{ with $folder }}{{ .id }}{{ end }}"{{ end }}>
+            <span class="lp-icon">{{ partial "os/app-icon.html" (dict "app" . "context" "launchpad") }}</span>
+            <span class="lp-label">{{ .label }}</span>
+        </button>
+        {{- end }}
+        {{- end }}
+    </div>
+</div>

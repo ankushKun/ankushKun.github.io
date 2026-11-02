@@ -120,16 +120,8 @@ handles short screens and stragglers. */ -}}
     {{/* RESUME: no template. The window body is fetched from /resume/
     (data/apps.yaml contentPermalink, layouts/resume/list.html). */}}
 
-    <!-- LAUNCHPAD - every app on the site in one grid -->
-    <template id="tpl-launchpad">
-    {{ partial "apps/games/grid.html" (dict
-        "id" "launchpad"
-        "title" "All Apps"
-        "all" true
-        "intro" "Everything on this desktop. The terminal runs, the chat is live, the canvas and the guestbook are shared with everyone else here."
-        "data" hugo.Data.apps
-    ) }}
-    </template>
+    {{/* LAUNCHPAD: no window template. All Apps opens as a full-screen
+    overlay (#launchpad-template below, assets/js/launchpad.js). */}}
 
     <!-- GAMES FOLDER CONTENT - Finder Icon View -->
     <template id="tpl-games">
@@ -326,6 +318,11 @@ handles short screens and stragglers. */ -}}
     ) }}
     </template>
 </div>
+
+{{/* All Apps (Launchpad): stamped out by assets/js/launchpad.js the first time it opens. */}}
+<template id="launchpad-template">
+{{ partial "apps/launchpad/overlay.html" (dict "apps" hugo.Data.apps.apps) }}
+</template>
 
 {{/* Used by the Quake III window's menu buttons (inline onclick in tpl-quake3). */}}
 <script>

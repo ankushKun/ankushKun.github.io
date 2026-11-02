@@ -169,6 +169,16 @@ html[data-appearance="dark"] .paint-window {
     display: inline-block;
 }
 
+/* Delete Day: a past day's, for anyone signed in (paint.js decides `hidden`) */
+.paint-delete-day {
+    display: none;
+}
+
+.paint-window.is-readonly .paint-delete-day:not([hidden]) {
+    display: inline-block;
+    color: var(--danger-text);
+}
+
 .paint-window.is-readonly .paint-canvas {
     cursor: default;
 }

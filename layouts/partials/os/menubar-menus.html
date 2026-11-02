@@ -32,12 +32,17 @@ compact mode, where the Apple menu keeps the essentials. */}}
             href="{{ with .contentPermalink }}{{ . }}{{ else }}/?open={{ .id }}{{ end }}" data-menu-action="open-app"
             data-app="{{ .id }}">{{ .label | default .title }}</a>
         {{- end }}
+        {{- /* The desktop's own apps, when there are any (desktop: true and not in the Dock) */ -}}
+        {{- $deskApps := slice -}}
+        {{- range where $apps "desktop" true }}{{ if not .dock }}{{ $deskApps = $deskApps | append . }}{{ end }}{{ end -}}
+        {{- with $deskApps }}
         <div class="dropdown-divider" role="separator"></div>
-        {{- range where $apps "desktop" true }}{{ if not .dock }}
+        {{- range . }}
         <a class="dropdown-item" role="menuitem" tabindex="-1"
             href="{{ with .contentPermalink }}{{ . }}{{ else }}/?open={{ .id }}{{ end }}" data-menu-action="open-app"
             data-app="{{ .id }}">{{ .label | default .title }}</a>
-        {{- end }}{{ end }}
+        {{- end }}
+        {{- end }}
         <div class="dropdown-divider" role="separator"></div>
         <button type="button" class="dropdown-item" role="menuitem" tabindex="-1" data-menu-action="search"
             data-shortcut="mod+K">Search…</button>

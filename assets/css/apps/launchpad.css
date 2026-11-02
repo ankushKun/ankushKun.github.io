@@ -1,0 +1,417 @@
+/* All Apps, as the Lion to Mavericks Launchpad (assets/js/launchpad.js,
+   layouts/partials/apps/launchpad/overlay.html).
+
+   Over the menubar and every window, under the Dock (raised while it is open,
+   as on a Mac), notifications and remote cursors. The grid's measurements come
+   from the script as custom properties on .lp: --lp-cols, --lp-cell-w,
+   --lp-cell-h, --lp-icon, --lp-top and --lp-bottom. It is dark in both
+   appearances: it sits on the desktop picture, like the real one. */
+
+.lp {
+    position: fixed;
+    inset: 0;
+    z-index: 10005;
+    color: #fff;
+    font-family: var(--font-system);
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+    --lp-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.lp[hidden] {
+    display: none;
+}
+
+body.launchpad-open .dock {
+    z-index: 10010;
+}
+
+/* The desktop picture, blurred and dimmed. A filtered copy of the wallpaper
+   rather than backdrop-filter: the windows go away (as they do on a Mac) and
+   a still, filtered layer is far cheaper to fade than a live backdrop. */
+.lp-backdrop {
+    position: absolute;
+    inset: -64px;
+    background: var(--desktop-color) var(--desktop-wallpaper) center / cover no-repeat;
+    filter: blur(30px) brightness(0.56) saturate(1.25);
+    opacity: 0;
+    transition: opacity 220ms ease;
+}
+
+.lp-backdrop::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 45%, rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, 0.4) 100%);
+}
+
+.lp.is-open .lp-backdrop {
+    opacity: 1;
+}
+
+/* ---- Search ------------------------------------------------------------- */
+
+.lp-search {
+    position: absolute;
+    top: calc(26px + var(--sat, 0px));
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    width: min(236px, 62vw);
+    height: 24px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 10px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(0, 0, 0, 0.12), 0 1px 0 rgba(255, 255, 255, 0.14);
+    color: rgba(255, 255, 255, 0.7);
+    cursor: text;
+}
+
+.lp-search:focus-within {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+.lp-search-glass {
+    flex: none;
+}
+
+.lp-search-input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: none;
+    color: #fff;
+    font: 13px/1 var(--font-system);
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.lp-search-input::placeholder {
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.lp-search-input::-webkit-search-cancel-button,
+.lp-search-input::-webkit-search-decoration {
+    -webkit-appearance: none;
+}
+
+/* ---- Pages -------------------------------------------------------------- */
+
+.lp-pages {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: var(--lp-top, 96px);
+    bottom: var(--lp-bottom, 120px);
+    overflow: hidden;
+    touch-action: none;
+}
+
+.lp-track {
+    display: flex;
+    height: 100%;
+    transition: transform 420ms var(--lp-ease);
+}
+
+.lp-track.is-dragging {
+    transition: none;
+}
+
+.lp-page {
+    flex: 0 0 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: repeat(var(--lp-cols, 7), var(--lp-cell-w, 140px));
+    grid-auto-rows: var(--lp-cell-h, 140px);
+    justify-content: center;
+    align-content: start;
+}
+
+/* Opening: everything arrives from a little closer and fades in; closing is
+   the same backwards, a touch quicker (the script waits for it). */
+.lp-pages,
+.lp-search,
+.lp-dots,
+.lp-empty {
+    opacity: 0;
+    transition: opacity 200ms ease, transform 260ms var(--lp-ease);
+}
+
+.lp-pages {
+    transform: scale(1.1);
+}
+
+.lp.is-open .lp-pages {
+    transform: none;
+}
+
+.lp.is-open .lp-pages,
+.lp.is-open .lp-search,
+.lp.is-open .lp-dots,
+.lp.is-open .lp-empty {
+    opacity: 1;
+}
+
+/* ---- Items -------------------------------------------------------------- */
+
+.lp-item {
+    -webkit-appearance: none;
+    appearance: none;
+    box-sizing: border-box;
+    width: var(--lp-cell-w, 140px);
+    height: var(--lp-cell-h, 140px);
+    margin: 0;
+    padding: calc((var(--lp-cell-h, 140px) - var(--lp-icon, 96px) - 24px) / 2) 4px 0;
+    border: 0;
+    border-radius: 18px;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: default;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    outline: none;
+    transform: translateY(var(--lp-shift, 0px));
+    transition: transform 280ms var(--lp-ease), opacity 220ms ease, background-color 120ms ease;
+}
+
+.lp-icon {
+    width: var(--lp-icon, 96px);
+    height: var(--lp-icon, 96px);
+    flex: none;
+    display: grid;
+    place-items: center;
+    filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.45));
+}
+
+.lp .app-icon-launchpad {
+    --app-icon-size: var(--lp-icon, 96px);
+}
+
+.lp .app-icon-launchpad img {
+    width: 86%;
+    height: 86%;
+}
+
+/* A pressed icon darkens, as on a Mac */
+.lp-item:active .lp-icon {
+    filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.45)) brightness(0.6);
+}
+
+.lp-label {
+    max-width: 100%;
+    font-size: 13px;
+    line-height: 17px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.45);
+}
+
+/* Keyboard selection: Launchpad's soft rounded highlight */
+.lp-item:focus-visible {
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+
+/* ---- Folder ------------------------------------------------------------- */
+
+.lp-folder-tile {
+    width: 84%;
+    height: 84%;
+    box-sizing: border-box;
+    padding: 12%;
+    border-radius: 23%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+    gap: 6%;
+    background: rgba(30, 34, 46, 0.5);
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+        inset 0 2px 7px rgba(0, 0, 0, 0.5),
+        0 1px 0 rgba(255, 255, 255, 0.12);
+    transition: background-color 200ms ease;
+}
+
+.lp-folder-tile .app-icon {
+    --app-icon-size: 100%;
+    width: 100%;
+    height: 100%;
+}
+
+.lp-folder-tile .app-icon img {
+    width: 100%;
+    height: 100%;
+    filter: none;
+}
+
+.lp-folder[aria-expanded="true"] .lp-folder-tile {
+    background: rgba(255, 255, 255, 0.26);
+}
+
+/* The rest of the grid steps back while a folder is open */
+.lp.has-folder .lp-page .lp-item:not([aria-expanded="true"]) {
+    opacity: 0.4;
+}
+
+/* The folder band: the grid splits under the folder's row and the band opens
+   in the gap, a notch pointing up at the folder (--lp-notch-x). */
+.lp-band {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: var(--lp-band-top, 0px);
+    height: var(--lp-band-h, 0px);
+    box-sizing: border-box;
+    padding-top: 10px;
+    isolation: isolate;
+    clip-path: inset(0 0 100% 0);
+    transition: clip-path 280ms var(--lp-ease);
+}
+
+.lp-band.is-open {
+    clip-path: inset(0 0 0 0);
+}
+
+.lp-band::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: var(--lp-notch-x, 50%);
+    width: 22px;
+    height: 11px;
+    margin-left: -11px;
+    background: rgba(14, 16, 24, 0.66);
+    clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+.lp-band::after {
+    content: '';
+    position: absolute;
+    inset: 10px 0 0;
+    z-index: -1;
+    background: rgba(14, 16, 24, 0.66);
+    box-shadow:
+        inset 0 12px 16px -12px rgba(0, 0, 0, 0.85),
+        inset 0 -12px 16px -12px rgba(0, 0, 0, 0.85),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.lp-band-title {
+    margin: 14px 0 2px;
+    font-size: 22px;
+    font-weight: 400;
+    line-height: 28px;
+    text-align: center;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.lp-band-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--lp-cols, 7), var(--lp-cell-w, 140px));
+    grid-auto-rows: var(--lp-cell-h, 140px);
+    justify-content: center;
+}
+
+/* ---- Dots and the empty search ---------------------------------------- */
+
+.lp-dots {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--lp-bottom, 120px) - 34px);
+    display: flex;
+    justify-content: center;
+}
+
+.lp-dots[hidden],
+.lp-empty[hidden] {
+    display: none;
+}
+
+.lp-dot {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: default;
+    display: grid;
+    place-items: center;
+}
+
+.lp-dot::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.35);
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.45);
+    transition: background-color 200ms ease;
+}
+
+.lp-dot[aria-current="true"]::before {
+    background: #fff;
+}
+
+.lp-dot:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.6);
+    outline-offset: -4px;
+    border-radius: 50%;
+}
+
+.lp-empty {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 38%;
+    margin: 0;
+    font-size: 20px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.55);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+/* ---- Phones ------------------------------------------------------------- */
+
+.lp.is-compact .lp-label {
+    font-size: 11px;
+    line-height: 14px;
+}
+
+.lp.is-compact .lp-item {
+    border-radius: 14px;
+    padding-top: calc((var(--lp-cell-h, 100px) - var(--lp-icon, 60px) - 20px) / 2);
+    gap: 5px;
+}
+
+.lp.is-compact .lp-band-title {
+    font-size: 18px;
+}
+
+/* Reduce motion: fades only */
+.lp.is-still .lp-pages,
+.lp.is-still .lp-track,
+.lp.is-still .lp-item,
+.lp.is-still .lp-band {
+    transition-property: opacity;
+}
+
+.lp.is-still .lp-pages {
+    transform: none;
+}

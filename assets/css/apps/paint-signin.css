@@ -1,0 +1,210 @@
+/* Paint's sign-in: a name and the content warning, laid out like IRC Chat's
+   (apps/irc.css .irc-nick-*), on paper instead of IRC's blue. Painted with
+   the site tokens, so both appearances come for free. */
+
+.paint-window {
+    position: relative;
+}
+
+.paint-signin {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+    background: radial-gradient(circle at center, #fffdf7 0%, #ece5d6 100%);
+}
+
+.paint-signin[hidden] {
+    display: none;
+}
+
+html[data-appearance="dark"] .paint-signin {
+    background: radial-gradient(circle at center, #302c27 0%, #1c1a17 100%);
+}
+
+.paint-signin-dialog {
+    width: min(400px, 100% - 40px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--text-color);
+}
+
+.paint-signin-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 26px;
+}
+
+.paint-signin-icon {
+    --app-icon-size: 56px;
+}
+
+.paint-signin-name {
+    font-size: 34px;
+    font-weight: 400;
+    letter-spacing: -1px;
+    color: var(--text-primary, var(--text-color));
+}
+
+/* Scoped to the dialog so the generic .window-content h2 rule cannot restyle it */
+.paint-signin-dialog .paint-signin-title {
+    margin: 0 0 22px;
+    font-size: 24px;
+    font-weight: 400;
+    color: var(--link);
+}
+
+.paint-signin-field {
+    display: block;
+    width: 100%;
+    margin-bottom: 14px;
+}
+
+.paint-signin-label {
+    display: block;
+    margin: 0 0 6px 2px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.paint-signin-input {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    font: 14px var(--font-system);
+    color: var(--text-color);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 3px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08);
+    outline: none;
+    user-select: text;
+    -webkit-user-select: text;
+}
+
+.paint-signin-input:focus {
+    border-color: var(--link);
+}
+
+/* A name picked in IRC Chat: shown, not editable here */
+.paint-signin-input[readonly] {
+    color: var(--text-muted);
+    background: var(--surface-alt);
+    cursor: default;
+}
+
+.paint-signin-terms {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 18px;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    line-height: 1.4;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.paint-signin-terms:hover {
+    background: rgba(255, 255, 255, 0.45);
+}
+
+html[data-appearance="dark"] .paint-signin-terms:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.paint-signin-terms input {
+    flex: none;
+    margin: 2px 0 0;
+}
+
+.paint-signin-actions {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* The shared Aqua gel, as IRC's Sign In */
+.paint-signin-btn {
+    padding: 6px 20px;
+    font: bold 13px var(--font-system);
+    color: var(--btn-primary-text);
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.3);
+    background: var(--btn-primary-bg);
+    border: 1px solid var(--btn-primary-border);
+    border-radius: 3px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 2px 2px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+}
+
+.paint-signin-btn:hover {
+    background: var(--btn-primary-bg-hover);
+}
+
+.paint-signin-btn:active {
+    background: var(--btn-primary-bg-active);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    transform: translateY(1px);
+}
+
+.paint-signin-btn:disabled {
+    background: var(--control, #ccc);
+    border-color: var(--border-strong);
+    box-shadow: none;
+    color: var(--text-muted);
+    text-shadow: none;
+    cursor: not-allowed;
+}
+
+.paint-signin-footer {
+    margin: 48px 0 0;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* Who you are, at the end of the status bar; opens the sign-in to change it */
+.paint-me {
+    flex: none;
+    margin-left: auto;
+    padding: 0 4px;
+    font: inherit;
+    font-weight: 600;
+    color: var(--text-color);
+    background: none;
+    border: 0;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.paint-me:hover:not(:disabled) {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.paint-me:disabled {
+    cursor: default;
+}
+
+html[data-appearance="dark"] .paint-me:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.paint-me[hidden] {
+    display: none;
+}
+
+/* Touch screens zoom into text fields under 16px */
+@media (pointer: coarse) {
+    .paint-signin-input {
+        font-size: 16px;
+    }
+}

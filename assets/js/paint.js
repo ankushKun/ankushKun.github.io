@@ -30,6 +30,18 @@
     const MAX_PENDING = 300;        // strokes held while the relay is away
     const MAX_KEY_LENGTH = 96;      // stroke keys are ours to mint, theirs to forge
 
+    // The name is the one IRC Chat uses (irc-chat.js keeps the same rules:
+    // trimmed, spaces to underscores, ten characters). The content warning is
+    // Paint's own, so a name set in either app is filled in for the other,
+    // which still asks for its warning.
+    const NAME_KEY = 'irc_nick';
+    // Which app set it ('irc' or 'paint'; names from before were IRC's). The
+    // other app shows it read-only: it is changed where it was picked.
+    const NAME_APP_KEY = 'irc_nick_app';
+    const TERMS_KEY = 'paint_tos_accepted';
+    const MAX_NAME = 10;
+    const SHOWN_ARTISTS = 3;
+
     const DAY_MS = 24 * 60 * 60 * 1000;
     // Daily boards began here. Board keys dated earlier are junk, not days,
     // and are ignored; that also caps how many days the gallery can list.
@@ -256,9 +268,33 @@
             w: Math.max(1, Math.min(40, Number(data.w) || 4)),
             pts: pts.slice(0, MAX_POINTS_PER_STROKE * 2),
             ts: ts,
-            by: typeof data.by === 'string' ? data.by.slice(0, 64) : ''
+            by: typeof data.by === 'string' ? data.by.slice(0, 64) : '',
+            nm: cleanName(data.nm)
         };
     }
+
+    /** A name as both apps store it; also what is shown of anyone else's. */
+    function cleanName(value) {
+        if (typeof value !== 'string') return '';
+        return value.replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, MAX_NAME).replace(/ /g, '_');
+    }
+
+    // Storage that never throws (the shell's SiteStore when it is there)
+    const store = {
+        get(key) {
+            try {
+                const s = window.SiteStore;
+                return s && s.get ? s.get(key) : localStorage.getItem(key);
+            } catch (e) { return null; }
+        },
+        set(key, value) {
+            try {
+                const s = window.SiteStore;
+                if (s && s.set) s.set(key, value);
+                else localStorage.setItem(key, value);
+            } catch (e) { /* kept for this visit only */ }
+        }
+    };
 
     /**
      * Add a stroke to `map` without letting it grow past MAX_STROKES. Past
@@ -289,14 +325,17 @@
      * Follow one board. `onStroke(key, stroke)` is called with a parsed stroke,
      * or null when the stroke was removed. `onCleared(ts)` only ever fires for
      * the legacy board: daily boards have no clear-for-everyone at all.
+     * `onDeleted({ at, by })` fires when somebody deleted a past day (its
+     * meta node says when and under which name); today cannot be deleted.
      * Returns a function that stops following.
      */
-    function watchBoard(board, onStroke, onCleared) {
+    function watchBoard(board, onStroke, onCleared, onDeleted) {
         const day = dayOf(board);
         const paths = window.SiteGun.paths.apps;
         const offs = new Set();
         let closed = false;
         let clearedAt = 0;
+        let deletedAt = 0;
 
         // Gun only hands over the unsubscribe handle with an event, so a
         // watcher that was closed before anything arrived unhooks itself here.
@@ -319,19 +358,30 @@
             if (stroke) onStroke(key, stroke);
         });
 
-        if (!day && onCleared) {
+        if ((!day && onCleared) || onDeleted) {
             paths.paintMeta(board).on(function (data, _key, _msg, ev) {
-                if (!live(ev)) return;
-                const t = data && Number(data.clearedAt);
-                // Only ever forwards: an older value would bring back
-                // everything cleared since.
-                if (!t || t <= clearedAt) return;
-                // Anyone can write this node. A "cleared at" in the future
-                // would hide every stroke drawn from now until that date, so
-                // it is not a clear at all and is ignored.
-                if (t > Date.now() + MAX_CLOCK_SKEW_MS) return;
-                clearedAt = t;
-                onCleared(t);
+                if (!live(ev) || !data) return;
+                if (!day && onCleared) {
+                    const t = Number(data.clearedAt);
+                    // Only ever forwards: an older value would bring back
+                    // everything cleared since. Anyone can write this node,
+                    // and a "cleared at" in the future would hide every
+                    // stroke drawn from now until that date, so it is ignored.
+                    if (t && t > clearedAt && t <= Date.now() + MAX_CLOCK_SKEW_MS) {
+                        clearedAt = t;
+                        onCleared(t);
+                    }
+                }
+                if (onDeleted) {
+                    const at = Number(data.deletedAt);
+                    // A past day only: a deletion claimed for today, from
+                    // before the day began or from the future is not one
+                    const past = !day || day < utcDay(Date.now());
+                    if (!at || at <= deletedAt || !past || at > Date.now() + MAX_CLOCK_SKEW_MS ||
+                        (day && at < dayStart(day))) return;
+                    deletedAt = at;
+                    onDeleted({ at: at, by: cleanName(data.deletedBy) || 'someone' });
+                }
             });
         }
 
@@ -377,7 +427,14 @@
             pager: root.querySelector('.paint-gallery-pager'),
             pageLabel: root.querySelector('.paint-gallery-page'),
             newer: root.querySelector('.paint-gallery-newer'),
-            older: root.querySelector('.paint-gallery-older')
+            older: root.querySelector('.paint-gallery-older'),
+            signin: root.querySelector('.paint-signin'),
+            nameInput: root.querySelector('.paint-signin-input'),
+            accept: root.querySelector('.paint-signin-accept'),
+            startBtn: root.querySelector('.paint-signin-btn'),
+            signinStatus: root.querySelector('.paint-signin-footer'),
+            me: root.querySelector('.paint-me'),
+            deleteDay: root.querySelector('.paint-delete-day')
         };
 
         // Same identity the cursors use. Storage can be blocked, in which
@@ -392,6 +449,7 @@
             return id;
         }
         const myId = visitorId();
+        let myName = '';
 
         let tool = 'pencil';
         let size = 4;
@@ -412,6 +470,7 @@
         let revealTimer = null;
         let settled = false;       // the open board has had time to replay
         let clearedAt = 0;
+        let deletion = null;       // { at, by } once somebody deleted the open (past) day
 
         const known = new Map();   // strokeKey -> stroke, for the open board
         const drawn = new Set();   // strokeKeys already painted
@@ -438,7 +497,12 @@
         resetCanvas();
 
         function isVisible(stroke) {
-            return (stroke.ts || 0) > clearedAt;
+            return !deletion && (stroke.ts || 0) > clearedAt;
+        }
+
+        function boardLabel(b) {
+            const day = dayOf(b);
+            return day ? dayLabel(day) : 'The original canvas';
         }
 
         /** Repaint from scratch - used after a clear, or on first load. */
@@ -455,6 +519,7 @@
             // A stroke in progress is not in `known` yet - keep it on screen.
             if (drawing && current) drawStroke(ctx, current);
             updateEmpty();
+            scheduleArtists();
         }
 
         /** Coalesce repaints: an undo or a prune can remove many strokes at once. */
@@ -486,7 +551,7 @@
         let lastPt = null;
 
         function beginStroke(e) {
-            if (readOnly || view !== 'canvas') return;
+            if (readOnly || view !== 'canvas' || !myName) return;
             if (e.button != null && e.button !== 0) return;
             const p = toLogical(e);
 
@@ -560,7 +625,24 @@
             tick();
         }
 
+        // The gallery and the day arrows learn which days exist from the keys
+        // of apps/paint (watchBoards). Strokes are written straight to their
+        // board's node, which links nothing above it, so the first stroke on a
+        // board links it in: apps/paint -> board -> strokes. Once a page view;
+        // the relay ignores a link it already holds, so repeats cost nothing.
+        const registered = new Set();
+
+        function registerBoard(b) {
+            if (registered.has(b) || !hasGun || !window.SiteGun.paths.apps.paintBoards) return;
+            registered.add(b);
+            const soul = window.SiteGun.ROOT + '/apps/paint/' + b + '/strokes';
+            window.SiteGun.paths.apps.paintBoards().get(b).put({ strokes: { '#': soul } });
+        }
+
         function publishStroke(stroke) {
+            // Renamed in IRC Chat (/nick) while Paint was open: draw under the new name
+            const stored = cleanName(store.get(NAME_KEY));
+            if (stored && stored !== myName) setName(stored);
             const now = Date.now();
             const key = now + '-' + myId + '-' + Math.random().toString(36).slice(2, 6);
             const payload = {
@@ -571,10 +653,12 @@
                 // cleanly and is far smaller than a nested node per point.
                 pts: stroke.pts.join(','),
                 by: myId,
+                nm: myName,
                 ts: now
             };
 
-            known.set(key, { t: stroke.t, c: stroke.c, w: stroke.w, pts: stroke.pts, ts: now, by: myId });
+            known.set(key, { t: stroke.t, c: stroke.c, w: stroke.w, pts: stroke.pts, ts: now, by: myId, nm: myName });
+            scheduleArtists();
             drawn.add(key);
             mine.push({ key: key, g: gesture });
             mineKeys.add(key);
@@ -588,7 +672,10 @@
                 if (pending.size >= MAX_PENDING) pending.delete(pending.keys().next().value);
                 pending.set(key, { board: board, payload: payload });
             }
-            if (strokesRef) strokesRef.get(key).put(payload);
+            if (strokesRef) {
+                registerBoard(board);
+                strokesRef.get(key).put(payload);
+            }
 
             if (drewOn !== board) {
                 drewOn = board;
@@ -603,7 +690,10 @@
             // has it, so this is safe even if Gun delivered some by itself.
             // Each stroke goes back to the board it was drawn on, which after
             // midnight is no longer the one on screen.
-            pending.forEach((entry, key) => paths.paintStrokes(entry.board).get(key).put(entry.payload));
+            pending.forEach((entry, key) => {
+                registerBoard(entry.board);
+                paths.paintStrokes(entry.board).get(key).put(entry.payload);
+            });
             pending.clear();
         }
 
@@ -745,6 +835,46 @@
             if (window.track) window.track('paint_clear_mine', { day: dayOf(board) });
         });
 
+        // ---- Delete a past day ----------------------------------------------
+        // Anyone signed in can take a past day down (people draw things that
+        // should not stay up). The drawings go for everyone and the day says
+        // who deleted it, as IRC Chat does for a deleted message. Like that,
+        // it is a courtesy of this page, not access control: writes are unsigned.
+
+        if (els.deleteDay) els.deleteDay.addEventListener('click', async () => {
+            if (!readOnly || deletion || !myName || view !== 'canvas') return;
+            if (!isConnected) {
+                tell('Not connected', 'A canvas can only be deleted while you are online.');
+                return;
+            }
+            const target = board;
+            const label = boardLabel(target);
+            const ok = window.showConfirm
+                ? await window.showConfirm('Delete ' + label + '?',
+                    'Every drawing on it is removed for everyone, and the canvas will say you deleted it. ' +
+                    'This cannot be undone.',
+                    { confirmLabel: 'Delete', danger: true })
+                : confirm('Delete ' + label + '? This cannot be undone.');
+            if (!ok || board !== target || deletion || !readOnly) return;
+
+            const paths = window.SiteGun.paths.apps;
+            const at = Date.now();
+            const keys = [...known.keys()];
+            const ref = paths.paintStrokes(target);
+            // The record first, so every viewer hides the day at once; then
+            // the strokes themselves are emptied and unlinked
+            paths.paintMeta(target).put({ deletedAt: at, deletedBy: myName });
+            const empty = { t: null, c: null, w: null, pts: null, by: null, nm: null, ts: null };
+            keys.forEach((key) => ref.get(key).put(empty));
+            if (keys.length) {
+                const unlink = {};
+                keys.forEach((key) => { unlink[key] = null; });
+                ref.put(unlink);
+            }
+            onDeleted({ at: at, by: myName });
+            if (window.track) window.track('paint_day_deleted', { day: dayOf(target) });
+        });
+
         // ---- Undo / Save --------------------------------------------------
 
         if (els.undo) els.undo.addEventListener('click', undo);
@@ -793,6 +923,11 @@
         /** Says so when a past day turns out to hold nothing. */
         function updateEmpty() {
             if (!els.empty) return;
+            if (deletion) {
+                els.empty.hidden = false;
+                els.empty.textContent = boardLabel(board) + ' was deleted by ' + deletion.by + '.';
+                return;
+            }
             const blank = settled && readOnly && drawn.size === 0;
             els.empty.hidden = !blank;
             if (!blank) return;
@@ -819,6 +954,7 @@
                     scheduleRepaint();
                     updateUndo();
                 }
+                scheduleArtists();
                 return;
             }
 
@@ -831,6 +967,7 @@
                 known.set(key, stroke);
             }
             adoptMine(key, stroke);
+            scheduleArtists();
             if (!isVisible(stroke) || drawn.has(key)) return;
 
             drawn.add(key);
@@ -844,6 +981,12 @@
             updateUndo();
         }
 
+        function onDeleted(info) {
+            deletion = info;
+            repaintAll();
+            syncChrome();
+        }
+
         const replayed = new Set();   // boards already fetched in this window
 
         function openBoard(next) {
@@ -854,6 +997,7 @@
             readOnly = board !== boardOf(today);
             strokesRef = hasGun && !readOnly ? window.SiteGun.paths.apps.paintStrokes(board) : null;
             clearedAt = 0;
+            deletion = null;
             settled = false;
             known.clear();
             drawn.clear();
@@ -875,7 +1019,7 @@
             const first = hasGun && !replayed.has(board);
             replayed.add(board);
             els.loading.hidden = !first;
-            if (hasGun) stopWatching = watchBoard(board, onStroke, onCleared);
+            if (hasGun) stopWatching = watchBoard(board, onStroke, onCleared, onDeleted);
 
             const timer = revealTimer = setTimeout(() => {
                 timers.delete(timer);
@@ -975,7 +1119,8 @@
             els.dayTitle.textContent = title;
             els.dayDate.textContent = date;
             els.dayDate.hidden = !date;
-            els.dayPrompt.textContent = prompt;
+            basePrompt = prompt;
+            renderPrompt();
 
             els.prev.disabled = gallery || !neighbour(-1);
             els.next.disabled = gallery || !neighbour(1);
@@ -984,6 +1129,61 @@
 
             updateHint();
             updateEmpty();
+        }
+
+        // ---- Who drew this canvas ----------------------------------------
+        // After the prompt: "Drawn by ankush, mia and 3 others". Named in the
+        // order they first drew; people who never picked a name only count.
+
+        let basePrompt = '';
+        let artistsQueued = false;
+
+        function artistsText() {
+            if (view !== 'canvas') return '';
+            const names = [];
+            const named = new Set();
+            const unnamed = new Set();
+            [...known.values()]
+                .filter(isVisible)
+                .sort((a, b) => (a.ts || 0) - (b.ts || 0))
+                .forEach((stroke) => {
+                    if (stroke.nm) {
+                        if (!named.has(stroke.nm)) names.push(stroke.nm);
+                        named.add(stroke.nm);
+                        unnamed.delete(stroke.by);
+                    } else if (stroke.by) {
+                        unnamed.add(stroke.by);
+                    }
+                });
+            if (!names.length) return '';
+            const shown = names.slice(0, SHOWN_ARTISTS);
+            const others = names.length - shown.length + unnamed.size;
+            if (others) return 'Drawn by ' + shown.join(', ') + ' and ' + others + (others === 1 ? ' other' : ' others');
+            if (shown.length === 1) return 'Drawn by ' + shown[0];
+            return 'Drawn by ' + shown.slice(0, -1).join(', ') + ' and ' + shown[shown.length - 1];
+        }
+
+        /** Delete Day: a past day with drawings on it, for anyone signed in. */
+        function updateDeleteDay() {
+            if (!els.deleteDay) return;
+            const hasDrawings = [...known.values()].some(isVisible);
+            els.deleteDay.hidden = !(readOnly && view === 'canvas' && !deletion && myName && hasDrawings);
+        }
+
+        function renderPrompt() {
+            updateDeleteDay();
+            const artists = artistsText();
+            const text = artists ? basePrompt + ' · ' + artists : basePrompt;
+            if (els.dayPrompt.textContent !== text) els.dayPrompt.textContent = text;
+        }
+
+        function scheduleArtists() {
+            if (artistsQueued) return;
+            artistsQueued = true;
+            requestAnimationFrame(() => {
+                artistsQueued = false;
+                renderPrompt();
+            });
         }
 
         /** Put a board on the canvas (from an arrow, a thumbnail or Back to Today). */
@@ -1100,6 +1300,7 @@
             const tctx = thumb.getContext('2d');
             const strokes = new Map();
             let cleared = 0;
+            let deletedBy = '';
             let queued = false;
             let full = true;       // next paint starts from a blank tile
             let lastTs = -Infinity;// newest stroke already on the tile
@@ -1110,6 +1311,18 @@
             // out-of-order arrival repaints the whole tile.
             function paint() {
                 queued = false;
+                if (deletedBy) {
+                    // No drawings left to show: the tile says who took the day down
+                    tctx.setTransform(1, 0, 0, 1, 0, 0);
+                    tctx.fillStyle = '#f2f2f2';
+                    tctx.fillRect(0, 0, THUMB_W, THUMB_H);
+                    tctx.fillStyle = '#8a8a8a';
+                    tctx.textAlign = 'center';
+                    tctx.textBaseline = 'middle';
+                    tctx.font = '600 30px -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif';
+                    tctx.fillText('Deleted by ' + deletedBy, THUMB_W / 2, THUMB_H / 2);
+                    return;
+                }
                 let list;
                 if (full) {
                     full = false;
@@ -1151,7 +1364,11 @@
                         full = true;
                     }
                     schedule();
-                }, (t) => { cleared = t; full = true; schedule(); }));
+                }, (t) => { cleared = t; full = true; schedule(); }, (info) => {
+                    deletedBy = info.by;
+                    btn.setAttribute('aria-label', title + ', deleted by ' + info.by);
+                    schedule();
+                }));
             }
             return item;
         }
@@ -1268,6 +1485,7 @@
 
             function onConnection(connected) {
                 isConnected = connected;
+                showSigninStatus(connected ? 'Online' : 'Offline');
                 setStatus(connected ? 'Live' : 'Offline', !connected);
                 // Said on the canvas itself, not only in the footer: a
                 // stroke drawn offline looks exactly like one that synced.
@@ -1284,6 +1502,111 @@
             }
         }
 
+        // ---- Sign in --------------------------------------------------------
+        // A name and the content warning before the canvas, as in IRC Chat.
+
+        /** A name picked in IRC Chat is IRC's to change; here it is read-only. */
+        function nameIsElsewhere() {
+            const saved = cleanName(store.get(NAME_KEY));
+            return !!saved && (store.get(NAME_APP_KEY) || 'irc') !== 'paint';
+        }
+
+        function setName(name) {
+            myName = name;
+            if (!els.me) return;
+            const locked = nameIsElsewhere();
+            els.me.textContent = name;
+            els.me.disabled = locked;
+            els.me.dataset.tip = locked ? 'Your name from IRC Chat' : 'Change your name';
+            els.me.setAttribute('aria-label', 'Signed in as ' + name + (locked ? ', from IRC Chat' : '. Change your name'));
+            els.me.hidden = !name;
+            updateDeleteDay();
+        }
+
+        /** The rest of the window stays out of reach while the screen is up. */
+        function setBehind(inert) {
+            [...root.children].forEach((el) => {
+                if (el !== els.signin) el.inert = inert;
+            });
+        }
+
+        function showSignIn() {
+            if (!els.signin) return;
+            if (drawing) endStroke();
+            // A name picked in IRC Chat is filled in and kept as it is; the
+            // warning is Paint's own
+            const locked = nameIsElsewhere();
+            els.nameInput.value = locked ? cleanName(store.get(NAME_KEY)) : (myName || cleanName(store.get(NAME_KEY)));
+            els.nameInput.readOnly = locked;
+            els.accept.checked = store.get(TERMS_KEY) === 'true';
+            els.startBtn.disabled = !els.accept.checked;
+            els.signin.hidden = false;
+            setBehind(true);
+            setTimeout(() => {
+                if (els.signin.hidden) return;
+                const target = els.nameInput.readOnly || (els.nameInput.value && !els.accept.checked)
+                    ? els.accept : els.nameInput;
+                target.focus({ preventScroll: true });
+            }, 50);
+        }
+
+        function signIn() {
+            const name = cleanName(els.nameInput.value);
+            els.nameInput.value = name;
+            if (!name) {
+                els.nameInput.focus();
+                return;
+            }
+            if (!els.accept.checked) {
+                tell('Content warning', 'You must accept the content warning before drawing.');
+                return;
+            }
+            if (!els.nameInput.readOnly) {
+                store.set(NAME_KEY, name);
+                store.set(NAME_APP_KEY, 'paint');
+            }
+            store.set(TERMS_KEY, 'true');
+            setName(name);
+            els.signin.hidden = true;
+            setBehind(false);
+        }
+
+        if (els.signin) {
+            els.accept.addEventListener('change', () => {
+                els.startBtn.disabled = !els.accept.checked;
+            });
+            // Spaces become underscores as you type, as in IRC Chat
+            els.nameInput.addEventListener('input', () => {
+                const value = els.nameInput.value;
+                const fixed = value.replace(/ /g, '_');
+                if (fixed === value) return;
+                const at = els.nameInput.selectionStart;
+                els.nameInput.value = fixed;
+                els.nameInput.setSelectionRange(at, at);
+            });
+            els.nameInput.addEventListener('keydown', (e) => {
+                if (e.key !== 'Enter') return;
+                e.preventDefault();
+                signIn();
+            });
+            // Keep the window manager from taking focus off the field
+            els.nameInput.addEventListener('mousedown', (e) => e.stopPropagation());
+            els.startBtn.addEventListener('click', signIn);
+            if (els.me) els.me.addEventListener('click', () => {
+                if (!nameIsElsewhere()) showSignIn();
+            });
+
+            const saved = cleanName(store.get(NAME_KEY));
+            if (saved && store.get(TERMS_KEY) === 'true') setName(saved);
+            else showSignIn();
+        } else {
+            setName(cleanName(store.get(NAME_KEY)) || 'guest');
+        }
+
+        function showSigninStatus(text) {
+            if (els.signinStatus) els.signinStatus.textContent = 'Server Status: ' + text;
+        }
+
         function waitSiteGun() {
             return new Promise((resolve, reject) => {
                 let attempts = 0;
@@ -1297,6 +1620,7 @@
 
         waitSiteGun().then(connect).catch(() => {
             // No realtime at all: today's canvas still works as a scratchpad.
+            showSigninStatus('Offline');
             els.loading.hidden = true;
             settled = true;
             setStatus('Offline', true);

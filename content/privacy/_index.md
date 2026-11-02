@@ -29,9 +29,10 @@ How it runs:
 
 The live cursors, sticky note, Guestbook, Paint, IRC Chat, the reactions under posts and projects, the Daily Puzzle leaderboard and Music's "listening now" are shared between everyone on the site. They sync through a [Gun](https://gun.eco) relay run by me, `gun.ankush.one`. Every page on this site, not only the desktop, connects to it when it loads, so it sees your IP address. Anything you put into them is **public** and can be read by anyone, including people who are not using this site.
 
-- **Cursors and presence:** while any page of the site is open, your pointer position and reactions are shared under a random id, and you are counted in the online badge.
-- **Sticky note and Paint:** the text you type and the strokes you draw. Paint starts a fresh canvas every day (UTC); earlier days stay readable in its gallery for as long as the relays keep them.
-- **Reactions and "reading now":** the reactions you leave under a post or project, stored under your random id. While a post is open in a window, a heartbeat under the same id lets other readers see how many people are reading it.
+- **Which apps get used:** the first time each day you open an app, it adds one to a shared, anonymous count for that app (no id, no name), so the desktop can show everyone the apps people use most. What you open yourself stays in your browser.
+- **Cursors and presence:** while any page of the site is open, your pointer position, reactions and which page you are on are shared under a random id with everyone on the site, and you are counted in the online badge and in a post's "reading now". Your pointer is only sent while someone else is online.
+- **Sticky note and Paint:** the text you type and the strokes you draw. Each stroke in Paint carries the name you picked (the same one IRC Chat uses), so a canvas can say who drew on it. Paint starts a fresh canvas every day (UTC); earlier days stay readable in its gallery for as long as the relays keep them, unless someone deletes the day, which stores their name and the time on it.
+- **Reactions and "reading now":** the reactions you leave under a post or project, stored under your random id. The page you are on (see above) is what lets other readers see how many people are reading a post.
 - **Daily Puzzle:** nothing is shared until you press **Post Time**. Then your chosen name, your time, the number of mines you hit and when you finished are added to that day's public leaderboard.
 - **Music:** only if you tick **Share what I'm playing**, the track you are playing, its position, whether it is playing and whom you are listening along with are shared under your random id while the Music app is open. It is off by default.
 - **IRC Chat:** while the IRC window is open, your nickname, a random IRC id, that you are online, when you were last seen and whether you are typing are shared so others can see who is in the room. Every message you send carries your nickname, that random id and the time, and the time of the latest message is stored for the unread dot on the IRC icon. Searching for a GIF sends your search text to [Klipy](https://klipy.com), and GIFs are loaded from their servers.
@@ -79,7 +80,9 @@ Everything below stays on your device. None of it is used for tracking, and none
 | `daily-puzzle-v1` | Your Daily Puzzle name, streak, best time and today's game |
 | `music-player-v1` | Music's volume, track, position and whether you share what you play |
 | `guestbook-signed` | That you signed the Guestbook (your random id) |
-| `irc_nick`, `irc_uuid`, `irc_tos_accepted`, `irc_notify`, `irc_blur_gifs`, `irc_last_read` | Your IRC nickname and id, that you accepted the chat rules, notification and GIF-blur settings, and when you last read the channel |
+| `irc_nick`, `irc_nick_app`, `irc_uuid`, `irc_tos_accepted`, `irc_notify`, `irc_blur_gifs`, `irc_last_read` | Your nickname (shared by IRC Chat and Paint) and which of the two you picked it in, your IRC id, that you accepted the chat rules, notification and GIF-blur settings, and when you last read the channel |
+| `paint_tos_accepted` | That you accepted Paint's content warning |
+| `app-usage-v1`, `app-usage-sent-v1`, `app-usage-global-v1`, `app-usage-shown-v1` | Which apps you open and how lately (so the desktop can show the ones you use most), which of them you have added to today's shared count, the last shared counts seen, and the icons shown last time |
 | `terminal-shell-v1` | Your last 100 Terminal commands and the time of your last login |
 | `v86-autosave`, `v86-save-on-close` | The Terminal's Linux save settings |
 

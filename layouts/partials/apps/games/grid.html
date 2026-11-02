@@ -1,11 +1,10 @@
 {{/* Folder window - Finder-style icon view of the apps in one group.
-Used for the Games folder and, with "all", the Launchpad (every app).
+Used for the Games folder. (All Apps is the Launchpad overlay, apps/launchpad/.)
 Usage:
 {{ partial "apps/games/grid.html" (dict
 "id" "games"            window id, also the app whose icon heads the toolbar
 "title" "Games"
 "group" "games"         `group:` in data/apps.yaml that lists an app here
-"all" true              every app instead (except this one and the games)
 "intro" "One line…"     optional: what this folder is, in plain words
 "itch" true             optional: the itch.io link under the intro
 "data" hugo.Data.apps
@@ -13,12 +12,6 @@ Usage:
 */}}
 {{- $group := .group | default .id -}}
 {{- $items := where .data.apps "group" $group -}}
-{{- /* "all": every app but this one and the games (they have their folder) */ -}}
-{{- if .all -}}
-{{- $self := .id -}}
-{{- $items = slice -}}
-{{- range .data.apps }}{{ if and (ne .id $self) (ne .group "games") }}{{ $items = $items | append . }}{{ end }}{{ end -}}
-{{- end -}}
 <div id="content-{{ .id }}">
     <div class="games-window" id="games-container-{{ .id }}">
         <div class="games-toolbar">

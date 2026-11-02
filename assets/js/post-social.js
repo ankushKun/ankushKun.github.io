@@ -9,7 +9,8 @@
  *
  * On the relay: apps/reactions/<page>/<reaction>/<visitor id> = true, one key
  * per visitor per reaction, removed again when the reaction is taken back.
- * Readers are the page's presence room (the one cursors.js already uses).
+ * Readers are the site presence cursors.js keeps: each visitor's record says
+ * which page they are on (`p`), so this only counts and never writes.
  */
 (function () {
     'use strict';
@@ -21,10 +22,9 @@
     const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
     const WRITE_GAP_MS = 500;         // per button
     const WRITES_PER_MINUTE = 12;     // per bar
-    const BEAT_MS = 5000;
-    const READER_TTL_MS = 15000;
+    const PAINT_MS = 5000;
+    const READER_TTL_MS = 50000;      // cursors.js beats every 20s
     const GUN_WAIT_MS = 12000;
-    const IS_DESKTOP = !!document.getElementById('window-contents');
 
     function whenGun() {
         return new Promise((resolve, reject) => {
@@ -129,7 +129,7 @@
         // ---- Reading now -------------------------------------------------
 
         const readers = new Map();    // id -> { ts, at } (at = when a NEW beat arrived here)
-        const presence = SiteGun.paths.live.presence(room);
+        const presence = SiteGun.paths.live.presence();
         const readersEl = document.createElement('span');
         readersEl.className = 'ps-readers';
         readersEl.hidden = true;
@@ -153,59 +153,34 @@
             if (ev && typeof ev.off === 'function' && subscriptions.indexOf(ev) === -1) subscriptions.push(ev);
             if (stopped || id === myId || typeof id !== 'string' || !ID_RE.test(id)) return;
             const ts = data && Number(data.ts);
-            if (!ts) {
-                readers.delete(id);
-            } else {
-                // Liveness is "did the beat change since we last looked",
-                // never the sender's clock
-                const known = readers.get(id);
-                if (known && known.ts === ts) return;
-                if (!known && readers.size >= 500) return;
-                readers.set(id, { ts: ts, at: Date.now() });
-            }
-            paintReaders();
-        });
-
-        // On an article page cursors.js already announces this reader in this
-        // room. In a desktop window the address bar belongs to the desktop,
-        // so the window announces it - only while the tab is being looked at.
-        let beating = false;
-        function beat() {
-            if (!IS_DESKTOP) return;
-            if (document.hidden) {
-                if (beating) presence.get(myId).put(null);
-                beating = false;
+            if (!ts || data.p !== room) {
+                // Left, or reading something else now
+                if (readers.delete(id)) paintReaders();
                 return;
             }
-            presence.get(myId).put({ ts: Date.now() });
-            beating = true;
-        }
+            // Liveness is "did the beat change since we last looked",
+            // never the sender's clock
+            const known = readers.get(id);
+            if (known && known.ts === ts) return;
+            if (!known && readers.size >= 500) return;
+            readers.set(id, { ts: ts, at: Date.now() });
+            paintReaders();
+        });
 
         function stop() {
             if (stopped) return;
             stopped = true;
             clearInterval(timer);
-            document.removeEventListener('visibilitychange', beat);
-            window.removeEventListener('pagehide', leave);
             subscriptions.forEach((ev) => { try { ev.off(); } catch (e) { /* ignore */ } });
             if (offConnection) offConnection();
-            leave();
             readersEl.remove();
-        }
-
-        function leave() {
-            if (beating) presence.get(myId).put(null);
-            beating = false;
         }
 
         const timer = setInterval(() => {
             // The window was closed or paged to another post
             if (!bar.isConnected) return stop();
-            beat();
             paintReaders();
-        }, BEAT_MS);
-        document.addEventListener('visibilitychange', beat);
-        window.addEventListener('pagehide', leave);
+        }, PAINT_MS);
 
         // ---- Connection ----------------------------------------------------
 
@@ -216,7 +191,6 @@
             if (isConnected && !everConnected) {
                 everConnected = true;
                 bar.hidden = false;
-                beat();
             }
             bar.classList.toggle('is-offline', !isConnected);
             Object.keys(buttons).forEach((name) => {

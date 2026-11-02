@@ -19,18 +19,29 @@
  * (an icon is always 80px wide), the offset lands pixel-exact for everyone -
  * hover the Terminal icon's label and every viewer sees it on their Terminal
  * icon's label, wherever the grid happened to put it.
+ *
+ * There is one room for the whole site, so a visitor on an article and one on
+ * the desktop see each other. Every update also carries the spot in the
+ * viewport (nx, ny in 0..1000): a viewer without that anchor on screen (another
+ * page, a window they do not have open) draws the cursor there, dimmed.
+ *
+ * Cost: on the Workers free plan every frame sent to the relay counts against
+ * a daily request limit, so the stream only runs while someone else is here,
+ * and it goes out every 200ms carrying the 60ms samples in between ("tr"),
+ * which receivers replay so the motion stays smooth.
  */
 (function () {
     'use strict';
 
     if (!window.SiteGun) return;
 
-    const ROOM = window.SiteGun.roomKey();
-    const MOVE_THROTTLE_MS = 70;      // ~14 updates/sec
-    const PRESENCE_BEAT_MS = 5000;
+    const SAMPLE_MS = 60;             // pointer position sampled this often while moving
+    const SEND_MS = 200;              // ...and sent this often, with the samples in between
+    const MAX_TRAIL = 8;
+    const PRESENCE_BEAT_MS = 20000;
+    const SLOW_BEAT_MS = 60000;       // while the relay says its daily budget is running low
     const CURSOR_TTL_MS = 6000;       // hide a cursor we stopped hearing from
-    const PRESENCE_TTL_MS = 15000;    // count someone as online this long after a beat
-    const GRAPH_PRUNE_MS = 60000;     // delete truly abandoned nodes from the graph
+    const PRESENCE_TTL_MS = 50000;    // count someone as online this long after a beat
     const MAX_PEERS = 40;             // cursors drawn at once; ids are self-declared
     const MAX_TRACKED_IDS = 2000;     // ids remembered per stream for liveness
     const MAX_ANCHOR_LEN = 80;
@@ -43,9 +54,16 @@
     // honest on mobile.
     const hasFinePointer = window.matchMedia('(pointer: fine)').matches;
 
-    const cursorsRef = window.SiteGun.paths.live.cursors(ROOM);
-    const presenceRef = window.SiteGun.paths.live.presence(ROOM);
-    const reactionsRef = window.SiteGun.paths.live.reactions(ROOM);
+    const cursorsRef = window.SiteGun.paths.live.cursors();
+    const presenceRef = window.SiteGun.paths.live.presence();
+    const reactionsRef = window.SiteGun.paths.live.reactions();
+    const load = window.SiteGun.load || { slow: false, onChange() {} };
+    /** The page this visitor is on: on the desktop, the focused window's page. */
+    const currentPage = () => {
+        const shell = window.SiteShell;
+        const path = shell && shell.isDesktop && shell.currentPath ? shell.currentPath() : null;
+        return window.SiteGun.roomKey(path || window.location.pathname);
+    };
 
     // Storage may be blocked; SiteGun.store never throws.
     const store = window.SiteGun.store;
@@ -74,40 +92,20 @@
                 if (!prev) {
                     // Bounded: drop the longest-remembered id to make room.
                     if (seen.size >= MAX_TRACKED_IDS) seen.delete(seen.keys().next().value);
-                    seen.set(id, { ts: ts, at: now, pruned: false });
+                    seen.set(id, { ts: ts, at: now });
                     return Math.abs(now - ts) <= firstSeenTtl;
                 }
                 if (prev.ts === ts) return false;
                 prev.ts = ts;
                 prev.at = now;
-                prev.pruned = false;
                 return true;
-            },
-            /**
-             * Ids whose value has not changed for maxAge, a few at a time.
-             * The record is kept (so a later change still counts as life) and
-             * only flagged, so each id is handed out once per quiet spell.
-             */
-            abandoned(maxAge, limit) {
-                const now = Date.now();
-                const out = [];
-                for (const [id, rec] of seen) {
-                    if (rec.pruned || now - rec.at <= maxAge) continue;
-                    rec.pruned = true;
-                    out.push(id);
-                    if (out.length >= limit) break;
-                }
-                return out;
             }
         };
     }
 
-    /** Delete nodes nobody has touched in a long time so the graph stays small. */
-    function pruneAbandoned(tracker, ref) {
-        tracker.abandoned(GRAPH_PRUNE_MS, 20).forEach((id) => {
-            if (id !== myId) ref.get(id).put(null);
-        });
-    }
+    // Abandoned records are not deleted from here any more: every viewer used
+    // to put a null for every stale id it had seen, and the relay forgets live
+    // records on its own two minutes after their last update.
 
     const finite = (v) => typeof v === 'number' && Number.isFinite(v);
     const clampOffset = (v) => Math.max(-MAX_OFFSET, Math.min(MAX_OFFSET, Math.round(v)));
@@ -179,42 +177,101 @@
     // Publishing
     // ------------------------------------------------------------------
 
-    let lastSent = 0;
     let lastPayload = '';
+    let pointer = null;      // newest position, waiting for the next sample
+    let lastPointer = null;  // last position sampled, re-sent when someone arrives
+    let samples = [];        // sampled since the last send
+    let sampleTimer = null;
+    let sendTimer = null;
+    let lastSendAt = 0;
 
     /** Our own multiplayer chrome is not something to point at. */
     function isOwnChrome(target) {
         return !!(target && target.closest && target.closest('#online-count, #reactions-popover'));
     }
 
-    function publishPosition(e) {
+    /** Anyone to show the cursor to? Most visits are alone; then nothing is sent. */
+    function othersHere() {
         const now = Date.now();
-        if (now - lastSent < MOVE_THROTTLE_MS) return;
+        for (const [id, at] of presentPeers) {
+            if (id !== myId && now - at <= PRESENCE_TTL_MS) return true;
+        }
+        return false;
+    }
+
+    const streaming = () => publishesCursor() && !load.slow && othersHere();
+
+    const viewportPos = (v, size) => Math.max(0, Math.min(1000, Math.round(v / Math.max(1, size) * 1000)));
+
+    function onPointerMove(e) {
         if (isOwnChrome(e.target)) return;
+        pointer = { target: e.target, x: e.clientX, y: e.clientY };
+        if (!sampleTimer) takeSample();
+    }
 
-        const anchor = anchorFor(e.target);
+    // Runs every SAMPLE_MS while the pointer moves and stops once it rests,
+    // after taking the resting position: the last sample is always the
+    // newest move, so a parked cursor ends exactly where it stopped.
+    function takeSample() {
+        sampleTimer = null;
+        const p = pointer;
+        if (!p) return;
+        pointer = null;
+        sampleTimer = setTimeout(takeSample, SAMPLE_MS);
+
+        const anchor = anchorFor(p.target);
         if (!anchor) return;
-
-        // Real pixels inside the anchor - not normalized. Identical CSS box
-        // sizes make this exact for icons, the widget and the sticky note.
-        const payload = {
+        // Tracked even when not shared, so a reaction lands where the pointer is.
+        lastAnchor = anchor;
+        lastClient = { x: p.x, y: p.y };
+        lastPointer = p;
+        if (!streaming()) {
+            samples = [];
+            return;
+        }
+        samples.push({
             a: anchor.key,
-            ox: Math.round(e.clientX - anchor.rect.left),
-            oy: Math.round(e.clientY - anchor.rect.top),
-            ts: now
-        };
+            // Real pixels inside the anchor - not normalized. Identical CSS box
+            // sizes make this exact for icons, the widget and the sticky note.
+            ox: Math.round(p.x - anchor.rect.left),
+            oy: Math.round(p.y - anchor.rect.top),
+            nx: viewportPos(p.x, window.innerWidth),
+            ny: viewportPos(p.y, window.innerHeight),
+            t: Date.now()
+        });
+        if (!sendTimer) sendTimer = setTimeout(send, Math.max(0, lastSendAt + SEND_MS - Date.now()));
+    }
+
+    function send() {
+        sendTimer = null;
+        if (!samples.length || !streaming()) {
+            samples = [];
+            return;
+        }
+        const last = samples[samples.length - 1];
+        // The way here, as "ox,oy,ms before the final point" on the same anchor.
+        const trail = samples.slice(0, -1)
+            .filter((s) => s.a === last.a)
+            .slice(-MAX_TRAIL)
+            .map((s) => s.ox + ',' + s.oy + ',' + (last.t - s.t))
+            .join(';');
+        samples = [];
 
         // Skip redundant writes when the pointer is parked.
-        const signature = payload.a + ':' + payload.ox + ':' + payload.oy;
-        if (signature === lastPayload) return;
-
-        lastSent = now;
+        const signature = last.a + ':' + last.ox + ':' + last.oy;
+        if (signature === lastPayload && !trail) return;
         lastPayload = signature;
-        lastAnchor = anchor;
-        lastClient = { x: e.clientX, y: e.clientY };
-        // With cursors hidden the position is still tracked locally, so a
-        // reaction lands where the pointer is, but it is not shared.
-        if (publishesCursor()) cursorsRef.get(myId).put(payload);
+        lastSendAt = Date.now();
+        // `tr` is always written, or the previous trail would replay again.
+        cursorsRef.get(myId).put({ a: last.a, ox: last.ox, oy: last.oy, nx: last.nx, ny: last.ny, tr: trail, ts: lastSendAt });
+    }
+
+    /** Someone just arrived: show them where this cursor is without waiting for a move. */
+    function resendPosition() {
+        if (!lastPointer || !lastPointer.target.isConnected) return;
+        lastPayload = '';
+        pointer = lastPointer;
+        if (!sampleTimer) takeSample();
     }
 
     // ------------------------------------------------------------------
@@ -364,7 +421,7 @@
      */
     function scheduleRender(instant) {
         // Nothing to place. This runs on every scroll, resize and window
-        // mutation, and most visits never have a second person in the room.
+        // mutation, and most visits never have a second person on the site.
         if (!peers.size) return;
         if (instant) renderInstant = true;
         if (renderQueued) return;
@@ -394,41 +451,52 @@
             return rect;
         };
 
+        let replaying = false;
         peers.forEach((peer, id) => {
             if (now - peer.lastSeen > CURSOR_TTL_MS) {
                 removePeer(id);
                 return;
             }
 
-            const rect = rectFor(peer.a);
+            // Step through the replayed trail: each point is due at its time.
+            while (peer.queue.length && peer.queue[0].at <= now) Object.assign(peer, peer.queue.shift());
+            if (peer.queue.length) replaying = true;
 
-            if (!rect) {
-                // The peer is pointing at something this viewer does not have
-                // open. Park it rather than teleporting it somewhere wrong -
-                // and stay hidden if it has never had a valid position, so it
-                // does not appear stuck in the top-left corner.
-                peer.el.classList.add('is-orphaned');
-                peer.el.hidden = !peer.positioned;
-                return;
+            let x;
+            let y;
+            const rect = peer.a !== 'desktop' ? rectFor(peer.a) : null;
+            if (rect) {
+                // Clamp inside sized anchors.
+                x = Math.min(rect.right, Math.max(rect.left, rect.left + peer.ox));
+                y = Math.min(rect.bottom, Math.max(rect.top, rect.top + peer.oy));
+                peer.el.classList.remove('is-orphaned');
+            } else if (peer.nx != null) {
+                // The wallpaper, or something this viewer does not have open
+                // (another page, a closed window): the same spot on screen,
+                // dimmed when it is not just the desktop.
+                x = peer.nx / 1000 * vw;
+                y = peer.ny / 1000 * vh;
+                peer.el.classList.toggle('is-orphaned', peer.a !== 'desktop');
+            } else {
+                // An older client without a viewport position.
+                const desk = rectFor('desktop');
+                if (peer.a !== 'desktop' || !desk) {
+                    peer.el.classList.add('is-orphaned');
+                    peer.el.hidden = !peer.positioned;
+                    return;
+                }
+                x = desk.left + peer.ox;
+                y = desk.top + peer.oy;
+                peer.el.classList.remove('is-orphaned');
             }
-            peer.el.classList.remove('is-orphaned');
             peer.el.hidden = false;
             peer.positioned = true;
-
-            let x = rect.left + peer.ox;
-            let y = rect.top + peer.oy;
-
-            // Clamp inside sized anchors; the desktop fallback is free to roam
-            // (a peer can be over the menubar, which sits above the desktop).
-            if (peer.a !== 'desktop') {
-                x = Math.min(rect.right, Math.max(rect.left, x));
-                y = Math.min(rect.bottom, Math.max(rect.top, y));
-            }
 
             peer.el.style.transform =
                 'translate3d(' + Math.round(Math.min(vw - 4, Math.max(0, x))) + 'px,' +
                 Math.round(Math.min(vh - 4, Math.max(0, y))) + 'px,0)';
         });
+        if (replaying) scheduleRender(false);
     }
 
     function createPeerElement() {
@@ -453,6 +521,18 @@
 
     const cursorLive = livenessTracker(CURSOR_TTL_MS);
 
+    /** "ox,oy,dt;..." from a peer, oldest first, bounded and sanity checked. */
+    function parseTrail(tr) {
+        if (typeof tr !== 'string' || !tr || tr.length > 400) return [];
+        const out = [];
+        tr.split(';').slice(0, MAX_TRAIL).forEach((part) => {
+            const [ox, oy, dt] = part.split(',').map(Number);
+            if (![ox, oy, dt].every(Number.isFinite) || dt < 0 || dt > 1000) return;
+            out.push({ ox: clampOffset(ox), oy: clampOffset(oy), dt: dt });
+        });
+        return out.sort((p, q) => q.dt - p.dt);
+    }
+
     cursorsRef.map().on((data, id) => {
         if (id === myId) return;
 
@@ -471,14 +551,29 @@
             // Ids are self-declared, so without a ceiling one script could
             // fill the layer with thousands of elements.
             if (peers.size >= MAX_PEERS) return;
-            peer = { el: createPeerElement() };
+            peer = { el: createPeerElement(), queue: [] };
             peers.set(id, peer);
         }
 
-        peer.a = data.a;
-        peer.ox = finite(data.ox) ? clampOffset(data.ox) : 0;
-        peer.oy = finite(data.oy) ? clampOffset(data.oy) : 0;
-        peer.lastSeen = Date.now();
+        const now = Date.now();
+        const final = {
+            a: data.a,
+            ox: finite(data.ox) ? clampOffset(data.ox) : 0,
+            oy: finite(data.oy) ? clampOffset(data.oy) : 0,
+            nx: finite(data.nx) ? Math.max(0, Math.min(1000, Math.round(data.nx))) : null,
+            ny: finite(data.ny) ? Math.max(0, Math.min(1000, Math.round(data.ny))) : null
+        };
+        if (final.ny == null) final.nx = null;
+        // Replay the way here at the speed it was drawn, so the cursor lands
+        // on `final` one trail-length after this update arrived.
+        const trail = parseTrail(data.tr);
+        const span = trail.length ? trail[0].dt : 0;
+        peer.queue = trail.map((p) => ({
+            a: final.a, ox: p.ox, oy: p.oy, nx: final.nx, ny: final.ny, at: now + span - p.dt
+        }));
+        peer.queue.push(Object.assign({ at: now + span }, final));
+        if (!peer.positioned) Object.assign(peer, peer.queue.shift());
+        peer.lastSeen = now;
 
         scheduleRender(false);
     });
@@ -550,7 +645,7 @@
 
             // For windows, hang the badge off the titlebar so it does not sit
             // on top of content.
-            if (key.startsWith('win:')) {
+            if (key.startsWith('win:') || key.startsWith('page:')) {
                 return el.querySelector('.window-titlebar') || el;
             }
             return el;
@@ -582,10 +677,19 @@
         return typeof nick === 'string' ? nick.trim().slice(0, MAX_NICK) : '';
     }
 
-    /** The beat carries the name, so the online list can show who is who.
-        Always sent, so a name that was cleared clears for everyone too. */
+    let announcedPage = null;
+
+    /** The beat carries the name, so the online list can show who is who
+        (always sent, so a name that was cleared clears for everyone too),
+        and the page, so a post can say how many are reading it. */
     function announcePresence() {
-        presenceRef.get(myId).put({ ts: Date.now(), nick: myNick() });
+        announcedPage = currentPage();
+        presenceRef.get(myId).put({ ts: Date.now(), nick: myNick(), p: announcedPage });
+    }
+
+    /** Moving to another page (or focusing another window) says so at once. */
+    function announceIfMoved() {
+        if (announcedPage !== null && currentPage() !== announcedPage) announcePresence();
     }
 
     function updateOnlineCount() {
@@ -599,6 +703,8 @@
             if (id !== myId) count++;
         });
         if (count === lastCount) return;
+        // The first other person arrived: show them where this cursor is.
+        if (count > 1 && lastCount <= 1) resendPosition();
         lastCount = count;
         onlineCountEl.textContent = count + ' Online';
         onlineCountEl.setAttribute('aria-label',
@@ -759,10 +865,10 @@
 
         const hint = document.createElement('p');
         hint.className = 'reactions-hint';
-        hint.textContent = 'Everyone on this page sees it.';
+        hint.textContent = 'Everyone online sees it.';
         const keys = document.createElement('span');
         keys.className = 'reactions-keys';
-        keys.textContent = ' Or press 1–8 anywhere.';
+        keys.textContent = ' Or press 1-8 anywhere.';
         hint.appendChild(keys);
         el.appendChild(hint);
 
@@ -827,7 +933,7 @@
     setupReactions();
 
     if (hasFinePointer) {
-        window.addEventListener('mousemove', publishPosition, { passive: true });
+        window.addEventListener('mousemove', onPointerMove, { passive: true });
     }
 
     // ------------------------------------------------------------------
@@ -839,37 +945,55 @@
 
     let timers = [];
 
+    let beatTimer = null;
+
     function leave() {
         // Best effort removal. Staleness is the real guarantee.
         cursorsRef.get(myId).put(null);
         presenceRef.get(myId).put(null);
+        announcedPage = null;
         lastPayload = '';
+        samples = [];
+    }
+
+    function beat() {
+        announcePresence();
+        beatTimer = setTimeout(beat, load.slow ? SLOW_BEAT_MS : PRESENCE_BEAT_MS);
     }
 
     function startTimers() {
         if (timers.length) return;
-        announcePresence();
+        beat();
         updateOnlineCount();
         timers = [
-            setInterval(announcePresence, PRESENCE_BEAT_MS),
             setInterval(() => {
                 updateOnlineCount();
-                // Prune expired cursors even when no updates are arriving.
+                // Drop expired cursors even when no updates are arriving.
                 scheduleRender(false);
-                pruneAbandoned(cursorLive, cursorsRef);
-                pruneAbandoned(presenceLive, presenceRef);
-                pruneAbandoned(reactionLive, reactionsRef);
             }, 2000),
             // Viewer badges change slowly; a 1s cadence is plenty and keeps
             // the DOM work off the cursor render path.
-            setInterval(refreshViewerBadges, 1000)
+            setInterval(() => {
+                refreshViewerBadges();
+                announceIfMoved();
+            }, 1000)
         ];
     }
 
     function stopTimers() {
         timers.forEach(clearInterval);
         timers = [];
+        clearTimeout(beatTimer);
+        beatTimer = null;
     }
+
+    // A slow day stretches the beat from the next one on; the cursor stream
+    // checks load.slow before every send.
+    load.onChange(() => {
+        if (!beatTimer) return;
+        clearTimeout(beatTimer);
+        beatTimer = setTimeout(beat, load.slow ? SLOW_BEAT_MS : PRESENCE_BEAT_MS);
+    });
 
     document.addEventListener('visibilitychange', () => {
         if (document.hidden) {

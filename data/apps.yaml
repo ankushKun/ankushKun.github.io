@@ -1,14 +1,20 @@
 # Every window on the desktop. Order matters: it is the order of the Dock,
 # the desktop icons and the Go menu.
 #
-#   desktop: true   an icon on the desktop: IRC Chat and Music
-#   dock: true      in the Dock (phones included): the content apps and All Apps
+#   desktop: true   an icon on the desktop at first (none now). The desktop
+#                   shows the apps people open most (assets/js/adaptive-
+#                   desktop.js); these would fill any gaps
+#   autoDesktop: false  never put on the desktop by that (pages and settings)
+#   dock: true      in the Dock (phones included): the content apps, IRC Chat,
+#                   Music and All Apps
 #   group: games    listed in the Games folder
 #   searchable      in Spotlight
-# Everything is also in All Apps (the Launchpad), whatever the flags.
+# Everything is also in All Apps (the Launchpad), whatever the flags, with
+# `group: games` inside its Games folder.
 apps:
-  # Every app in one grid, Mavericks' Launchpad (layouts/partials/apps/
-  # games/grid.html with "all"). In the Dock.
+  # Every app in one grid, Mavericks' Launchpad: a full-screen overlay, not a
+  # window (layouts/partials/apps/launchpad/overlay.html, assets/js/launchpad.js).
+  # In the Dock; F4 opens it too.
   - id: launchpad
     label: All Apps
     title: All Apps
@@ -55,7 +61,7 @@ apps:
     type: app
     description: Experience, projects, skills and education, with the PDF to download
     desktop: false
-    dock: true
+    dock: false
     searchable: true
     contentPermalink: /resume/
     aliases: [cv, resume.pdf]
@@ -152,8 +158,8 @@ apps:
     title: IRC Chat
     type: app
     description: IRC chat client - mIRC v6.35
-    desktop: true
-    dock: false
+    desktop: false
+    dock: true
     searchable: true
     defaultSize:
       width: 900
@@ -197,8 +203,8 @@ apps:
     title: Music
     type: app
     description: iTunes-style player — Cover Flow, songs, and a mix to play
-    desktop: true
-    dock: false
+    desktop: false
+    dock: true
     searchable: true
     defaultSize:
       width: 920
@@ -272,6 +278,7 @@ apps:
     description: What changed on this site, and what is new since your last visit
     desktop: false
     dock: false
+    autoDesktop: false
     searchable: true
     aliases: [updates, changelog, whats-new]
     defaultSize:
@@ -322,6 +329,7 @@ apps:
     description: What this site collects and shares
     desktop: false
     dock: false
+    autoDesktop: false
     searchable: true
     contentPermalink: /privacy/
     defaultSize:
@@ -338,6 +346,7 @@ apps:
     description: Acknowledgements and third-party licences
     desktop: false
     dock: false
+    autoDesktop: false
     searchable: true
     contentPermalink: /credits/
     defaultSize:
@@ -514,6 +523,7 @@ apps:
     description: Desktop picture, light or dark appearance, highlight colour, sounds and motion
     desktop: false
     dock: false
+    autoDesktop: false
     searchable: true
     aliases: [settings, prefs, appearance, dark-mode, theme, wallpaper, desktop-background, accessibility]
     defaultSize:

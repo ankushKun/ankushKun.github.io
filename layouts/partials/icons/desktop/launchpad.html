@@ -1,133 +1,82 @@
-{{/* All Apps (Launchpad) Desktop Icon - 64x64 SVG - Ultra Skeuomorphic Style
-     The Lion / Mavericks Launchpad icon: a brushed aluminium disc with a
-     chrome rocket set into it, nose to the upper right, red cone and fins,
-     a blue porthole and a short exhaust flame. A free-floating object like
-     the vinyl record and the calendar, not an app tile. */}}
+{{/* All Apps (Launchpad) Dock Icon - 64x64 SVG - Old macOS skeuomorphic style
+     The Mavericks Applications folder: the same blue folder as Projects
+     (folder.html: back with its tab, front, gradients, shadow and a white
+     embossed glyph at 25%), with the "A" of the Applications folder embossed
+     on the front and three glossy app icons tucked inside, peeking out over
+     the front the way Projects' papers and ruler do. Keep the geometry and
+     colours in step with folder.html so the two read as one family. */}}
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" aria-hidden="true">
     <defs>
-        <!-- Aluminium: bright at the top, darker below, like a lit disc -->
-        <linearGradient id="lpDisc" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" style="stop-color:#fafafb" />
-            <stop offset="30%" style="stop-color:#e3e4e7" />
-            <stop offset="70%" style="stop-color:#b9bbc0" />
-            <stop offset="100%" style="stop-color:#8e9096" />
+        <linearGradient id="lpBody" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#3b82f6" />
+            <stop offset="100%" style="stop-color:#1e40af" />
         </linearGradient>
-        <!-- Bevel ring: light on top, dark underneath -->
-        <linearGradient id="lpRim" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" style="stop-color:#ffffff" />
-            <stop offset="50%" style="stop-color:#c8cacf" />
-            <stop offset="100%" style="stop-color:#5f6167" />
+        <linearGradient id="lpBack" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#2563eb" />
+            <stop offset="100%" style="stop-color:#1e3a8a" />
         </linearGradient>
-        <!-- Soft sheen across the upper left of the disc -->
-        <radialGradient id="lpSheen" cx="36%" cy="24%" r="55%">
-            <stop offset="0%" style="stop-color:rgba(255,255,255,0.75)" />
-            <stop offset="60%" style="stop-color:rgba(255,255,255,0.08)" />
-            <stop offset="100%" style="stop-color:rgba(255,255,255,0)" />
-        </radialGradient>
-        <!-- Chrome body: highlight down one side, shadow on the other -->
-        <linearGradient id="lpChrome" x1="0%" y1="0%" x2="100%" y2="0%" gradientUnits="objectBoundingBox">
-            <stop offset="0%" style="stop-color:#6f737a" />
-            <stop offset="22%" style="stop-color:#d3d6db" />
-            <stop offset="42%" style="stop-color:#ffffff" />
-            <stop offset="68%" style="stop-color:#c2c6cc" />
-            <stop offset="100%" style="stop-color:#5d6168" />
+        <!-- The apps inside: the calendar's red, the ruler's yellow, a green -->
+        <linearGradient id="lpRed" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#e85c52" />
+            <stop offset="100%" style="stop-color:#b01a10" />
         </linearGradient>
-        <linearGradient id="lpRed" x1="0%" y1="0%" x2="100%" y2="0%" gradientUnits="objectBoundingBox">
-            <stop offset="0%" style="stop-color:#8f1510" />
-            <stop offset="35%" style="stop-color:#ff6a5e" />
-            <stop offset="60%" style="stop-color:#e2362b" />
-            <stop offset="100%" style="stop-color:#8a130e" />
+        <linearGradient id="lpYellow" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#f8d75a" />
+            <stop offset="100%" style="stop-color:#d39a08" />
         </linearGradient>
-        <linearGradient id="lpFin" x1="0%" y1="0%" x2="0%" y2="100%" gradientUnits="objectBoundingBox">
-            <stop offset="0%" style="stop-color:#f0574b" />
-            <stop offset="100%" style="stop-color:#9e1a12" />
+        <linearGradient id="lpGreen" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#72d47c" />
+            <stop offset="100%" style="stop-color:#2a8f37" />
         </linearGradient>
-        <linearGradient id="lpNozzle" x1="0%" y1="0%" x2="100%" y2="0%" gradientUnits="objectBoundingBox">
-            <stop offset="0%" style="stop-color:#3b3e44" />
-            <stop offset="50%" style="stop-color:#8d9198" />
-            <stop offset="100%" style="stop-color:#2f3237" />
+        <linearGradient id="lpGloss" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:rgba(255,255,255,0.6)" />
+            <stop offset="100%" style="stop-color:rgba(255,255,255,0.05)" />
         </linearGradient>
-        <radialGradient id="lpGlass" cx="38%" cy="32%" r="70%">
-            <stop offset="0%" style="stop-color:#bfefff" />
-            <stop offset="45%" style="stop-color:#39a7e8" />
-            <stop offset="100%" style="stop-color:#0b4f8c" />
-        </radialGradient>
-        <linearGradient id="lpFlame" x1="0%" y1="0%" x2="0%" y2="100%" gradientUnits="objectBoundingBox">
-            <stop offset="0%" style="stop-color:#fff3b0" />
-            <stop offset="35%" style="stop-color:#ffb020" />
-            <stop offset="75%" style="stop-color:#f0481c" />
-            <stop offset="100%" style="stop-color:rgba(220,40,20,0)" />
-        </linearGradient>
-        <!-- The disc's drop shadow onto the desktop -->
-        <filter id="lpDropShadow" x="-25%" y="-25%" width="150%" height="160%">
-            <feGaussianBlur in="SourceAlpha" stdDeviation="1.7" />
-            <feOffset dx="0" dy="2" />
+        <filter id="lpShadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="2" />
+            <feOffset dx="0" dy="2" result="offsetblur" />
             <feComponentTransfer>
-                <feFuncA type="linear" slope="0.38" />
+                <feFuncA type="linear" slope="0.4" />
             </feComponentTransfer>
             <feMerge>
                 <feMergeNode />
                 <feMergeNode in="SourceGraphic" />
             </feMerge>
         </filter>
-        <!-- The rocket's contact shadow on the metal, so it reads as set in -->
-        <filter id="lpCarve" x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur in="SourceAlpha" stdDeviation="0.9" />
-            <feOffset dx="0.8" dy="1.4" />
-            <feComponentTransfer>
-                <feFuncA type="linear" slope="0.5" />
-            </feComponentTransfer>
-            <feMerge>
-                <feMergeNode />
-                <feMergeNode in="SourceGraphic" />
-            </feMerge>
-        </filter>
-        <clipPath id="lpDiscClip">
-            <circle cx="32" cy="32" r="25.5" />
-        </clipPath>
     </defs>
 
-    <g filter="url(#lpDropShadow)">
-        <!-- Bevel ring, then the disc face -->
-        <circle cx="32" cy="32" r="27" fill="url(#lpRim)" stroke="rgba(0,0,0,0.5)" stroke-width="0.6" />
-        <circle cx="32" cy="32" r="25.5" fill="url(#lpDisc)" stroke="rgba(0,0,0,0.22)" stroke-width="0.5" />
+    <!-- Folder back -->
+    <g filter="url(#lpShadow)">
+        <path d="M6 14 L18 14 L22 18 L58 18 L58 56 L6 56 Z" fill="url(#lpBack)" />
+    </g>
 
-        <!-- Brushed grain: faint concentric rings -->
-        <g fill="none" clip-path="url(#lpDiscClip)">
-            <circle cx="32" cy="32" r="23.5" stroke="rgba(255,255,255,0.35)" stroke-width="0.5" />
-            <circle cx="32" cy="32" r="22" stroke="rgba(0,0,0,0.07)" stroke-width="0.6" />
-            <circle cx="32" cy="32" r="20" stroke="rgba(255,255,255,0.22)" stroke-width="0.5" />
-            <circle cx="32" cy="32" r="17.5" stroke="rgba(0,0,0,0.06)" stroke-width="0.6" />
-            <circle cx="32" cy="32" r="15" stroke="rgba(255,255,255,0.2)" stroke-width="0.5" />
-            <circle cx="32" cy="32" r="12" stroke="rgba(0,0,0,0.06)" stroke-width="0.6" />
-            <circle cx="32" cy="32" r="9" stroke="rgba(255,255,255,0.18)" stroke-width="0.5" />
-            <circle cx="32" cy="32" r="6" stroke="rgba(0,0,0,0.05)" stroke-width="0.6" />
+    <!-- The apps, tucked in and peeking over the front -->
+    <g stroke-width="0.4">
+        <g transform="rotate(-9 19 27.0)">
+            <rect x="12" y="20.0" width="14" height="14" rx="3.2" fill="url(#lpRed)" stroke="#6a0a06" />
+            <path d="M12.6 23.2Q12.6 20.6 15.2 20.6L22.8 20.6Q25.4 20.6 25.4 23.2L25.4 26.2L12.6 26.2Z" fill="url(#lpGloss)" />
         </g>
-        <circle cx="32" cy="32" r="25.5" fill="url(#lpSheen)" />
+        <g transform="rotate(4 32 24.0)">
+            <rect x="25" y="16.0" width="14" height="14" rx="3.2" fill="url(#lpYellow)" stroke="#8a6406" />
+            <path d="M25.6 19.2Q25.6 16.6 28.2 16.6L35.8 16.6Q38.4 16.6 38.4 19.2L38.4 22.2L25.6 22.2Z" fill="url(#lpGloss)" />
+        </g>
+        <g transform="rotate(12 45 26.0)">
+            <rect x="38" y="19.0" width="14" height="14" rx="3.2" fill="url(#lpGreen)" stroke="#1b6324" />
+            <path d="M38.6 22.2Q38.6 19.6 41.2 19.6L48.8 19.6Q51.4 19.6 51.4 22.2L51.4 25.2L38.6 25.2Z" fill="url(#lpGloss)" />
+        </g>
+    </g>
 
-        <!-- The rocket, lifting off to the upper right -->
-        <g transform="translate(31.5 32.5) rotate(45)" filter="url(#lpCarve)">
-            <!-- exhaust flame -->
-            <path d="M-3.4 14 Q-1.8 20 0 25 Q1.8 20 3.4 14 Z" fill="url(#lpFlame)" />
-            <path d="M-1.6 14 Q0 18.5 0 21 Q0 18.5 1.6 14 Z" fill="#fff6c8" opacity="0.9" />
-            <!-- fins -->
-            <path d="M-5.3 2 L-12.5 13.5 L-12.2 15.4 L-5.3 11.6 Z" fill="url(#lpFin)" stroke="#6c0f0a" stroke-width="0.4" stroke-linejoin="round" />
-            <path d="M5.3 2 L12.5 13.5 L12.2 15.4 L5.3 11.6 Z" fill="url(#lpFin)" stroke="#6c0f0a" stroke-width="0.4" stroke-linejoin="round" />
-            <!-- nozzle -->
-            <path d="M-4 11.6 L4 11.6 L3.4 14.6 L-3.4 14.6 Z" fill="url(#lpNozzle)" stroke="#1f2126" stroke-width="0.4" stroke-linejoin="round" />
-            <!-- body -->
-            <path d="M0 -21 C4.9 -16 6 -8 5.6 4 L5.4 11.6 L-5.4 11.6 L-5.6 4 C-6 -8 -4.9 -16 0 -21 Z" fill="url(#lpChrome)" stroke="#2c2f35" stroke-width="0.5" stroke-linejoin="round" />
-            <!-- body seam line -->
-            <path d="M-5.5 5.5 Q0 7 5.5 5.5" fill="none" stroke="rgba(0,0,0,0.28)" stroke-width="0.5" />
-            <!-- nose cone -->
-            <path d="M0 -21 C3.7 -17.2 5 -13 5.4 -9.4 L-5.4 -9.4 C-5 -13 -3.7 -17.2 0 -21 Z" fill="url(#lpRed)" stroke="#5e0d08" stroke-width="0.45" stroke-linejoin="round" />
-            <path d="M-5.3 -9.4 L5.3 -9.4" stroke="rgba(255,255,255,0.55)" stroke-width="0.5" />
-            <!-- porthole -->
-            <circle cx="0" cy="-2.2" r="3.4" fill="#2b2f36" />
-            <circle cx="0" cy="-2.2" r="2.6" fill="url(#lpGlass)" />
-            <ellipse cx="-0.9" cy="-3.3" rx="1.1" ry="0.7" fill="rgba(255,255,255,0.85)" />
-            <!-- chrome highlight streak -->
-            <path d="M-2.4 -16 C-3.4 -9 -3.6 -1 -3.2 9" fill="none" stroke="rgba(255,255,255,0.75)" stroke-width="0.7" stroke-linecap="round" />
+    <!-- Folder front -->
+    <g filter="url(#lpShadow)">
+        <path d="M4 26 L60 26 L60 54 Q60 58 56 58 L8 58 Q4 58 4 54 Z" fill="url(#lpBody)" />
+        <!-- Subtle highlight edge -->
+        <path d="M4 26 L60 26" stroke="rgba(255,255,255,0.3)" stroke-width="1" />
+
+        <!-- Embossed "A", as on the Applications folder -->
+        <g transform="translate(32, 42)" opacity="0.25" fill="none" stroke="white" stroke-width="3"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M-7.5 8 L0 -8 L7.5 8" />
+            <path d="M-4 1.8 L4 1.8" />
         </g>
     </g>
 </svg>

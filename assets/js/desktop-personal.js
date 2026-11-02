@@ -749,6 +749,11 @@
         sortByName,
         resetArrangement,
         hasArrangement: () => !!arrangement,
+        /** The set of icons changed (adaptive-desktop.js): lay them out again */
+        relayout() {
+            if (arrangement) applyArrangement(true);
+            else fitDefaultLayout();
+        },
         /** The shell asks this for anything it does not have a menu for itself */
         contextMenu(node) {
             return node && node.closest && node.closest('.private-sticky') ? noteMenu(node) : null;

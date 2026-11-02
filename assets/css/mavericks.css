@@ -3116,8 +3116,8 @@ a.finder-row {
     top: 0;
     left: 0;
     will-change: transform;
-    /* Peers publish ~14 updates/sec; this smooths the gaps between them. */
-    transition: transform 90ms linear, opacity 150ms ease;
+    /* Peers' trails replay a point every ~60ms; this smooths the steps. */
+    transition: transform 60ms linear, opacity 150ms ease;
 }
 
 /* Suppressed when a LOCAL layout change moved the anchor - the cursor has to
@@ -3131,9 +3131,10 @@ a.finder-row {
     filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35));
 }
 
-/* Peer is pointing at something this viewer does not have open. */
+/* Peer is on another page or in a window this viewer does not have open:
+   drawn at the same spot on screen, dimmed. */
 .remote-cursor.is-orphaned {
-    opacity: 0.25;
+    opacity: 0.5;
 }
 
 #online-count {

@@ -1,6 +1,6 @@
 {{/* Window Frame - wraps content in macOS-style static window */}}
 {{/* Usage: {{ partial "window-frame.html" (dict "title" .Title "permalink" .Permalink "content" .Content) }} */}}
-<div class="static-window">
+<div class="static-window"{{ with .page }} data-cursor-anchor="page:{{ .RelPermalink }}"{{ end }}>
     <div class="window-titlebar">
         {{ partial "os/window/controls.html" (dict "closeLink" "/") }}
         <div class="window-title">{{ .title }}</div>

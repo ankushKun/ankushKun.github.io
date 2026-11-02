@@ -1,6 +1,7 @@
 {{/* Shared app icon renderer.
 Usage: {{ partial "os/app-icon.html" (dict "app" $app "context" "desktop") }}
-Contexts map to fixed visual sizes in CSS: desktop 64px, grid 48px, spotlight/notification 32px, chrome 18px.
+Contexts map to fixed visual sizes in CSS: desktop 64px, grid 48px, spotlight/notification 32px, chrome 18px;
+launchpad and launchpad-mini are sized by the Launchpad's own grid (apps/launchpad.css).
 */}}
 {{- $app := .app -}}
 {{- $icon := .icon -}}
@@ -17,7 +18,7 @@ a hidden template or a list that is cloned on demand, where an eager image
 would be fetched on every page view without ever being shown. */}}
 {{- $loading := "lazy" -}}
 {{- if eq $context "desktop" -}}{{- $loading = "eager" -}}{{- end -}}
-{{- $px := index (dict "desktop" 64 "grid" 48 "spotlight" 32 "notification" 32 "chrome" 18) $context | default 64 -}}
+{{- $px := index (dict "desktop" 64 "grid" 48 "launchpad" 96 "launchpad-mini" 24 "spotlight" 32 "notification" 32 "chrome" 18) $context | default 64 -}}
 <span class="{{ delimit $classes " " }}" aria-hidden="true">
     {{- if and $icon (eq $icon.type "image") -}}
     <img src="{{ $icon.src }}" alt="" draggable="false" width="{{ $px }}" height="{{ $px }}" loading="{{ $loading }}" decoding="async">

@@ -1518,14 +1518,20 @@
             els.nickBtn.disabled = true;
         }
 
+        // The name is shared with Paint (paint.js writes the same irc_nick), so
+        // one picked there is filled in here, read-only: it is changed where
+        // it was picked (irc_nick_app). The content warning is each app's own
+        // and still has to be accepted for the chat.
+        if (savedNick) els.nickInput.value = savedNick;
+        els.nickInput.readOnly = !!savedNick && ircStore.get('irc_nick_app') === 'paint';
+
         if (savedNick && termsAccepted) {
-            els.nickInput.value = savedNick;
             // Auto-join after a brief delay
             setTimeout(() => {
                 join();
             }, 300);
         } else {
-            setTimeout(() => els.nickInput.focus(), 50);
+            setTimeout(() => (savedNick ? els.termsInput : els.nickInput).focus(), 50);
         }
 
         function join() {
@@ -1540,8 +1546,11 @@
                 return;
             }
 
-            // Save nick and terms acceptance
-            ircStore.set('irc_nick', nick);
+            // Save nick and terms acceptance. A name from Paint stays Paint's.
+            if (!els.nickInput.readOnly) {
+                ircStore.set('irc_nick', nick);
+                ircStore.set('irc_nick_app', 'irc');
+            }
             ircStore.set('irc_tos_accepted', 'true');
 
             // Get or generate UUID
@@ -1580,8 +1589,9 @@
             // from the previous session before a rejoin can register new ones.
             teardownConnection();
 
-            // Clear localStorage
+            // Clear localStorage (the name is Paint's too: it goes for both)
             ircStore.remove('irc_nick');
+            ircStore.remove('irc_nick_app');
             ircStore.remove('irc_tos_accepted');
 
             // Reset UI
@@ -1605,6 +1615,7 @@
             els.users.innerHTML = '';
             els.prompt.classList.remove('hidden');
             els.nickInput.value = '';
+            els.nickInput.readOnly = false;
             els.termsInput.checked = false;
             els.nickBtn.disabled = true;
             els.msgInput.setAttribute('contenteditable', 'false');
@@ -1976,6 +1987,11 @@
                 return;
             }
             if (nick === myNick) return;
+            // Picked in Paint: it is changed there, not here
+            if (ircStore.get('irc_nick_app') === 'paint') {
+                addMsg('', 'Your name comes from Paint. Change it there.', true);
+                return;
+            }
             if (nickTakenByOther(online, nick, myUUID)) {
                 addMsg('', `"${nick}" is already in use.`, true);
                 return;

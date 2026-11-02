@@ -155,6 +155,16 @@
     margin: 0;
 }
 
+/* A name picked in Paint: shown, not editable here */
+.irc-nick-dialog input[type="text"][readonly] {
+    color: var(--text-muted);
+    cursor: default;
+}
+
+.irc-input-wrapper:has(input[readonly]) {
+    background: rgba(0, 0, 0, 0.04);
+}
+
 .irc-terms {
     width: 100%;
     margin-bottom: 20px;
