@@ -1,6 +1,6 @@
 {
- "updated": "2026-11-02T11:00:50.807Z",
- "count": 20,
+ "updated": "2026-11-07T10:03:59.366Z",
+ "count": 21,
  "entries": [
   {
    "id": "8rz540vzu",
@@ -221,6 +221,17 @@
    "variant": 7,
    "ts": 1793559496851,
    "updatedTs": 1793559496851
+  },
+  {
+   "id": "s0xrqbrw4",
+   "name": "Nico",
+   "from": "Montevideo, Uruguay",
+   "blurb": "",
+   "x": "",
+   "ig": "",
+   "variant": 1,
+   "ts": 1794013355743,
+   "updatedTs": 1794013355743
   }
  ]
 }
