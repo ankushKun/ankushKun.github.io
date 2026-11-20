@@ -1,0 +1,39 @@
+---
+title: "3dsFM"
+description: "An offline music player for the Nintendo 3DS playing MP3, Ogg, Opus, and WAV with Cover Flow, a queue, visualizer, and lid-closed playback."
+date: 2026-10-13
+tags: ["hardware", "game-dev"]
+featured: true
+status: active
+stack: ["C++17", "libctru", "Citro2D", "Citro3D", "NDSP"]
+links:
+  - label: "Website"
+    url: "https://ankush.one/3dsFM/"
+  - label: "GitHub"
+    url: "https://github.com/ankushKun/3dsFM"
+cover: ./cover.jpg
+coverAlt: "3dsFM logo and disc icon on a dark dot-grid background"
+related: ["/blogs/nintendo-3ds-homebrew", "/projects/3dsdl"]
+---
+**3dsFM turns a 3DS into the music player it should have shipped as.**
+
+I had a folder of 600 downloaded songs and a New 3DS that sits next to my bed. The console's own sound app is from 2011 and acts like it, so I wrote my own. Drop files under `sdmc:/Music`, loose or in folders, and 3dsFM reads the tags, pulls out the cover art and sorts everything into songs, artists and a queue.
+
+The bottom screen is the controller. Songs come as a cover flow you can flick through, a grid or a list; the top screen is always the player, with the art fogged behind the title. Close the lid and the music keeps going with the screens off, like an iPod with a hinge.
+
+## Features
+- MP3, Ogg Vorbis, Opus and WAV, decoded on the console with mpg123, Tremor and libopus
+- Tags from ID3, Vorbis comments and WAV INFO chunks, with video-site noise like "(Official Video)" cleaned off titles
+- A library index on the SD card, so 600 songs appear instantly on every launch after the first
+- Cover flow with flick physics, a grid and a list, plus artists with song counts and a play queue
+- Covers load for what is on screen first, so long lists stay smooth
+- A visualizer, dark and HOME Menu themes, and playback with the lid closed
+- A 3D HOME Menu banner with its own jingle, built from a glTF model in the repo
+
+## Built With
+- C++17 with libctru, Citro2D and Citro3D, NDSP for sound
+- Host-side tests for the tag reader, scanner and queue under AddressSanitizer
+- Reproducible .3dsx and .cia builds in Docker, released by GitHub Actions
+- Shares its toolchain and website design with [3dsDL](/projects/3dsdl/)
+
+It is a development build that I test on a New 3DS. The story of getting it to play without freezing the console is in [the blog post](/blogs/nintendo-3ds-homebrew/). GPLv3.

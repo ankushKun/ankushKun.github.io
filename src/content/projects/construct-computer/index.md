@@ -1,0 +1,44 @@
+---
+title: "Construct Computer"
+description: "AI employees that each get their own cloud computer — browser, terminal, files, email, and memory — on a desktop you can watch and take over."
+date: 2026-02-20
+tags: ["ai-agents", "construct", "cloudflare", "product-hunt"]
+featured: true
+status: active
+stack: ["TypeScript", "Cloudflare Workers", "Durable Objects", "React", "Hono", "MCP"]
+links:
+  - label: "Website"
+    url: "https://construct.computer"
+  - label: "Open Construct"
+    url: "https://os.construct.computer/?utm_source=ankush.one&utm_medium=referral&utm_campaign=project"
+  - label: "Product Hunt"
+    url: "https://www.producthunt.com/products/construct-computer"
+  - label: "Status"
+    url: "https://status.construct.computer"
+  - label: "CWAB benchmark"
+    url: "https://github.com/construct-computer/cloud-workspace-agent-benchmark"
+related: ["/blogs/running-ai-agents-on-cloudflare-not-vms", "/blogs/grokbot-alternative", "/blogs/clef-vs-jev-benchmark", "/blogs/jev-ai-agents", "/blogs/cheap-llm-for-ai-agents", "/blogs/ai-search-recommends-ai-employees"]
+---
+Construct is a workforce of AI employees, and each one gets its own cloud computer. Each agent gets a browser, a terminal, files, email, a calendar, memory and the apps you connect, and it does the work on that computer while you watch from a desktop in your browser. You can step in and take over whenever you want.
+
+I co-founded it with Nischal Naik in February 2026, and most of the code has my fingerprints on it.
+
+## How it got here
+- **February 2026:** the first build, a browser desktop OS with one Docker container per user.
+- **March to April 2026:** moved the backend off a VPS and onto Cloudflare (a Durable Object per user running the agent, Sandboxes for code, R2 and D1), then opened paid plans. More in [All our Agents get computers, we pay for almost none](/blogs/running-ai-agents-on-cloudflare-not-vms/).
+- **April to May 2026:** published an open source [app SDK](https://www.npmjs.com/package/@construct-computer/app-sdk) for building MCP apps for Construct, a macOS notch companion, and [CWAB](https://github.com/construct-computer/cloud-workspace-agent-benchmark), a benchmark that runs Construct, OpenClaw and Hermes Agent through the same invoice reconciliation tasks on five models. Construct was the only one with a 100% pass@3 on all five.
+- **July to August 2026:** rebuilt the backend from scratch, ported the desktop onto it, and moved every existing user over to the new version.
+- **23 August 2026:** launched on Product Hunt and finished #1 Product of the Day and #5 Product of the Week in Productivity.
+- **September to October 2026:** Zen Mode at [app.construct.computer](https://app.construct.computer/?utm_source=ankush.one&utm_medium=referral&utm_campaign=project), a calmer chat-first way in that also works on a phone, plus a decision layer for the agent's small judgement calls. It started on [Jev](/blogs/jev-ai-agents/) and is moving to Cloudflare's Clef after we benchmarked the two in [Clef beat Jev on Jev's home turf](/blogs/clef-vs-jev-benchmark/).
+
+## What it does today
+- Multiple agents on the larger plans, each with its own computer
+- A live view of every agent's browser, terminal and files that you can take over at any time
+- Reusable workflows saved from runs that went well
+- Long-term memory
+- The full desktop at os.construct.computer, or Zen Mode at app.construct.computer
+
+Plans start at $9 a month.
+
+## Stack
+It's a TypeScript monorepo on Cloudflare: an API Worker (Hono, D1, R2, queues and Durable Objects for the agents), a React desktop with its own window manager, Launchpad, Mission Control and Spotlight, and the Zen Mode dashboard. Apps and integrations plug in over MCP. The core platform is closed source. The public pieces are the [app SDK](https://github.com/construct-computer/app-sdk), [CWAB](https://github.com/construct-computer/cloud-workspace-agent-benchmark) and Foxwatch, the open source monitoring tool behind our [status page](https://status.construct.computer).

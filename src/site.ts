@@ -1,9 +1,10 @@
-// Site wide settings. Everything here is placeholder data, replace it with the real values.
+// Site-wide identity, navigation, social links, booking and newsletter settings.
 
 export const SITE = {
   url: 'https://ankush.one',
   title: 'Ankush Singh',
-  description: 'Placeholder site description. One or two sentences on who you are and what you do.',
+  description:
+    'Co-founder of Construct Computer. Building AI agents, developer tools, and Nintendo 3DS homebrew.',
   locale: 'en_US',
   lang: 'en',
 };
@@ -11,18 +12,39 @@ export const SITE = {
 export const AUTHOR = {
   name: 'Ankush Singh',
   alternateName: ['Ankush Kun', 'ankushKun'],
-  jobTitle: 'Placeholder role',
-  worksFor: { name: 'Placeholder Company', url: 'https://example.com' },
-  email: 'hello@example.com',
-  location: 'Placeholder City, Country',
+  jobTitle: 'Co-founder',
+  worksFor: { name: 'Construct Computer', url: 'https://construct.computer' },
+  alumniOf: { name: 'Chandigarh University' },
+  email: 'ankush4singh@gmail.com',
+  location: 'India',
+  knowsAbout: [
+    'AI Agents',
+    'Developer Tools',
+    'Cloudflare Workers',
+    'Model Context Protocol',
+    'TypeScript',
+    'React',
+    'Rust',
+    'C++',
+    'Solana',
+    'Arweave',
+    'AO',
+    'Nintendo 3DS Homebrew',
+    'Open Source',
+  ],
 };
 
-/** Profiles that represent you. Rendered on About and Contact, and used as schema.org sameAs. */
+/** Profiles that represent Ankush. Rendered on About and Contact, and used as schema.org sameAs. */
 export const SOCIALS = [
-  { platform: 'GitHub', handle: '@placeholder', url: 'https://github.com/placeholder' },
-  { platform: 'X', handle: '@placeholder', url: 'https://x.com/placeholder' },
-  { platform: 'LinkedIn', handle: 'placeholder', url: 'https://linkedin.com/in/placeholder' },
-  { platform: 'YouTube', handle: '@placeholder', url: 'https://youtube.com/@placeholder' },
+  { platform: 'GitHub', handle: '@ankushKun', url: 'https://github.com/ankushKun' },
+  { platform: 'X', handle: '@ankushKun_', url: 'https://x.com/ankushKun_' },
+  { platform: 'LinkedIn', handle: 'ankushkun', url: 'https://linkedin.com/in/ankushkun' },
+  { platform: 'YouTube', handle: '@ankushkun', url: 'https://youtube.com/@ankushkun' },
+  { platform: 'Telegram', handle: '@ankushKun', url: 'https://t.me/ankushKun' },
+  { platform: 'Discord', handle: '@ankushkun', url: 'https://discord.com/users/666578281142812673' },
+  { platform: 'Instagram', handle: '@ankushKun_', url: 'https://instagram.com/ankushKun_' },
+  { platform: 'Reddit', handle: 'u/TECHIE6023', url: 'https://reddit.com/user/TECHIE6023' },
+  { platform: 'Medium', handle: 'ankushkun.medium.com', url: 'https://ankushkun.medium.com' },
 ];
 
 export const NAV = [
@@ -44,10 +66,10 @@ export const FOOTER_NAV = [
   { label: 'RSS', href: '/blogs/index.xml' },
 ];
 
-export const BOOKING_URL = 'https://cal.com/placeholder';
+export const BOOKING_URL = 'https://cal.com/ankushkun/call';
 
-/** Newsletter form target. Point action at your provider (Buttondown, ConvertKit, Resend...). */
+/** Newsletter form target. Set `action` to your provider URL (Buttondown, ConvertKit, Resend...) to enable the form. */
 export const NEWSLETTER = {
-  action: 'https://example.com/subscribe',
+  action: '',
   emailField: 'email',
 };

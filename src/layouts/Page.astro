@@ -4,6 +4,7 @@
 import { render } from 'astro:content';
 import Base from './Base.astro';
 import { getPage } from '../lib/content';
+import { ogPathForPage } from '../lib/og';
 import { PERSON_ID, breadcrumbs, webPage } from '../lib/schema';
 
 interface Props {
@@ -27,6 +28,7 @@ const crumbs = path === '/' ? [] : [breadcrumbs([{ name: title, path }])];
   {title}
   {description}
   image={cover}
+  imageUrl={cover ? undefined : ogPathForPage(id)}
   {type}
   modified={updated}
   schema={[webPage(pageType, path, title, description, aboutYou), ...crumbs, ...schema]}

@@ -1,6 +1,4 @@
 ---
 title: Resume
-description: Placeholder resume description. Experience, education and skills.
+description: Resume of Ankush Singh, co-founder of Construct Computer — experience, selected projects, skills, and education.
 ---
-
-

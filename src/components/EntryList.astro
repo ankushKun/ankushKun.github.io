@@ -1,7 +1,9 @@
 ---
 // A list of entries with thumbnail, date, title and description. Used by every index page.
+// Entries with a custom `cover` use Astro's optimized image; others use the build-time generated card.
 import { Image } from 'astro:assets';
 import { formatDate, isoDate, urlOf, type Entry } from '../lib/content';
+import { ogPathForEntry } from '../lib/og';
 
 interface Props {
   items: Entry[];
@@ -15,9 +17,26 @@ const { items, thumbs = true } = Astro.props;
   {
     items.map((item) => (
       <li class="flex gap-4">
-        {thumbs && item.data.cover && (
-          <Image src={item.data.cover} alt="" width={320} height={180} class="aspect-video w-32 shrink-0 object-cover" />
-        )}
+        {thumbs &&
+          (item.data.cover ? (
+            <Image
+              src={item.data.cover}
+              alt=""
+              width={320}
+              height={180}
+              class="aspect-video w-32 shrink-0 object-cover"
+            />
+          ) : (
+            <img
+              src={ogPathForEntry(item)}
+              alt=""
+              width={320}
+              height={168}
+              loading="lazy"
+              decoding="async"
+              class="aspect-video w-32 shrink-0 object-cover"
+            />
+          ))}
         <div>
           <time datetime={isoDate(item.data.date)} class="text-sm">{formatDate(item.data.date)}</time>
           <h3 class="font-semibold"><a href={urlOf(item)}>{item.data.title}</a></h3>

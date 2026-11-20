@@ -1,6 +1,6 @@
 ---
 title: Blog
-description: Placeholder blog description. What you write about.
+description: Technical writing on AI agents, Cloudflare infrastructure, Nintendo 3DS homebrew, developer tools, and reverse engineering.
 ---
 
-Placeholder intro to the blog.
+Deep dives, benchmarks, tutorials, and build notes on AI agents, developer tools, web engineering, and Nintendo 3DS homebrew.

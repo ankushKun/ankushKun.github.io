@@ -1,0 +1,42 @@
+---
+title: "WebAnimate"
+description: "A Chrome extension for inspecting web page elements, keyframing animations on a timeline editor, and exporting videos with FFmpeg."
+date: 2026-01-06
+tags: ["web", "developer-tools"]
+status: active
+stack: ["React", "PixiJS", "FFmpeg", "Chrome Extension"]
+links:
+  - label: "GitHub"
+    url: "https://github.com/ankushKun/webanimate"
+  - label: "Download Extension"
+    url: "https://github.com/ankushKun/webanimate/releases"
+---
+**WebAnimate is a Chrome extension that lets you inspect elements on web pages, apply animations, and record them using a timeline-based editor.**
+
+Built with React, PixiJS, and FFmpeg for video processing, it makes creating web animations simple and intuitive.
+
+<figure class="my-6">
+<video controls preload="metadata">
+  <source src="https://github.com/user-attachments/assets/520cded8-32e8-475a-84b4-69ceef17727d" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+</figure>
+
+## Features
+- **Element Inspection:** Click to select any element on a web page
+- **Timeline Editor:** Create complex animations with an intuitive timeline interface
+- **Animation Playback:** Preview animations before recording
+- **Video Export:** Record and download animations as video files using FFmpeg
+
+## Tech Stack
+- **React** for the UI
+- **PixiJS** for the timeline editor
+- **FFmpeg** for video processing and export
+- **Chrome Extension APIs** for browser integration
+
+## Installation
+1. Download the latest `webanimate.zip` from [releases](https://github.com/ankushKun/webanimate/releases)
+2. Extract the contents
+3. Open `chrome://extensions` in Chrome
+4. Enable "Developer mode"
+5. Click "Load unpacked" and select the extracted folder

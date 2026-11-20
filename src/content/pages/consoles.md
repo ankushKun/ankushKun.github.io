@@ -1,6 +1,6 @@
 ---
 title: Console Collection
-description: Placeholder console collection description. The consoles you own and what you did with them.
+description: Game consoles and handhelds Ankush Singh owns, mods, and writes homebrew for.
 ---
 
-Placeholder intro to the collection.
+The consoles and handhelds I own, mod, and occasionally write native homebrew for.

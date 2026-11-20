@@ -4,15 +4,17 @@ import type { ImageMetadata } from 'astro';
 import { getImage } from 'astro:assets';
 import { AUTHOR, FOOTER_NAV, NAV, SITE } from '../site';
 import { absUrl } from '../lib/content';
+import { OG_HEIGHT, OG_WIDTH, ogPathForPage } from '../lib/og';
 import { person, website } from '../lib/schema';
-import defaultImage from '../assets/og-default.png';
 import '../styles/global.css';
 
 interface Props {
   title: string;
   description: string;
   image?: ImageMetadata;
+  imageUrl?: string;
   imageAlt?: string;
+  canonical?: string;
   type?: 'website' | 'article' | 'profile';
   published?: Date;
   modified?: Date;
@@ -20,13 +22,38 @@ interface Props {
   noindex?: boolean;
 }
 
-const { title, description, image, imageAlt = '', type = 'website', published, modified, schema = [], noindex = false } = Astro.props;
+const {
+  title,
+  description,
+  image,
+  imageUrl,
+  imageAlt = '',
+  canonical: canonicalOverride,
+  type = 'website',
+  published,
+  modified,
+  schema = [],
+  noindex = false,
+} = Astro.props;
 
 const isHome = Astro.url.pathname === '/';
 const fullTitle = isHome ? `${SITE.title} | ${AUTHOR.jobTitle}` : `${title} | ${SITE.title}`;
-const canonical = absUrl(Astro.url.pathname);
-const og = await getImage({ src: image ?? defaultImage, width: 1200, height: 630, format: 'jpg' });
-const ogUrl = absUrl(og.src);
+const pageUrl = absUrl(Astro.url.pathname);
+const canonical = canonicalOverride ?? pageUrl;
+
+let ogUrl: string;
+let ogWidth = OG_WIDTH;
+let ogHeight = OG_HEIGHT;
+
+if (image) {
+  const og = await getImage({ src: image, width: OG_WIDTH, height: OG_HEIGHT, format: 'jpg' });
+  ogUrl = absUrl(og.src);
+  ogWidth = Number(og.attributes.width ?? OG_WIDTH);
+  ogHeight = Number(og.attributes.height ?? OG_HEIGHT);
+} else {
+  ogUrl = absUrl(imageUrl ?? ogPathForPage('home'));
+}
+
 const jsonLd = { '@context': 'https://schema.org', '@graph': [website(), person(), ...schema] };
 const current = (href: string) => Astro.url.pathname.startsWith(href);
 ---
@@ -43,20 +70,21 @@ const current = (href: string) => Astro.url.pathname.startsWith(href);
     {noindex && <meta name="robots" content="noindex" />}
     <meta name="generator" content={Astro.generator} />
 
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="alternate" type="application/rss+xml" title={`${SITE.title} blog`} href="/blogs/index.xml" />
     <link rel="sitemap" href="/sitemap.xml" />
 
     <meta property="og:type" content={type} />
     <meta property="og:site_name" content={SITE.title} />
     <meta property="og:locale" content={SITE.locale} />
-    <meta property="og:url" content={canonical} />
+    <meta property="og:url" content={pageUrl} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={ogUrl} />
-    <meta property="og:image:width" content={String(og.attributes.width)} />
-    <meta property="og:image:height" content={String(og.attributes.height)} />
+    <meta property="og:image:width" content={String(ogWidth)} />
+    <meta property="og:image:height" content={String(ogHeight)} />
     {imageAlt && <meta property="og:image:alt" content={imageAlt} />}
     {published && <meta property="article:published_time" content={published.toISOString()} />}
     {modified && <meta property="article:modified_time" content={modified.toISOString()} />}

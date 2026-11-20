@@ -1,6 +1,6 @@
 ---
 title: Newsletter
-description: Placeholder newsletter description. What subscribers get and how often.
+description: Occasional dispatches from Ankush Singh on new technical essays, launches, and side projects.
 ---
 
-Placeholder paragraph on what the newsletter covers and how often it goes out.
+Occasional emails when I publish a deep dive, ship a new project, or release a benchmark. No spam and no artificial cadence.

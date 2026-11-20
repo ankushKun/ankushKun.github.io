@@ -15,14 +15,14 @@ Every entry is a folder with an `index.md` and its images. The folder name is th
 | Section | Folder | URL |
 | --- | --- | --- |
 | Blog | `src/content/blog/<slug>/` | `/blogs/<slug>/` |
-| Projects | `src/content/projects/<year>.<slug>/` | `/projects/<year>.<slug>/` |
-| Timeline | `src/content/timeline/<year>.<slug>/` | `/timeline/<year>.<slug>/` |
+| Projects | `src/content/projects/<slug>/` | `/projects/<slug>/` |
+| Timeline | `src/content/timeline/<slug>/` | `/timeline/<slug>/` |
 | Talks | `src/content/talks/<slug>/` | `/talks/<slug>/` |
 | Consoles | `src/content/consoles/<slug>/` | `/console-collection/<slug>/` |
 
-Copy an existing entry to start a new one. All entries share `title`, `description`, `date`, `updated`, `tags`, `cover`, `coverAlt` and `draft`; each section adds a few fields of its own, defined in `src/content.config.ts`. The build fails if a required field is missing.
+Copy an existing entry to start a new one. All entries share `title`, `description`, `date`, `updated`, `tags`, `cover`, `coverAlt`, `canonical`, `links`, `faq`, `related` and `draft`; each section adds a few fields of its own, defined in `src/content.config.ts`. The build fails if a required field is missing.
 
-`cover` is the list thumbnail, the image at the top of the page and the social preview. `description` is the meta description, the social card text, the RSS summary and the `llms.txt` line, so keep it to one clear sentence. `draft: true` shows the entry in dev only.
+`cover` is optional: when set, it is used for the list thumbnail, detail hero image, and social preview. When omitted, a theme-agnostic 1200x630 card is generated at build time via `src/lib/og.ts` (`/og/<section>/<slug>.png`) for list thumbnails and social previews (configurable via `OG_THEME` in `src/lib/og.ts`). `description` is the meta description, social card text, RSS summary and `llms.txt` line, so keep it to one clear sentence. `draft: true` shows the entry in dev only.
 
 Standalone pages (About, Now, Privacy...) and the intro of every section index are Markdown files in `src/content/pages/`, named after the page. Resume data lives in `src/data/resume.ts` and also feeds the About page. Name, socials, nav, booking link and newsletter form target live in `src/site.ts`.
 

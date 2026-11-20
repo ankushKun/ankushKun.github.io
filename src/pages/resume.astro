@@ -6,7 +6,7 @@ import { inline } from '../lib/inline';
 ---
 
 <Page id="resume">
-  <p class="mb-8"><a href={resume.pdf} download>Download PDF</a></p>
+  <p class="mb-8"><a href={resume.pdf} download={resume.pdfDownloadName}>Download PDF</a></p>
 
   <section class="mb-8">
     <h2 class="mb-2 text-xl font-semibold">Summary</h2>
@@ -19,16 +19,47 @@ import { inline } from '../lib/inline';
       resume.experience.map((e) => (
         <article class="mb-6">
           <h3 class="font-semibold">{e.role}, <a href={e.url}>{e.org}</a></h3>
-          <p class="text-sm">{formatMonth(e.start)} to {formatMonth(e.end)} &middot; {e.location}</p>
+          <p class="text-sm">
+            {formatMonth(e.start)} to {formatMonth(e.end)}
+            {e.location && <> &middot; {e.location}</>}
+          </p>
           <ul class="list-disc pl-5">{e.highlights.map((h) => <li set:html={inline(h)} />)}</ul>
         </article>
       ))
     }
   </section>
 
+  {resume.projects.length > 0 && (
+    <section class="mb-8">
+      <h2 class="mb-2 text-xl font-semibold">Selected Projects</h2>
+      {
+        resume.projects.map((p) => (
+          <article class="mb-6">
+            <h3 class="font-semibold">
+              <a href={p.url}>{p.name}</a>
+              {p.more && <> (<a href={p.more}>write-up</a>)</>}
+            </h3>
+            <p class="text-sm">{formatMonth(p.start)} &middot; {p.tech.join(', ')}</p>
+            <ul class="list-disc pl-5">{p.highlights.map((h) => <li set:html={inline(h)} />)}</ul>
+          </article>
+        ))
+      }
+      <p class="text-sm"><a href="/projects/">View all projects</a></p>
+    </section>
+  )}
+
   <section class="mb-8">
     <h2 class="mb-2 text-xl font-semibold">Education</h2>
-    <ul>{resume.education.map((e) => <li>{e.degree} in {e.field}, {e.school} ({formatMonth(e.start)} to {formatMonth(e.end)})</li>)}</ul>
+    <ul>
+      {
+        resume.education.map((e) => (
+          <li>
+            {e.degree} in {e.field}, {e.school}
+            {e.start && <> ({formatMonth(e.start)} to {formatMonth(e.end)})</>}
+          </li>
+        ))
+      }
+    </ul>
   </section>
 
   <section>

@@ -7,6 +7,13 @@ export async function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
+const { data } = entry;
 ---
 
-<Entry entry={entry} />
+<Entry entry={entry}>
+  {data.links.length > 0 && (
+    <ul slot="meta" class="flex flex-wrap gap-4 text-sm">
+      {data.links.map((l) => <li><a href={l.url}>{l.label}</a></li>)}
+    </ul>
+  )}
+</Entry>

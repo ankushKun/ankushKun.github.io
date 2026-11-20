@@ -4,7 +4,8 @@ import { z } from 'astro/zod';
 
 /**
  * Every entry is a folder: src/content/<collection>/<slug>/index.md with its images beside it.
- * The folder name is the URL slug. A cover image doubles as list thumbnail and social preview.
+ * The folder name is the URL slug. A custom `cover` doubles as list thumbnail, hero image and
+ * social preview; entries without a `cover` automatically receive a build-time generated card.
  */
 const bundle = (base: string) =>
   glob({
@@ -12,6 +13,9 @@ const bundle = (base: string) =>
     pattern: '**/index.md',
     generateId: ({ entry }) => entry.replace(/\/index\.md$/, ''),
   });
+
+const link = z.object({ label: z.string(), url: z.string().min(1) });
+const faqItem = z.object({ q: z.string(), a: z.string() });
 
 /** Fields every dated entry shares, so lists, feeds, SEO and the sitemap treat them the same way. */
 const entry = ({ image }: SchemaContext) =>
@@ -23,10 +27,12 @@ const entry = ({ image }: SchemaContext) =>
     tags: z.array(z.string()).default([]),
     cover: image().optional(),
     coverAlt: z.string().default(''),
+    canonical: z.url().optional(),
+    links: z.array(link).default([]),
+    faq: z.array(faqItem).default([]),
+    related: z.array(z.string()).default([]),
     draft: z.boolean().default(false),
   });
-
-const link = z.object({ label: z.string(), url: z.url() });
 
 const blog = defineCollection({
   loader: bundle('blog'),
@@ -40,7 +46,6 @@ const projects = defineCollection({
       featured: z.boolean().default(false),
       status: z.enum(['active', 'archived']).default('active'),
       stack: z.array(z.string()).default([]),
-      links: z.array(link).default([]),
     }),
 });
 
@@ -48,9 +53,8 @@ const timeline = defineCollection({
   loader: bundle('timeline'),
   schema: (ctx) =>
     entry(ctx).extend({
-      /** Groups events on the timeline page, for example work, win, hackathon or speaking. */
+      /** Groups events on the timeline page, for example work, win, launch, hackathon or milestone. */
       kind: z.string(),
-      links: z.array(link).default([]),
     }),
 });
 

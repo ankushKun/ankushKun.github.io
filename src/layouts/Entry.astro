@@ -4,8 +4,10 @@
 import { Image, getImage } from 'astro:assets';
 import { render } from 'astro:content';
 import Base from './Base.astro';
-import { SECTION_PATH, absUrl, formatDate, isoDate, getPage, type Entry } from '../lib/content';
-import { breadcrumbs, entryNode } from '../lib/schema';
+import { SECTION_PATH, absUrl, formatDate, getAllEntries, getPage, isoDate, urlOf, type Entry } from '../lib/content';
+import { inline } from '../lib/inline';
+import { OG_HEIGHT, OG_WIDTH, ogPathForEntry } from '../lib/og';
+import { breadcrumbs, entryNode, faqPage } from '../lib/schema';
 
 interface Props {
   entry: Entry;
@@ -16,24 +18,44 @@ const { data } = entry;
 const { Content } = await render(entry);
 const section = await getPage(entry.collection);
 const sectionPath = SECTION_PATH[entry.collection];
-const image = data.cover && absUrl((await getImage({ src: data.cover, width: 1200, height: 630, format: 'jpg' })).src);
+
+const generatedOgPath = data.cover ? undefined : ogPathForEntry(entry);
+const schemaImage = data.cover
+  ? absUrl((await getImage({ src: data.cover, width: OG_WIDTH, height: OG_HEIGHT, format: 'jpg' })).src)
+  : absUrl(generatedOgPath!);
+
+const canonicalHost = data.canonical ? new URL(data.canonical).hostname.replace(/^www\./, '') : undefined;
+
+let relatedEntries: Entry[] = [];
+if (data.related.length > 0) {
+  const all = await getAllEntries();
+  const byUrl = new Map(all.map((e) => [urlOf(e).replace(/\/$/, ''), e]));
+  relatedEntries = data.related
+    .map((path) => byUrl.get(path.replace(/\/$/, '')))
+    .filter((e): e is Entry => Boolean(e));
+}
+
+const schemaNodes = [
+  entryNode(entry, schemaImage),
+  breadcrumbs([
+    { name: section.data.title, path: sectionPath },
+    { name: data.title, path: Astro.url.pathname },
+  ]),
+  ...(data.faq.length > 0 ? [faqPage(data.faq)] : []),
+];
 ---
 
 <Base
   title={data.title}
   description={data.description}
   image={data.cover}
-  imageAlt={data.coverAlt}
+  imageUrl={generatedOgPath}
+  imageAlt={data.coverAlt || data.title}
+  canonical={data.canonical}
   type="article"
   published={data.date}
   modified={data.updated}
-  schema={[
-    entryNode(entry, image),
-    breadcrumbs([
-      { name: section.data.title, path: sectionPath },
-      { name: data.title, path: Astro.url.pathname },
-    ]),
-  ]}
+  schema={schemaNodes}
 >
   <article>
     <header class="mb-8">
@@ -43,16 +65,47 @@ const image = data.cover && absUrl((await getImage({ src: data.cover, width: 120
       <p class="text-sm">
         <time datetime={isoDate(data.date)}>{formatDate(data.date, 'long')}</time>
         {data.updated && <> &middot; Updated <time datetime={isoDate(data.updated)}>{formatDate(data.updated, 'long')}</time></>}
+        {data.canonical && canonicalHost && (
+          <> &middot; Originally published on <a href={data.canonical}>{canonicalHost}</a></>
+        )}
       </p>
       <slot name="meta" />
       {data.tags.length > 0 && <ul class="flex flex-wrap gap-2 text-sm">{data.tags.map((t) => <li>#{t}</li>)}</ul>}
     </header>
 
-    {data.cover && <Image src={data.cover} alt={data.coverAlt} width={1200} class="mb-8" loading="eager" fetchpriority="high" />}
+    {data.cover && <Image src={data.cover} alt={data.coverAlt || data.title} width={1200} class="mb-8" loading="eager" fetchpriority="high" />}
 
     <div class="prose dark:prose-invert">
       <Content />
     </div>
+
     <slot />
+
+    {data.faq.length > 0 && (
+      <section class="mt-12 border-t pt-8">
+        <h2 class="mb-4 text-xl font-semibold">Frequently asked questions</h2>
+        <dl class="space-y-4">
+          {data.faq.map((item) => (
+            <div>
+              <dt class="font-semibold">{item.q}</dt>
+              <dd class="mt-1" set:html={inline(item.a)} />
+            </div>
+          ))}
+        </dl>
+      </section>
+    )}
+
+    {relatedEntries.length > 0 && (
+      <section class="mt-12 border-t pt-8">
+        <h2 class="mb-4 text-xl font-semibold">Related</h2>
+        <ul class="space-y-2">
+          {relatedEntries.map((item) => (
+            <li>
+              <a href={urlOf(item)}>{item.data.title}</a> &mdash; {item.data.description}
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
   </article>
 </Base>

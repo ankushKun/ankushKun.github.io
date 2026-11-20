@@ -1,6 +1,6 @@
 ---
 title: Projects
-description: Placeholder projects description. What you have built.
+description: Software, AI agents, developer tools, Nintendo 3DS homebrew, hardware builds, and hackathon projects by Ankush Singh.
 ---
 
-Placeholder intro to the projects.
+A non-exhaustive archive of things I've built — from AI agent platforms and developer tools to Nintendo 3DS homebrew, games, and early hardware experiments.

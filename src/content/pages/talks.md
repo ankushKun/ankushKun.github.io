@@ -1,6 +1,6 @@
 ---
 title: Talks
-description: Placeholder talks description. Talks, panels and workshops you have given.
+description: Talks, product demos, community tours, and workshops by Ankush Singh.
 ---
 
-Placeholder intro to the talks.
+Talks, product debuts, demos, and community tours I've hosted or spoken at.
