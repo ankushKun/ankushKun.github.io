@@ -1,0 +1,31 @@
+---
+import Page from '../layouts/Page.astro';
+import EntryList from '../components/EntryList.astro';
+import { getEntries } from '../lib/content';
+
+const posts = (await getEntries('blog')).slice(0, 3);
+const projects = (await getEntries('projects')).filter((p) => p.data.featured && p.data.status === 'active').slice(0, 4);
+const events = (await getEntries('timeline')).slice(0, 3);
+const talks = (await getEntries('talks')).slice(0, 2);
+
+const sections = [
+  { title: 'Latest posts', href: '/blogs/', items: posts },
+  { title: 'Selected projects', href: '/projects/', items: projects },
+  { title: 'Recently', href: '/timeline/', items: events },
+  { title: 'Talks', href: '/talks/', items: talks },
+];
+---
+
+<Page id="home" type="profile">
+  {
+    sections.map(
+      (s) =>
+        s.items.length > 0 && (
+          <section class="mb-12">
+            <h2 class="mb-4 text-xl font-semibold"><a href={s.href}>{s.title}</a></h2>
+            <EntryList items={s.items} />
+          </section>
+        ),
+    )
+  }
+</Page>

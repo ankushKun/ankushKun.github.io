@@ -1,0 +1,28 @@
+---
+import Page from '../layouts/Page.astro';
+import { SOCIALS } from '../site';
+import { resume } from '../data/resume';
+import { formatMonth } from '../lib/content';
+---
+
+<Page id="about" pageType="ProfilePage" type="profile">
+  <section class="mb-12">
+    <h2 class="mb-4 text-xl font-semibold"><a href="/resume/">Experience</a></h2>
+    <ul class="space-y-2">
+      {
+        resume.experience.map((e) => (
+          <li>
+            {e.role}, <a href={e.url}>{e.org}</a> ({formatMonth(e.start)} to {formatMonth(e.end)})
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <section>
+    <h2 class="mb-4 text-xl font-semibold">Elsewhere</h2>
+    <ul class="flex flex-wrap gap-4">
+      {SOCIALS.map((s) => <li><a href={s.url} rel="me">{s.platform}</a></li>)}
+    </ul>
+  </section>
+</Page>

@@ -1,0 +1,40 @@
+---
+// A page whose title, description and intro text come from src/content/pages/<id>.md.
+// Section indexes put their lists in the default slot, below the intro.
+import { render } from 'astro:content';
+import Base from './Base.astro';
+import { getPage } from '../lib/content';
+import { PERSON_ID, breadcrumbs, webPage } from '../lib/schema';
+
+interface Props {
+  id: string;
+  /** schema.org type of the page itself, for example AboutPage, ContactPage or CollectionPage. */
+  pageType?: string;
+  schema?: Record<string, unknown>[];
+  type?: 'website' | 'profile';
+}
+
+const { id, pageType = 'WebPage', schema = [], type } = Astro.props;
+const page = await getPage(id);
+const { Content } = await render(page);
+const { title, description, cover, updated } = page.data;
+const path = Astro.url.pathname;
+const aboutYou = ['ProfilePage', 'AboutPage', 'ContactPage'].includes(pageType) ? { mainEntity: { '@id': PERSON_ID } } : {};
+const crumbs = path === '/' ? [] : [breadcrumbs([{ name: title, path }])];
+---
+
+<Base
+  {title}
+  {description}
+  image={cover}
+  {type}
+  modified={updated}
+  schema={[webPage(pageType, path, title, description, aboutYou), ...crumbs, ...schema]}
+>
+  <h1 class="mb-4 text-3xl font-bold">{title}</h1>
+  {updated && <p class="text-sm">Updated <time datetime={updated.toISOString()}>{updated.toLocaleDateString('en-US', { dateStyle: 'long', timeZone: 'UTC' })}</time></p>}
+  <div class="prose dark:prose-invert mb-8">
+    <Content />
+  </div>
+  <slot />
+</Base>

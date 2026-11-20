@@ -1,0 +1,38 @@
+---
+import Page from '../layouts/Page.astro';
+import { resume } from '../data/resume';
+import { formatMonth } from '../lib/content';
+import { inline } from '../lib/inline';
+---
+
+<Page id="resume">
+  <p class="mb-8"><a href={resume.pdf} download>Download PDF</a></p>
+
+  <section class="mb-8">
+    <h2 class="mb-2 text-xl font-semibold">Summary</h2>
+    <p set:html={inline(resume.summary)} />
+  </section>
+
+  <section class="mb-8">
+    <h2 class="mb-2 text-xl font-semibold">Experience</h2>
+    {
+      resume.experience.map((e) => (
+        <article class="mb-6">
+          <h3 class="font-semibold">{e.role}, <a href={e.url}>{e.org}</a></h3>
+          <p class="text-sm">{formatMonth(e.start)} to {formatMonth(e.end)} &middot; {e.location}</p>
+          <ul class="list-disc pl-5">{e.highlights.map((h) => <li set:html={inline(h)} />)}</ul>
+        </article>
+      ))
+    }
+  </section>
+
+  <section class="mb-8">
+    <h2 class="mb-2 text-xl font-semibold">Education</h2>
+    <ul>{resume.education.map((e) => <li>{e.degree} in {e.field}, {e.school} ({formatMonth(e.start)} to {formatMonth(e.end)})</li>)}</ul>
+  </section>
+
+  <section>
+    <h2 class="mb-2 text-xl font-semibold">Skills</h2>
+    <ul>{resume.skills.map((s) => <li><strong>{s.label}:</strong> {s.items.join(', ')}</li>)}</ul>
+  </section>
+</Page>

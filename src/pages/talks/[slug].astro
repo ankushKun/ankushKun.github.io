@@ -1,0 +1,20 @@
+---
+import Entry from '../../layouts/Entry.astro';
+import { getEntries } from '../../lib/content';
+
+export async function getStaticPaths() {
+  return (await getEntries('talks')).map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { data } = entry;
+---
+
+<Entry entry={entry}>
+  <ul slot="meta" class="flex flex-wrap gap-4 text-sm">
+    <li>{data.event}</li>
+    {data.location && <li>{data.location}</li>}
+    {data.video && <li><a href={data.video}>Video</a></li>}
+    {data.slides && <li><a href={data.slides}>Slides</a></li>}
+  </ul>
+</Entry>

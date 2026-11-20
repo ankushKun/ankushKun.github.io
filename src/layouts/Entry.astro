@@ -1,0 +1,58 @@
+---
+// Detail page for any dated entry: blog post, project, timeline event, talk or console.
+// Section specific details go in the "meta" slot, extra content after the body in the default slot.
+import { Image, getImage } from 'astro:assets';
+import { render } from 'astro:content';
+import Base from './Base.astro';
+import { SECTION_PATH, absUrl, formatDate, isoDate, getPage, type Entry } from '../lib/content';
+import { breadcrumbs, entryNode } from '../lib/schema';
+
+interface Props {
+  entry: Entry;
+}
+
+const { entry } = Astro.props;
+const { data } = entry;
+const { Content } = await render(entry);
+const section = await getPage(entry.collection);
+const sectionPath = SECTION_PATH[entry.collection];
+const image = data.cover && absUrl((await getImage({ src: data.cover, width: 1200, height: 630, format: 'jpg' })).src);
+---
+
+<Base
+  title={data.title}
+  description={data.description}
+  image={data.cover}
+  imageAlt={data.coverAlt}
+  type="article"
+  published={data.date}
+  modified={data.updated}
+  schema={[
+    entryNode(entry, image),
+    breadcrumbs([
+      { name: section.data.title, path: sectionPath },
+      { name: data.title, path: Astro.url.pathname },
+    ]),
+  ]}
+>
+  <article>
+    <header class="mb-8">
+      <p class="text-sm"><a href={sectionPath}>{section.data.title}</a></p>
+      <h1 class="text-3xl font-bold">{data.title}</h1>
+      <p>{data.description}</p>
+      <p class="text-sm">
+        <time datetime={isoDate(data.date)}>{formatDate(data.date, 'long')}</time>
+        {data.updated && <> &middot; Updated <time datetime={isoDate(data.updated)}>{formatDate(data.updated, 'long')}</time></>}
+      </p>
+      <slot name="meta" />
+      {data.tags.length > 0 && <ul class="flex flex-wrap gap-2 text-sm">{data.tags.map((t) => <li>#{t}</li>)}</ul>}
+    </header>
+
+    {data.cover && <Image src={data.cover} alt={data.coverAlt} width={1200} class="mb-8" loading="eager" fetchpriority="high" />}
+
+    <div class="prose dark:prose-invert">
+      <Content />
+    </div>
+    <slot />
+  </article>
+</Base>

@@ -1,0 +1,11 @@
+---
+import Page from '../../layouts/Page.astro';
+import EntryList from '../../components/EntryList.astro';
+import { getEntries } from '../../lib/content';
+
+const talks = await getEntries('talks');
+---
+
+<Page id="talks" pageType="CollectionPage">
+  <EntryList items={talks} />
+</Page>

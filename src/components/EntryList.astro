@@ -1,0 +1,29 @@
+---
+// A list of entries with thumbnail, date, title and description. Used by every index page.
+import { Image } from 'astro:assets';
+import { formatDate, isoDate, urlOf, type Entry } from '../lib/content';
+
+interface Props {
+  items: Entry[];
+  thumbs?: boolean;
+}
+
+const { items, thumbs = true } = Astro.props;
+---
+
+<ul class="space-y-6">
+  {
+    items.map((item) => (
+      <li class="flex gap-4">
+        {thumbs && item.data.cover && (
+          <Image src={item.data.cover} alt="" width={320} height={180} class="aspect-video w-32 shrink-0 object-cover" />
+        )}
+        <div>
+          <time datetime={isoDate(item.data.date)} class="text-sm">{formatDate(item.data.date)}</time>
+          <h3 class="font-semibold"><a href={urlOf(item)}>{item.data.title}</a></h3>
+          <p>{item.data.description}</p>
+        </div>
+      </li>
+    ))
+  }
+</ul>

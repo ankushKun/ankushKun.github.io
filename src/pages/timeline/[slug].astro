@@ -1,0 +1,18 @@
+---
+import Entry from '../../layouts/Entry.astro';
+import { getEntries } from '../../lib/content';
+
+export async function getStaticPaths() {
+  return (await getEntries('timeline')).map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { data } = entry;
+---
+
+<Entry entry={entry}>
+  <ul slot="meta" class="flex flex-wrap gap-4 text-sm">
+    <li>{data.kind}</li>
+    {data.links.map((l) => <li><a href={l.url}>{l.label}</a></li>)}
+  </ul>
+</Entry>

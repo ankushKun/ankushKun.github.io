@@ -1,0 +1,21 @@
+---
+import Page from '../layouts/Page.astro';
+import { AUTHOR, BOOKING_URL, SOCIALS } from '../site';
+---
+
+<Page id="contact" pageType="ContactPage">
+  <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2">
+    <dt>Email</dt>
+    <dd><a href={`mailto:${AUTHOR.email}`}>{AUTHOR.email}</a></dd>
+    <dt>Call</dt>
+    <dd><a href={BOOKING_URL}>Book a call</a></dd>
+    {
+      SOCIALS.map((s) => (
+        <>
+          <dt>{s.platform}</dt>
+          <dd><a href={s.url} rel="me">{s.handle}</a></dd>
+        </>
+      ))
+    }
+  </dl>
+</Page>

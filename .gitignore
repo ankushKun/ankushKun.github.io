@@ -1,0 +1,34 @@
+# Build output and generated types
+dist/
+.astro/
+
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS and editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+
+# Local agent settings
+.claude/settings.local.json
+
+# Deploy tooling caches
+.vercel/
+.netlify/
+.wrangler/

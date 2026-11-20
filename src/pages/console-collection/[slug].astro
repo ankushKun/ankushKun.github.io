@@ -1,0 +1,19 @@
+---
+import Entry from '../../layouts/Entry.astro';
+import { getEntries } from '../../lib/content';
+
+export async function getStaticPaths() {
+  return (await getEntries('consoles')).map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { data } = entry;
+---
+
+<Entry entry={entry}>
+  <dl slot="meta" class="grid grid-cols-[auto_1fr] gap-x-6 text-sm">
+    <dt>Maker</dt><dd>{data.maker}</dd>
+    <dt>Released</dt><dd>{data.released}</dd>
+    {data.mods.length > 0 && <><dt>Mods</dt><dd>{data.mods.join(", ")}</dd></>}
+  </dl>
+</Entry>

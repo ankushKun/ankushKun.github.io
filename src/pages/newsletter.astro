@@ -1,0 +1,12 @@
+---
+import Page from '../layouts/Page.astro';
+import { NEWSLETTER } from '../site';
+---
+
+<Page id="newsletter">
+  <form action={NEWSLETTER.action} method="post" class="flex flex-wrap gap-2">
+    <label for="newsletter-email" class="sr-only">Email</label>
+    <input id="newsletter-email" type="email" name={NEWSLETTER.emailField} required autocomplete="email" placeholder="you@example.com" class="border px-2 py-1" />
+    <button type="submit" class="border px-3 py-1">Subscribe</button>
+  </form>
+</Page>
