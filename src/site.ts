@@ -53,6 +53,7 @@ export const NAV = [
   { label: 'Timeline', href: '/timeline/' },
   { label: 'Talks', href: '/talks/' },
   { label: 'About', href: '/about/' },
+  { label: 'Apps', href: '/apps/' },
 ];
 
 export const FOOTER_NAV = [
