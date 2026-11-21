@@ -39,4 +39,5 @@ const crumbs = path === '/' ? [] : [breadcrumbs([{ name: title, path }])];
     <Content />
   </div>
   <slot />
+  <Fragment slot="hero"><slot name="hero" /></Fragment>
 </Base>

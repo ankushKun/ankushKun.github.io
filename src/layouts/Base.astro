@@ -20,6 +20,8 @@ interface Props {
   modified?: Date;
   schema?: Record<string, unknown>[];
   noindex?: boolean;
+  /** Fullscreen stage mode (home page WaraWara Plaza): no header, nav, footer, or scroll sections. */
+  fullscreen?: boolean;
 }
 
 const {
@@ -34,6 +36,7 @@ const {
   modified,
   schema = [],
   noindex = false,
+  fullscreen = false,
 } = Astro.props;
 
 const isHome = Astro.url.pathname === '/';
@@ -56,6 +59,8 @@ if (image) {
 
 const jsonLd = { '@context': 'https://schema.org', '@graph': [website(), person(), ...schema] };
 const current = (href: string) => Astro.url.pathname.startsWith(href);
+const hero = !fullscreen && Astro.slots.has('hero') ? (await Astro.slots.render('hero')).trim() : '';
+const hasHero = hero !== '';
 ---
 
 <!doctype html>
@@ -97,21 +102,42 @@ const current = (href: string) => Astro.url.pathname.startsWith(href);
 
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   </head>
-  <body class="mx-auto max-w-2xl px-4 py-8">
-    <header class="mb-12 flex flex-wrap justify-between gap-4">
-      <a href="/" class="font-semibold">{SITE.title}</a>
-      <nav class="flex flex-wrap gap-4">
-        {NAV.map((l) => <a href={l.href} aria-current={current(l.href) ? 'page' : undefined}>{l.label}</a>)}
-      </nav>
-    </header>
+  <body class:list={[fullscreen && 'm-0 h-svh overflow-hidden']}>
+    {
+      fullscreen ? (
+        <main class="h-svh w-full overflow-hidden">
+          <slot />
+        </main>
+      ) : (
+        <>
+          <div class:list={[hasHero && 'relative']}>
+            <header
+              data-site-header
+              class:list={[
+                'mx-auto flex max-w-2xl flex-wrap justify-between gap-4 px-4 pt-8',
+                hasHero ? 'pointer-events-none absolute inset-x-0 top-0 z-10 [&_a]:pointer-events-auto' : 'mb-12',
+              ]}
+            >
+              <a href="/" class="font-semibold">{SITE.title}</a>
+              <nav class="flex flex-wrap gap-4">
+                {NAV.map((l) => <a href={l.href} aria-current={current(l.href) ? 'page' : undefined}>{l.label}</a>)}
+              </nav>
+            </header>
+            {hasHero && <Fragment set:html={hero} />}
+          </div>
 
-    <main>
-      <slot />
-    </main>
+          <div class:list={['mx-auto max-w-2xl px-4 pb-8', hasHero && 'pt-12']}>
+            <main>
+              <slot />
+            </main>
 
-    <footer class="mt-16 flex flex-wrap gap-4 border-t pt-4 text-sm">
-      <span>&copy; {new Date().getFullYear()} {AUTHOR.name}</span>
-      {FOOTER_NAV.map((l) => <a href={l.href}>{l.label}</a>)}
-    </footer>
+            <footer class="mt-16 flex flex-wrap gap-4 border-t pt-4 text-sm">
+              <span>&copy; {new Date().getFullYear()} {AUTHOR.name}</span>
+              {FOOTER_NAV.map((l) => <a href={l.href}>{l.label}</a>)}
+            </footer>
+          </div>
+        </>
+      )
+    }
   </body>
 </html>
