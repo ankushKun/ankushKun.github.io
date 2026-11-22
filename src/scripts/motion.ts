@@ -70,6 +70,28 @@ function boxMove(from: Rect, to: Rect) {
   return { from: `translate(${from.left}px, ${from.top}px) scale(${sx}, ${sy})`, to: `translate(${to.left}px, ${to.top}px)` };
 }
 
+/** The casing's screen: its box less the border that is the casing (Frame.astro). */
+const screenOf = (glass: Element): Rect => {
+  const r = glass.getBoundingClientRect();
+  const s = getComputedStyle(glass);
+  const t = parseFloat(s.borderTopWidth);
+  const l = parseFloat(s.borderLeftWidth);
+  return { left: r.left + l, top: r.top + t, width: r.width - l - parseFloat(s.borderRightWidth), height: r.height - t - parseFloat(s.borderBottomWidth) };
+};
+
+/**
+ * The casing's move: its box (`box`, where it ends up) placed so the screen it ends with (`to`) sits
+ * where the screen it began with (`from`) was, and then left where it is. The casing round the
+ * screen goes with it, so it slides off past the edges (or back on) as the screen grows or shrinks.
+ */
+function casingMove(from: Rect, to: Rect, box: Rect) {
+  const sx = to.width ? from.width / to.width : 1;
+  const sy = to.height ? from.height / to.height : 1;
+  const left = from.left - (to.left - box.left) * sx;
+  const top = from.top - (to.top - box.top) * sy;
+  return { from: `translate(${left}px, ${top}px) scale(${sx}, ${sy})`, to: `translate(${box.left}px, ${box.top}px)` };
+}
+
 /** Where the casing's screen and the channel were before the page changed, while an app comes or goes. */
 let casing: Rect | null = null;
 let doorFrom: Rect | null = null;
@@ -103,7 +125,7 @@ document.addEventListener('astro:before-preparation', (event) => {
     if (plazaMove || toApp === isApp(document)) return;
     nav = toApp ? 'app-in' : 'app-out';
     const glass = document.querySelector('.tv-glass');
-    if (glass) casing = rectOf(glass);
+    if (glass) casing = screenOf(glass);
     if (!toApp) return;
     const main = document.getElementById('main');
     if (main) name(main, 'col-page');
@@ -158,7 +180,7 @@ document.addEventListener('astro:after-swap', () => {
   // The casing and the channel move between where they were and where they are now (global.css).
   const glass = document.querySelector('.tv-glass');
   if (app && glass && casing) {
-    const m = boxMove(casing, rectOf(glass));
+    const m = casingMove(casing, screenOf(glass), rectOf(glass));
     html.style.setProperty('--glass-from', m.from);
     html.style.setProperty('--glass-to', m.to);
   }

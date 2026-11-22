@@ -128,7 +128,7 @@ export function wirePlay() {
     const to = casing(place());
 
     // The casing becomes a panel with a hole in it, the hole still the TV's screen, then morphs.
-    Object.assign(glass.style, { inset: '0', borderRadius: '0', boxShadow: 'none', background: 'var(--color-casing)', transition: 'none', clipPath: to });
+    Object.assign(glass.style, { inset: '0', border: '0', borderRadius: '0', boxShadow: 'none', background: 'var(--color-casing)', transition: 'none', clipPath: to });
     // The plaza button fades out now (html[data-playing]); power only once the CRT has formed, as on
     // the way out it goes first and the plaza button only comes back once the TV has.
     const morph = calm() ? undefined : glass.animate([{ clipPath: from }, { clipPath: to }], MORPH);
