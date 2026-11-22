@@ -14,24 +14,19 @@ import type { PlazaMii } from './types';
 import { angleDelta, clamp, clamp01, type Rng } from './util';
 
 /**
- * Where friend `i` stands, as [across, toward the camera] from you: a loose grid of three
- * staggered rows with you in the front one, so it reads as a group of friends hanging out, not a
- * ring closing in. Nobody stands straight behind you. Depth is stretched for the long lens.
+ * The floor the middle group stands on, from you: this far across either way, and from `back`
+ * behind you to `front` in front (depth stretched for the long lens). Nobody stands in the lane
+ * straight behind you (`BEHIND`), where you would hide them. Friends keep at least `APART` from
+ * each other and from you, measured as the lens sees it (`apart`), and they are scattered afresh
+ * on every visit, as friends hanging out stand, never in rows.
  */
-const GRID: [number, number][] = [
-  [-1.55, 0.35], [1.45, -0.25],
-  [-0.8, -2.55], [0.95, -2.2], [-2.3, -2.25], [2.35, -2.75],
-  [0.2, -5.0], [-1.45, -4.85], [1.85, -4.65],
-];
-function spot(i: number): [number, number] {
-  // Each friend is nudged by its own fixed amount, so the rows never line up, and stay the same on every visit.
-  const jitter = (s: number) => {
-    const v = Math.sin((i + 1) * 12.9898 + s * 78.233) * 43758.5453;
-    return (v - Math.floor(v)) * 2 - 1;
-  };
-  const [x, z] = GRID[i % GRID.length];
-  return [x + jitter(1) * 0.28, z + jitter(2) * 0.6];
-}
+const GROUP = { x: 2.7, back: -5.6, front: 0.45 };
+const BEHIND = { x: 0.7, z: -3.4 };
+const APART = 1.1;
+/** How often a friend with nothing on wanders to another place in the group instead. */
+const WANDER = 0.14;
+/** How far a wander goes, as the lens sees it: a few steps, never across the whole group. */
+const WANDER_SPAN = { min: 0.6, max: 2.2 };
 const FRIENDS = 7;
 /** Nobody else walks into the oval around the middle group. */
 const KEEP_OUT = { x: -0.15, z: -2.3, r: 4.6 };
@@ -58,6 +53,56 @@ const LAG = 0.09;
 const STAGE_PANTS = 0x2a2c30;
 /** How much deeper than wide everything is spaced, to look even through the lens. */
 const DEEP = 2.6;
+
+/** Whether a place, from you, is on the middle group's floor and out of the lane behind you. */
+function inGroup(x: number, z: number) {
+  const behind = Math.abs(x) < BEHIND.x && z < 0 && z > BEHIND.z;
+  return Math.abs(x) <= GROUP.x && z >= GROUP.back && z <= GROUP.front && !behind;
+}
+
+/** How far apart two places look through the lens: depth squeezed, and closer still when one is in line behind the other, hidden. */
+function apart(ax: number, az: number, bx: number, bz: number) {
+  const dx = Math.abs(ax - bx);
+  const d = Math.hypot(dx, (az - bz) / DEEP);
+  return dx < 0.55 ? d * 0.65 : d;
+}
+
+/** How near the way from a to b passes to p, depth squeezed. */
+function passes(ax: number, az: number, bx: number, bz: number, px: number, pz: number) {
+  const ex = bx - ax;
+  const ez = (bz - az) / DEEP;
+  const qx = px - ax;
+  const qz = (pz - az) / DEEP;
+  const u = clamp01((qx * ex + qz * ez) / (ex * ex + ez * ez || 1));
+  return Math.hypot(qx - ex * u, qz - ez * u);
+}
+
+/**
+ * How good a place in the group is, given how near the nearest other is: enough room counts for
+ * all of it, past that nearer you is better, so the group stays together and never spreads thin.
+ */
+const roomScore = (near: number, x: number, z: number) => Math.min(near, APART * 1.4) - 0.05 * Math.hypot(x, z / DEEP);
+
+/** Places round you for `n` friends, each the best of a handful of random tries, new on every visit. */
+function scatter(n: number) {
+  const placed: [number, number][] = [[0, 0]];
+  for (let i = 0; i < n; i++) {
+    let best: [number, number] = [GROUP.x * (i % 2 ? 1 : -1), GROUP.back];
+    let score = -Infinity;
+    for (let t = 0; t < 40; t++) {
+      const x = (Math.random() * 2 - 1) * GROUP.x;
+      const z = GROUP.back + Math.random() * (GROUP.front - GROUP.back);
+      if (!inGroup(x, z)) continue;
+      const s = roomScore(Math.min(...placed.map(([px, pz]) => apart(x, z, px, pz))), x, z);
+      if (s > score) {
+        score = s;
+        best = [x, z];
+      }
+    }
+    placed.push(best);
+  }
+  return placed.slice(1);
+}
 const PERSONAL = 0.7;
 /** Your own fall: from high in the sky, where the page opens on you floating, under real gravity. */
 export const SKYFALL = { height: 6.5, time: Math.sqrt((2 * 6.5) / motion.GRAVITY) };
@@ -487,6 +532,7 @@ export class Crowd {
     const old: Layout | undefined = this.layout;
     this.layout = layout;
     const moved = old && old.tall === layout.tall && old.anchors.length === layout.anchors.length;
+    const places = moved ? [] : scatter(this.miis.filter((m) => m.friend).length - 1);
     this.miis.forEach((m, i) => {
       if (moved) {
         // A resized window carries everyone along with their cube, mid step or not.
@@ -507,12 +553,11 @@ export class Crowd {
         m.x = layout.hero.x;
         m.z = layout.hero.z;
       } else if (m.friend) {
-        const [dx, dz] = spot(i - 1);
+        // Friends come straight after you in the list.
+        const [dx, dz] = places[i - 1];
         m.x = layout.hero.x + dx;
         m.z = layout.hero.z + dz;
-        // Mostly turned your way and toward the front, each at its own angle.
-        const toYou = Math.atan2(layout.hero.x - m.x, layout.hero.z - m.z);
-        m.yaw = m.face = toYou * 0.55 + (Math.sin(i * 7.31) * 0.5);
+        m.yaw = m.face = this.towardYou(m, Math.random());
       }
       if (m.friend) {
         m.homeX = m.x;
@@ -1391,6 +1436,15 @@ export class Crowd {
     }
 
     if (m.act === 'away') return;
+    // Wandering to another place in the group (`drift`): there, it makes that its place and turns
+    // back toward you. Caught on something, it stays where it got to.
+    if (m.act === 'stroll') {
+      if (!this.step(m, WALK * m.pace, 5.6, dt, false) && time - m.at < STUCK) return;
+      m.homeX = m.x;
+      m.homeZ = m.z;
+      m.face = m.homeFace = this.towardYou(m, this.r());
+      return this.rest(m, time, 0.6 + this.r() * 1.6);
+    }
     // Through the opening you face the camera and friends face you; after that everyone faces
     // whoever they are busy with, and the camera when it comes in close.
     const opening = watching || !this.waved || time < this.applause.to || m.clip === motion.land || m.clip === motion.hello;
@@ -1447,6 +1501,7 @@ export class Crowd {
    * Everything is short, so the group always has something going on.
    */
   private mingle(m: Mii, time: number) {
+    if (!m.lead && this.r() < WANDER && this.drift(m, time)) return;
     const roll = this.r();
     const partner = this.idle(m)[Math.floor(this.r() * 2)];
     const len = (a: number, b: number) => a + this.r() * (b - a);
@@ -1479,6 +1534,55 @@ export class Crowd {
       m.face = (this.r() - 0.5) * Math.PI * 2;
       this.rest(m, time, len(1, 3));
     }
+  }
+
+  /**
+   * A friend wanders a few steps to another place in the group: one with room, not in the lane
+   * behind you, reached without walking through anyone. False if there is nowhere like that.
+   */
+  private drift(m: Mii, time: number) {
+    const { hero } = this.layout;
+    const others = this.miis.filter((o) => o.friend && o !== m && o.act !== 'away');
+    let best: { x: number; z: number } | null = null;
+    let score = -Infinity;
+    for (let t = 0; t < 24; t++) {
+      const x = (this.r() * 2 - 1) * GROUP.x;
+      const z = GROUP.back + this.r() * (GROUP.front - GROUP.back);
+      if (!inGroup(x, z)) continue;
+      const wx = hero.x + x;
+      const wz = hero.z + z;
+      const walk = Math.hypot(wx - m.x, (wz - m.z) / DEEP);
+      if (walk < WANDER_SPAN.min || walk > WANDER_SPAN.max) continue;
+      // Clear of where everyone is and where anyone wandering is headed, and of the way there.
+      let near = Infinity;
+      let blocked = false;
+      for (const o of others) {
+        near = Math.min(near, apart(wx, wz, o.x, o.z), apart(wx, wz, o.homeX, o.homeZ));
+        if (passes(m.x, m.z, wx, wz, o.x, o.z) < 0.6) blocked = true;
+      }
+      if (blocked || near < APART) continue;
+      const s = roomScore(near, x, z);
+      if (s > score) {
+        score = s;
+        best = { x: wx, z: wz };
+      }
+    }
+    if (!best) return false;
+    m.tx = m.homeX = best.x;
+    m.tz = m.homeZ = best.z;
+    m.act = 'stroll';
+    m.at = time;
+    m.until = Infinity;
+    this.play(m, motion.walk, time);
+    return true;
+  }
+
+  /** Mostly turned your way and toward the front, at an angle of its own (`k`, 0 to 1). */
+  private towardYou(m: Mii, k: number) {
+    const you = this.miis[0];
+    const dx = you.x - m.x;
+    const dz = you.z - m.z;
+    return (dx || dz ? Math.atan2(dx, dz) : 0) * 0.55 + (k - 0.5);
   }
 
   /** With the camera in close, each Mii in the middle picks something to do for it. */
