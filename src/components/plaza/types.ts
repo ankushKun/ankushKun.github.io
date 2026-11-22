@@ -1,5 +1,24 @@
 // Shapes shared by the build-time data (src/lib/plaza.ts) and the browser runtime.
-export type IconName = 'pencil' | 'code' | 'flag' | 'mic' | 'smile' | 'clock' | 'doc' | 'gamepad' | 'plane' | 'envelope' | 'apps' | 'chat' | 'music' | 'chip' | 'trophy';
+export type IconName =
+  | 'pencil'
+  | 'code'
+  | 'flag'
+  | 'mic'
+  | 'smile'
+  | 'clock'
+  | 'doc'
+  | 'gamepad'
+  | 'plane'
+  | 'envelope'
+  | 'apps'
+  | 'chat'
+  | 'music'
+  | 'chip'
+  | 'trophy'
+  | 'terminal'
+  | 'globe'
+  | 'camera'
+  | 'blocks';
 
 export interface CubeStyle {
   icon: IconName;
@@ -24,6 +43,10 @@ export interface PlazaPost {
   tag: string;
   text: string;
   href: string;
+  /** The entry's cover, square-cropped and small; without one the bubble shows its block's icon. */
+  thumb?: string;
+  /** A timeline event's day (YYYY-MM-DD) and the color of its kind, shown as a calendar page in place of the icon. */
+  date?: { iso: string; color: string };
   /** Spoken by your own Mii in the middle instead of someone in the crowd (the welcome). */
   me?: boolean;
 }

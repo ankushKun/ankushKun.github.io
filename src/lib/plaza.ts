@@ -4,8 +4,9 @@ import { getImage } from 'astro:assets';
 import { CROWD, CUBES, FEATURED, HERO, ME, WELCOME } from '../data/plaza';
 import { existsSync } from 'node:fs';
 import { AUTHOR, FOOTER_NAV, NAV } from '../site';
-import { SECTION_PATH, getEntries, urlOf, type Section } from './content';
+import { SECTION_PATH, getEntries, isoDate, urlOf, type Section } from './content';
 import { folderMiis, resolveMii } from './miis';
+import { timelineKindMeta } from './timeline';
 
 export async function getPlazaData(): Promise<PlazaData> {
   const links = [...NAV, ...FOOTER_NAV];
@@ -35,10 +36,20 @@ export async function getPlazaData(): Promise<PlazaData> {
   // Bubbles: every entry on the site (posts, projects, the timeline), each said by someone near its
   // section's block, in a new order on every visit (bubbles.ts).
   const entries = (await Promise.all((Object.keys(SECTION_PATH) as Section[]).map((s) => getEntries(s)))).flat();
-  const posts: PlazaPost[] = entries.flatMap((e): PlazaPost[] => {
-    const cube = cubeOf(SECTION_PATH[e.collection]);
-    return cube < 0 ? [] : [{ cube, tag: cubes[cube].label, text: e.data.title, href: urlOf(e) }];
-  });
+  // A bubble's icon is about 45px, so a 144px square of the entry's cover stays sharp at 3x.
+  const posts: PlazaPost[] = (
+    await Promise.all(
+      entries.map(async (e): Promise<PlazaPost[]> => {
+        const cube = cubeOf(SECTION_PATH[e.collection]);
+        if (cube < 0) return [];
+        const { cover } = e.data;
+        const thumb = cover && (await getImage({ src: cover, width: 144, height: 144, fit: 'cover', format: 'webp', quality: 80 })).src;
+        // A timeline event is dated by a little calendar page, as on the timeline board.
+        const date = e.collection === 'timeline' ? { iso: isoDate(e.data.date), color: timelineKindMeta(e.data.kind[0]).color } : undefined;
+        return [{ cube, tag: cubes[cube].label, text: e.data.title, href: urlOf(e), ...(thumb && { thumb }), ...(date && { date }) }];
+      }),
+    )
+  ).flat();
 
   // Your own Mii opens with a welcome, one of WELCOME picked on each visit, from the About block.
   const aboutCube = cubeOf('/about/');

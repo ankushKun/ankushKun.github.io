@@ -92,6 +92,26 @@ export const GLYPHS: Record<IconName, (c: string) => string> = {
   envelope: (c) => `
     <rect x="20" y="19" width="60" height="44" rx="7"/>
     <path d="M24.500 25.500L50 45.500l25.500-20" fill="none" stroke="${c}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/>`,
+  terminal: (c) => `
+    <rect x="19" y="16" width="62" height="48" rx="8"/>
+    <rect x="25" y="23" width="50" height="34" rx="4" fill="${c}" opacity=".75"/>
+    <path d="M33 34l9 6.5-9 6.5M47 47h13" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>`,
+  globe: (c) => `
+    <circle cx="50" cy="40" r="26"/>
+    <g fill="none" stroke="${c}" stroke-width="3.2" opacity=".6">
+      <ellipse cx="50" cy="40" rx="12" ry="25"/>
+      <path d="M25 40h50M29 28h42M29 52h42"/>
+    </g>`,
+  camera: (c) => `
+    <path d="M35 21l4-6h22l4 6h9a6 6 0 0 1 6 6v31a6 6 0 0 1-6 6H26a6 6 0 0 1-6-6V27a6 6 0 0 1 6-6z"/>
+    <circle cx="50" cy="42" r="13" fill="${c}" opacity=".68"/>
+    <circle cx="50" cy="42" r="7" fill="#fff"/>
+    <circle cx="69" cy="30" r="3" fill="${c}" opacity=".6"/>`,
+  blocks: (c) => `
+    <path d="M50 13l24 12v26L50 63 26 51V25z"/>
+    <path d="M50 13l24 12-24 12-24-12z" fill="#fff"/>
+    <path d="M50 37l24-12v26L50 63z" fill="${c}" opacity=".28"/>
+    <path d="M50 37L26 25v26l24 12z" fill="${c}" opacity=".14"/>`,
 };
 
 /** Backdrops, in the manner of Wii U software icons: one per section, picked by its place. */

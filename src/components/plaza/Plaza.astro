@@ -34,6 +34,18 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
     }
   </nav>
   <div class="plaza-bubbles" aria-hidden="true"></div>
+  <!-- Shared outer-only drop shadow for speech bubbles: blurs the unified body+tail silhouette and
+       punches out the interior so the frosted glass above it blurs only the plaza canvas. Kept out
+       of display:none so Safari resolves the filter reference. -->
+  <svg class="plaza-defs" aria-hidden="true">
+    <defs>
+      <filter id="plaza-bubble-shadow" x="-30%" y="-40%" width="160%" height="200%" color-interpolation-filters="sRGB">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="5.5" result="blur"></feGaussianBlur>
+        <feOffset in="blur" dx="0" dy="3" result="offset"></feOffset>
+        <feComposite in="offset" in2="SourceAlpha" operator="out"></feComposite>
+      </filter>
+    </defs>
+  </svg>
   <div class="plaza-who" aria-hidden="true"></div>
   <button type="button" class="plaza-start" aria-label="Start">
     <svg class="plaza-start-hand" viewBox="0 0 64 64" aria-hidden="true">
@@ -271,12 +283,31 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
      its corner and the speaker's name on a dark tag over the top edge. One unit (--b) is about
      0.7% of the screen's height, held smaller on narrow screens so a bubble never covers much. */
 
+  .plaza-defs {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
   .plaza-bubbles {
     z-index: 2;
     --b: clamp(3.8px, min(0.72vh, 0.4vw), 5.4px);
+    --bubble-shadow-a: 0.14;
     position: absolute;
     inset: 0;
     pointer-events: none;
+  }
+
+  :root[data-theme='dark'] .plaza-bubbles {
+    --bubble-shadow-a: 0.4;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) .plaza-bubbles {
+      --bubble-shadow-a: 0.4;
+    }
   }
 
   .plaza-bubble {
@@ -297,8 +328,8 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
     transition: color 0.5s ease;
     text-decoration: none;
     pointer-events: auto;
-    /* Grows out of its tail, which points at whoever is speaking (bubbles.ts sets --tail). */
-    transform-origin: var(--tail, 30%) calc(100% + 20px);
+    /* Grows out of its tail tip, which points at whoever is speaking (bubbles.ts sets --tail). */
+    transform-origin: var(--tail, 30%) calc(100% + var(--tail-h, 16px));
     will-change: transform;
   }
 
@@ -309,40 +340,44 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
     }
   }
 
-  /* The frosted glass, as two siblings: the body (::before) and the tail (::after), a corner of the
-     same glass hanging from the bottom edge and pointing down at whoever is speaking (bubbles.ts sets
-     --tail to their head's place along the bubble). Glass that blurs what is behind it hides that
-     from anything inside it, so neither sits in the other: both blur the plaza itself. The tail is
-     a square turned on its point, cut to the half below the edge, so it never doubles over the body. */
-  .plaza-bubble::before,
-  .plaza-bubble::after {
+  /* The frosted glass as one unified silhouette (body + tail, clipped to --bubble-path from
+     bubbles.ts) so the tail shares the exact same backdrop-filter blur pass as the body with no
+     seam. The drop shadow sits behind it on a sibling SVG whose interior is punched out, so it
+     wraps around the tail too without breaking backdrop-filter or darkening the glass. */
+  .plaza-bubble::before {
     content: '';
     position: absolute;
     z-index: -1;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: calc(100% + var(--tail-h, 0px));
     background: light-dark(rgb(250 252 253 / 0.8), rgb(36 42 46 / 0.78));
     backdrop-filter: blur(calc(var(--b) * 1.2)) saturate(1.15);
     -webkit-backdrop-filter: blur(calc(var(--b) * 1.2)) saturate(1.15);
+    clip-path: var(--bubble-path);
     transition: background-color 0.5s ease;
     pointer-events: none;
   }
 
-  .plaza-bubble::before {
-    inset: 0;
-    border-radius: inherit;
-    corner-shape: squircle;
-    box-shadow: 0 calc(var(--b) * 0.6) calc(var(--b) * 2.4) light-dark(rgb(60 85 95 / 0.12), rgb(0 0 0 / 0.4));
+  .plaza-bubble-shadow {
+    position: absolute;
+    z-index: -2;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: calc(100% + var(--tail-h, 0px));
+    overflow: visible;
+    pointer-events: none;
   }
 
-  .plaza-bubble::after {
-    --t: calc(var(--b) * 4.2);
-    top: calc(100% - 0.5px);
-    left: var(--tail, 30%);
-    width: var(--t);
-    height: var(--t);
-    border-bottom-right-radius: calc(var(--b) * 0.8);
-    translate: -50% -50%;
-    rotate: 45deg;
-    clip-path: polygon(100% 0, 100% 100%, 0 100%);
+  .plaza-bubble-shadow path {
+    fill: light-dark(#3c555f, #000);
+    opacity: var(--bubble-shadow-a, 0.14);
+    filter: url(#plaza-bubble-shadow);
+    transition:
+      fill 0.5s ease,
+      opacity 0.5s ease;
   }
 
   /* A bubble pops in and out: the whole grows or shrinks, and each part fades on its own, since
@@ -356,14 +391,12 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
   }
 
   .plaza-bubble.is-in > *,
-  .plaza-bubble.is-in::before,
-  .plaza-bubble.is-in::after {
+  .plaza-bubble.is-in::before {
     animation: plaza-fade 0.2s ease both;
   }
 
   .plaza-bubble.is-out > *,
-  .plaza-bubble.is-out::before,
-  .plaza-bubble.is-out::after {
+  .plaza-bubble.is-out::before {
     animation: plaza-fade 0.26s ease-in reverse both;
   }
 
@@ -402,7 +435,47 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
     width: calc(var(--b) * 8.4);
     height: calc(var(--b) * 8.4);
     border-radius: calc(var(--b) * 1.1);
+    object-fit: cover;
     box-shadow: 0 0 0 1px rgb(0 0 0 / 0.06);
+  }
+
+  /* A timeline event's date, as the calendar pages on the timeline board. */
+  .plaza-bubble-cal {
+    flex: none;
+    display: grid;
+    grid-template-rows: calc(var(--b) * 2.4) 1fr calc(var(--b) * 2.2);
+    width: calc(var(--b) * 8.4);
+    height: calc(var(--b) * 8.4);
+    overflow: hidden;
+    border-radius: calc(var(--b) * 1.1);
+    background: light-dark(#fff, #2f363a);
+    box-shadow: 0 0 0 1px rgb(0 0 0 / 0.06);
+    color: light-dark(#2a2f31, #f0f4f6);
+    text-align: center;
+  }
+
+  .plaza-bubble-cal span {
+    background: var(--k);
+    color: #fff;
+    font-size: calc(var(--b) * 1.7);
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    line-height: calc(var(--b) * 2.4);
+    text-transform: uppercase;
+  }
+
+  .plaza-bubble-cal b {
+    align-self: center;
+    font-size: calc(var(--b) * 3.4);
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .plaza-bubble-cal small {
+    font-size: calc(var(--b) * 1.6);
+    font-weight: 700;
+    line-height: calc(var(--b) * 1.6);
+    opacity: 0.6;
   }
 
   .plaza-bubble-text {

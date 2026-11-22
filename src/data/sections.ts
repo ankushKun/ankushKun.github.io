@@ -8,9 +8,9 @@ export const TILES: Record<string, CubeStyle> = {
   '/privacy/': { icon: 'doc', colors: ['#9fb0c8', '#526984'] },
   '/credits/': { icon: 'smile', colors: ['#5fd16f', '#1f9457'] },
   '/mii/': { icon: 'smile', colors: ['#ffd23f', '#f29a12'] },
-  '/apps/#paint': { icon: 'pencil', colors: ['#ffb35c', '#ea6a2a'] },
-  '/apps/#guestbook': { icon: 'envelope', colors: ['#5fd16f', '#1f9457'] },
-  '/apps/#terminal': { icon: 'code', colors: ['#9fb0c8', '#526984'] },
+  '/apps/paint/': { icon: 'pencil', colors: ['#ffb35c', '#ea6a2a'] },
+  '/apps/guestbook/': { icon: 'envelope', colors: ['#5fd16f', '#1f9457'] },
+  '/apps/terminal/': { icon: 'code', colors: ['#9fb0c8', '#526984'] },
 };
 
 /** Colors for art made for entries without a cover, picked per entry so a grid of them varies. */

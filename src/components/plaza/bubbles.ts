@@ -8,6 +8,9 @@ import { clamp } from './util';
 const LIFE = 8.5;
 const EVERY = 3.4;
 const MARGIN = 12;
+const SVG_NS = 'http://www.w3.org/2000/svg';
+// Cubic Bezier control-point ratio for a superellipse (n = 4, matching CSS corner-shape: squircle).
+const SQUIRCLE_K = 0.091;
 
 export interface Box {
   x: number;
@@ -18,9 +21,11 @@ export interface Box {
 
 interface Active {
   el: HTMLAnchorElement;
+  shadow: SVGPathElement;
   speaker: number;
   until: number;
   box: Box;
+  shapeKey: string;
 }
 
 const _v = new THREE.Vector3();
@@ -29,6 +34,9 @@ export class Bubbles {
   private active: Active[] = [];
   private queue: PlazaPost[];
   private last = -Infinity;
+  private unit = 0;
+  private viewW = 0;
+  private viewH = 0;
   /** Said before anything else, once: the greeting, or something asked for with `sayNext`. */
   private first: PlazaPost | null;
   /** While it is up, nobody else speaks. */
@@ -37,7 +45,7 @@ export class Bubbles {
   constructor(
     private layer: HTMLElement,
     posts: PlazaPost[],
-    /** Icon image URL for each cube. */
+    /** Icon image URL for each cube, for posts without a thumbnail of their own. */
     private thumbs: string[],
     greeting: PlazaPost | null = null,
   ) {
@@ -80,6 +88,15 @@ export class Bubbles {
 
   /** `avoid` lists screen boxes a new bubble must not cover: the section blocks. */
   update(time: number, crowd: Crowd, camera: THREE.Camera, w: number, h: number, open: boolean, avoid: Box[] = []) {
+    if (w !== this.viewW || h !== this.viewH) {
+      this.viewW = w;
+      this.viewH = h;
+      this.unit = parseFloat(getComputedStyle(this.layer).getPropertyValue('--b')) || clamp(Math.min(h * 0.0072, w * 0.004), 3.8, 5.4);
+      for (const a of this.active) {
+        a.box.w = a.el.offsetWidth;
+        a.box.h = a.el.offsetHeight;
+      }
+    }
     this.active = this.active.filter((a) => {
       if (time < a.until) return true;
       this.close(a);
@@ -100,7 +117,7 @@ export class Bubbles {
     if (!open || !post || this.active.length >= (w < 720 ? 1 : 2) || time - this.last < EVERY) return;
     this.last = time;
 
-    const el = this.build(post);
+    const { el, shadow } = this.build(post);
     this.layer.append(el);
     const bw = el.offsetWidth;
     const bh = el.offsetHeight;
@@ -117,7 +134,7 @@ export class Bubbles {
     }
     if (best) {
       const { speaker, at } = best;
-      const a: Active = { el, speaker, until: time + LIFE, box: at.box };
+      const a: Active = { el, shadow, speaker, until: time + LIFE, box: at.box, shapeKey: '' };
       this.move(a, at);
       el.classList.add('is-in');
       crowd.say(speaker, time, LIFE);
@@ -143,8 +160,17 @@ export class Bubbles {
 
   private move(a: Active, at: { box: Box; tail: number }) {
     a.box = at.box;
+    const tx = Math.round(at.tail);
     a.el.style.transform = `translate3d(${Math.round(at.box.x)}px, ${Math.round(at.box.y)}px, 0)`;
-    a.el.style.setProperty('--tail', `${Math.round(at.tail)}px`);
+    const key = `${at.box.w}|${at.box.h}|${tx}|${this.unit.toFixed(2)}`;
+    if (key !== a.shapeKey) {
+      a.shapeKey = key;
+      const { d, tailH } = bubbleShape(at.box.w, at.box.h, tx, this.unit);
+      a.el.style.setProperty('--tail', `${tx}px`);
+      a.el.style.setProperty('--tail-h', `${tailH.toFixed(2)}px`);
+      a.el.style.setProperty('--bubble-path', `path("${d}")`);
+      a.shadow.setAttribute('d', d);
+    }
   }
 
   /** Where a bubble of this size sits for this speaker: above the head, tail pointing down at it. */
@@ -155,9 +181,10 @@ export class Bubbles {
     const x = clamp(sx - bw * 0.42, MARGIN, Math.max(MARGIN, w - bw - MARGIN));
     // Room under the bubble for its tail, which ends just over the head.
     const y = sy - bh - 20;
+    const pad = Math.min(tailInset(bw, bh, this.unit), bw / 2);
     return {
       box: { x, y, w: bw, h: bh },
-      tail: clamp(sx - x, 30, bw - 30),
+      tail: clamp(sx - x, pad, bw - pad),
       fits: _v.z < 1 && sx > 40 && sx < w - 40 && y > MARGIN + 14 && sy < h - 24,
     };
   }
@@ -167,18 +194,89 @@ export class Bubbles {
     el.className = 'plaza-bubble';
     el.href = post.href;
     el.tabIndex = -1;
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('class', 'plaza-bubble-shadow');
+    svg.setAttribute('aria-hidden', 'true');
+    const shadow = document.createElementNS(SVG_NS, 'path');
+    svg.append(shadow);
     const tag = document.createElement('span');
     tag.className = 'plaza-bubble-tag';
     tag.textContent = post.tag;
-    const img = document.createElement('img');
-    img.src = this.thumbs[post.cube] ?? '';
-    img.alt = '';
+    const icon = post.date ? calendar(post.date) : document.createElement('img');
+    if (icon instanceof HTMLImageElement) {
+      icon.src = post.thumb ?? this.thumbs[post.cube] ?? '';
+      icon.alt = '';
+      icon.decoding = 'async';
+    }
     const text = document.createElement('span');
     text.className = 'plaza-bubble-text';
     text.textContent = post.text;
-    el.append(tag, img, text);
-    return el;
+    el.append(svg, tag, icon, text);
+    return { el, shadow };
   }
+}
+
+/** A calendar page for a timeline event: its month on a strip in the color of its kind, the day, the year. */
+function calendar({ iso, color }: { iso: string; color: string }) {
+  const d = new Date(`${iso}T00:00:00Z`);
+  const el = document.createElement('time');
+  el.className = 'plaza-bubble-cal';
+  el.dateTime = iso;
+  el.style.setProperty('--k', color);
+  const month = document.createElement('span');
+  month.textContent = d.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
+  const day = document.createElement('b');
+  day.textContent = String(d.getUTCDate());
+  const year = document.createElement('small');
+  year.textContent = String(d.getUTCFullYear());
+  el.append(month, day, year);
+  return el;
+}
+
+/** Minimum horizontal inset for the tail center so its base stays clear of the squircle corners. */
+function tailInset(w: number, h: number, b: number) {
+  const r = Math.min(b * 5.2, w / 2, h / 2);
+  return r + b * 2.7 + b * 0.75;
+}
+
+/**
+ * One continuous SVG path for the whole bubble (squircle body + smoothly joined rounded-tip tail),
+ * so the frosted glass blurs the plaza in a single pass and the outer shadow wraps the tip too.
+ */
+function bubbleShape(w: number, h: number, tail: number, b: number) {
+  const r = Math.min(b * 5.2, w / 2, h / 2);
+  const c = r * SQUIRCLE_K;
+  const tw = b * 2.7;
+  const th = b * 2.8;
+  const join = b * 0.75;
+  const tip = b * 0.9;
+  const pad = Math.min(r + tw + join, w / 2);
+  const tx = clamp(tail, pad, w - pad);
+
+  const len = Math.hypot(tw, th);
+  const ux = tw / len;
+  const uy = th / len;
+  const f = (n: number) => n.toFixed(2);
+
+  const d = [
+    `M 0 ${f(r)}`,
+    `C 0 ${f(c)} ${f(c)} 0 ${f(r)} 0`,
+    `L ${f(w - r)} 0`,
+    `C ${f(w - c)} 0 ${f(w)} ${f(c)} ${f(w)} ${f(r)}`,
+    `L ${f(w)} ${f(h - r)}`,
+    `C ${f(w)} ${f(h - c)} ${f(w - c)} ${f(h)} ${f(w - r)} ${f(h)}`,
+    `L ${f(tx + tw + join)} ${f(h)}`,
+    `Q ${f(tx + tw)} ${f(h)} ${f(tx + tw - join * ux)} ${f(h + join * uy)}`,
+    `L ${f(tx + tip * ux)} ${f(h + th - tip * uy)}`,
+    `Q ${f(tx)} ${f(h + th)} ${f(tx - tip * ux)} ${f(h + th - tip * uy)}`,
+    `L ${f(tx - tw + join * ux)} ${f(h + join * uy)}`,
+    `Q ${f(tx - tw)} ${f(h)} ${f(tx - tw - join)} ${f(h)}`,
+    `L ${f(r)} ${f(h)}`,
+    `C ${f(c)} ${f(h)} 0 ${f(h - c)} 0 ${f(h - r)}`,
+    'Z',
+  ].join(' ');
+
+  return { d, tailH: th };
 }
 
 /** Posts in a random order, taking turns between blocks so the same block never speaks twice running. */

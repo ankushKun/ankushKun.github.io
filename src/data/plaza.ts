@@ -6,18 +6,19 @@ import type { CubeStyle } from '../components/plaza/types';
  * two are the most prominent). The first FEATURED slots show random blog posts and projects, a new
  * pick on each visit; the rest are one block per link here, keyed by href. Labels come from NAV
  * and FOOTER_NAV in src/site.ts, or `label` for links that are not in either. Art for each lives
- * in public/plaza/icons/, named after the href (e.g. `/apps/#irc-chat` is `apps-irc-chat.webp`).
+ * in public/plaza/icons/, named after the href (e.g. `/apps/chat/` is `apps-chat.webp`). An app's block
+ * links to the app itself, or to its placeholder until it is built.
  */
 export const FEATURED = 1;
 
 export const CUBES: Record<string, CubeStyle> = {
-  '/apps/#games': { label: 'Games', icon: 'gamepad', colors: ['#ff6464', '#cf2238'] },
-  '/apps/#irc-chat': { label: 'IRC Chat', icon: 'chat', colors: ['#62c4ff', '#2380dc'] },
-  '/apps/#music': { label: 'Music', icon: 'music', colors: ['#ff8fc4', '#dd3f85'] },
+  '/games/': { label: 'Games', icon: 'gamepad', colors: ['#ff6464', '#cf2238'] },
+  '/apps/chat/': { label: 'IRC Chat', icon: 'chat', colors: ['#62c4ff', '#2380dc'] },
+  '/apps/music/': { label: 'Music', icon: 'music', colors: ['#ff8fc4', '#dd3f85'] },
   '/timeline/': { icon: 'flag', colors: ['#5fd16f', '#1f9457'] },
-  '/resume/': { label: 'Resume', icon: 'doc', colors: ['#9fb0c8', '#526984'] },
-  '/about/': { icon: 'smile', colors: ['#ffd23f', '#f29a12'] },
   '/blogs/': { icon: 'pencil', colors: ['#ff9d52', '#ee4a4f'] },
+  '/about/': { icon: 'smile', colors: ['#ffd23f', '#f29a12'] },
+  '/resume/': { label: 'Resume', icon: 'doc', colors: ['#9fb0c8', '#526984'] },
   '/projects/': { icon: 'code', colors: ['#45d3c6', '#1c6fd0'] },
   '/apps/': { icon: 'apps', colors: ['#b184ff', '#6a3fd6'] },
 };
