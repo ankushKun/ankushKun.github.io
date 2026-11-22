@@ -1,23 +1,12 @@
 // The /mii/ page: load a Mii from a QR code image or a code, see it in 3D, copy its code.
 import * as THREE from 'three';
-import { decodeMii, encodeMii, miiFromQr, miiInfo } from './data';
+import { decodeMii, encodeMii, miiInfo } from './data';
 import { loadMiiKit } from './kit';
+import { miiFromQrImage } from './qr';
 import { MiiSet, restPose } from './rig';
 
-async function qrBytes(image: Blob): Promise<Uint8Array> {
-  const { default: jsQR } = await import('jsqr');
-  const bitmap = await createImageBitmap(image);
-  const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
-  if (!ctx) throw new Error('Could not read the image');
-  ctx.drawImage(bitmap, 0, 0);
-  const { data, width, height } = ctx.getImageData(0, 0, bitmap.width, bitmap.height);
-  const qr = jsQR(data, width, height, { inversionAttempts: 'attemptBoth' });
-  if (!qr) throw new Error('No QR code found in that image');
-  return Uint8Array.from(qr.binaryData);
-}
-
-export async function mount(root: HTMLElement) {
+/** Starts the viewer. Resolves to a function that stops it and frees its GPU memory. */
+export async function mount(root: HTMLElement): Promise<() => void> {
   const need = <E extends Element>(el: E | null): E => {
     if (!el) throw new Error('Mii page markup is incomplete');
     return el;
@@ -65,7 +54,7 @@ export async function mount(root: HTMLElement) {
 
   async function fromImage(image: Blob) {
     try {
-      show(await miiFromQr(await qrBytes(image)));
+      show(await miiFromQrImage(image));
     } catch (err) {
       say(err instanceof Error ? err.message : String(err), true);
     }
@@ -88,13 +77,14 @@ export async function mount(root: HTMLElement) {
     await navigator.clipboard.writeText(code.value);
     say('Copied');
   });
-  addEventListener('paste', (e) => {
+  const onPaste = (e: ClipboardEvent) => {
     const item = [...(e.clipboardData?.items ?? [])].find((i) => i.type.startsWith('image/'));
     const blob = item?.getAsFile();
     if (!blob) return;
     e.preventDefault();
     fromImage(blob);
-  });
+  };
+  addEventListener('paste', onPaste);
   stage.addEventListener('dragover', (e) => {
     e.preventDefault();
     stage.dataset.drop = '';
@@ -158,7 +148,15 @@ export async function mount(root: HTMLElement) {
       set.commit();
     }
     renderer.render(scene, camera);
-    requestAnimationFrame(frame);
+    raf = requestAnimationFrame(frame);
   }
-  requestAnimationFrame(frame);
+  let raf = requestAnimationFrame(frame);
+
+  return () => {
+    cancelAnimationFrame(raf);
+    removeEventListener('paste', onPaste);
+    set?.dispose();
+    renderer.dispose();
+    renderer.forceContextLoss();
+  };
 }

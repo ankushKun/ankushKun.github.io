@@ -1,5 +1,5 @@
 // Shapes shared by the build-time data (src/lib/plaza.ts) and the browser runtime.
-export type IconName = 'pencil' | 'code' | 'flag' | 'mic' | 'smile' | 'clock' | 'doc' | 'gamepad' | 'plane' | 'envelope' | 'apps' | 'chat' | 'music';
+export type IconName = 'pencil' | 'code' | 'flag' | 'mic' | 'smile' | 'clock' | 'doc' | 'gamepad' | 'plane' | 'envelope' | 'apps' | 'chat' | 'music' | 'chip' | 'trophy';
 
 export interface CubeStyle {
   icon: IconName;

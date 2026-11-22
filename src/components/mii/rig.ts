@@ -176,6 +176,67 @@ export function randomMii(kit: MiiKit, random: () => number = Math.random) {
   return FFLiCharInfo.pack(info);
 }
 
+/** Whether FFL takes a CharInfo as a valid Mii. */
+function isValid(kit: MiiKit, info: Uint8Array) {
+  const m = kit.ffl;
+  const ptr = m._malloc(info.length);
+  try {
+    m.HEAPU8.set(info, ptr);
+    return m._FFLiVerifyCharInfoWithReason(ptr, 0) === 0;
+  } finally {
+    m._free(ptr);
+  }
+}
+
+/** A small seeded random number generator (mulberry32 over a string hash). */
+export function seeded(seed: string) {
+  let h = 1779033703 ^ seed.length;
+  for (let i = 0; i < seed.length; i++) {
+    h = Math.imul(h ^ seed.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+  return () => {
+    h = (h + 0x6d2b79f5) | 0;
+    let t = Math.imul(h ^ (h >>> 15), 1 | h);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * The same Mii for the same seed on every screen, as a CharInfo: every part picked by a seeded
+ * random from the Mii Maker's ranges and set where the Mii Maker sets it. FFL's own generator
+ * can't be seeded, so it only supplies a valid starting point whose looks are all overwritten.
+ */
+export function seededMii(kit: MiiKit, seed: string) {
+  const random = seeded(seed);
+  const pick = (n: number) => Math.floor(random() * n);
+  const base = FFLiCharInfo.unpack(getRandomCharInfo(kit.ffl, FFLGender.ALL, FFLAge.ADULT, FFLRace.ALL));
+  for (let tries = 0; tries < 8; tries++) {
+    const info = structuredClone(base) as Record<string, Record<string, number>> & typeof base;
+    const male = random() < 0.5;
+    const hairColor = pick(8);
+    const set = (part: string, values: Record<string, number>) => Object.assign(info[part], values);
+    set('faceline', { type: pick(12), color: pick(6), texture: 0, make: 0 });
+    set('hair', { type: pick(132), color: hairColor, flip: pick(2) });
+    set('eye', { type: pick(60), color: pick(6), scale: 4, aspect: 3, rotate: 4, x: 2, y: 12 });
+    set('eyebrow', { type: pick(24), color: hairColor, scale: 4, aspect: 3, rotate: 6, x: 2, y: 10 });
+    set('nose', { type: pick(18), scale: 4, y: 9 });
+    set('mouth', { type: pick(36), color: pick(5), scale: 4, aspect: 3, y: 13 });
+    const beard = male && random() < 0.18;
+    set('beard', { mustache: beard ? 1 + pick(5) : 0, type: beard ? pick(6) : 0, color: hairColor, scale: 4, y: 10 });
+    const glasses = random() < 0.16;
+    set('glass', { type: glasses ? 1 + pick(8) : 0, color: pick(6), scale: 4, y: 10 });
+    set('mole', { type: 0, scale: 4, x: 2, y: 20 });
+    set('body', { height: Math.round(40 + random() * 60), build: Math.round(30 + random() * 60) });
+    info.personal.gender = male ? 0 : 1;
+    info.personal.favoriteColor = pick(12);
+    const data = FFLiCharInfo.pack(info);
+    if (isValid(kit, data)) return data;
+  }
+  return randomMii(kit, random);
+}
+
 const _m = new THREE.Matrix4();
 const _q = new THREE.Quaternion();
 const _q2 = new THREE.Quaternion();

@@ -5,6 +5,8 @@ export interface FFLModule {
   _malloc(size: number): number;
   _free(ptr: number): void;
   HEAPU8: Uint8Array;
+  /** 0 when the CharInfo is valid, else why not. */
+  _FFLiVerifyCharInfoWithReason(info: number, allowInvalidName: number): number;
 }
 
 export interface CharModelDesc {

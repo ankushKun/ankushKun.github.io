@@ -13,8 +13,8 @@ export const SCORE = {
 } as const;
 
 export interface Soundtrack {
-  /** Settles once the recording can play, or has failed to load. */
-  ready: Promise<void>;
+  /** Starts loading the recording, if it hasn't yet; settles once it can play, or has failed to load. */
+  ready(): Promise<void>;
   /** Whether the browser is letting sound out. Most hold it until the visitor first touches the page. */
   readonly live: boolean;
   /**
@@ -28,17 +28,25 @@ export interface Soundtrack {
   settle(): void;
   /** Fades out, for leaving the page. `false` brings the sound back. */
   duck(on: boolean, seconds?: number): void;
+  /** Muffled and quiet, as if heard from another room: while the plaza is behind another page. */
+  muffle(on: boolean): void;
   toggle(): void;
 }
 
-const silent: Soundtrack = { ready: Promise.resolve(), live: true, begin() {}, position: () => null, settle() {}, duck() {}, toggle() {} };
+const silent: Soundtrack = { ready: () => Promise.resolve(), live: true, begin() {}, position: () => null, settle() {}, duck() {}, muffle() {}, toggle() {} };
 
 export function soundtrack(): Soundtrack {
   if (typeof AudioContext === 'undefined') return silent;
   const ctx = new AudioContext();
   const out = ctx.createGain();
   out.gain.value = 0;
-  out.connect(ctx.destination);
+  // Everything passes a low-pass filter, wide open on the plaza and closed down behind other pages.
+  const tone = ctx.createBiquadFilter();
+  tone.type = 'lowpass';
+  tone.frequency.value = 20000;
+  tone.Q.value = 0.7;
+  out.connect(tone);
+  tone.connect(ctx.destination);
 
   let buffer: AudioBuffer | null = null;
   let source: AudioBufferSourceNode | null = null;
@@ -48,8 +56,9 @@ export function soundtrack(): Soundtrack {
   let opening = false;
   let muted = false;
   let ducked = false;
+  let muffled = false;
 
-  const level = () => (muted || ducked ? 0 : VOLUME);
+  const level = () => (muted || ducked ? 0 : muffled ? VOLUME * 0.32 : VOLUME);
   const fade = (to: number, seconds: number) => {
     const now = ctx.currentTime;
     out.gain.cancelScheduledValues(now);
@@ -78,14 +87,16 @@ export function soundtrack(): Soundtrack {
     if (buffer && where && !source && ctx.state === 'running') play(where());
   };
 
-  const ready = fetch(SRC)
-    .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`Plaza sound failed to load (${r.status})`))))
-    .then((data) => ctx.decodeAudioData(data))
-    .then((decoded) => {
-      buffer = decoded;
-      start();
-    })
-    .catch((err: unknown) => console.warn(err));
+  let loading: Promise<void> | null = null;
+  const ready = () =>
+    (loading ??= fetch(SRC)
+      .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`Plaza sound failed to load (${r.status})`))))
+      .then((data) => ctx.decodeAudioData(data))
+      .then((decoded) => {
+        buffer = decoded;
+        start();
+      })
+      .catch((err: unknown) => console.warn(err)));
 
   ctx.addEventListener('statechange', start);
   const unlock = () => {
@@ -101,6 +112,7 @@ export function soundtrack(): Soundtrack {
     },
     begin(at) {
       where = at;
+      void ready();
       start();
     },
     position() {
@@ -118,6 +130,15 @@ export function soundtrack(): Soundtrack {
     duck(on, seconds = 0.4) {
       ducked = on;
       fade(level(), seconds);
+    },
+    muffle(on) {
+      if (on === muffled) return;
+      muffled = on;
+      const now = ctx.currentTime;
+      tone.frequency.cancelScheduledValues(now);
+      tone.frequency.setValueAtTime(tone.frequency.value, now);
+      tone.frequency.exponentialRampToValueAtTime(on ? 650 : 20000, now + (on ? 0.5 : 0.9));
+      fade(level(), on ? 0.5 : 0.9);
     },
     toggle() {
       muted = !muted;

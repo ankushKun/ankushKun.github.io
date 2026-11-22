@@ -1,6 +1,7 @@
 // Runs the plaza: builds the scene, plays the opening, then keeps the place alive and answers
 // zoom, the mouse and the cube links, in time with the sound.
 import * as THREE from 'three';
+import { depthOf, dockIndex } from '../../lib/nav';
 import { loadMiiKit } from '../mii/kit';
 import { SCORE, soundtrack } from './audio';
 import { Bubbles } from './bubbles';
@@ -12,7 +13,7 @@ import { HeadCards } from './heads';
 import { drawIcons, thumb } from './icons';
 import { applyView, blankView, copyView, makeLayout, mixViews, type Layout } from './layout';
 import type { PlazaData } from './types';
-import { clamp, damp, easeIn, easeInOut, rng, smoothstep } from './util';
+import { clamp, damp, easeInOut, rng, smoothstep } from './util';
 
 /**
  * The opening, in seconds from the visitor's click. The page opens on your Mii floating high in the
@@ -33,24 +34,41 @@ const INTRO = {
   crowd: SCORE.crowd - 2.5,
   talk: SCORE.crowd + 2.5,
 };
-/** Seconds the camera takes to dive at a cube before the page changes. */
-const LEAVE = 0.5;
+/** Frames a second while the plaza is only a backdrop: it is hazed over and half hidden. */
+const BACKDROP_FPS = 30;
 /** Zoom runs from 0 (farthest, where it starts) through 1 (the whole plaza) to 3 (the middle group up close). */
 const ZOOM = { min: 0, rest: 0, max: 3, close: 2.5 };
 
-export async function start(root: HTMLElement, data: PlazaData) {
+/**
+ * Starts the plaza. `backdrop` starts it behind another page (that page's path): settled, silent
+ * and with no opening, the camera on that page's spot.
+ */
+export async function start(root: HTMLElement, data: PlazaData, options: { backdrop?: string } = {}) {
   const need = <E extends Element>(el: E | null): E => {
     if (!el) throw new Error('Plaza markup is incomplete');
     return el;
   };
   const canvas = need(root.querySelector('canvas'));
   const bubbleLayer = need(root.querySelector<HTMLElement>('.plaza-bubbles'));
-  const veil = need(root.querySelector<HTMLElement>('.plaza-veil'));
   const begin = need(root.querySelector<HTMLButtonElement>('.plaza-start'));
   const card = need(root.querySelector<HTMLElement>('.plaza-who'));
+  const ghost = need(root.querySelector<HTMLElement>('.plaza-ghost'));
+  const ghostImg = need(ghost.querySelector('img'));
   const cardImg = need(card.querySelector('img'));
   const cardName = need(card.querySelector('span'));
   const links = [...root.querySelectorAll<HTMLAnchorElement>('a[data-cube]')];
+
+  // Pages change in place (see src/scripts/motion.ts) and the plaza never goes away: behind every
+  // other page it is the backdrop, the camera gliding to a spot of its own for each section, the
+  // blocks gone and the music muffled. `backdrop` is the path of the page it is behind.
+  let backdrop: string | null = options.backdrop ?? null;
+  /** Set once everything is built. Until then a page change only notes where the plaza now is. */
+  let onView: ((path: string) => void) | null = null;
+  root.addEventListener('plaza:view', (e) => {
+    const { path } = (e as CustomEvent<{ path: string }>).detail;
+    if (onView) onView(path);
+    else backdrop = path === '/' ? null : path;
+  });
 
   const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let w = root.clientWidth;
@@ -68,6 +86,7 @@ export async function start(root: HTMLElement, data: PlazaData) {
     const link = links[i];
     if (link) {
       link.href = pick.href;
+      link.setAttribute('aria-label', pick.label);
       const tag = link.querySelector('span');
       if (tag) tag.textContent = pick.label;
     }
@@ -78,7 +97,8 @@ export async function start(root: HTMLElement, data: PlazaData) {
   const [kit, icons] = await Promise.all([
     loadMiiKit(),
     drawIcons(data.cubes, 512),
-    Promise.race([music.ready, new Promise((done) => setTimeout(done, 3000))]),
+    // Behind a page there is no sound to wait for: it only loads once you are on the plaza.
+    backdrop ? null : Promise.race([music.ready(), new Promise((done) => setTimeout(done, 3000))]),
   ]);
 
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
@@ -107,6 +127,18 @@ export async function start(root: HTMLElement, data: PlazaData) {
   const camera = new THREE.PerspectiveCamera(5.2, w / h, 1, 2500);
   const floor = new Floor(scene, weak ? 0.35 : 0.5);
   floor.resize(renderer);
+
+  // Day or night, after the site's light or dark (src/scripts/theme.ts). A change dims or raises
+  // the lights over about half a second rather than cutting.
+  const isNight = () => document.documentElement.dataset.theme === 'dark';
+  let night = isNight() ? 1 : 0;
+  let nightTo = night;
+  floor.setNight(night);
+  renderer.setClearColor(HAZE, 1);
+  new MutationObserver(() => {
+    nightTo = isNight() ? 1 : 0;
+    resume();
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
   const cubes = new Cubes(
     scene,
@@ -142,10 +174,11 @@ export async function start(root: HTMLElement, data: PlazaData) {
 
   let layout: Layout = makeLayout(w / h, data.cubes.length);
   const now = blankView();
-  const eye = blankView();
   const landing = blankView();
   const zoomed = blankView();
   const shown = blankView();
+  /** Where the camera stands behind a page (see `backdropView`). */
+  const backdropAt = blankView();
   /** Where zoom is headed, and where it is now; it eases between the two. */
   let zoomTo: number = ZOOM.rest;
   let zoom: number = ZOOM.rest;
@@ -154,7 +187,16 @@ export async function start(root: HTMLElement, data: PlazaData) {
   const pointer = new THREE.Vector2();
   const follow = new THREE.Vector2();
   let time = 0;
-  let opening = !calm;
+  /**
+   * Coming back from another page: the TV's plaza button opens /#0, and the plaza is simply there,
+   * everyone in place, with no fall and nothing to click first. The mark is read and taken off the
+   * address, so a refresh plays the opening as usual.
+   */
+  const returning = location.hash === '#0';
+  if (returning) history.replaceState(history.state, '', location.pathname + location.search);
+  /** No opening and no waiting: reduced motion, coming back, or starting behind another page. */
+  const quiet = calm || returning || backdrop !== null;
+  let opening = !quiet;
   /**
    * The first time a visitor sees the opening in this browser session it plays through: clicks,
    * Escape and zoom don't skip it. After that, they do.
@@ -176,14 +218,17 @@ export async function start(root: HTMLElement, data: PlazaData) {
     }
   }
   /** Waiting for the visitor's click, which starts everything. */
-  let waiting = !calm;
+  let waiting = !quiet;
   /** When the opening began, on the scene's clock. Until the click, never. */
-  let start = calm ? -Infinity : Infinity;
+  let start = quiet ? -Infinity : Infinity;
   /** Seconds into the opening. */
   const since = () => time - start;
   /** Whether the scene is still following the recording through the opening. */
-  let scored = !calm;
-  let leaving: { at: number; cube: number; from: THREE.Vector3; dist: number } | null = null;
+  let scored = !quiet;
+  /** Until when the camera glides rather than snaps to where zoom puts it: just back from a page. */
+  let slowUntil = 0;
+  /** How much the blocks show, eased, so they fade rather than blink out behind a page. */
+  let blocksShown = backdrop ? 0 : 1;
   let built = false;
 
   function arrange(moveCrowd: boolean) {
@@ -203,7 +248,7 @@ export async function start(root: HTMLElement, data: PlazaData) {
   } else {
     crowd.settle(0);
     cubes.settle();
-    copyView(layout.views[1], now);
+    copyView(backdrop ? backdropView(backdrop) : layout.views[1], now);
   }
 
   /** The click: sound starts, you fall, the opening plays from here. */
@@ -251,18 +296,28 @@ export async function start(root: HTMLElement, data: PlazaData) {
     return mixViews(views[i], views[i + 1], level - i, out);
   }
 
+  /**
+   * Where the camera stands behind a page: down among the crowd, turned to a different part of
+   * the plaza for each section in dock order, so moving between sections pans across the place,
+   * and a little closer in on an entry's own page. It sways slowly while you read.
+   */
+  function backdropView(path: string) {
+    mixViews(layout.views[1], layout.views[2], 0.5, backdropAt);
+    const i = dockIndex(path);
+    const turn = i >= 0 ? (i - 2.5) / 2.5 : 0.3;
+    backdropAt.yaw = turn * 0.34 + (calm ? 0 : Math.sin(time * 0.05) * 0.035);
+    backdropAt.target.x += turn * 1.1;
+    backdropAt.pitch -= 0.03;
+    if (depthOf(path) > 1) {
+      backdropAt.dist *= 0.8;
+      backdropAt.target.y += 0.08;
+    }
+    return backdropAt;
+  }
+
   function aim(dt: number) {
     const { views, sky } = layout;
-    if (leaving) {
-      const e = easeIn(Math.min(1, (time - leaving.at) / LEAVE));
-      eye.target.lerpVectors(leaving.from, cubes.position(leaving.cube, eye.target), e);
-      eye.dist = leaving.dist * (1 - e * 0.82);
-      eye.pitch = now.pitch;
-      eye.fov = now.fov;
-      eye.haze[0] = now.haze[0];
-      eye.haze[1] = now.haze[1];
-      return eye;
-    }
+    if (backdrop) return mixViews(now, backdropView(backdrop), calm ? 1 : 1 - Math.exp(-2.2 * dt), now);
     if (waiting) return copyView(sky, now);
     if (opening) {
       const t = since();
@@ -302,13 +357,13 @@ export async function start(root: HTMLElement, data: PlazaData) {
       if (close) bubbles.dismiss();
       crowd.notice(close, time);
     }
-    return mixViews(now, zoomView(zoom, zoomed), calm ? 1 : 1 - Math.exp(-14 * dt), now);
+    return mixViews(now, zoomView(zoom, zoomed), calm ? 1 : 1 - Math.exp((time < slowUntil ? -2.4 : -14) * dt), now);
   }
 
   /** The view actually shown: the aimed one, eased a little toward the pointer, as in a game. */
   function lean(v: typeof now, dt: number) {
     copyView(v, shown);
-    if (calm || leaving) return shown;
+    if (calm) return shown;
     follow.x = damp(follow.x, pointer.x, 2.6, dt);
     follow.y = damp(follow.y, pointer.y, 2.6, dt);
     const span = shown.dist * Math.tan(THREE.MathUtils.degToRad(shown.fov / 2));
@@ -329,7 +384,9 @@ export async function start(root: HTMLElement, data: PlazaData) {
   });
   begin.addEventListener('click', () => go());
   addEventListener('keydown', (e) => {
-    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (backdrop || e.metaKey || e.ctrlKey || e.altKey) return;
+    // Keys pressed on the light switch are its own.
+    if (e.target instanceof Element && e.target.closest('[data-theme-toggle]')) return;
     if (e.key === 'm' || e.key === 'M') music.toggle();
     else if (e.key === '+' || e.key === '=') zoomBy(0.5);
     else if (e.key === '-' || e.key === '_') zoomBy(-0.5);
@@ -413,7 +470,7 @@ export async function start(root: HTMLElement, data: PlazaData) {
     const box = root.getBoundingClientRect();
     return [e.clientX - box.left, e.clientY - box.top] as const;
   };
-  const playful = () => !waiting && !opening && !leaving;
+  const playful = () => !waiting && !opening && !backdrop;
   let press: { id: number; mii: number; x: number; y: number; at: number; holding: boolean } | null = null;
   function liftMii() {
     if (!press || press.holding) return;
@@ -480,7 +537,7 @@ export async function start(root: HTMLElement, data: PlazaData) {
   });
   /** Each frame: what the mouse is over, the cursor for it, and the card. */
   function hover() {
-    if (!hovers) return;
+    if (!hovers || backdrop) return;
     const now = performance.now();
     if (now - lastPick > 90 || !mouse) {
       lastPick = now;
@@ -512,7 +569,11 @@ export async function start(root: HTMLElement, data: PlazaData) {
     const ch = card.offsetHeight;
     // Above the head, kept on screen; under the pointer instead when there is no room above.
     const top = y - ch - 10 >= 8 ? y - ch - 10 : Math.min(h - ch - 8, (mouse?.y ?? y) + 24);
-    card.style.transform = `translate3d(${Math.round(clamp(x - cw / 2, 8, w - cw - 8))}px, ${Math.round(top)}px, 0)`;
+    const left = clamp(x - cw / 2, 8, w - cw - 8);
+    card.style.transform = `translate3d(${Math.round(left)}px, ${Math.round(top)}px, 0)`;
+    // It grows out of the head it names, wherever it had to sit to stay on screen.
+    card.style.setProperty('--ox', `${Math.round(x - left)}px`);
+    card.style.setProperty('--oy', `${Math.round(y - top)}px`);
   }
 
   links.forEach((link, i) => {
@@ -521,7 +582,7 @@ export async function start(root: HTMLElement, data: PlazaData) {
     let spun = false;
     link.draggable = false;
     link.addEventListener('pointerdown', (e) => {
-      if (e.button !== 0 || leaving) return;
+      if (e.button !== 0 || backdrop) return;
       grip = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: 0 };
       spun = false;
       link.setPointerCapture(e.pointerId);
@@ -569,32 +630,37 @@ export async function start(root: HTMLElement, data: PlazaData) {
         spun = false;
         return;
       }
-      if (calm || leaving || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      if (backdrop || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
       e.preventDefault();
       endOpening();
-      leaving = { at: time, cube: i, from: now.target.clone(), dist: now.dist };
-      bubbles.dismiss();
-      music.duck(true, LEAVE * 0.9);
-      veil.style.transition = `opacity ${LEAVE * 0.55}s ease ${LEAVE * 0.45}s`;
-      veil.style.opacity = '1';
-      setTimeout(() => location.assign(link.href), LEAVE * 1000 + 30);
+      liftBlock(i);
+      location.assign(link.href);
     });
   });
-  // Coming back with the back button restores the page as it was left: mid dive, behind the veil.
-  addEventListener('pageshow', (e) => {
-    if (!e.persisted) return;
-    leaving = null;
-    veil.style.transition = 'opacity 0.4s ease';
-    veil.style.opacity = '0';
-    music.duck(false);
-  });
+
+  /**
+   * Opening a block: a flat copy of its art is laid over it while the next page loads, and the TV
+   * switches on over it (see Base.astro).
+   */
+  function liftBlock(i: number) {
+    const at = cubes.project(i, camera, w, h);
+    const size = Math.round(at.r * 2);
+    ghostImg.src = icons[i].toDataURL('image/webp', 0.92);
+    ghost.style.setProperty('--s', `${size}px`);
+    ghost.style.transform = `translate3d(${Math.round(at.x - size / 2)}px, ${Math.round(at.y - size / 2)}px, 0)`;
+    ghost.style.opacity = '1';
+    ghost.dataset.on = '';
+  }
+  function hideGhost() {
+    delete ghost.dataset.on;
+  }
 
   const sizes = links.map(() => 0);
   /** Where each section block is on screen, for bubbles to keep clear of. */
   const blocks: { x: number; y: number; w: number; h: number }[] = [];
   function placeLinks() {
     blocks.length = 0;
-    const hidden = opening || leaving !== null;
+    const hidden = opening || backdrop !== null;
     links.forEach((link, i) => {
       const at = cubes.project(i, camera, w, h);
       const size = Math.round(at.r * 2);
@@ -612,6 +678,11 @@ export async function start(root: HTMLElement, data: PlazaData) {
 
   function tick(dt: number) {
     time += dt;
+    if (night !== nightTo) {
+      night = calm || Math.abs(nightTo - night) < 0.002 ? nightTo : damp(night, nightTo, 4.5, dt);
+      floor.setNight(night);
+      renderer.setClearColor(HAZE, 1);
+    }
     const v = lean(aim(dt), dt);
     applyView(camera, v);
     floor.setHaze(v.haze[0], v.haze[1]);
@@ -621,7 +692,10 @@ export async function start(root: HTMLElement, data: PlazaData) {
     crowd.update(dt, time, camera.position, calm);
     // Blocks belong to the wide views. Closer in than about two thirds of the standard view they fade.
     const open = (v.dist * Math.tan(THREE.MathUtils.degToRad(v.fov / 2))) / (layout.views[1].dist * Math.tan(THREE.MathUtils.degToRad(layout.views[1].fov / 2)));
-    cubes.update(time, dt, calm, camera, v.dist, opening && time < INTRO.wide ? 1 : smoothstep(0.55, 0.78, open));
+    // Behind a page the blocks fade away, and come back as you return.
+    const showing = backdrop ? 0 : opening && time < INTRO.wide ? 1 : smoothstep(0.55, 0.78, open);
+    blocksShown = calm || dt === 0 ? showing : damp(blocksShown, showing, backdrop ? 7 : 4, dt);
+    cubes.update(time, dt, calm, camera, v.dist, blocksShown);
     return v;
   }
 
@@ -640,7 +714,7 @@ export async function start(root: HTMLElement, data: PlazaData) {
     placeLinks();
     if (press && !press.holding && performance.now() - press.at > 350) liftMii();
     hover();
-    bubbles.update(time, crowd, camera, w, h, !opening && !leaving && !close && (calm || since() > INTRO.talk), blocks);
+    bubbles.update(time, crowd, camera, w, h, !opening && !backdrop && !close && (calm || since() > INTRO.talk), blocks);
     if (waiting) pointAt();
   }
 
@@ -689,7 +763,7 @@ export async function start(root: HTMLElement, data: PlazaData) {
   let fastFor = 0;
   let lastChange = 0;
   function govern(realDt: number) {
-    if (realDt > 0.25) return; // a stall (tab switch, compile), not a slow device
+    if (backdrop || realDt > 0.25) return; // a stall (tab switch, compile), not a slow device
     if (realDt > 1 / 45) slowFor += realDt;
     else slowFor = Math.max(0, slowFor - realDt * 0.5);
     if (realDt < 1 / 57) fastFor += realDt;
@@ -728,7 +802,19 @@ export async function start(root: HTMLElement, data: PlazaData) {
     return v;
   }
 
+  /** When the backdrop last drew, and when it stops drawing on a small device to save power. */
+  let drawnAt = 0;
+  let freezeAt = Infinity;
   function frame(t: number) {
+    if (backdrop && !resized && t - drawnAt < 1000 / BACKDROP_FPS - 4) {
+      raf = requestAnimationFrame(frame);
+      return;
+    }
+    if (backdrop && (calm || small) && time > freezeAt) {
+      raf = 0;
+      return;
+    }
+    drawnAt = t;
     if (resized) applyResize();
     const real = Math.max(0, (t - last) / 1000);
     govern(real);
@@ -740,8 +826,8 @@ export async function start(root: HTMLElement, data: PlazaData) {
     if (root.dataset.state !== 'live') {
       root.dataset.state = 'live';
       root.dataset.waiting = String(waiting);
-      // With nothing to wait for, sound joins whenever the browser lets it.
-      if (!waiting) music.begin(() => null);
+      // With nothing to wait for, sound joins whenever the browser lets it. Not behind a page.
+      if (!waiting && !backdrop) music.begin(() => null);
     }
     raf = requestAnimationFrame(frame);
   }
@@ -756,7 +842,7 @@ export async function start(root: HTMLElement, data: PlazaData) {
    * wherever they have got to.
    */
   setInterval(() => {
-    if (document.visibilityState === 'visible') return;
+    if (backdrop || document.visibilityState === 'visible') return;
     const t = performance.now();
     if (!built) built = crowd.build(t + 5);
     advance(Math.max(0, (t - last) / 1000));
@@ -769,6 +855,7 @@ export async function start(root: HTMLElement, data: PlazaData) {
   let resized = false;
   new ResizeObserver(() => {
     resized = true;
+    freezeAt = time + 0.3;
     resume();
   }).observe(root);
   function applyResize() {
@@ -863,6 +950,71 @@ export async function start(root: HTMLElement, data: PlazaData) {
       },
     });
   }
+
+  /** Behind a page the plaza draws at no more than the screen's own resolution. */
+  function setQuality() {
+    const ratio = backdrop ? Math.min(ratios[ratioLevel], 1) : ratios[ratioLevel];
+    if (renderer.getPixelRatio() === ratio) return;
+    renderer.setPixelRatio(ratio);
+    renderer.setSize(w, h, false);
+    floor.resize(renderer);
+    sizeBehind();
+  }
+
+  /** Leaving the plaza before the opening is over: everyone is simply in place. */
+  function settleNow() {
+    if (waiting) {
+      waiting = false;
+      start = time - INTRO.wide;
+      root.dataset.waiting = 'false';
+    }
+    opening = false;
+    scored = false;
+    cubes.settle();
+    crowd.settle(time);
+    music.settle();
+  }
+
+  onView = (path) => {
+    const home = path === '/';
+    if (home && backdrop) {
+      backdrop = null;
+      slowUntil = time + 1.8;
+      music.muffle(false);
+      if (!waiting) music.begin(() => null);
+    } else if (!home) {
+      if (!backdrop) {
+        if (waiting || opening) settleNow();
+        bubbles.dismiss();
+        hideCard();
+        letGoMii(false);
+        touches.clear();
+        letLook();
+        music.muffle(true);
+      }
+      backdrop = path;
+    }
+    hideGhost();
+    setQuality();
+    freezeAt = time + 2.6;
+    if (resized) applyResize();
+    // Drawn straight away, so the page change shows the plaza as it is now.
+    last = performance.now();
+    draw(tick(0).target);
+    resume();
+  };
+  // Behind a page, the camera still leans a little toward the pointer.
+  addEventListener(
+    'pointermove',
+    (e) => {
+      if (backdrop && e.pointerType === 'mouse') pointer.set((e.clientX / w) * 2 - 1, 1 - (e.clientY / h) * 2);
+    },
+    { passive: true },
+  );
+  setQuality();
+  if (backdrop) music.muffle(true);
+  // M mutes everywhere; behind a page the keys belong to the page, which passes it on.
+  root.addEventListener('plaza:mute', () => music.toggle());
 
   last = performance.now();
   raf = requestAnimationFrame(frame);

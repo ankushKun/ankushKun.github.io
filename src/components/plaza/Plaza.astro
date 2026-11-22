@@ -1,20 +1,33 @@
 ---
-// The home page: a Wii U style plaza. Without WebGL or JavaScript it is a plain grid of links.
+// The plaza: the home page itself, by day or by night after the site's light or dark. Without
+// WebGL or JavaScript it shows a plain grid of links.
+// `lazy` leaves its data and the early downloads out: other pages fetch /plaza.json if and when
+// the plaza starts behind them.
 import '@fontsource/m-plus-1p/latin-500.css';
 import '@fontsource/m-plus-1p/latin-700.css';
 import { getPlazaData } from '../../lib/plaza';
 
-const data = await getPlazaData();
-const json = JSON.stringify(data).replace(/</g, '\\u003c');
+interface Props {
+  lazy?: boolean;
+}
+
+const { lazy = false } = Astro.props;
+const data = lazy ? null : await getPlazaData();
+const json = data ? JSON.stringify(data).replace(/</g, '\\u003c') : '';
 ---
 
-<!-- The plaza's heaviest files start downloading with the page, not after its scripts run. -->
-<link rel="preload" href="/ffl/FFLResHigh.dat" as="fetch" crossorigin="anonymous" />
-<link rel="preload" href="/ffl/ffl.wasm" as="fetch" crossorigin="anonymous" />
-<link rel="preload" href="/ffl/body-m.glb" as="fetch" crossorigin="anonymous" />
-<link rel="preload" href="/ffl/body-f.glb" as="fetch" crossorigin="anonymous" />
-<link rel="preload" href="/media/warawara-plaza.mp3" as="fetch" crossorigin="anonymous" />
-{data.cubes.map((c) => c.art && !c.feature && <link rel="preload" href={c.art} as="image" />)}
+{
+  data && (
+    <>
+      <link rel="preload" href="/ffl/FFLResHigh.dat" as="fetch" crossorigin="anonymous" />
+      <link rel="preload" href="/ffl/ffl.wasm" as="fetch" crossorigin="anonymous" />
+      <link rel="preload" href="/ffl/body-m.glb" as="fetch" crossorigin="anonymous" />
+      <link rel="preload" href="/ffl/body-f.glb" as="fetch" crossorigin="anonymous" />
+      <link rel="preload" href="/media/warawara-plaza.mp3" as="fetch" crossorigin="anonymous" />
+      {data.cubes.map((c) => c.art && !c.feature && <link rel="preload" href={c.art} as="image" />)}
+    </>
+  )
+}
 
 <section class="plaza" data-plaza data-state="static">
   <script is:inline>
@@ -23,8 +36,8 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
   <canvas aria-hidden="true"></canvas>
   <nav class="plaza-links" aria-label="Sections">
     {
-      data.cubes.map((c, i) => (
-        <a href={c.href} data-cube={i}>
+      data?.cubes.map((c, i) => (
+        <a href={c.href} data-cube={i} aria-label={c.label}>
           <span>{c.label}</span>
         </a>
       ))
@@ -32,39 +45,58 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
   </nav>
   <div class="plaza-bubbles" aria-hidden="true"></div>
   <div class="plaza-who" aria-hidden="true"><img alt="" width="188" height="188" /><span></span></div>
+  <div class="plaza-ghost tile" aria-hidden="true"><img alt="" /></div>
   <button type="button" class="plaza-start" aria-label="Start">
     <svg class="plaza-start-hand" viewBox="0 0 64 64" aria-hidden="true">
       <path d="M24 30V9.5a5 5 0 0 1 10 0V27l2-.6a5 5 0 0 1 6.300 3.300l.2.700 1.900-.5a5 5 0 0 1 6.100 3.400l.3 1 1-.2a5 5 0 0 1 5.900 3.900l1.200 6.300a17 17 0 0 1-3.700 14.200L52 60H28.500L16.600 45.900a5.300 5.300 0 0 1 .7-7.600 5.300 5.300 0 0 1 6.700.2z"></path>
     </svg>
   </button>
   <div class="plaza-veil" aria-hidden="true"><span></span><span></span><span></span></div>
-  <script type="application/json" data-plaza-data set:html={json} />
+  {data && <script type="application/json" data-plaza-data set:html={json} />}
 </section>
 
 <script>
   import type { PlazaData } from './types';
 
-  const root = document.querySelector<HTMLElement>('[data-plaza]');
-  const raw = root?.querySelector('[data-plaza-data]')?.textContent;
+  // The plaza starts once and then lives on across page changes (see src/scripts/motion.ts). On the
+  // home page it starts at once. Behind another page it starts only where there is room for it (a
+  // big screen, a fine pointer, memory to spare), once the page itself has loaded, and fades in.
   const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
+  const roomy = () => {
+    const device = navigator as Navigator & { deviceMemory?: number };
+    return matchMedia('(pointer: fine) and (min-width: 1000px) and (min-height: 620px)').matches && (device.deviceMemory ?? 8) >= 4;
+  };
 
-  if (root && raw && !saveData) {
-    import('./main')
-      .then(({ start }) => start(root, JSON.parse(raw) as PlazaData))
+  function boot() {
+    const root = document.querySelector<HTMLElement>('[data-plaza]');
+    if (!root || root.dataset.boot) return;
+    const home = location.pathname === '/';
+    if (saveData) {
+      root.dataset.state = 'static';
+      return;
+    }
+    if (!home && !roomy()) return;
+    root.dataset.boot = '1';
+    const inline = root.querySelector('[data-plaza-data]')?.textContent;
+    const data: Promise<PlazaData> = inline ? Promise.resolve(JSON.parse(inline)) : fetch('/plaza.json').then((r) => r.json());
+    const later = home ? Promise.resolve() : new Promise((done) => setTimeout(done, 400));
+    Promise.all([import('./main'), data, later])
+      .then(([{ start }, plaza]) => start(root, plaza, { backdrop: location.pathname === '/' ? undefined : location.pathname }))
       .catch((err: unknown) => {
         console.error('Plaza failed to start', err);
         root.dataset.state = 'static';
+        delete root.dataset.boot;
       });
-  } else if (root) {
-    root.dataset.state = 'static';
   }
+  boot();
+  document.addEventListener('astro:page-load', boot);
 </script>
 
 <style is:global>
   .plaza {
     /* One unit is a hundredth of the screen's height on a 16:9 screen, as on the console. */
     --u: clamp(5.4px, min(1vh, 0.5625vw), 9px);
-    --ink: #3f4446;
+    --ink: light-dark(#3f4446, #dfe7ea);
     --sky: #4fbfee;
     position: relative;
     width: 100%;
@@ -72,7 +104,7 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
     height: 100dvh;
     overflow: hidden;
     isolation: isolate;
-    background: #e4f0f2;
+    background: var(--color-haze);
     color: var(--ink);
     font-family: 'M PLUS 1p', ui-rounded, system-ui, sans-serif;
     font-weight: 500;
@@ -161,15 +193,20 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
     box-shadow: 0 1px 6px rgb(0 0 0 / 0.18);
     opacity: 0;
     translate: -50% -4px;
+    scale: 0.86;
+    /* Out of the block above it. */
+    transform-origin: 50% -4px;
     transition:
       opacity 0.16s ease,
-      translate 0.2s cubic-bezier(0.3, 1.4, 0.5, 1);
+      translate 0.2s cubic-bezier(0.3, 1.4, 0.5, 1),
+      scale 0.22s cubic-bezier(0.3, 1.4, 0.5, 1);
     pointer-events: none;
   }
 
   .plaza[data-state='live'] .plaza-links a:is(:hover, :focus-visible) span {
     opacity: 1;
     translate: -50% 0;
+    scale: 1;
   }
 
   .plaza[data-state='static'] .plaza-links {
@@ -185,8 +222,8 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
   .plaza[data-state='static'] .plaza-links a {
     padding: 12px 22px;
     border-radius: 18px;
-    background: #fff;
-    box-shadow: 0 2px 10px rgb(60 90 95 / 0.14);
+    background: light-dark(#fff, #262c30);
+    box-shadow: 0 2px 10px light-dark(rgb(60 90 95 / 0.14), rgb(0 0 0 / 0.5));
     font-weight: 700;
   }
 
@@ -216,18 +253,22 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
     padding: calc(var(--b) * 2.4) calc(var(--b) * 3.6) calc(var(--b) * 2.4) calc(var(--b) * 2.4);
     border-radius: calc(var(--b) * 3.6);
     corner-shape: squircle;
-    background: rgb(250 252 253 / 0.8);
+    background: light-dark(rgb(250 252 253 / 0.8), rgb(36 42 46 / 0.78));
     backdrop-filter: blur(calc(var(--b) * 1.2)) saturate(1.15);
     -webkit-backdrop-filter: blur(calc(var(--b) * 1.2)) saturate(1.15);
     box-shadow:
-      inset 0 0 0 1px rgb(255 255 255 / 0.7),
-      0 0 0 1px rgb(80 100 110 / 0.14),
-      0 calc(var(--b) * 0.6) calc(var(--b) * 2.4) rgb(60 85 95 / 0.12);
-    color: #3a3f42;
+      inset 0 0 0 1px light-dark(rgb(255 255 255 / 0.7), rgb(255 255 255 / 0.1)),
+      0 0 0 1px light-dark(rgb(80 100 110 / 0.14), rgb(0 0 0 / 0.5)),
+      0 calc(var(--b) * 0.6) calc(var(--b) * 2.4) light-dark(rgb(60 85 95 / 0.12), rgb(0 0 0 / 0.4));
+    color: light-dark(#3a3f42, #e3eaed);
+    transition:
+      background-color 0.5s ease,
+      color 0.5s ease;
     text-decoration: none;
     opacity: 0;
     pointer-events: auto;
-    transform-origin: 30% 100%;
+    /* Grows out of its tail, which points at whoever is speaking (bubbles.ts sets --tail). */
+    transform-origin: var(--tail, 30%) calc(100% + 14px);
     will-change: transform;
   }
 
@@ -303,16 +344,17 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
     padding: calc(var(--b) * 2.2);
     border-radius: calc(var(--b) * 3.6);
     corner-shape: squircle;
-    background: rgb(250 252 253 / 0.86);
+    background: light-dark(rgb(250 252 253 / 0.86), rgb(36 42 46 / 0.84));
     backdrop-filter: blur(calc(var(--b) * 1.2)) saturate(1.15);
     -webkit-backdrop-filter: blur(calc(var(--b) * 1.2)) saturate(1.15);
     box-shadow:
-      inset 0 0 0 1px rgb(255 255 255 / 0.7),
-      0 0 0 1px rgb(80 100 110 / 0.14),
-      0 calc(var(--b) * 0.6) calc(var(--b) * 2.4) rgb(60 85 95 / 0.12);
+      inset 0 0 0 1px light-dark(rgb(255 255 255 / 0.7), rgb(255 255 255 / 0.1)),
+      0 0 0 1px light-dark(rgb(80 100 110 / 0.14), rgb(0 0 0 / 0.5)),
+      0 calc(var(--b) * 0.6) calc(var(--b) * 2.4) light-dark(rgb(60 85 95 / 0.12), rgb(0 0 0 / 0.4));
     opacity: 0;
     scale: 0.85;
-    transform-origin: 50% 100%;
+    /* Grows out of the head it names, wherever the card had to sit to stay on screen (main.ts). */
+    transform-origin: var(--ox, 50%) var(--oy, 100%);
     transition:
       opacity 0.16s ease,
       scale 0.22s cubic-bezier(0.3, 1.5, 0.5, 1);
@@ -417,7 +459,23 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
     }
   }
 
-  /* White out: while loading, and when diving into a cube. Three orbs wait with you if it is slow. */
+  /* Diving into a block: a flat copy of its art grows over it, and flies on into the next page. */
+  .plaza-ghost {
+    position: absolute;
+    z-index: 3;
+    top: 0;
+    left: 0;
+    display: none !important;
+    opacity: 0;
+    pointer-events: none;
+    will-change: transform, opacity;
+  }
+
+  .plaza-ghost[data-on] {
+    display: block !important;
+  }
+
+  /* White out while loading. Three orbs wait with you if it is slow. */
 
   .plaza-veil {
     position: absolute;
@@ -426,7 +484,7 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
     place-content: center;
     place-items: center;
     gap: calc(var(--u) * 2.4);
-    background: #e9f3f4;
+    background: light-dark(#e9f3f4, #13171a);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.5s ease;
@@ -441,7 +499,7 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
     width: calc(var(--u) * 2.6);
     height: calc(var(--u) * 2.6);
     border-radius: 50%;
-    background: #b9c8c8;
+    background: light-dark(#b9c8c8, #3c474c);
     opacity: 0;
   }
 

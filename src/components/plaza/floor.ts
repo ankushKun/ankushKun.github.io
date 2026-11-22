@@ -1,11 +1,15 @@
 // The plaza floor: rows of dotted hexagon tiles in white grout, glossy enough to mirror the Miis
 // and to catch broad soft glare, fading into pale haze with distance. Colors are written as
-// display values, picked off captures of the Wii U.
+// display values, picked off captures of the Wii U. At night (dark mode) the same floor is lit
+// low: dark tiles, dim grout, a cool glare and a deep blue-grey haze (`setNight`).
 import * as THREE from 'three';
 import { miiUniforms } from '../mii/rig';
 
-/** The haze, and the canvas behind everything. */
-export const HAZE = new THREE.Color(0.895, 0.94, 0.95);
+/** The haze by day and by night. */
+const HAZE_DAY = new THREE.Color(0.895, 0.94, 0.95);
+const HAZE_NIGHT = new THREE.Color(0.075, 0.09, 0.102);
+/** The haze, and the canvas behind everything: between day and night as the lights change. */
+export const HAZE = HAZE_DAY.clone();
 /** Layer for what the floor mirrors. */
 export const MIRRORED = 1;
 
@@ -24,15 +28,12 @@ const fragment = /* glsl */ `
   uniform vec2 uRes;
   uniform sampler2D uMirror;
   uniform float uTime;
+  uniform float uNight;
   varying vec3 vWorld;
 
   // Tiles sit on a triangular grid: PITCH apart along a row, rows half a step over.
   const float PITCH = 0.87;
   const float ROW = 0.8660254;
-  const vec3 GROUT = vec3(0.93, 0.96, 0.96);
-  const vec3 TILE = vec3(0.795, 0.835, 0.812);
-  const vec3 DOT = vec3(0.915, 0.94, 0.925);
-  const vec3 GLARE = vec3(0.972, 0.992, 0.992);
 
   // Hexagon with points left and right, r from center to its flat edges.
   float hexagon(vec2 p, float r) {
@@ -57,6 +58,11 @@ const fragment = /* glsl */ `
   }
 
   void main() {
+    vec3 GROUT = mix(vec3(0.93, 0.96, 0.96), vec3(0.155, 0.18, 0.195), uNight);
+    vec3 TILE = mix(vec3(0.795, 0.835, 0.812), vec3(0.095, 0.112, 0.122), uNight);
+    vec3 DOT = mix(vec3(0.915, 0.94, 0.925), vec3(0.17, 0.195, 0.205), uNight);
+    vec3 GLARE = mix(vec3(0.972, 0.992, 0.992), vec3(0.24, 0.285, 0.31), uNight);
+
     vec2 p = vWorld.xz / PITCH;
     float row = floor(p.y / ROW + 0.5);
     vec2 c = vec2(p.x - 0.5 * mod(row, 2.0), p.y - row * ROW);
@@ -125,6 +131,7 @@ export class Floor {
       uRes: { value: new THREE.Vector2(1, 1) },
       uMirror: { value: this.target.texture },
       uTime: { value: 0 },
+      uNight: { value: 0 },
     };
     const mesh = new THREE.Mesh(
       new THREE.PlaneGeometry(6000, 6000).rotateX(-Math.PI / 2),
@@ -148,6 +155,13 @@ export class Floor {
     miiUniforms.uFogColor.value.copy(HAZE);
     miiUniforms.uFogNear.value = near + (far - near) * 0.2;
     miiUniforms.uFogFar.value = far + (far - near) * 0.12;
+  }
+
+  /** How far into night the plaza is, 0 (day) to 1 (night): the floor, and the haze everything shares. */
+  setNight(t: number) {
+    this.uniforms.uNight.value = t;
+    HAZE.copy(HAZE_DAY).lerp(HAZE_NIGHT, t);
+    miiUniforms.uFogColor.value.copy(HAZE);
   }
 
   /** Draws the mirrored Miis for this frame. Call before the main render. */

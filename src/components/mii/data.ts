@@ -107,6 +107,24 @@ export function decodeMii(code: string): Uint8Array | null {
   return checksumOk(bytes) ? bytes : null;
 }
 
+/** Size of an FFLiCharInfo: how FFL describes a Mii it made itself (random Miis, the chat's). */
+export const CHARINFO_SIZE = 288;
+
+/**
+ * A Mii code's bytes: the 96 bytes of a QR code Mii, or a CharInfo for Miis made on the spot,
+ * which FFL draws as they are. Null for anything else.
+ */
+export function miiBytes(code: string): Uint8Array | null {
+  const mii = decodeMii(code);
+  if (mii) return mii;
+  try {
+    const bytes = Uint8Array.from(atob(code.trim()), (c) => c.charCodeAt(0));
+    return bytes.length === CHARINFO_SIZE ? bytes : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Wii U favorite colors, used for shirts. Raw sRGB, as FFL shades them. */
 export const FAVORITE_COLORS = [
   0xd21e14, 0xff6e19, 0xffd820, 0x78d220, 0x007830, 0x0a48bc, 0x3caade, 0xf55a7d, 0x7328ad, 0x483818, 0xe0e0e0, 0x181814,

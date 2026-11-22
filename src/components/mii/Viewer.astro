@@ -24,14 +24,24 @@ const initial = await resolveMii(ME, 'ME');
 </div>
 
 <script>
-  const root = document.querySelector<HTMLElement>('[data-mii]');
-  if (root) import('./viewer').then(({ mount }) => mount(root));
+  // Pages change in place, so the viewer starts on each visit and stops when you leave.
+  let stopping: Promise<() => void> | null = null;
+  document.addEventListener('astro:page-load', () => {
+    const root = document.querySelector<HTMLElement>('[data-mii]');
+    if (!root || root.dataset.live !== undefined) return;
+    root.dataset.live = '';
+    stopping = import('./viewer').then(({ mount }) => mount(root));
+  });
+  document.addEventListener('astro:before-swap', () => {
+    stopping?.then((stop) => stop());
+    stopping = null;
+  });
 </script>
 
 <style is:global>
   .mii {
-    --mii-line: rgb(29 40 38 / 0.12);
-    --mii-ink: #1d2826;
+    --mii-line: light-dark(rgb(29 40 38 / 0.12), rgb(255 255 255 / 0.14));
+    --mii-ink: light-dark(#1d2826, #e3ece9);
     display: grid;
     gap: 12px;
   }
@@ -40,7 +50,12 @@ const initial = await resolveMii(ME, 'ME');
     position: relative;
     overflow: hidden;
     border-radius: 20px;
-    background: radial-gradient(120% 90% at 50% 20%, #ffffff 0%, #e6f2ef 55%, #cfe1dc 100%);
+    background: radial-gradient(
+      120% 90% at 50% 20%,
+      light-dark(#ffffff, #33403d) 0%,
+      light-dark(#e6f2ef, #253230) 55%,
+      light-dark(#cfe1dc, #1a2422) 100%
+    );
     aspect-ratio: 4 / 3;
     transition: box-shadow 0.15s ease;
   }
