@@ -51,6 +51,8 @@ export interface PlazaPost {
   me?: boolean;
   /** Spoken by this Mii (its index in the crowd), wherever it stands: the DJ saying what plays. */
   by?: number;
+  /** `thumb` is a Mii's portrait (a chat message's sender), drawn on a backdrop as the chat draws faces. */
+  mii?: boolean;
 }
 
 /**

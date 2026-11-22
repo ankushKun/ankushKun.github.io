@@ -399,6 +399,11 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
     box-shadow: 0 0 0 1px rgb(0 0 0 / 0.06);
   }
 
+  /* A chat message's sender, framed as the chat frames faces. */
+  .plaza-bubble img.is-mii {
+    background: linear-gradient(to bottom, light-dark(#fff, #48535a), light-dark(#eef1f3, #343d43));
+  }
+
   /* A timeline event's date, as the calendar pages on the timeline board. */
   .plaza-bubble-cal {
     flex: none;

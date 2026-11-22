@@ -12,6 +12,7 @@ import { loadMiiKit } from '../mii/kit';
 import { SCORE, soundtrack } from './audio';
 import { Boombox, type BoomboxKind } from './boombox';
 import { Bubbles } from './bubbles';
+import type { Chatter } from './chatter';
 import { HeadGear } from './headgear';
 import { Crowd, SKYFALL } from './crowd';
 import { GRAVITY } from './motion';
@@ -205,6 +206,28 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     // A different greeting on every visit.
     data.welcome[Math.floor(Math.random() * data.welcome.length)] ?? null,
   );
+
+  // The chat's latest messages join the bubbles, said under the Chat block (chatter.ts). It listens
+  // while the plaza is open, and starts over on coming back, so what was read in the chat meanwhile
+  // is no longer new.
+  const chatCube = data.cubes.findIndex((c) => c.href === '/apps/chat/');
+  let chatter: Chatter | null = null;
+  let hearing = 0;
+  function hearChat() {
+    if (chatCube < 0 || chatter) return;
+    const token = ++hearing;
+    import('./chatter')
+      .then(({ Chatter }) => {
+        if (token === hearing && active) chatter = new Chatter(chatCube, data.cubes[chatCube].href, bubbles);
+      })
+      .catch((err: unknown) => console.warn('Chat bubbles failed', err));
+  }
+  function stopChat() {
+    hearing++;
+    chatter?.stop();
+    chatter = null;
+  }
+  bubbles.onSay = (post) => chatter?.said(post);
 
   // Camera ---------------------------------------------------------------------------------------
 
@@ -1233,6 +1256,8 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
   whenShown(() => {
     last = performance.now();
     raf = requestAnimationFrame(frame);
+    // The chat a moment later, clear of the first frames.
+    setTimeout(hearChat, 1500);
   });
 
   return {
@@ -1250,6 +1275,7 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
       touches.clear();
       hideCard();
       closeOver();
+      stopChat();
     },
     wake(from) {
       if (active) return;
@@ -1264,6 +1290,7 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
       // The plaza fades in over about half a second (global.css): the pull back waits till then.
       stepOut(from, 0.4);
       resume();
+      hearChat();
     },
   };
 }

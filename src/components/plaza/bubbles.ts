@@ -1,5 +1,6 @@
 // Speech bubbles: now and then a Mii says an entry from anywhere on the site, and the bubble links to it.
 // Your own Mii opens with a greeting, alone on screen; the rest only start once it has finished.
+// Recent chat messages join in later (`mix`), and new ones go ahead of the rest (`hurry`).
 import * as THREE from 'three';
 import type { Crowd } from './crowd';
 import type { PlazaPost } from './types';
@@ -12,6 +13,8 @@ const MARGIN = 12;
 const ABOVE = 20;
 /** Milliseconds a closing bubble is kept for: its shrink back into its speaker (`is-out` in Plaza.astro, 0.34 s) and a frame or two to start. */
 const OUT = 420;
+/** How many times a post going ahead of the rest looks for someone in view to say it, before it waits its turn. */
+const HURRY_TRIES = 6;
 const SVG_NS = 'http://www.w3.org/2000/svg';
 // Cubic Bezier control-point ratio for a superellipse (n = 4, matching CSS corner-shape: squircle).
 const SQUIRCLE_K = 0.091;
@@ -24,6 +27,7 @@ export interface Box {
 }
 
 interface Active {
+  post: PlazaPost;
   el: HTMLAnchorElement;
   shadow: SVGPathElement;
   speaker: number;
@@ -36,7 +40,13 @@ const _v = new THREE.Vector3();
 
 export class Bubbles {
   private active: Active[] = [];
+  private posts: PlazaPost[];
   private queue: PlazaPost[];
+  /** Said ahead of the queue, in order, alongside whatever is up: new chat messages. */
+  private soon: PlazaPost[] = [];
+  private soonTries = 0;
+  /** Told about each post as its bubble goes up. */
+  onSay: ((post: PlazaPost) => void) | null = null;
   private last = -Infinity;
   private unit = 0;
   private viewW = 0;
@@ -56,8 +66,22 @@ export class Bubbles {
     greeting: PlazaPost | null = null,
   ) {
     this.first = greeting;
+    this.posts = posts;
     // After the greeting, every entry in a new order on every visit, never two from one block running.
     this.queue = shuffled(posts);
+  }
+
+  /** Mixes `more` in with the site's posts, in place of any mixed in before, and says `first` ahead of them all, in order. */
+  mix(more: PlazaPost[], first: PlazaPost[] = []) {
+    this.queue = shuffled([...this.posts, ...more]);
+    this.soon = [...first];
+    this.soonTries = 0;
+  }
+
+  /** A post just made: said ahead of the queue as soon as there is room, then taking its turn with the rest. */
+  hurry(post: PlazaPost) {
+    this.soon.push(post);
+    this.queue.splice(Math.floor(Math.random() * (this.queue.length + 1)), 0, post);
   }
 
   /** Whether something is waiting to be said first (the greeting), which may come sooner than the rest. */
@@ -119,9 +143,14 @@ export class Bubbles {
     }
 
     if (this.alone && this.active.includes(this.alone)) return;
-    const post = this.first ?? this.queue[0];
+    const post = this.first ?? this.soon[0] ?? this.queue[0];
     if (this.active.some((a) => a.until === Infinity)) return;
     if (!open || !post || this.active.length >= (w < 720 ? 1 : 2) || time - this.last < EVERY) return;
+    // Already up (a new message, hurried, coming round in the queue too): the next one instead.
+    if (this.active.some((a) => a.post === post)) {
+      if (post === this.queue[0]) this.queue.push(this.queue.shift()!);
+      return;
+    }
     this.last = time;
 
     const { el, shadow } = this.build(post);
@@ -144,7 +173,7 @@ export class Bubbles {
     if (best) {
       const { speaker, at } = best;
       const life = post === this.first ? this.firstLife : LIFE;
-      const a: Active = { el, shadow, speaker, until: time + life, box: at.box, shapeKey: '' };
+      const a: Active = { post, el, shadow, speaker, until: time + life, box: at.box, shapeKey: '' };
       this.move(a, at);
       el.classList.add('is-in');
       crowd.say(speaker, time, life);
@@ -155,12 +184,22 @@ export class Bubbles {
         this.firstLife = LIFE;
         this.alone = a;
         this.last = a.until - EVERY + 0.8;
+      } else if (post === this.soon[0]) {
+        this.soon.shift();
+        this.soonTries = 0;
       } else this.queue.push(this.queue.shift()!);
+      this.onSay?.(post);
       return;
     }
-    // Nobody suitable in view: try again soon, with the next post unless this one goes first.
+    // Nobody suitable in view: try again soon, with the next post unless this one goes first. One
+    // going ahead of the rest gets a few tries, then takes its turn in the queue.
     el.remove();
-    if (post !== this.first) this.queue.push(this.queue.shift()!);
+    if (post === this.soon[0]) {
+      if (++this.soonTries >= HURRY_TRIES) {
+        this.soon.shift();
+        this.soonTries = 0;
+      }
+    } else if (post !== this.first) this.queue.push(this.queue.shift()!);
     this.last = time - EVERY * 0.75;
   }
 
@@ -219,6 +258,7 @@ export class Bubbles {
     tag.textContent = post.tag;
     const icon = post.date ? calendar(post.date) : document.createElement('img');
     if (icon instanceof HTMLImageElement) {
+      if (post.mii && post.thumb) icon.className = 'is-mii';
       icon.src = post.thumb ?? this.thumbs[post.cube] ?? '';
       icon.alt = '';
       icon.decoding = 'async';
