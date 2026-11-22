@@ -6,6 +6,7 @@ Personal site built with Astro and Tailwind. Static output. Client JavaScript is
 pnpm dev      # http://localhost:4321
 pnpm check    # type check content and templates
 pnpm build    # static site in dist/
+pnpm favicons # save the icons of linked sites (after adding links)
 ```
 
 ## Adding content
@@ -31,10 +32,13 @@ Every page but the plaza is shown on a TV (`src/components/ui/Frame.astro`): a w
 - **Top left**, a round button back to the plaza. **Top right**, a round button that opens the menu of sections (`NAV` in `src/site.ts`): their glass tiles drop out of it one under another (`src/scripts/menu.ts`), each with its name on a dark tag to its left (the section you are in has a blue one), and fold back up into it when it closes. It stays open, without dimming the page, until the button or Escape closes it, and on a big screen it stays open as you go from page to page. Icons are frosted glass like the Wii U home menu's (`--aero-*` in `global.css`).
 - **The footer** at the end of every page links the rest of the site (`FOOTER_NAV`): home, the sections, privacy, credits and the RSS feed.
 - **On a phone** the casing is thinner, the column fills the screen under the two buttons, the buttons step aside while you read down a page and come back when you scroll up.
-- **Lists**: the blog is rows of posts under their year (`Feed.astro`); projects are glossy channel tiles, more across as the column widens (`ChannelMenu.astro`); the timeline is memos dated by little calendar pages colored by kind (`Timeline.astro`); apps are the Wii's channel menu (`apps.astro`): wide channels in glossy frames, art edge to edge with the name across the top (a wide crop of painted art, `/art/channel/<slug>.webp`, or a drawn banner, `/art/channel/<slug>.svg`), always whole pages of twelve with grey empty channels in the free slots, two, three or four across by the room the menu has.
+- **Lists**: the blog is rows of posts under their year (`Feed.astro`); projects are glossy channel tiles, more across as the column widens (`ChannelMenu.astro`); the timeline is memos dated by little calendar pages colored by kind (`Timeline.astro`); apps are the Wii's channel menu (`apps.astro` on `ChannelGrid.astro`): wide channels in glossy frames, art edge to edge with the name across the top (the app's own banner from `src/assets/channels/<slug>.webp`, painted 16:9 on white in the style of the block art with its scene kept below the name, which is then grey; else a wide crop of its block art; else a drawn banner, `/art/channel/<slug>.svg`), always whole pages of twelve with grey empty channels in the free slots, two, three or four across by the room the menu has; games (`games.astro`) are the same menu, every game in `src/data/games.ts`, each opening its own page (see Games).
 - **Entries** (`layouts/Entry.astro`) read top to bottom: the B button back to the section, the title, a byline signed by your Mii, the picture, then the text. Standalone pages (`layouts/Page.astro`) are a title and their text; sections of a longer page are `Panel.astro`, a heading with what is under it.
 - **Light and dark** follow the device until you pick one with the icon out in the casing's top right corner, or at the top beside the plaza button on a phone (`ThemeToggle.astro`, `src/scripts/theme.ts`); picking what the device already shows goes back to following it. The dark TV has a black casing and a charcoal column. Colors that change are `light-dark()` pairs on the tokens in `global.css`. On the TV the new lights spread in a circle from the icon; on the plaza it turns to night, the floor, haze and fog dimming over about half a second (`setNight` in `plaza/floor.ts`). The theme is set before the page draws, so it never flashes.
 - **Icons** on the TV's buttons and the light switch are [Hugeicons](https://hugeicons.com) (`@hugeicons/core-free-icons`), drawn at build time as inline SVG by `HugeIcon.astro`.
+- **Link buttons** (`MenuButton.astro`) are one design everywhere: the console's plain glossy surface, a badge, the label, and an end mark for what pressing it does (an arrow opens a new tab, a chevron stays on the site, a down arrow downloads). Color only lives in the badge, which `src/lib/links.ts` picks from the href: a platform's real mark from [Simple Icons](https://simpleicons.org) (`src/lib/platforms.ts`, one row per platform), else the site's own icon, else a section's tile for pages here, else a glyph. The label is always the one written, so give every `links:` entry a label that says what it opens ("3dsDL", not "Website"). Entries and the 404 go back with `BackButton.astro`, made the same way.
+- **Site icons** for links to sites without a platform mark are saved by `pnpm favicons` (`scripts/favicons.mjs`) into `public/favicons/`, with `src/data/favicons.json` saying whether each fills its badge or sits on a white tile. Both are committed, so the build never goes online. Run it after adding links; a site with no usable icon gets a globe.
+- **Links out of the site** open in a new tab with a small arrow after them: Markdown through a Sätteri plugin (`src/lib/external-links.ts`), short data strings through `inline()`, templates through `extAttrs()` (`src/lib/external.ts`). Astro caches rendered Markdown, so after changing the plugin delete `node_modules/.astro/data-store.json` before building.
 - **Sounds** are made on the spot (`src/scripts/sfx.ts`): a tick when you point at something, a chime when you press it. `M` mutes them. `B` goes back.
 - **Mii portraits** (`public/mii/`) are rendered from `ME`: neutral, happy, surprised, and a full-body one for the 404. Re-render them if `ME` changes.
 - Entries without a `cover` get drawn art from `/art/<section>/<slug>.svg`, picked from their tags (`src/lib/tiles.ts`). Sections without a plaza block take their tile's glyph and colors from `TILES` in `src/data/sections.ts`.
@@ -50,7 +54,7 @@ Moving between pages follows one model (`src/scripts/motion.ts`, the end of `glo
 
 ## Apps
 
-Apps live at `/apps/<name>/` and take the whole screen instead of the reading column (`app` on `Base.astro`, `.col-app` in `global.css`): the TV's casing slides off past the edges as you go in and back as you leave (a channel grows into its app, see Moving between pages), and the plaza button stays in the top left. An app with a rail of its own (the chat) lists the sections there instead of the TV's menu: Menu in the rail unfolds them under it and folds them away, the rail scrolls when the screen is short, the TV's menu button stays hidden (`data-app-nav`), the menu folds away if it was open as you came in, and the light switch moves into the app's bar. On a phone the rail goes and both buttons stay in the bar. The list on `/apps/` is `src/data/apps.ts`; an app with an `href` opens, one without shakes its head.
+Apps live at `/apps/<name>/` and take the whole screen instead of the reading column (`app` on `Base.astro`, `.col-app` in `global.css`): the TV's casing slides off past the edges as you go in and back as you leave (a channel grows into its app, see Moving between pages), and the plaza button stays in the top left. An app with a rail of its own (the chat) lists the sections there instead of the TV's menu: Menu in the rail unfolds them under it and folds them away, the rail scrolls when the screen is short, the TV's menu button stays hidden (`data-app-nav`), the menu folds away if it was open as you came in, and the light switch moves into the app's bar. On a phone the rail goes and both buttons stay in the bar. The list on `/apps/` is `src/data/apps.ts`; an app with an `href` opens, one without shakes its head. An app's plaza block, tile and art are keyed by its `href` once it has one (`appPath`), so a live app's block opens the app itself (`/apps/chat/`, `/games/`) and one marked `soon` opens a placeholder at its href (`pages/apps/[app].astro`, `AppSoon.astro`): its art, what it will be, and the way back. Every game on `/games/` has a page of its own the same way (`pages/games/[game].astro`) with its play links, where it will run once it is embedded.
 
 ### Chat (`/apps/chat/`)
 
@@ -64,11 +68,19 @@ A live chat room drawn as Miiverse was on the Wii U (`src/components/chat/`): a 
 - The room keeps the last 110 posts; whoever is in it deletes older ones. Presence is rewritten every 5 seconds and shows who is typing.
 - To try changes without touching the real room, run a GUN relay locally and build with `PUBLIC_CHAT_RELAY=http://localhost:8765/gun`.
 
+## Games
+
+Every game on `/games/` (`src/data/games.ts`) has a page at `/games/<id>/` (`pages/games/[game].astro`), a page on the TV like any other: a title screen (`AppCover.astro`) with the back button entries have (B presses it), the art, who made it, a green Play button and its links. Play morphs the TV into a CRT round the game (`src/scripts/play.ts`): the casing's hole, drawn as a path with the same steps either way, goes from the screen's rounded rectangle to a CRT's outline, sides bowed out and corners rounded, shaped to the game's own picture (`aspect`, 4:3 by default) and as large as fits under the TV's buttons, which stay where they always are, so there are no black bars. A dark lip runs round it like the tube's surround, the glass has a soft light and shaded edges, and the game fades in. A power button takes the plaza button's place while it plays and stops it: the game's frame is removed, which ends it and its sound, and the morph plays back to the ordinary TV. Leaving the page while playing puts the TV back at once. The game runs in a frame of its own, named by its full `index.html` path (the dev server serves no folder's index), so its keys, pointer lock and sound stay inside it and the site's B and M keep working outside it.
+
+- **Your games** point at their project (`project`), which gives the cover, description and links. Those built for the web on itch.io play through itch's embed, letterboxed to their shape (`aspect`). Lucky Knight's build needs cross-origin isolation, which no framed page gets, so its Play opens itch.io in a new tab (`newTab`).
+- **Everyone else's** run from files served by this site, under `public/play/`, so nothing breaks if another site goes: DOOM (Chocolate Doom in WebAssembly with the shareware WAD), Quake III Arena (James Darpinian's ioquake3 WebAssembly build, GPLv2, with the demo's `pak0.pk3` split into three parts under 25 MiB that the page joins; only multiplayer still uses his peer server), Portal (the Still Alive floppy demo on v86), the Flash games (Ruffle, `public/play/flash/?game=<name>`) and Crysis (a joke: it never loads). Their art is `src/assets/games/<id>.webp`: the game's real icon centered on a blurred copy of itself, opaque square icons cut to a squircle.
+- `public/play/` is excluded from `astro check` (`tsconfig.json`), since it is other people's built code.
+
 ## Home page plaza
 
 The home page is a Wii U style plaza rendered with three.js, timed off the console's own start up. It opens on your Mii floating in the haze with a tap prompt over it. The click (browsers only allow sound after one) starts the music and the opening: you fall under real gravity, the camera riding down with you, to your friends waiting below, land with a knee bend and wave hello while they clap, the camera pulls back as ten glass blocks tumble in one after another, then a crowd runs in with their hands up and gathers under the blocks. Now and then someone in the crowd says something real from the site in a speech bubble.
 
-- Each block shows title art from `public/plaza/icons/<section>.webp` (512px, named after the section's path, e.g. `blogs.webp`), made like Wii U menu icons: one character with an attitude, cropped boldly, in its own medium (yarn, clay, cut paper, pixel art, cel animation...), with no text. The block's name shows on a tag when it is hovered or focused. A section without a file falls back to a drawn glyph with its name.
+- Each block shows title art from `public/plaza/icons/<section>.webp` (512px, named after the section's path, e.g. `blogs.webp`), drawn like the Wii U's own system icons so the set reads as one family: one bold object specific to the section, in flat solid color with a chunky darker side face for depth, lit from the top left, on pearly white, with no text, gloss, glow, drawn tile or floating decoration (the glass block is the frame). The block's name shows on a tag when it is hovered or focused. A section without a file falls back to a drawn glyph with its name.
 - The back row shows `FEATURED` random blog posts and projects that have a cover, a new pick on each visit, with the cover as the block's art.
 - Which links become blocks, their glyph and colors, your Mii (`ME`), your friends (`HERO`) and the crowd size live in `src/data/plaza.ts`. Block names come from `NAV` and `FOOTER_NAV`.
 - Your Mii speaks first on every visit, a moment after the camera has pulled back, a greeting picked at random from `WELCOME` in `src/data/plaza.ts` (plain, punny, unhinged, and game references), alone until it ends. One of them is true: the Konami code on the plaza sets the whole crowd dancing.
@@ -116,6 +128,9 @@ src/
   components/           ChannelMenu, Feed, Timeline, Friends, ui/ (the TV frame, panel, buttons, tiles), plaza/ (the 3D plaza), mii/ (Wii U Miis), chat/ (the chat app)
   data/sections.ts      tiles for sections without a plaza block, colors for drawn art
   data/apps.ts          the apps on /apps/
+  data/games.ts         the games on /games/ and how each one plays
+  assets/games/         channel art for games that aren't yours
+  assets/channels/      banners for the apps' channels on /apps/
   scripts/motion.ts     page transitions, the menu, B to go back
   scripts/sfx.ts        UI sounds
   lib/
@@ -126,7 +141,7 @@ src/
     miis.ts             Mii QR images to Mii codes, at build time
     schema.ts           schema.org builders
   pages/                routes, plus sitemap.xml, robots.txt, llms.txt, blogs/index.xml
-public/                 favicon, resume.pdf, ffl/ (Mii runtime and models)
+public/                 favicon, resume.pdf, ffl/ (Mii runtime and models), play/ (the games' self-hosted files)
 scripts/transitions.mjs films every route change (pnpm transitions)
 ```
 
