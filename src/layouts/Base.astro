@@ -20,6 +20,7 @@ import { absUrl, pagePath } from '../lib/content';
 import { OG_HEIGHT, OG_WIDTH, ogAlt, ogPathForPage } from '../lib/og';
 import { person, website } from '../lib/schema';
 import { tileFor } from '../lib/tiles';
+import { hasTwin, twinOf } from '../lib/twins';
 import Frame from '../components/ui/Frame.astro';
 import ThemeToggle from '../components/ui/ThemeToggle.astro';
 import Plaza from '../components/plaza/Plaza.astro';
@@ -78,6 +79,8 @@ const fullscreen = fullscreenProp || embed;
 const path = pagePath(Astro.url);
 const isHome = path === '/';
 const fullTitle = isHome ? SITE.title : `${title} | ${SITE.title}`;
+// The page's Markdown twin, for AI agents to read (src/lib/twins.ts), when it has one.
+const twin = !embed && (await hasTwin(path)) ? absUrl(twinOf(path)) : null;
 const pageUrl = absUrl(path);
 const canonical = canonicalOverride ?? pageUrl;
 
@@ -113,6 +116,7 @@ const year = new Date().getFullYear();
     <meta name="description" content={description} />
     <meta name="author" content={AUTHOR.name} />
     <link rel="canonical" href={canonical} />
+    {twin && <link rel="alternate" type="text/markdown" href={twin} title="Markdown" />}
     {noindex && <meta name="robots" content="noindex" />}
     <meta name="generator" content={Astro.generator} />
     {embed && <base target="_blank" />}

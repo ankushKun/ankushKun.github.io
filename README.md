@@ -22,6 +22,14 @@ Every page has its picture's alt text (`og:image:alt`, `twitter:image:alt`), and
 
 The cards' backdrop (`src/assets/og/plaza.jpg` with `plaza.json`) and the clip are recorded from the real plaza by `pnpm og:capture` while `pnpm dev` runs: headless Chrome on virtual time, with the chat and the radio blocked so nobody's messages end up in them. Run it again after the plaza changes look.
 
+## AI agents (AEO)
+
+The site follows the AEO Spec v1.0 ([dualmark.dev](https://dualmark.dev/docs/spec/overview)), so answer engines can read and cite it:
+
+- **Markdown twins** (`src/lib/twins.ts`, built by `pages/[...twin].md.ts`): every page that is something to read has a Markdown copy at its path with `.md` for the trailing slash: `/index.md` for the home page, `/blogs/<slug>.md` for a post, `/about.md`, `/blogs.md` for the list, and so on. Each is made from the same content as its page: the title and description, the facts (dates, tags, stack), the page's own Markdown with site links made absolute and pictures pointed at their built files, its links and FAQ. Home, About, Contact, Resume, Apps and Games add what their pages show from `src/data/` and `src/site.ts`. `/sitemap.md` lists every twin. Each page names its twin in a `<link rel="alternate" type="text/markdown">`. Interactive pages (the apps themselves, the Mii viewer) have none.
+- **GitHub Pages only.** The site, and the other repos served under `ankush.one/*`, are GitHub Pages, so nothing sits in front of them: the twins are served as GitHub serves `.md` files, and the spec's checks for response headers (`X-Markdown-Tokens`, `X-Robots-Tag`, `Vary`, a `Link` header) and for answering by `Accept` or user agent are left unmet on purpose.
+- `robots.txt` lets every crawler in, and `/llms.txt` lists the site for language models.
+
 ## Adding content
 
 Every entry is a folder with an `index.md` and its images. The folder name is the URL.
