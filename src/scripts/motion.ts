@@ -14,8 +14,11 @@
 //   back.
 // - On a phone the two buttons step aside while you read down a page, and come back when you
 //   scroll up.
-// Going to and from the plaza is a real page load instead (see Base.astro); going there, the page
-// fades out first (data-going-home).
+// - To and from the plaza the router changes the page too, so the site stays one document and the
+//   music never stops: the plaza zooms into a block and fades into its haze before the page fades
+//   in, and coming back the page fades out as the plaza pulls back out of the block
+//   (html[data-plaza-move], plaza/main.ts). The plaza itself stays alive, asleep, while you are
+//   away (Plaza.astro).
 import type { TransitionBeforePreparationEvent, TransitionBeforeSwapEvent } from 'astro:transitions/client';
 import { sectionOf } from '../lib/nav';
 import { closeMenu, isMenuOpen, resetMenu, showMenuStill } from './menu';
@@ -29,6 +32,10 @@ let door: HTMLElement | null = null;
 /** Whether the menu was open when the page began to change, to open it again on the new one. */
 let menuWasOpen = false;
 let from = location.pathname;
+/** The page the router last came from (the page itself, before the first page change). */
+export const previousPath = () => from;
+/** 'enter' leaving the plaza, 'return' coming back to it, for one page change. */
+let plazaMove: 'enter' | 'return' | null = null;
 let oldTop = 0;
 
 /** Elements given a transition name for one move, cleared once it is over. */
@@ -45,12 +52,6 @@ function clearNames() {
 const narrow = matchMedia('(max-width: 879px)');
 const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const isApp = (doc: Document) => !!doc.querySelector('.col-app');
-
-/** The lengths of the moves, as global.css sets them, in milliseconds. */
-function length(token: '--vt-out' | '--vt-in' | '--vt-big') {
-  const v = getComputedStyle(document.documentElement).getPropertyValue(token).trim();
-  return v.endsWith('ms') ? parseFloat(v) : parseFloat(v) * 1000 || 300;
-}
 
 type Rect = Pick<DOMRect, 'left' | 'top' | 'width' | 'height'>;
 const rectOf = (el: Element): Rect => {
@@ -80,6 +81,10 @@ document.addEventListener('astro:before-preparation', (event) => {
   clearNames();
   door = null;
   casing = null;
+  // To or from the plaza: one fade of the whole screen, nothing named on either side (global.css).
+  const home = (p: string) => p === '/';
+  plazaMove = home(e.from.pathname) !== home(e.to.pathname) ? (home(e.to.pathname) ? 'return' : 'enter') : null;
+  if (plazaMove) document.documentElement.dataset.plazaMove = plazaMove;
   const source = e.sourceElement instanceof Element ? e.sourceElement.closest('a') : null;
   // On a phone the menu covers the page: it folds away first, while the next page loads, so the
   // page change starts on a clear screen. It costs no time when the page takes longer to load.
@@ -95,7 +100,7 @@ document.addEventListener('astro:before-preparation', (event) => {
   e.loader = async () => {
     await Promise.all([load(), folded]);
     const toApp = isApp(e.newDocument);
-    if (toApp === isApp(document)) return;
+    if (plazaMove || toApp === isApp(document)) return;
     nav = toApp ? 'app-in' : 'app-out';
     const glass = document.querySelector('.tv-glass');
     if (glass) casing = rectOf(glass);
@@ -116,6 +121,11 @@ document.addEventListener('astro:before-swap', (event) => {
   // Moving the menu to the new page closes it; it opens again after the swap if it was open.
   menuWasOpen ||= isMenuOpen() && !narrow.matches;
 
+  // The plaza is one element kept for the whole visit once it runs (Plaza.astro); every other page
+  // holds an empty place for it. A place never filled gives way to the real plaza.
+  const plaza = document.querySelector('[data-plaza]');
+  if (plaza && !plaza.hasAttribute('data-plaza-boot')) plaza.removeAttribute('data-astro-transition-persist');
+
   // Out of an app, the page comes up behind it on its own, and the app shrinks back into the channel
   // it was opened from if the page has it.
   if (nav === 'app-out') {
@@ -130,12 +140,17 @@ document.addEventListener('astro:before-swap', (event) => {
     }
   }
 
-  e.viewTransition.finished.finally(clearNames);
+  e.viewTransition.finished.finally(() => {
+    clearNames();
+    delete document.documentElement.dataset.plazaMove;
+  });
 });
 
 document.addEventListener('astro:after-swap', () => {
   const html = document.documentElement;
   html.dataset.nav = nav;
+  if (plazaMove) html.dataset.plazaMove = plazaMove;
+  plazaMove = null;
   html.toggleAttribute('data-door', !!door);
   const main = document.getElementById('main');
   const app = nav !== 'page';
@@ -179,27 +194,6 @@ document.addEventListener('astro:after-swap', () => {
       else a.removeAttribute('aria-current');
     });
 });
-
-// Going home to the plaza: the page fades out completely first, and only then does the plaza load
-// and pull back out of its block (plaza/main.ts). Back from the back/forward cache, the page shows
-// again.
-document.addEventListener(
-  'click',
-  (e) => {
-    const link = e.target instanceof Element ? e.target.closest<HTMLAnchorElement>('a[href]') : null;
-    if (!link || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    const to = new URL(link.href);
-    if (to.origin !== location.origin || to.pathname !== '/' || link.target) return;
-    e.preventDefault();
-    const html = document.documentElement;
-    if (html.hasAttribute('data-going-home')) return;
-    if (calm()) return location.assign(to.href);
-    html.setAttribute('data-going-home', '');
-    setTimeout(() => location.assign(to.href), length('--vt-in'));
-  },
-  true,
-);
-addEventListener('pageshow', () => document.documentElement.removeAttribute('data-going-home'));
 
 // On a phone a link in the menu closes it as you go, even to the page you are on.
 document.addEventListener('click', (e) => {

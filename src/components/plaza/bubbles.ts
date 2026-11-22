@@ -121,14 +121,16 @@ export class Bubbles {
     this.layer.append(el);
     const bw = el.offsetWidth;
     const bh = el.offsetHeight;
-    const candidates = post.me ? (crowd.free(0) ? [0] : []) : crowd.speakers(post.cube).slice(0, 16);
+    const own = post.by ?? (post.me ? 0 : -1);
+    const candidates = own >= 0 ? (crowd.free(own) ? [own] : []) : crowd.speakers(post.cube).slice(0, 16);
     // The speaker whose bubble covers least of the section blocks: ideally none, at most a corner.
     let best: { speaker: number; at: ReturnType<Bubbles['place']>; cover: number } | null = null;
     for (const speaker of candidates) {
       const at = this.place(crowd, speaker, camera, w, h, bw, bh);
       if (!at.fits || this.active.some((a) => overlap(a.box, at.box))) continue;
       const cover = avoid.reduce((s, b) => s + area(b, at.box), 0) / (bw * bh);
-      if (cover > 0.18 || (best && cover >= best.cover)) continue;
+      // The DJ stands under the Music block, so what they say goes over it.
+      if ((post.by === undefined && cover > 0.18) || (best && cover >= best.cover)) continue;
       best = { speaker, at, cover };
       if (cover === 0) break;
     }

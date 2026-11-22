@@ -1,5 +1,5 @@
 // The home page plaza: which links become glass cubes, how they look, and who stands in the middle.
-import type { CubeStyle } from '../components/plaza/types';
+import type { CubeStyle, MiiLook } from '../components/plaza/types';
 
 /**
  * The plaza's blocks, in slot order: back row (4), the two sides, then the front row (whose middle
@@ -34,6 +34,57 @@ export const ME = 'AwEAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAABNAGUAAAAAAAAAAAAAAAAAAAAAA
 
 /** Up to nine friends who stand around you and applaud. With fewer than seven, the crowd fills in. */
 export const HERO: string[] = [];
+
+/**
+ * The DJ: stands under the Music block with a boombox on their shoulder, bobbing while music
+ * plays, says each new track, and opens the player when pressed. A file name or a Mii code, as
+ * above; empty for a random Mii.
+ */
+export const DJ = 'Hatsune Miku.png';
+
+/**
+ * What a QR code can't carry, by file name in src/data/miis/: Switch colors, a headset, a ponytail
+ * (MiiLook in plaza/types.ts).
+ */
+export const LOOKS: Record<string, MiiLook> = {
+  'Hatsune Miku.png': { parts: { hair: { color: 61 }, eyebrow: { color: 61 } }, headset: '#39c5bb' },
+  'Gumi.png': { parts: { hair: { color: 69 }, eyebrow: { color: 69 } } },
+};
+
+/**
+ * Who dances either side of the DJ while music plays, left then right as you look at them. Each
+ * is made here: a Mii to start from (a file name or a code) with the parts that change.
+ */
+export const BACKUP: (MiiLook & { name: string; from: string })[] = [
+  {
+    name: 'Akita Neru',
+    from: 'Hatsune Miku.png',
+    parts: {
+      hair: { type: 103, color: 85 },
+      eyebrow: { color: 85 },
+      eye: { color: 90 },
+      personal: { favoriteColor: 10 },
+    },
+    ponytail: '#fff27e',
+  },
+  {
+    name: 'Kasane Teto',
+    from: 'Hatsune Miku.png',
+    parts: {
+      hair: { type: 29, color: 31 },
+      eyebrow: { color: 31 },
+      eye: { color: 20 },
+      personal: { favoriteColor: 11 },
+    },
+    headset: '#ff4a5c',
+  },
+];
+
+/**
+ * The DJ's boombox: 'model' is Supersiv11's low poly boom box (public/plaza/boombox.glb, CC BY),
+ * 'drawn' is built in code in the plaza's own style (plaza/boombox.ts).
+ */
+export const BOOMBOX: 'model' | 'drawn' = 'model';
 
 /** Crowd size, not counting the group in the middle. */
 export const CROWD = { desktop: 110, mobile: 70 };

@@ -1,5 +1,5 @@
 // Build-time Mii loading: every QR code image in src/data/miis/ becomes a Mii code.
-import { readdir, readFile } from 'node:fs/promises';
+import { readdir, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import jsQR from 'jsqr';
 import sharp from 'sharp';
@@ -17,17 +17,22 @@ export async function miiFromImage(file: string): Promise<string> {
   return encodeMii(await miiFromQr(Uint8Array.from(qr.binaryData)));
 }
 
-let cache: Promise<Map<string, string>> | undefined;
+/** Decoded images by file name, kept until the file changes, so the dev server sees Miis added or swapped. */
+const decoded = new Map<string, { mtime: number; code: Promise<string> }>();
 
 /** Every QR image in src/data/miis/, keyed by file name. */
-export function folderMiis() {
-  cache ??= (async () => {
-    const files = (await readdir(DIR).catch(() => [] as string[])).filter((f) => IMAGE.test(f)).sort();
-    const out = new Map<string, string>();
-    for (const f of files) out.set(f, await miiFromImage(path.join(DIR, f)));
-    return out;
-  })();
-  return cache;
+export async function folderMiis() {
+  const files = (await readdir(DIR).catch(() => [] as string[])).filter((f) => IMAGE.test(f)).sort();
+  const out = new Map<string, string>();
+  for (const f of files) {
+    const file = path.join(DIR, f);
+    const { mtimeMs } = await stat(file);
+    let hit = decoded.get(f);
+    if (hit?.mtime !== mtimeMs) decoded.set(f, (hit = { mtime: mtimeMs, code: miiFromImage(file) }));
+    out.set(f, await hit.code);
+  }
+  for (const f of decoded.keys()) if (!out.has(f)) decoded.delete(f);
+  return out;
 }
 
 /** Resolves a Mii reference: a file name in src/data/miis/ or a Mii code. */

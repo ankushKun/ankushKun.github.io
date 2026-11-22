@@ -1,0 +1,601 @@
+/* The Music app (Music.astro). iTunes 11's layout in the TV's materials: a glossy toolbar with an
+   LCD in the middle, Cover Flow on a dark stage, a striped song list and a status line. The sliders
+   share the widget's look (.music-range, Widget.astro). */
+
+.mu {
+  --mu-bar: 84px;
+  /* Cover Flow's stage: a pale studio by day, the old black one by night. */
+  --mu-stage: radial-gradient(120% 90% at 50% 0%, #ffffff, #eef2f4 55%, #d9e0e4);
+  --mu-stage-ink: var(--color-ink-strong);
+  --mu-stage-soft: var(--color-ink-soft);
+  --mu-panel: light-dark(#fff, #1d2225);
+  --mu-stripe: light-dark(#f4f7f8, #22282b);
+  --mu-lcd: light-dark(#f3f6ef, #14181a);
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: var(--mu-bar) auto minmax(0, 1fr) auto;
+  background: var(--mu-panel);
+  color: var(--color-ink);
+}
+
+/* The night stage, after the site's lights (theme.ts), or the device's until one is picked. */
+:root[data-theme='dark'] .mu {
+  --mu-stage: radial-gradient(120% 90% at 50% 0%, #3a4246, #15191b 60%, #050607);
+  --mu-stage-ink: #fff;
+  --mu-stage-soft: rgb(255 255 255 / 0.6);
+}
+
+/* Toolbar ------------------------------------------------------------------------------------- */
+
+.mu-bar {
+  display: grid;
+  grid-template-columns: 1fr minmax(320px, 520px) 1fr;
+  align-items: center;
+  gap: 20px;
+  /* Clear of the plaza button on the left, the light switch and the menu on the right. */
+  padding: 0 150px 0 96px;
+  background: linear-gradient(var(--color-gloss-top), var(--color-gloss-bottom));
+  box-shadow:
+    inset 0 -1px 0 var(--color-line),
+    0 1px 0 light-dark(rgb(255 255 255 / 0.8), rgb(255 255 255 / 0.04));
+}
+
+.mu-transport {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mu-key {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--color-ink);
+  transition:
+    background 0.15s ease,
+    scale 0.25s var(--ease-spring);
+}
+
+.mu-key:hover {
+  background: var(--color-line);
+}
+
+.mu-key:active {
+  scale: 0.9;
+}
+
+.mu-play {
+  width: 52px;
+  height: 52px;
+  background: radial-gradient(circle at 50% 30%, var(--color-gloss-top) 40%, light-dark(#eaeff1, #262c30));
+  box-shadow:
+    0 0 0 3px light-dark(#a8def4, #2a6d8e),
+    0 4px 10px -4px light-dark(rgb(30 50 60 / 0.3), rgb(0 0 0 / 0.6));
+  color: var(--color-sky);
+}
+
+.mu-play:hover {
+  background: radial-gradient(circle at 50% 30%, var(--color-gloss-top) 40%, light-dark(#eaeff1, #262c30));
+  box-shadow: var(--glow);
+}
+
+.mu-play .i-pause,
+.mu-play[aria-pressed='true'] .i-play {
+  display: none;
+}
+
+.mu-play[aria-pressed='true'] .i-pause {
+  display: block;
+}
+
+.mu-vol {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 6px;
+  max-width: 150px;
+  margin-left: 10px;
+  color: var(--color-ink-soft);
+}
+
+.mu-vol svg {
+  flex: none;
+}
+
+/* The LCD: what is playing, on a pale screen set into the bar. */
+.mu-lcd {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  height: 62px;
+  padding: 5px 14px 5px 5px;
+  border-radius: 14px;
+  background: var(--mu-lcd);
+  box-shadow:
+    inset 0 1px 3px light-dark(rgb(40 60 30 / 0.18), rgb(0 0 0 / 0.6)),
+    0 1px 0 light-dark(rgb(255 255 255 / 0.9), rgb(255 255 255 / 0.05));
+}
+
+.mu-lcd-art {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: light-dark(#e3e9e0, #22282b);
+  color: var(--color-ink-faint);
+}
+
+.mu-lcd-art img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mu-lcd-main {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 2px;
+}
+
+.mu-lcd-line {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.mu-lcd-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+}
+
+.mu-lcd-title,
+.mu-lcd-artist {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mu-lcd-title {
+  color: var(--color-ink-strong);
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.mu-lcd-artist {
+  color: var(--color-ink-soft);
+  font-size: 0.75rem;
+  line-height: 1.3;
+}
+
+.mu-toggle {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--color-ink-faint);
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.mu-toggle:hover {
+  background: var(--color-line);
+}
+
+.mu-toggle[aria-pressed='true'] {
+  color: var(--color-sky);
+}
+
+.mu-toggle .i-one,
+.mu-toggle[data-mode='one'] .i-all {
+  display: none;
+}
+
+.mu-toggle[data-mode='one'] .i-one {
+  display: block;
+}
+
+.mu-lcd-scrub {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mu-time {
+  min-width: 2.8em;
+  color: var(--color-ink-soft);
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.mu-time[data-left] {
+  text-align: right;
+}
+
+.mu-search {
+  display: flex;
+  align-items: center;
+  justify-self: end;
+  gap: 6px;
+  width: min(220px, 100%);
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--mu-panel);
+  box-shadow:
+    inset 0 1px 2px light-dark(rgb(0 0 0 / 0.12), rgb(0 0 0 / 0.5)),
+    0 0 0 1px var(--color-line);
+  color: var(--color-ink-faint);
+}
+
+.mu-search:focus-within {
+  box-shadow: var(--glow);
+}
+
+.mu-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: var(--color-ink);
+  font: inherit;
+  font-size: 0.875rem;
+}
+
+.mu-search input:focus-visible {
+  box-shadow: none;
+}
+
+/* Cover Flow -------------------------------------------------------------------------------- */
+
+.mu-flow {
+  --cover: clamp(140px, 22vh, 220px);
+  position: relative;
+  height: calc(var(--cover) * 1.62 + 52px);
+  overflow: hidden;
+  background: var(--mu-stage);
+  outline: none;
+  perspective: 900px;
+  user-select: none;
+}
+
+.mu-flow:focus-visible {
+  box-shadow: inset 0 0 0 3px #46c3f0;
+}
+
+.mu-flow-stage {
+  position: absolute;
+  inset: 26px 0 auto;
+  height: var(--cover);
+  transform-style: preserve-3d;
+}
+
+.mu-cover {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: var(--cover);
+  height: var(--cover);
+  margin-left: calc(var(--cover) / -2);
+  padding: 0;
+  border: 0;
+  background: none;
+  transition:
+    transform 0.48s var(--ease-glide),
+    opacity 0.48s ease,
+    filter 0.48s ease;
+}
+
+.mu-cover img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  box-shadow: 0 6px 18px -8px rgb(0 0 0 / 0.5);
+}
+
+/* Each cover stands on a glossy floor: a mirrored copy under it, fading out. It turns with the cover. */
+.mu-cover .mu-reflect {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  box-shadow: none;
+  transform: scaleY(-1);
+  opacity: 0.5;
+  mask-image: linear-gradient(to top, rgb(0 0 0 / 0.75), transparent 45%);
+  pointer-events: none;
+}
+
+.mu-cover[hidden] {
+  display: block;
+  visibility: hidden;
+}
+
+.mu-flow-caption {
+  position: absolute;
+  inset: auto 0 14px;
+  display: grid;
+  margin: 0;
+  color: var(--mu-stage-ink);
+  text-align: center;
+}
+
+.mu-flow-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.mu-flow-artist {
+  color: var(--mu-stage-soft);
+  font-size: 0.8125rem;
+}
+
+/* The songs ---------------------------------------------------------------------------------- */
+
+.mu-list {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.mu-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  table-layout: fixed;
+}
+
+.mu-table th {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  padding: 0;
+  background: linear-gradient(var(--color-gloss-top), var(--color-gloss-bottom));
+  box-shadow: inset 0 -1px 0 var(--color-line);
+  text-align: left;
+}
+
+.mu-table th button {
+  width: 100%;
+  padding: 7px 12px;
+  border: 0;
+  background: none;
+  color: var(--color-ink-soft);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: inherit;
+}
+
+.mu-table th[aria-sort] button {
+  color: var(--color-ink-strong);
+}
+
+.mu-table th[aria-sort='ascending'] button::after,
+.mu-table th[aria-sort='descending'] button::after {
+  content: '';
+  display: inline-block;
+  margin-left: 6px;
+  border: 4px solid transparent;
+  border-top-color: currentColor;
+  vertical-align: middle;
+}
+
+.mu-table th[aria-sort='ascending'] button::after {
+  translate: 0 -2px;
+  rotate: 180deg;
+}
+
+.mu-table td {
+  overflow: hidden;
+  padding: 0 12px;
+  height: 34px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mu-table tbody tr:nth-child(even of :not([hidden])) {
+  background: var(--mu-stripe);
+}
+
+.mu-table tbody tr {
+  cursor:
+    url('/ui/hand.svg') 11 1,
+    pointer;
+}
+
+.mu-table tbody tr:hover {
+  background: light-dark(rgb(47 178 230 / 0.08), rgb(47 178 230 / 0.1));
+}
+
+.mu-table tbody tr[aria-current] {
+  background: linear-gradient(light-dark(#5ccbf3, #2a8fbf), light-dark(#2fb2e6, #1f78a5));
+  color: #fff;
+}
+
+.mu-table tbody tr[aria-current] .mu-c-artist,
+.mu-table tbody tr[aria-current] .mu-c-time {
+  color: rgb(255 255 255 / 0.85);
+}
+
+.mu-c-i {
+  width: 56px;
+  text-align: right;
+}
+
+.mu-table th.mu-c-i button {
+  text-align: right;
+}
+
+.mu-c-artist {
+  width: 32%;
+  color: var(--color-ink-soft);
+}
+
+.mu-c-time {
+  width: 72px;
+  color: var(--color-ink-soft);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.mu-table th.mu-c-time button {
+  text-align: right;
+}
+
+.mu-n {
+  color: var(--color-ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+tr[aria-current] .mu-n,
+.mu-on {
+  display: none;
+}
+
+/* The playing row's number becomes little bars, dancing while it is heard. */
+tr[aria-current] .mu-on {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 12px;
+}
+
+.mu-on i {
+  width: 3px;
+  height: 12px;
+  border-radius: 1px;
+  background: currentColor;
+  transform-origin: bottom;
+  scale: 1 0.4;
+}
+
+.mu[data-audible] tr[aria-current] .mu-on i {
+  animation: music-bar 0.9s ease-in-out infinite alternate;
+}
+
+.mu[data-audible] tr[aria-current] .mu-on i:nth-child(2) {
+  animation-duration: 0.7s;
+  animation-delay: -0.4s;
+}
+
+.mu[data-audible] tr[aria-current] .mu-on i:nth-child(3) {
+  animation-duration: 1.1s;
+  animation-delay: -0.2s;
+}
+
+.mu-row-play {
+  display: block;
+  overflow: hidden;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mu-status {
+  padding: 7px 12px;
+  background: linear-gradient(var(--color-gloss-top), var(--color-gloss-bottom));
+  box-shadow: inset 0 1px 0 var(--color-line);
+  color: var(--color-ink-soft);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+/* In the bar, the light switch sits left of the menu button, level with it. */
+@media (min-width: 880px) {
+  html:has(.mu) .theme-toggle {
+    top: 26px;
+    right: calc(var(--bezel) + 26px + 56px + 12px);
+    color: var(--color-ink-faint);
+  }
+
+  html:has(.mu) .theme-toggle:hover {
+    color: var(--color-ink-soft);
+  }
+}
+
+/* A phone: the buttons along the top, then the LCD and the transport, then the songs. Cover Flow
+   and search make way. */
+@media (max-width: 879px) {
+  .mu {
+    grid-template-rows: auto minmax(0, 1fr) auto;
+  }
+
+  .mu-bar {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: calc(var(--bezel-top) + 76px) 14px 14px;
+  }
+
+  .mu-transport {
+    order: 2;
+    justify-content: center;
+  }
+
+  .mu-lcd {
+    order: 1;
+  }
+
+  .mu-search,
+  .mu-flow {
+    display: none;
+  }
+
+  .mu-table td,
+  .mu-table th button {
+    padding-inline: 8px;
+  }
+
+  .mu-c-artist {
+    width: 34%;
+  }
+
+  .mu-c-i {
+    width: 44px;
+  }
+
+  .mu-c-time {
+    width: 56px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mu-cover {
+    transition-duration: 0.01s;
+  }
+
+  .mu[data-audible] tr[aria-current] .mu-on i {
+    animation: none;
+    scale: 1 0.8;
+  }
+}

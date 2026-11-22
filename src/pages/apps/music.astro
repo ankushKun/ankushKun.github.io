@@ -1,0 +1,28 @@
+---
+// The Music app: an app, so it fills the TV's screen (Base.astro `app`) instead of the column. It is
+// a view of the site's radio (src/scripts/music/), which keeps playing after you leave.
+import Base from '../../layouts/Base.astro';
+import Music from '../../components/music/Music.astro';
+import { getPage, pagePath } from '../../lib/content';
+import { ogPathForPage } from '../../lib/og';
+import { breadcrumbs, webPage } from '../../lib/schema';
+
+const { title, description } = (await getPage('music')).data;
+const path = pagePath(Astro.url);
+---
+
+<Base
+  {title}
+  {description}
+  imageUrl={ogPathForPage('music')}
+  app
+  schema={[
+    webPage('WebPage', path, title, description),
+    breadcrumbs([
+      { name: 'Apps', path: '/apps/' },
+      { name: title, path },
+    ]),
+  ]}
+>
+  <Music />
+</Base>

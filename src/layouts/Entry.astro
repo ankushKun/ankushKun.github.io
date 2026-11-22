@@ -9,6 +9,7 @@ import Base from './Base.astro';
 import ChannelMenu from '../components/ChannelMenu.astro';
 import Thumb from '../components/ui/Thumb.astro';
 import BackButton from '../components/ui/BackButton.astro';
+import CautionTape from '../components/ui/CautionTape.astro';
 import { NEW_TAB, extAttrs } from '../lib/external';
 import { AUTHOR } from '../site';
 import { SECTION_PATH, absUrl, formatDate, getPage, getReadMore, isoDate, pagePath, readingMinutes, type Entry } from '../lib/content';
@@ -24,6 +25,7 @@ const { entry } = Astro.props;
 const { data } = entry;
 const post = entry.collection === 'blog';
 const hero = entry.collection !== 'timeline' || Boolean(data.cover);
+const archived = entry.collection === 'projects' && entry.data.status === 'archived';
 // A short entry with no picture above or in its text has Related in view as the page opens, so its
 // first row (two across) loads at once; anywhere else Related is further down and its pictures wait.
 const body = entry.body ?? '';
@@ -65,6 +67,7 @@ const schemaNodes = [
   schema={schemaNodes}
 >
   <article>
+    {archived && <CautionTape corner />}
     <BackButton href={sectionPath} label={sectionTitle} tile={sectionPath} />
     <h1>{data.title}</h1>
     <p class="byline">
@@ -92,7 +95,14 @@ const schemaNodes = [
       }
     </p>
     {!post && <p class="lead">{data.description}</p>}
-    {hero && <Thumb {entry} main eager width={1280} class="cover" />}
+    {
+      hero && (
+        <div class="hero">
+          <Thumb {entry} main eager width={1280} class="cover" />
+          {archived && <CautionTape />}
+        </div>
+      )
+    }
     {
       Astro.slots.has('meta') && (
         <div class="meta">
@@ -206,11 +216,15 @@ const schemaNodes = [
     line-height: 1.7;
   }
 
-  article :global(.cover) {
+  .hero {
+    position: relative;
     margin-top: 28px;
-    aspect-ratio: 16 / 9;
     overflow: hidden;
     border-radius: 14px;
+  }
+
+  article :global(.cover) {
+    aspect-ratio: 16 / 9;
   }
 
   .meta {

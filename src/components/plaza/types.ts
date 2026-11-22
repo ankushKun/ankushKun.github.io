@@ -49,10 +49,26 @@ export interface PlazaPost {
   date?: { iso: string; color: string };
   /** Spoken by your own Mii in the middle instead of someone in the crowd (the welcome). */
   me?: boolean;
+  /** Spoken by this Mii (its index in the crowd), wherever it stands: the DJ saying what plays. */
+  by?: number;
+}
+
+/**
+ * What a Mii code can't carry. `parts` change the Mii itself, by FFL's CharInfo names (hair type,
+ * eye color, favoriteColor under personal...); the colors of hair, eyes, eyebrows, mouth, beard and
+ * glasses are the Switch's hundred (0 to 99), which a QR code can't hold. The rest are drawn on,
+ * for the DJ and those around them and the middle group only (far-off crowd heads are flat
+ * pictures): `headset` is a headset with a mic, its lights in that color, and `ponytail` a long
+ * ponytail tied high on the left, in that color.
+ */
+export interface MiiLook {
+  parts?: Record<string, Record<string, number>>;
+  headset?: string;
+  ponytail?: string;
 }
 
 /** A Mii with a name: yours, or one from a QR image in src/data/miis/ (named after the file). */
-export interface PlazaMii {
+export interface PlazaMii extends MiiLook {
   code: string;
   name: string;
 }
@@ -66,6 +82,11 @@ export interface PlazaData {
   hero: PlazaMii[];
   /** Miis from QR images, walked by the crowd before random Miis fill the rest. */
   pool: PlazaMii[];
+  /** Who stands under the Music block with the boombox; null for a random Mii. */
+  dj: PlazaMii | null;
+  /** Who dances either side of them, left then right. */
+  backup: PlazaMii[];
+  boombox: 'model' | 'drawn';
   crowd: { desktop: number; mobile: number };
   /** Posts and projects with cover art; each visit fills the feature slots with a random few. */
   featured: PlazaCube[];

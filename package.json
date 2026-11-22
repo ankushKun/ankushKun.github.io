@@ -12,7 +12,8 @@
     "astro": "astro",
     "check": "astro check",
     "transitions": "node scripts/transitions.mjs",
-    "favicons": "node scripts/favicons.mjs"
+    "favicons": "node scripts/favicons.mjs",
+    "music": "node scripts/music.mjs"
   },
   "dependencies": {
     "@astrojs/markdown-satteri": "0.4.7",

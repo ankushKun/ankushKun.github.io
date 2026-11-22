@@ -518,6 +518,29 @@ export const stunned: Clip = (p, t, k) => {
   p.expr = 3;
 };
 
+/**
+ * Knocked flat: limbs flung loose where they landed, eyes shut, then a twitch of the hands and
+ * feet as it comes round. The crowd lays the body down and stands it back up.
+ */
+export const sprawl: Clip = (p, t, k) => {
+  const limp = 1 - Math.exp(-9 * t);
+  const twitch = ramp(t, 0.45, 0.6) * (1 - ramp(t, 0.7, 0.9));
+  p.outL = mix(1.6, 1.15 + k * 0.4, limp);
+  p.outR = mix(1.6, 1.45 - k * 0.4, limp);
+  p.swingL = 0.3 * limp;
+  p.swingR = -0.2 * limp;
+  p.elbowL = 0.35 + twitch * 0.5;
+  p.elbowR = 0.6 - twitch * 0.3;
+  p.legL = 0.2 * limp;
+  p.legR = -0.1 * limp + twitch * 0.25;
+  p.kneeL = 0.3;
+  p.kneeR = 0.15 + twitch * 0.4;
+  p.spread = 0.14 * limp;
+  p.nod = -0.15 * limp;
+  p.headYaw = (k - 0.5) * 0.9 * limp;
+  p.expr = t < 0.55 ? 1 : 3;
+};
+
 /** Running off after a fright: the plaza run, the same as the crowd's run in, with a scared face. `t` is stride phase. */
 export const flee: Clip = (p, t, k) => {
   run(p, t, k);
@@ -601,6 +624,85 @@ export const wink: Clip = (p, t) => {
   p.headYaw = 0.1 * into;
   p.expr = into > 0.4 ? 6 : 0;
 };
+
+/**
+ * Beats a second for everything that moves to the music. YouTube's sound plays in a frame of its
+ * own, out of the page's reach, so this keeps its own steady time.
+ */
+export const TEMPO = 112 / 60;
+
+/** Where `t` seconds falls in the beat: 1 on it, easing to 0 halfway to the next. */
+export const onBeat = (t: number) => fold(cos(t * TAU * TEMPO));
+
+/** Bobbing to the music: knees and head on every beat, hips swaying over two, the free hand keeping time. */
+export const groove: Clip = (p, t) => {
+  const into = ramp(t, 0, 0.5);
+  const bob = onBeat(t);
+  const s = sin(t * Math.PI * TEMPO);
+  p.crouch = (0.02 + bob * 0.08) * into;
+  p.nod = (0.02 + bob * 0.09) * into;
+  p.sway = s * 0.3 * into;
+  p.leanZ = -s * 0.04 * into;
+  p.tilt = s * 0.07 * into;
+  p.swingR = (0.2 + bob * 0.2) * into;
+  p.elbowR = mix(0.16, 1 + bob * 0.35, into);
+  p.twistR = 0.45 * into;
+  p.expr = 2;
+};
+
+/**
+ * Backup dancing beside the DJ, on the same beat: a step from side to side on every beat with a
+ * bounce in the knees, the arms punching up and out in turn; then, for a bar out of every two, the
+ * outside arm thrown up, pumping on the beat, and the other hand on the hip. `k` below a half is
+ * the dancer on the left as you look, above it the one on the right, so the two mirror each other.
+ */
+export const idol: Clip = (p, t, k) => {
+  const into = ramp(t, 0, 0.5);
+  const beats = t * TEMPO;
+  const bob = onBeat(t);
+  const step = sin(beats * Math.PI);
+  // Eases from punching (0) to the arm up (1) and back, a bar of four beats each way.
+  const up = smooth((sin((beats * Math.PI) / 4) + 0.3) / 0.6) * into;
+  const left = k < 0.5;
+  p.crouch = (0.04 + bob * 0.12) * into;
+  p.sway = step * 0.5 * into;
+  p.leanZ = -step * 0.07 * into;
+  p.tilt = step * 0.1 * into;
+  p.nod = bob * 0.06 * into;
+  p.kneeL = fold(step) * 0.3 * into;
+  p.kneeR = fold(-step) * 0.3 * into;
+  // Facing you, the dancer on the left has their right arm outside. Arms punch on alternate beats.
+  const punch = (s: number) => ({ swing: 0.25 * into, out: mix(0.14, 0.5 + fold(s) * 1.3, into), twist: -0.4 * into, elbow: mix(0.16, 0.95 - fold(s) * 0.55, into) });
+  const a = punch(step);
+  const b = punch(-step);
+  // Thrown up a little forward, so it shows in front of big hair rather than behind it.
+  const outside = { swing: mix(a.swing, 0.5, up), out: mix(a.out, 2.3, up), twist: mix(a.twist, -0.5, up), elbow: mix(a.elbow, 0.2 + bob * 0.35, up) };
+  const inside = { swing: mix(b.swing, 0.05, up), out: mix(b.out, 0.7, up), twist: mix(b.twist, 1.3, up), elbow: mix(b.elbow, 1.75, up) };
+  const [r, l] = left ? [outside, inside] : [inside, outside];
+  p.swingR = r.swing;
+  p.outR = r.out;
+  p.twistR = r.twist;
+  p.elbowR = r.elbow;
+  p.swingL = l.swing;
+  p.outL = l.out;
+  p.twistL = l.twist;
+  p.elbowL = l.elbow;
+  p.headYaw = (left ? -1 : 1) * 0.12 * up;
+  p.expr = 2;
+};
+
+/**
+ * A boombox up on the left shoulder (a headset's mic is on the right), over whatever else the
+ * body is doing: the upper arm out level, the forearm folded back up beside the head, which tips
+ * away to make room.
+ */
+export function carry(p: Pose) {
+  p.swingL = 0.12;
+  p.outL = 1.45;
+  p.twistL = -1.5;
+  p.elbowL = 1.15;
+  p.tilt += 0.08;
+}
 
 /** How long the clips that end on their own last, in seconds. */
 export const LENGTH = { land: 0.75, thanks: 1.15, wave: 1.8, hop: 1.2, gaze: 2.8, hello: 2.2, stunned: 0.8, shock: 1.6, faint: 3.2, wink: 1.4 } as const;

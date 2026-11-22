@@ -1,7 +1,7 @@
 // Little sounds, made on the spot: a tick when the pointer comes to rest on something you can
 // press, a chime when you press it, a softer one going back, a buzz for what can't be opened yet.
 // Browsers only allow sound after a first touch or key, so nothing plays before that. M mutes them
-// (the plaza's own keys mute its music).
+// along with the music (src/scripts/music/engine.ts).
 type Sound = 'tick' | 'select' | 'back' | 'flip' | 'nope';
 
 let ctx: AudioContext | null = null;

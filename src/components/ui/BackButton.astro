@@ -15,11 +15,9 @@ interface Props {
 
 const { href, label, tile } = Astro.props;
 const art = tile ? tileFor(tile) : undefined;
-// The plaza is a real page load, not a swap on the TV (Base.astro).
-const plaza = href === '/' || href.startsWith('/#');
 ---
 
-<a {href} class="back-btn" data-back data-sfx="back" data-astro-reload={plaza ? '' : undefined}>
+<a {href} class="back-btn" data-back data-sfx="back">
   <HugeIcon icon={ArrowLeft01Icon} size={14} strokeWidth={2.6} class="chev" />
   {
     art ? (

@@ -1,0 +1,556 @@
+---
+// The radio's controls, on every screen: a quiet note that turns into dancing bars while music is
+// heard; a tag beside it naming each new track for a moment; and a small player that drops out of
+// it. The track's cover shows on the plaza's Music block instead (plaza/nowplaying.ts). One element for the whole visit
+// (transition:persist), like the light switch. On the plaza it sits left of the light switch; on
+// the TV, in the casing's top left corner, mirroring it (on a phone, at the top beside it).
+// src/scripts/music/widget.ts runs it.
+import { MusicNote01Icon, NextIcon, PauseIcon, PlayIcon, PreviousIcon, VolumeHighIcon, VolumeMute02Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons';
+import HugeIcon from '../ui/HugeIcon.astro';
+import { MUSIC } from '../../data/music';
+---
+
+<div class="music" data-music-widget transition:persist="music" hidden>
+  <button type="button" class="music-btn" popovertarget="music-pop" aria-label="Music" data-sfx>
+    <HugeIcon icon={MusicNote01Icon} size={20} strokeWidth={1.8} class="music-note" />
+    <span class="music-bars" aria-hidden="true"><i></i><i></i><i></i></span>
+  </button>
+  <p class="music-now" aria-hidden="true"><span></span></p>
+  <div id="music-pop" class="music-pop" popover aria-label="Music">
+    <div class="music-head">
+      <span class="music-art">
+        <HugeIcon icon={MusicNote01Icon} size={22} strokeWidth={1.8} />
+        <img alt="" width="56" height="56" decoding="async" hidden />
+      </span>
+      <span class="music-meta">
+        <span class="music-title">{MUSIC.title}</span>
+        <span class="music-artist"></span>
+      </span>
+    </div>
+    <div class="music-scrub">
+      <span class="music-time" data-at>0:00</span>
+      <input type="range" class="music-range" data-seek min="0" max="0" step="1" value="0" aria-label="Position" />
+      <span class="music-time" data-left>0:00</span>
+    </div>
+    <div class="music-row">
+      <div class="music-transport">
+        <button type="button" class="music-key" data-prev aria-label="Previous"><HugeIcon icon={PreviousIcon} size={18} strokeWidth={2} /></button>
+        <button type="button" class="music-key music-play" data-play aria-label="Play">
+          <HugeIcon icon={PlayIcon} size={22} strokeWidth={2} class="i-play" />
+          <HugeIcon icon={PauseIcon} size={22} strokeWidth={2} class="i-pause" />
+        </button>
+        <button type="button" class="music-key" data-next aria-label="Next"><HugeIcon icon={NextIcon} size={18} strokeWidth={2} /></button>
+      </div>
+      <label class="music-vol">
+        <button type="button" class="music-mute" data-mute aria-label="Mute">
+          <HugeIcon icon={VolumeHighIcon} size={16} strokeWidth={2} class="i-on" />
+          <HugeIcon icon={VolumeMute02Icon} size={16} strokeWidth={2} class="i-off" />
+        </button>
+        <input type="range" class="music-range" data-volume min="0" max="100" step="1" value="25" aria-label="Volume" />
+      </label>
+    </div>
+    <a href="/apps/music/" class="music-open" data-sfx>
+      Open Music
+      <HugeIcon icon={ArrowRight01Icon} size={14} strokeWidth={2.4} />
+    </a>
+  </div>
+</div>
+
+<script>
+  import '../../scripts/music/widget';
+</script>
+
+<style is:global>
+  .music {
+    position: fixed;
+    z-index: 60;
+    /* The TV on a big screen: the casing's top left corner, mirroring the light switch in the top
+       right one (ThemeToggle.astro has the sum). */
+    top: calc((1.4142 * (var(--bezel-top) + var(--crt-y)) - var(--crt-y)) / 2.4142 - 16px);
+    left: calc((1.4142 * (var(--bezel) + var(--crt-x)) - var(--crt-x)) / 2.4142 - 16px);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    view-transition-name: music;
+    transition:
+      opacity 0.25s ease,
+      translate 0.35s var(--ease-glide);
+  }
+
+  .music[hidden] {
+    display: none;
+  }
+
+  .music-btn {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: var(--color-ink-faint);
+    transition: color 0.2s ease;
+  }
+
+  .music-btn:hover,
+  .music-btn:has(+ .music-now + .music-pop:popover-open:not([data-over])) {
+    color: var(--color-ink-soft);
+  }
+
+  /* A note while nothing is heard; three dancing bars while it is. */
+  .music-btn > * {
+    grid-area: 1 / 1;
+  }
+
+  .music-note {
+    width: 19px;
+    height: 19px;
+  }
+
+  .music[data-audible] .music-note,
+  .music:not([data-audible]) .music-bars {
+    display: none;
+  }
+
+  .music-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 2.5px;
+    height: 16px;
+  }
+
+  .music-bars i {
+    width: 3.5px;
+    height: 16px;
+    border-radius: 2px;
+    background: currentColor;
+    transform-origin: bottom;
+    animation: music-bar 0.9s ease-in-out infinite alternate;
+  }
+
+  .music-bars i:nth-child(2) {
+    animation-duration: 0.7s;
+    animation-delay: -0.4s;
+  }
+
+  .music-bars i:nth-child(3) {
+    animation-duration: 1.1s;
+    animation-delay: -0.2s;
+  }
+
+  .music[data-audible] .music-btn {
+    color: var(--color-sky);
+  }
+
+  @keyframes music-bar {
+    from {
+      scale: 1 0.3;
+    }
+    to {
+      scale: 1 1;
+    }
+  }
+
+  /* The track's name on a dark tag, as names are on the plaza, for a moment after it changes. */
+  .music-now {
+    max-width: min(240px, 50vw);
+    margin: 0;
+    overflow: hidden;
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: var(--color-tag);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    opacity: 0;
+    translate: -6px 0;
+    pointer-events: none;
+    transition:
+      opacity 0.3s ease,
+      translate 0.4s var(--ease-glide);
+  }
+
+  .music-now span {
+    display: inline-block;
+  }
+
+  .music[data-telling] .music-now {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  /* A long name slides along to its end and back. */
+  .music[data-telling] .music-now[data-long] span {
+    animation: music-marquee 9s ease-in-out 0.8s infinite alternate;
+  }
+
+  @keyframes music-marquee {
+    0%,
+    15% {
+      translate: 0 0;
+    }
+    85%,
+    100% {
+      translate: var(--shift, 0) 0;
+    }
+  }
+
+  /* The player: a white card dropped out of the button, placed by widget.ts. */
+  .music-pop {
+    position: fixed;
+    inset: auto;
+    width: 280px;
+    max-width: calc(100vw - 24px);
+    margin: 0;
+    padding: 14px;
+    border: 0;
+    border-radius: 22px;
+    background: linear-gradient(var(--color-gloss-top), var(--color-gloss-bottom));
+    box-shadow:
+      0 0 0 1px var(--color-line),
+      0 18px 40px -14px light-dark(rgb(20 40 55 / 0.35), rgb(0 0 0 / 0.75));
+    color: var(--color-ink);
+    opacity: 0;
+    scale: 0.94;
+    transition:
+      opacity 0.2s ease,
+      scale 0.3s var(--ease-spring),
+      overlay 0.2s allow-discrete,
+      display 0.2s allow-discrete;
+  }
+
+  .music-pop:popover-open {
+    opacity: 1;
+    scale: 1;
+  }
+
+  @starting-style {
+    .music-pop:popover-open {
+      opacity: 0;
+      scale: 0.94;
+    }
+  }
+
+  .music-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .music-art {
+    position: relative;
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    overflow: hidden;
+    border-radius: 12px;
+    background: light-dark(#e6edf0, #2a3135);
+    color: var(--color-ink-faint);
+    box-shadow: 0 0 0 1px var(--color-line);
+  }
+
+  .music-art img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .music-meta {
+    display: grid;
+    min-width: 0;
+    gap: 2px;
+  }
+
+  .music-title,
+  .music-artist {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .music-title {
+    color: var(--color-ink-strong);
+    font-weight: 700;
+  }
+
+  .music-artist {
+    color: var(--color-ink-soft);
+    font-size: 0.8125rem;
+  }
+
+  .music-scrub {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .music-time {
+    min-width: 2.6em;
+    color: var(--color-ink-soft);
+    font-size: 0.6875rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .music-time[data-left] {
+    text-align: right;
+  }
+
+  .music-range {
+    flex: 1;
+    min-width: 0;
+    height: 18px;
+    margin: 0;
+    background: none;
+    appearance: none;
+    cursor: pointer;
+  }
+
+  .music-range::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 2px;
+    background: linear-gradient(to right, var(--color-sky) var(--fill, 0%), light-dark(#d5dee2, #3a4247) var(--fill, 0%));
+  }
+
+  .music-range::-moz-range-track {
+    height: 4px;
+    border-radius: 2px;
+    background: linear-gradient(to right, var(--color-sky) var(--fill, 0%), light-dark(#d5dee2, #3a4247) var(--fill, 0%));
+  }
+
+  .music-range::-webkit-slider-thumb {
+    width: 14px;
+    height: 14px;
+    margin-top: -5px;
+    border: 0;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 4px rgb(0 0 0 / 0.3);
+    appearance: none;
+  }
+
+  .music-range::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border: 0;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 4px rgb(0 0 0 / 0.3);
+  }
+
+  .music-range:focus-visible {
+    box-shadow: none;
+  }
+
+  .music-range:focus-visible::-webkit-slider-thumb {
+    box-shadow: var(--glow);
+  }
+
+  .music-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .music-transport {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .music-key,
+  .music-mute {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: var(--color-ink);
+    transition:
+      background 0.15s ease,
+      scale 0.25s var(--ease-spring);
+  }
+
+  .music-key:hover,
+  .music-mute:hover {
+    background: var(--color-line);
+  }
+
+  .music-key:active {
+    scale: 0.9;
+  }
+
+  .music-play {
+    width: 44px;
+    height: 44px;
+    background: radial-gradient(circle at 50% 30%, var(--color-gloss-top) 40%, light-dark(#eaeff1, #262c30));
+    box-shadow:
+      0 0 0 2.5px light-dark(#a8def4, #2a6d8e),
+      0 3px 8px -3px light-dark(rgb(30 50 60 / 0.3), rgb(0 0 0 / 0.6));
+    color: var(--color-sky);
+  }
+
+  .music-play:hover {
+    background: radial-gradient(circle at 50% 30%, var(--color-gloss-top) 40%, light-dark(#eaeff1, #262c30));
+    box-shadow: var(--glow);
+  }
+
+  .music-play .i-pause,
+  .music-play[aria-pressed='true'] .i-play,
+  .music-mute .i-off,
+  .music-mute[aria-pressed='true'] .i-on {
+    display: none;
+  }
+
+  .music-play[aria-pressed='true'] .i-pause,
+  .music-mute[aria-pressed='true'] .i-off {
+    display: block;
+  }
+
+  .music-vol {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 2px;
+    max-width: 120px;
+    color: var(--color-ink-soft);
+  }
+
+  .music-mute {
+    width: 30px;
+    height: 30px;
+    color: inherit;
+  }
+
+  .music-open {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin: 10px -14px -14px;
+    padding: 11px;
+    border-top: 1px solid var(--color-line);
+    border-radius: 0 0 22px 22px;
+    color: var(--color-ink-soft);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition:
+      color 0.15s ease,
+      background 0.15s ease;
+  }
+
+  .music-open:hover {
+    background: var(--color-line);
+    color: var(--color-sky);
+  }
+
+  /* The plaza: left of the light switch, over the scene, a little lighter. */
+  :root[data-home] .music {
+    top: max(12px, env(safe-area-inset-top));
+    right: calc(max(12px, env(safe-area-inset-right)) + 38px);
+    bottom: auto;
+    left: auto;
+    flex-direction: row-reverse;
+  }
+
+  :root[data-home] .music-btn {
+    color: light-dark(rgb(63 68 70 / 0.45), rgb(220 230 235 / 0.5));
+  }
+
+  :root[data-home] .music-btn:hover {
+    color: light-dark(rgb(63 68 70 / 0.8), rgb(220 230 235 / 0.85));
+  }
+
+  :root[data-home] .music-now {
+    translate: 6px 0;
+  }
+
+  :root[data-home] .music[data-telling] .music-now {
+    translate: 0 0;
+  }
+
+  /* An app has the screen: in its bar, left of the light switch. The Music app is the player itself. */
+  @media (min-width: 880px) {
+    html:has(.col-app) .music {
+      top: 26px;
+      right: 66px;
+      bottom: auto;
+      left: auto;
+      flex-direction: row-reverse;
+    }
+
+    html:has(.col-app) .music-btn {
+      color: rgb(255 255 255 / 0.85);
+    }
+
+    html:has(.col-app) .music[data-audible] .music-btn {
+      color: #fff;
+    }
+  }
+
+  html:has([data-music-app]) .music {
+    display: none;
+  }
+
+  /* A phone: at the top beside the light switch, stepping aside with it while you read. */
+  @media (max-width: 879px) {
+    .music {
+      top: calc(var(--bezel-top) + 18px);
+      bottom: auto;
+      left: calc(var(--bezel) + 110px);
+    }
+
+    .music-btn {
+      width: 40px;
+      height: 40px;
+    }
+
+    :root[data-home] .music {
+      top: max(22px, env(safe-area-inset-top));
+      right: calc(max(16px, env(safe-area-inset-right)) + 44px);
+    }
+
+    html[data-reading] .music:not(:focus-within) {
+      opacity: 0;
+      translate: 0 -90px;
+      pointer-events: none;
+    }
+  }
+
+  html[data-playing] .music {
+    opacity: 1;
+    translate: 0 0;
+    pointer-events: auto;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .music-bars i {
+      animation: none;
+      scale: 1 0.7;
+    }
+
+    .music[data-telling] .music-now[data-long] span {
+      animation: none;
+    }
+  }
+
+  @media print {
+    .music {
+      display: none;
+    }
+  }
+</style>

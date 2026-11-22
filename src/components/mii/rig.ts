@@ -139,6 +139,8 @@ interface Slot {
   hidden: boolean;
   /** A flat stand-in is drawing this head, so the real one stays hidden. */
   card: boolean;
+  /** A bone whose world placement is kept each pose, for something held (`track`). */
+  track: { bone: number; matrix: THREE.Matrix4 } | null;
 }
 
 interface Batch {
@@ -185,6 +187,38 @@ function isValid(kit: MiiKit, info: Uint8Array) {
     return m._FFLiVerifyCharInfoWithReason(ptr, 0) === 0;
   } finally {
     m._free(ptr);
+  }
+}
+
+/** Parts whose `color` is one of the Switch's hundred colors in a Mii's look. */
+const COMMON_COLORED = new Set(['hair', 'eye', 'eyebrow', 'mouth', 'beard', 'glass']);
+
+/**
+ * Mii `data` with some of its parts changed, by FFL's CharInfo names: `{ hair: { type: 29 } }`.
+ * The colors of hair, eyes, eyebrows, mouth, beard and glasses are the Switch's hundred (0 to 99):
+ * FFL draws them all, but a QR code Mii only carries a few, so the result is a CharInfo. `data`
+ * comes back as it was if FFL can't read it.
+ */
+export function withParts(kit: MiiKit, data: Uint8Array, parts: Record<string, Record<string, number>>) {
+  const m = kit.ffl;
+  const info = m._malloc(FFLiCharInfo.size);
+  const src = m._malloc(data.length);
+  try {
+    m.HEAPU8.set(data, src);
+    if (data.length !== FFLiCharInfo.size && !m._FFLpGetCharInfoFromStoreData(info, src)) return data;
+    const parsed = FFLiCharInfo.unpack(data.length === FFLiCharInfo.size ? data : m.HEAPU8.slice(info, info + FFLiCharInfo.size));
+    for (const [part, fields] of Object.entries(parts)) {
+      const into = parsed[part] as Record<string, number> | undefined;
+      if (!into) continue;
+      for (const [field, value] of Object.entries(fields)) {
+        // FFL reads a color with the top bit set as one of the Switch's common colors.
+        into[field] = field === 'color' && COMMON_COLORED.has(part) ? (value | 0x80000000) >>> 0 : value;
+      }
+    }
+    return FFLiCharInfo.pack(parsed);
+  } finally {
+    m._free(info);
+    m._free(src);
   }
 }
 
@@ -300,6 +334,7 @@ export class MiiSet {
         full: !!opts.happy,
         hidden: true,
         card: false,
+        track: null,
       };
     });
 
@@ -454,6 +489,19 @@ export class MiiSet {
     return this.slots[i].head !== null;
   }
 
+  /**
+   * Keeps `bone` of Mii `i` placed in the world: the matrix returned is rewritten with the bone's
+   * world placement (scale included) every time the Mii is posed, so a prop can follow a hand.
+   */
+  track(i: number, bone: string) {
+    const s = this.slots[i];
+    const body = this.batches[s.gender]?.body;
+    const j = body ? body.bone(bone) : -1;
+    if (j < 0) throw new Error(`No bone ${bone}`);
+    s.track = { bone: j, matrix: new THREE.Matrix4() };
+    return s.track.matrix;
+  }
+
   /** Whether Mii `i` is out of sight. */
   isHidden(i: number) {
     return this.slots[i].hidden;
@@ -579,6 +627,7 @@ export class MiiSet {
       }
       _m.multiplyMatrices(W[j], body.inverses[j]).toArray(out, base + j * 16);
     }
+    if (s.track) s.track.matrix.copy(W[s.track.bone]);
 
     // Head: constant size, placed and turned by the head bone.
     const hb = body.bone('head');
@@ -595,8 +644,12 @@ export class MiiSet {
     }
 
     if (this.shadow) {
-      const sh = Math.max(0, p.scale * (0.85 + s.sx * 0.25) * (1 - p.y * 1.9));
-      this.shadow.setMatrixAt(i, _m.compose(_p.set(p.x, 0.004, p.z), _q.setFromAxisAngle(UP, p.yaw), _s.set(sh, 1, sh)));
+      // Under the middle of the body, so one lying down or tumbling has it in the right place, and
+      // shrinking as the lower of the feet and the head leaves the floor.
+      _s.set(0, s.top * p.scale * 0.45, 0).applyQuaternion(_hq);
+      const up = Math.max(0, Math.min(p.y, p.y + _s.y * 2));
+      const sh = Math.max(0, p.scale * (0.85 + s.sx * 0.25) * (1 - up * 1.9));
+      this.shadow.setMatrixAt(i, _m.compose(_p.set(p.x + _s.x, 0.004, p.z + _s.z), _q.setFromAxisAngle(UP, p.yaw), _s.set(sh, 1, sh)));
     }
   }
 

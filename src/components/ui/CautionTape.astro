@@ -1,0 +1,154 @@
+---
+// Caution tape for an archived entry. `corner` drapes it across the column's top left corner;
+// otherwise it runs across the cover. Either way the parent clips it, so its ends never show.
+interface Props {
+  corner?: boolean;
+}
+
+const { corner = false } = Astro.props;
+const LABELS = ['Archived', 'No longer maintained'];
+const run = Array.from({ length: 6 }, (_, i) => LABELS[i % LABELS.length]);
+---
+
+{
+  corner ? (
+    <div class="tape corner" role="note">
+      <span class="sr-only">Archived, no longer maintained</span>
+      <div class="strip" aria-hidden="true">
+        <span class="hazard" />
+        <span class="stack">
+          <span class="label">Archived</span>
+          <span class="sub">No longer maintained</span>
+        </span>
+        <span class="hazard" />
+      </div>
+    </div>
+  ) : (
+    <div class="tape across" role="note">
+      <span class="sr-only">Archived, no longer maintained</span>
+      <div class="strip" aria-hidden="true">
+        {run.map((label) => (
+          <>
+            <span class="label">{label}</span>
+            <span class="hazard" />
+          </>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+<style>
+  .tape {
+    pointer-events: none;
+  }
+
+  .strip {
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 0.35), transparent 38%, rgb(0 0 0 / 0.12)),
+      #f6c711;
+    border-block: 2px solid #1b1b1b;
+    box-shadow: 0 6px 18px rgb(0 0 0 / 0.45);
+    white-space: nowrap;
+  }
+
+  .label {
+    flex: none;
+    color: #141414;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  .hazard {
+    height: 100%;
+    background: repeating-linear-gradient(-45deg, #141414 0 10px, transparent 10px 20px);
+  }
+
+  /* Across the cover, low enough to leave logos in its corners alone. */
+  .across {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+  }
+
+  .across .strip {
+    gap: 18px;
+    width: 160%;
+    height: clamp(34px, 2rem + 1.4vw, 46px);
+    padding-inline: 18px;
+    transform: translateY(28%) rotate(-7deg);
+  }
+
+  .across .label {
+    font-size: clamp(0.8rem, 0.6rem + 0.7vw, 1.05rem);
+  }
+
+  .across .hazard {
+    flex: none;
+    width: 64px;
+  }
+
+  /* The corner: a square box at the column's top left, the strip laid across its diagonal. */
+  .corner {
+    position: absolute;
+    top: var(--bezel-top);
+    left: 0;
+    z-index: 2;
+    display: none;
+    width: 260px;
+    height: 260px;
+    overflow: hidden;
+  }
+
+  .corner .strip {
+    position: absolute;
+    top: 96px;
+    left: 96px;
+    gap: 14px;
+    width: 520px;
+    height: 52px;
+    transform: translate(-50%, -50%) rotate(-45deg);
+  }
+
+  .corner .hazard {
+    flex: 1;
+  }
+
+  .stack {
+    display: grid;
+    flex: none;
+    justify-items: center;
+    gap: 3px;
+  }
+
+  .corner .label {
+    font-size: 1.05rem;
+  }
+
+  .sub {
+    color: #141414;
+    font-size: 0.625rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  /* The corner only shows when the column leaves a wide gutter beside the article, so it never
+     lands on the back button or title; narrower screens keep the tape on the cover. */
+  @media (min-width: 1560px) {
+    .corner {
+      display: block;
+    }
+
+    .across {
+      display: none;
+    }
+  }
+</style>

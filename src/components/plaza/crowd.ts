@@ -4,10 +4,11 @@
 import * as THREE from 'three';
 import { decodeMii } from '../mii/data';
 import type { MiiKit } from '../mii/kit';
-import { MiiSet, randomMii, restPose, type Pose } from '../mii/rig';
+import { MiiSet, randomMii, restPose, withParts, type Pose } from '../mii/rig';
 import { MIRRORED } from './floor';
 import type { Layout } from './layout';
 import * as motion from './motion';
+import * as toss from './toss';
 import type { PlazaMii } from './types';
 import { angleDelta, clamp, clamp01, type Rng } from './util';
 
@@ -33,6 +34,15 @@ function spot(i: number): [number, number] {
 const FRIENDS = 7;
 /** Nobody else walks into the oval around the middle group. */
 const KEEP_OUT = { x: -0.15, z: -2.3, r: 4.6 };
+/**
+ * The DJ stands this far in front of the floor point under the Music block, in the middle of its
+ * ring, and nobody else takes a spot within CLEAR of them, so they stand out on their own.
+ */
+const DJ_SPOT = { forward: 0.9, clear: 2.2 };
+/** The DJ's backup dancers stand this far to either side of them, and this far behind. */
+const BACKUP = { gap: 0.95, back: -0.3 };
+/** Pants for the DJ and their dancers, as on a stage. */
+const STAGE_PANTS = 0x2a2c30;
 /** How much deeper than wide everything is spaced, to look even through the lens. */
 const DEEP = 2.6;
 const PERSONAL = 0.7;
@@ -42,14 +52,35 @@ export const SKYFALL = { height: 6.5, time: Math.sqrt((2 * 6.5) / motion.GRAVITY
 const FADE = 0.45;
 const RUN = 9.5;
 const WALK = 1.25;
-/** Your Mii's pants, your friends' and everyone else's. */
-const PANTS = { you: 0x1c1d20, friends: 0x702015, theirs: 0x8c9096 };
+/** Your Mii's pants. Everyone else's are picked from the rest on each visit. */
+const YOUR_PANTS = 0x1c1d20;
+const PANTS = [0x8c9096, 0x40474e, 0x2a2c30, 0x28407a, 0x702015, 0x5a4030, 0xc0a030];
 /** Miis stand a little larger here than in Mii Maker, as they do on the console's plaza. */
 const SIZE = 1.12;
-/** Picked up, a Mii's feet hang this far off the floor; its body swings below the hand on this length. */
-const GRAB = { clear: 0.45, swing: 0.42 };
-/** The fastest a Mii can be thrown, across the floor. */
-const THROW = 11;
+/**
+ * Picked up, a Mii's feet hang this far off the floor; its body swings below the hand on this
+ * length, never further out than `reach` (radians) from hanging straight down, and the swing dies
+ * away at `settle` a second.
+ */
+const GRAB = { clear: 0.2, swing: 0.42, reach: 1.15, settle: 1.6 };
+/**
+ * Through the long lens a flick up the screen covers a lot of floor, so depth counts for this
+ * much less in how the held body swings.
+ */
+const SQUEEZE = 2.4;
+/** Landing on its feet, a Mii catches itself if it is this near upright and slower than this. */
+const CATCH = { upright: 0.78, speed: 7, spin: 7 };
+/** How hard the floor grips shoes in a skid. */
+const SKID = 0.6;
+/** Hit slower than this, someone on their feet is only shoved aside, not sent staggering. */
+const SHOVE = 0.8;
+/**
+ * Bodies move and meet in steps no longer than this, and short enough that none goes further than
+ * `travel` in one, so even the hardest throw can't pass through someone between frames.
+ */
+const TICK = { step: 1 / 240, travel: 0.08, most: 48 };
+/** Knocked flat, a Mii lies there for this long, give or take, and takes this long to spring back up. */
+const DOWN = { lie: 0.8, rise: 0.45 };
 
 /** What a Mii does when tapped. Poked again and again, it loses its temper. */
 const REACTIONS: [motion.Clip, number][] = [
@@ -75,9 +106,9 @@ const ANNOYED: [motion.Clip, number][] = [
   [motion.tantrum, 2.4],
 ];
 
-type Act = 'away' | 'stand' | 'stroll' | 'dash' | 'speak' | 'fall' | 'show' | 'hover' | 'held' | 'flung' | 'stunned' | 'flee';
+type Act = 'away' | 'stand' | 'stroll' | 'dash' | 'speak' | 'fall' | 'show' | 'hover' | 'held' | 'flung' | 'down' | 'stunned' | 'flee';
 /** Acts where you have hold of a Mii, or it is getting over it. Nothing else may interrupt them. */
-const HANDLED: ReadonlySet<Act> = new Set(['held', 'flung', 'stunned', 'flee']);
+const HANDLED: ReadonlySet<Act> = new Set(['held', 'flung', 'down', 'stunned', 'flee']);
 
 interface Mii {
   set: MiiSet;
@@ -128,6 +159,13 @@ interface Mii {
   blink: number;
   friend: boolean;
   lead: boolean;
+  /** The DJ under the Music block, boombox on their shoulder. */
+  dj: boolean;
+  /**
+   * For the DJ and their dancers: where they stand from the DJ's spot, and which side they dance
+   * on (-1 left as you look, 1 right, 0 the DJ). Null for everyone else.
+   */
+  stage: { x: number; z: number; side: number } | null;
   spot: Spot | null;
   /** Which way it is going round the middle group on this trip: 1, -1, or 0 for not yet chosen. */
   detour: number;
@@ -138,17 +176,33 @@ interface Mii {
   homeZ: number;
   homeFace: number;
   // Being played with.
-  /** Where the pointer wants the hand holding it, the hand itself, and the hand's speed. */
+  /**
+   * Where the pointer wants the hand holding it, the hand itself, and the hand's speed. `grab` is
+   * how far across the floor the collar was from the pointer when it was picked up, kept the same
+   * while it is carried.
+   */
   grip: THREE.Vector3;
+  grab: THREE.Vector3;
   hand: THREE.Vector3;
   handVel: THREE.Vector3;
-  /** How far the body has swung out from hanging straight down, toward +x and +z (radians), and how fast. */
-  sway: THREE.Vector2;
-  swayVel: THREE.Vector2;
-  /** Speed through the air once thrown, and how fast it is spinning. */
+  /** Held, the middle of the body hanging under the hand, now and a step ago (depth squeezed, see SQUEEZE). */
+  bob: THREE.Vector3;
+  bobPrev: THREE.Vector3;
+  /** Held or skidding, how fast the body is really going over the floor; held, how fast it is turning. */
   vel3: THREE.Vector3;
+  turn: THREE.Vector3;
+  /** Held, the change in speed from bumping into someone, given to the swing on the next step. */
+  kick: THREE.Vector3;
+  /** Held, where the middle of the body was last frame and is this frame, swept between as bodies move. */
+  last: THREE.Vector3;
+  next: THREE.Vector3;
+  /** Let go of or knocked over, the body as it flies, bounces and lies (see toss.ts). */
+  body: toss.Body;
+  /** Getting up off the floor: the way it lay and the way it will stand. */
+  lay: THREE.Quaternion;
+  rise: THREE.Quaternion;
+  /** Skidding to a stop on its feet, how fast it is turning. */
   spin: number;
-  bounced: boolean;
   /** The whole body tipped forward and to its left (radians). */
   tipX: number;
   tipZ: number;
@@ -172,6 +226,12 @@ const HOLD: motion.Clip = () => undefined;
 const still = restPose();
 const _a = new THREE.Vector3();
 const _b = new THREE.Vector3();
+const _c = new THREE.Vector3();
+const _up = new THREE.Vector3();
+const _e = new THREE.Euler();
+const _q = new THREE.Quaternion();
+/** Which way is up the body of a Mii turned to `yaw` and tipped by `pitch` and `roll`, as a Pose is. */
+const upOf = (yaw: number, pitch: number, roll: number, out: THREE.Vector3) => out.set(0, 1, 0).applyEuler(_e.set(pitch, yaw, roll, 'YXZ'));
 const smoothstep01 = (v: number) => {
   const t = clamp01(v);
   return t * t * (3 - 2 * t);
@@ -191,6 +251,17 @@ export class Crowd {
   private waved = false;
   /** Whether the camera is in close on the middle group, which then turns to look at it. */
   private noticed = false;
+  /** The DJ's index, or -1 without a Music block; where they stand; whether music is heard. */
+  readonly dj: number = -1;
+  private djAt = { x: 0, z: 0 };
+  private djCube: number;
+  private grooving = false;
+  /** When the music was first heard, on the scene's clock: everyone on stage keeps the beat from it. */
+  private grooveAt = 0;
+  /** How far into a beat the DJ's bob is: 1 on it, 0 between or while they are not grooving. */
+  djBeat = 0;
+  /** Where the DJ's left wrist (the boombox hand) is in the world, rewritten every frame they are posed. */
+  readonly djWrist: THREE.Matrix4 | null = null;
 
   constructor(
     scene: THREE.Scene,
@@ -203,6 +274,12 @@ export class Crowd {
       pool: PlazaMii[];
       count: number;
       cubes: number;
+      /** The Music block's index, which the DJ stands under, or -1 for no DJ. */
+      djCube: number;
+      /** Who the DJ is; null for a random Mii. */
+      dj: PlazaMii | null;
+      /** Who dances either side of the DJ, left then right as you look. */
+      backup: PlazaMii[];
       /** Face texture size for the crowd. */
       resolution: number;
       random: Rng;
@@ -213,7 +290,8 @@ export class Crowd {
     const decode = (miis: PlazaMii[]) =>
       miis.flatMap((who): Cast[] => {
         const data = decodeMii(who.code);
-        return data ? [{ data, who }] : [];
+        if (!data) return [];
+        return [{ data: who.parts ? withParts(opts.kit, data, who.parts) : data, who }];
       });
     const named = decode(opts.hero).slice(0, 10);
     // A different set of famous faces stands beside you on each visit.
@@ -224,11 +302,25 @@ export class Crowd {
     }
     const next = (): Cast => pool.shift() ?? { data: randomMii(opts.kit, r), who: null };
     const middle = [...named, ...Array.from({ length: Math.max(0, FRIENDS + 1 - named.length) }, next)];
+    // The DJ is drawn with the middle group, sharp up close and never a flat head, but lives in the crowd.
+    this.djCube = opts.djCube;
+    const dj = opts.djCube < 0 ? null : ((opts.dj && decode([opts.dj])[0]) ?? { data: randomMii(opts.kit, r), who: null });
+    const stage = dj ? [dj, ...decode(opts.backup)] : [];
     const others = Array.from({ length: opts.count }, next);
 
     const headScale = 0.125;
-    const middleSet = new MiiSet(opts.kit, opts.renderer, middle.map((c) => c.data), { resolution: 512, happy: true, pants: (i) => (i === 0 ? PANTS.you : PANTS.friends), headScale, layer: MIRRORED });
-    const crowdSet = new MiiSet(opts.kit, opts.renderer, others.map((c) => c.data), { resolution: opts.resolution, pants: PANTS.theirs, headScale, layer: MIRRORED });
+    // Shirts are each Mii's favorite color. Mii data has no pants, so those change on every visit.
+    const anyPants = (n: number) => Array.from({ length: n }, () => PANTS[Math.floor(Math.random() * PANTS.length)]);
+    const middlePants = anyPants(middle.length);
+    const crowdPants = anyPants(others.length);
+    const middleSet = new MiiSet(opts.kit, opts.renderer, [...middle, ...stage].map((c) => c.data), {
+      resolution: 512, happy: true, headScale, layer: MIRRORED,
+      pants: (i) => (i === 0 ? YOUR_PANTS : i >= middle.length ? STAGE_PANTS : middlePants[i]),
+    });
+    const crowdSet = new MiiSet(opts.kit, opts.renderer, others.map((c) => c.data), {
+      resolution: opts.resolution, headScale, layer: MIRRORED,
+      pants: (i) => crowdPants[i],
+    });
     middleSet.build();
     this.sets = [middleSet, crowdSet];
     scene.add(middleSet.group, crowdSet.group);
@@ -263,6 +355,8 @@ export class Crowd {
         blink: 1 + r() * 4,
         friend,
         lead: friend && slot === 0,
+        dj: false,
+        stage: null,
         spot: null,
         detour: 0,
         who: who?.name ? who : null,
@@ -270,20 +364,78 @@ export class Crowd {
         homeZ: 0,
         homeFace: 0,
         grip: new THREE.Vector3(),
+        grab: new THREE.Vector3(),
         hand: new THREE.Vector3(),
         handVel: new THREE.Vector3(),
-        sway: new THREE.Vector2(),
-        swayVel: new THREE.Vector2(),
+        bob: new THREE.Vector3(),
+        bobPrev: new THREE.Vector3(),
         vel3: new THREE.Vector3(),
+        turn: new THREE.Vector3(),
+        kick: new THREE.Vector3(),
+        last: new THREE.Vector3(),
+        next: new THREE.Vector3(),
+        body: toss.body(),
+        lay: new THREE.Quaternion(),
+        rise: new THREE.Quaternion(),
         spin: 0,
-        bounced: false,
         tipX: 0,
         tipZ: 0,
         pokes: 0,
         pokedAt: -Infinity,
       });
     middle.forEach((c, i) => add(middleSet, i, true, c.who));
+    // The DJ, then their dancers, out to either side in turn, left first.
+    stage.forEach((c, j) => {
+      const slot = middle.length + j;
+      add(middleSet, slot, false, c.who);
+      const m = this.miis[slot];
+      m.home = opts.djCube;
+      const side = j === 0 ? 0 : j % 2 ? -1 : 1;
+      m.stage = { x: side * BACKUP.gap * Math.ceil(j / 2), z: side ? BACKUP.back : 0, side };
+      // The two sides mirror each other (motion.idol).
+      if (side) m.k = side < 0 ? 0.25 : 0.75;
+    });
+    if (dj) {
+      this.miis[middle.length].dj = true;
+      this.dj = middle.length;
+      this.djWrist = middleSet.track(middle.length, 'wrist_l');
+    }
     others.forEach((c, i) => add(crowdSet, i, false, c.who));
+  }
+
+  /**
+   * Who wears something drawn on their head (a headset, a ponytail: MiiLook in plaza/types.ts), and
+   * what: the DJ, their dancers and the middle group only, whose heads are always real. A crowd
+   * Mii far off is a flat picture, which nothing can sit on.
+   */
+  get gear() {
+    return this.miis.flatMap((m, i) => (m.who && (m.who.headset || m.who.ponytail) && m.set === this.sets[0] ? [{ i, look: m.who }] : []));
+  }
+
+  /** Where Mii `i`'s head is in the world this frame, or null while it is out of sight. */
+  headOf(i: number) {
+    const m = this.miis[i];
+    return m.act === 'away' || m.set.isHidden(m.slot) ? null : m.set.headMatrix(m.slot);
+  }
+
+  /** Whether the DJ is out on the floor to be seen. */
+  djShown() {
+    if (this.dj < 0) return false;
+    const m = this.miis[this.dj];
+    return m.act !== 'away' && !m.set.isHidden(m.slot);
+  }
+
+  /** Which way the DJ faces, and how big they are drawn. */
+  djFrame() {
+    const m = this.miis[this.dj];
+    return { yaw: m.yaw, scale: SIZE };
+  }
+
+  /** Music is heard (`true`) or not: the DJ bobs along to it and their dancers dance, or they stand. */
+  setGroove(on: boolean) {
+    // The beat starts over when the music comes back, on the next frame's clock.
+    if (on && !this.grooving) this.grooveAt = NaN;
+    this.grooving = on;
   }
 
   /** The batch of Miis in the crowd (everyone but you and your friends). */
@@ -340,10 +492,24 @@ export class Crowd {
         m.homeFace = m.face;
       }
     });
+    if (this.dj >= 0) {
+      const a = layout.anchors[this.djCube % layout.anchors.length];
+      this.djAt = { x: a.x, z: a.z + DJ_SPOT.forward };
+    }
     this.lay();
     for (const m of this.miis) {
       if (m.friend) continue;
       const keep = moved && m.act !== 'away';
+      if (m.stage) {
+        m.tx = this.djAt.x + m.stage.x;
+        m.tz = this.djAt.z + m.stage.z;
+        if (!keep) {
+          m.x = m.tx;
+          m.z = m.tz;
+          m.yaw = m.face = 0;
+        }
+        continue;
+      }
       this.claim(m, this.nearest(m.home, keep ? m.x : null, keep ? m.z : null));
       if (!keep) {
         m.x = m.tx;
@@ -363,8 +529,10 @@ export class Crowd {
     // Rows through the long lens stack up on screen, so spots sit further apart in depth than across.
     const gap = PERSONAL * 1.5;
     const deep = DEEP * 1.35;
+    const dj = this.dj >= 0 ? this.djAt : null;
     const free = (x: number, z: number) => {
       if (this.outside(x, z) < 0.6) return false;
+      if (dj && (x - dj.x) ** 2 + ((z - dj.z) / deep) ** 2 < DJ_SPOT.clear ** 2) return false;
       for (const s of spots) if ((s.x - x) ** 2 + ((s.z - z) / deep) ** 2 < gap * gap) return false;
       return true;
     };
@@ -552,7 +720,7 @@ export class Crowd {
   speakers(cube: number) {
     const out: number[] = [];
     this.miis.forEach((m, i) => {
-      if (m.home === cube && (m.act === 'stand' || m.act === 'stroll')) out.push(i);
+      if (m.home === cube && !m.stage && (m.act === 'stand' || m.act === 'stroll')) out.push(i);
     });
     for (let i = out.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -575,6 +743,12 @@ export class Crowd {
     this.play(m, motion.talk, time);
   }
 
+  /** Mii `i` stops talking, if it was: its bubble was pressed. */
+  hush(i: number, time: number) {
+    const m = this.miis[i];
+    if (m.act === 'speak') this.rest(m, time, 1 + this.r() * 2);
+  }
+
   headTop(i: number, out: THREE.Vector3) {
     const m = this.miis[i];
     return out.set(m.x, m.set.headTop(m.slot) * SIZE + m.lift, m.z);
@@ -594,7 +768,8 @@ export class Crowd {
 
   /**
    * The Mii under the screen point (x, y) in CSS pixels, nearest the camera first, or -1. Each Mii
-   * is a box from its feet to the top of its head, wide enough to catch small ones far away.
+   * is a band from its feet to the top of its head, along the body however it lies, wide enough to
+   * catch small ones far away.
    */
   pick(camera: THREE.Camera, x: number, y: number, w: number, h: number, prefer = -1) {
     let best = -1;
@@ -602,15 +777,22 @@ export class Crowd {
     let near = Infinity;
     this.miis.forEach((m, i) => {
       if (m.act === 'away' || m.act === 'hover' || m.act === 'fall' || m.act === 'held' || m.set.isHidden(m.slot)) return;
-      _a.set(m.x, m.lift, m.z).project(camera);
+      upOf(m.yaw, m.tipX, m.tipZ, _up);
+      _a.set(m.x, m.lift, m.z);
+      _b.copy(_a).addScaledVector(_up, m.set.headTop(m.slot) * SIZE);
+      _a.project(camera);
       if (_a.z > 1) return;
+      _b.project(camera);
       const fx = (_a.x + 1) * 0.5 * w;
       const fy = (1 - _a.y) * 0.5 * h;
       const depth = _a.z;
-      _a.set(m.x, m.lift + m.set.headTop(m.slot) * SIZE, m.z).project(camera);
-      const ty = (1 - _a.y) * 0.5 * h;
-      const half = Math.max(9, (fy - ty) * 0.3);
-      if (Math.abs(x - fx) > half || y < ty - 4 || y > fy + 4) return;
+      // From the feet to the head on screen, and how far along and off to the side the point is.
+      const lx = (_b.x + 1) * 0.5 * w - fx;
+      const ly = (1 - _b.y) * 0.5 * h - fy;
+      const len = Math.hypot(lx, ly) || 1;
+      const along = ((x - fx) * lx + (y - fy) * ly) / len;
+      const off = Math.abs((x - fx) * ly - (y - fy) * lx) / len;
+      if (off > Math.max(9, len * 0.3) || along < -4 || along > len + 4) return;
       // The one already pointed at stays picked while it is under the pointer, whoever walks past.
       if (i === prefer) kept = true;
       if (depth < near) {
@@ -641,34 +823,52 @@ export class Crowd {
   /** Picks Mii `i` up by the back of its shirt, the hand following `ray` (see `carry`). */
   grab(i: number, time: number, ray: THREE.Ray) {
     const m = this.miis[i];
-    if (m.act === 'away' || m.act === 'hover' || m.act === 'fall' || m.act === 'held') return false;
+    // The DJ won't be parted from the boombox, nor the dancers from the DJ.
+    if (m.stage || m.act === 'away' || m.act === 'hover' || m.act === 'fall' || m.act === 'held') return false;
     m.set.liven(m.slot);
     if (m.spot) m.spot.owner = null;
     m.spot = null;
     const collar = m.set.collar(m.slot) * SIZE;
-    // The hand closes on the collar where the Mii stands, then lifts it to the pointer.
-    m.hand.set(m.x, m.lift + collar, m.z);
+    // The hand closes on the collar wherever it is, standing, lying or in the air, then lifts it
+    // to the pointer, and the body swings down under it from the way it was.
+    upOf(m.yaw, m.tipX, m.tipZ, _up);
+    m.hand.set(m.x, m.lift, m.z).addScaledVector(_up, collar);
     m.grip.copy(m.hand);
     m.handVel.set(0, 0, 0);
-    m.sway.set(0, 0);
-    m.swayVel.set(0, 0);
+    m.bob.set(m.hand.x, m.hand.y, m.hand.z / SQUEEZE).addScaledVector(_up, -GRAB.swing);
+    m.bobPrev.copy(m.bob);
+    m.vel3.set(0, 0, 0);
+    m.turn.set(0, 0, 0);
+    m.kick.set(0, 0, 0);
+    toss.stand(m.body, m.x, m.lift, m.z, m.yaw, m.tipX, m.tipZ, m.set.headTop(m.slot) * SIZE);
+    m.spin = 0;
     m.vel = 0;
     m.act = 'held';
     m.at = time;
     this.play(m, motion.dangle, time, true);
+    // It is lifted straight up where it was, whatever part of it was pressed: through the long lens
+    // the pointer's spot at carrying height can be well behind or in front of the Mii itself.
+    m.grab.set(0, 0, 0);
+    if (this.atCarry(m, ray, _b)) m.grab.set(m.hand.x - _b.x, 0, m.hand.z - _b.z);
     this.carry(i, ray);
     return true;
   }
 
+  /** Where `ray` meets the height Mii `m` is carried at, into `out`; false if it never does. */
+  private atCarry(m: Mii, ray: THREE.Ray, out: THREE.Vector3) {
+    if (ray.direction.y > -1e-4) return false;
+    ray.at((m.set.collar(m.slot) * SIZE + GRAB.clear - ray.origin.y) / ray.direction.y, out);
+    return true;
+  }
+
   /**
-   * Moves the hand holding Mii `i` to where `ray` (from the camera through the pointer) meets
-   * the height it is carried at, so the collar stays under the pointer as it goes.
+   * Moves the hand holding Mii `i` with `ray` (from the camera through the pointer) where it meets
+   * the height it is carried at, so the Mii moves just as far as the pointer does.
    */
   carry(i: number, ray: THREE.Ray) {
     const m = this.miis[i];
-    if (m.act !== 'held' || ray.direction.y > -1e-4) return;
-    const height = m.set.collar(m.slot) * SIZE + GRAB.clear;
-    ray.at((height - ray.origin.y) / ray.direction.y, _b);
+    if (m.act !== 'held' || !this.atCarry(m, ray, _b)) return;
+    _b.add(m.grab);
     const { far } = this.layout;
     _b.x = clamp(_b.x, -far.halfWidth * 1.1, far.halfWidth * 1.1);
     _b.z = Math.max(_b.z, far.z - 4);
@@ -676,36 +876,26 @@ export class Crowd {
   }
 
   /**
-   * Lets go of Mii `i`. Let go while still it drops where it is; flung, it flies off with the
-   * hand's speed. Wherever it comes down, it stands there stunned, looks about, and runs for it.
+   * Lets go of Mii `i`. It carries on exactly as it was going in your hand, no faster and no other
+   * way: let go while still it drops where it is, let go on the move and it flies on, turning as it
+   * swung, slowed only by the air and then the floor. Landing near upright it catches itself and
+   * skids; any other way it bounces, slides, lies there a moment and gets up. Then it runs for it.
    */
   release(i: number, time: number) {
     const m = this.miis[i];
     if (m.act !== 'held') return;
-    // Through the long lens a flick up the screen covers a lot of floor, so depth counts for less.
-    const v = m.vel3.set(m.handVel.x, 0, m.handVel.z / 2.4);
-    const speed = Math.min(THROW, v.length());
-    if (speed > 0) v.setLength(speed);
-    const thrown = speed > 2.2;
-    v.y = thrown ? 2 + speed * 0.3 + Math.min(3, Math.max(0, m.handVel.y) * 0.2) : 0;
-    // However hard the throw, it comes down somewhere you can still see it.
-    const air = (v.y + Math.sqrt(v.y * v.y + 2 * motion.GRAVITY * Math.max(0, m.lift))) / motion.GRAVITY;
-    const { far, hero } = this.layout;
-    const room = far.halfWidth * 0.85;
-    const x = m.x + v.x * air;
-    const z = m.z + v.z * air;
-    if (Math.abs(x) > room) v.x = (Math.sign(x) * room - m.x) / air;
-    if (z < far.z + 3) v.z = (far.z + 3 - m.z) / air;
-    if (z > hero.z + 30) v.z = (hero.z + 30 - m.z) / air;
-    m.spin = thrown ? (this.r() < 0.5 ? -1 : 1) * speed * 0.7 : 0;
-    m.bounced = false;
+    const b = m.body;
+    b.vel.copy(m.vel3);
+    b.omega.copy(m.turn);
     m.act = 'flung';
     m.at = time;
-    this.play(m, thrown ? motion.fall : motion.dangle, time);
+    this.play(m, Math.hypot(b.vel.x, b.vel.z) > 2.2 ? motion.fall : motion.dangle, time);
   }
 
   update(dt: number, time: number, camera: THREE.Vector3, calm: boolean) {
+    if (Number.isNaN(this.grooveAt)) this.grooveAt = time;
     for (const m of this.miis) this.think(m, dt, time, camera, calm);
+    this.physics(dt, time);
     this.separate();
     for (const m of this.miis) this.draw(m, time, calm);
     for (const set of this.sets) set.commit();
@@ -793,13 +983,28 @@ export class Crowd {
         if (time >= m.until) this.rest(m, time, 1.5 + this.r() * 4);
         return;
       default:
+        if (m.stage) return this.onStage(m, dt, time, toCamera, calm);
         this.turn(m, m.face, dt);
         this.keepSpot(m, dt);
         if (!calm && time >= m.until) this.decide(m, time, toCamera);
     }
   }
 
-  /** Held, flying, stunned or running off: the same for the crowd and the middle group. */
+  /**
+   * The DJ and their dancers keep their places facing out: the DJ bobs while music is heard, the
+   * dancers dance, all on the same beat.
+   */
+  private onStage(m: Mii, dt: number, time: number, toCamera: number, calm: boolean) {
+    const side = m.stage!.side;
+    // The DJ turns a touch to their right, so the boombox on the left shoulder faces you too; the
+    // dancers turn a little in toward them.
+    this.turn(m, toCamera + (side ? -side * 0.2 : -0.25), dt);
+    this.keepSpot(m, dt);
+    const clip = this.grooving && !calm ? (m.dj ? motion.groove : motion.idol) : motion.stand;
+    if (m.clip !== clip) this.play(m, clip, time);
+  }
+
+  /** Held, flying, down, stunned or running off: the same for the crowd and the middle group. */
   private handled(m: Mii, dt: number, time: number, toCamera: number) {
     const collar = m.set.collar(m.slot) * SIZE;
     switch (m.act) {
@@ -808,25 +1013,36 @@ export class Crowd {
         // The hand follows the pointer closely, not rigidly, and its speed is kept for a throw.
         _a.copy(m.hand);
         m.hand.lerp(m.grip, 1 - Math.exp(-30 * dt));
-        const ax = m.handVel.x;
-        const az = m.handVel.z;
         m.handVel.lerp(_b.subVectors(m.hand, _a).divideScalar(dt), 1 - Math.exp(-16 * dt));
-        // The body swings under the hand like a pendulum: the hand speeding up leaves it trailing
-        // behind, gravity brings it back, and it settles. Depth counts for less, as with a throw.
-        const pull = motion.GRAVITY / GRAB.swing;
-        const accX = ((m.handVel.x - ax) / dt) * 0.6;
-        const accZ = ((m.handVel.z - az) / dt) * 0.25;
-        const damp = Math.exp(-3.2 * dt);
-        m.swayVel.x = (m.swayVel.x + (-pull * Math.sin(m.sway.x) - (accX / GRAB.swing) * Math.cos(m.sway.x)) * dt) * damp;
-        m.swayVel.y = (m.swayVel.y + (-pull * Math.sin(m.sway.y) - (accZ / GRAB.swing) * Math.cos(m.sway.y)) * dt) * damp;
-        m.sway.x = clamp(m.sway.x + m.swayVel.x * dt, -0.85, 0.85);
-        m.sway.y = clamp(m.sway.y + m.swayVel.y * dt, -0.85, 0.85);
+        // The body hangs from the hand like a weight on a string: the hand speeding up leaves it
+        // trailing, gravity swings it back under, and it settles. Worked in small steps, with the
+        // hand moving through them, so a fast flick swings it as hard as it should.
+        const n = Math.max(1, Math.ceil(dt * 240));
+        const h = dt / n;
+        const keep = Math.exp(-GRAB.settle * h);
+        const low = GRAB.swing * Math.cos(GRAB.reach);
+        const wide = GRAB.swing * Math.sin(GRAB.reach);
+        for (let s = 1; s <= n; s++) {
+          _b.lerpVectors(_a, m.hand, s / n);
+          _b.z /= SQUEEZE;
+          _c.subVectors(m.bob, m.bobPrev).multiplyScalar(keep);
+          m.bobPrev.copy(m.bob);
+          m.bob.add(_c);
+          m.bob.y -= motion.GRAVITY * h * h;
+          // A bump against someone knocks the swing, and it rocks back from them.
+          if (s === 1) m.bob.add(_c.set(m.kick.x, m.kick.y, m.kick.z / SQUEEZE).multiplyScalar(h));
+          // The string keeps it at arm's length from the hand, and the shirt won't let it swing up over it.
+          _c.subVectors(m.bob, _b).setLength(GRAB.swing);
+          if (-_c.y < low) {
+            const out = Math.hypot(_c.x, _c.z) || 1;
+            _c.set((_c.x / out) * wide, -low, (_c.z / out) * wide);
+          }
+          m.bob.addVectors(_b, _c);
+        }
         // It squirms round to face you, twisting as it hangs.
         m.yaw += angleDelta(m.yaw, toCamera + Math.sin(time * 1.4 + m.k * 9) * 0.55) * (1 - Math.exp(-3 * dt));
-        // Up the body, from its swung-out middle to the hand; in the Mii's own frame that is its tip.
-        _b.set(Math.sin(m.sway.x), Math.cos(m.sway.x) * Math.cos(m.sway.y), Math.sin(m.sway.y)).normalize();
-        _b.x = -_b.x;
-        _b.z = -_b.z;
+        // Up the body, from its middle to the hand; in the Mii's own frame that is its tip.
+        _b.set(m.hand.x, m.hand.y, m.hand.z / SQUEEZE).sub(m.bob).normalize();
         const c = Math.cos(m.yaw);
         const s = Math.sin(m.yaw);
         const ux = _b.x * c - _b.z * s;
@@ -837,47 +1053,67 @@ export class Crowd {
         m.x = m.hand.x - _b.x * collar;
         m.z = m.hand.z - _b.z * collar;
         m.lift = m.hand.y - _b.y * collar;
+        m.kick.set(0, 0, 0);
+        // It is a body like any other while it hangs, solid to anyone it swings into. How fast it
+        // really goes and turns, as seen, is kept for when it is let go.
+        const b = m.body;
+        _a.copy(b.com);
+        m.last.copy(b.com);
+        _q.copy(b.rot);
+        toss.stand(b, m.x, m.lift, m.z, m.yaw, m.tipX, m.tipZ, m.set.headTop(m.slot) * SIZE);
+        const smooth = 1 - Math.exp(-20 * dt);
+        m.vel3.lerp(_a.subVectors(b.com, _a).divideScalar(dt), smooth);
+        m.turn.lerp(toss.turnRate(_q, b.rot, dt, _a), smooth);
+        b.vel.copy(m.vel3);
+        b.omega.copy(m.turn);
         return;
       }
-      case 'flung': {
-        const v = m.vel3;
-        v.y -= motion.GRAVITY * dt;
-        m.x += v.x * dt;
-        m.z += v.z * dt;
-        m.lift += v.y * dt;
-        m.yaw += m.spin * dt;
-        m.spin *= Math.exp(-1.2 * dt);
-        // It rights itself in the air, feet first by the time it lands.
-        const right = Math.exp(-(m.clip === motion.fall ? 5 : 9) * dt);
-        m.tipX *= right;
-        m.tipZ *= right;
-        if (m.lift > 0) return;
-        m.lift = 0;
-        if (v.y < -9 && !m.bounced) {
-          // A hard landing bounces once.
-          m.bounced = true;
-          v.y *= -0.3;
-          v.x *= 0.5;
-          v.z *= 0.5;
-          return;
+      case 'flung':
+        // Moved with everyone else in `physics`.
+        return;
+      case 'down': {
+        const b = m.body;
+        // Lying there, it is moved with everyone else in `physics`.
+        if (time < m.until) return;
+        // It springs back up stiff as a board, pivoting on its feet, with a little hop at the end.
+        if (m.clip === motion.sprawl) {
+          m.lay.copy(b.rot);
+          toss.upOf(b, _up);
+          m.rise.setFromUnitVectors(_up, _c.set(0, 1, 0)).multiply(b.rot);
+          // Feet stay where they lay.
+          toss.pose(b, _a);
+          m.hand.set(_a.x, Math.max(0, _a.y), _a.z);
+          this.play(m, motion.stand, time, false, DOWN.rise);
         }
-        v.y = 0;
+        const u = clamp01((time - m.until) / DOWN.rise);
+        const k = 1 - Math.pow(1 - u, 3) * Math.cos(u * 4);
+        b.rot.slerpQuaternions(m.lay, m.rise, Math.min(1.08, k));
+        b.com.set(0, b.low, 0).applyQuaternion(b.rot).add(m.hand);
+        b.vel.set(0, 0, 0);
+        b.omega.set(0, 0, 0);
+        this.place(m);
+        m.lift = m.hand.y * (1 - u) + Math.sin(u * Math.PI) * 0.06;
+        if (u < 1) return;
+        m.tipX = m.tipZ = 0;
+        m.vel3.set(0, 0, 0);
+        m.spin = 0;
         m.act = 'stunned';
         m.at = time;
-        this.play(m, motion.land, time, true);
+        this.play(m, motion.stunned, time, true, 0.2);
         return;
       }
       case 'stunned': {
-        // A short skid, then still.
+        // A skid on its shoes, slowed by friction till it stops, then still.
         const v = m.vel3;
-        v.multiplyScalar(Math.exp(-12 * dt));
+        const speed = Math.hypot(v.x, v.z);
+        if (speed > 0) v.multiplyScalar(Math.max(0, speed - SKID * motion.GRAVITY * dt) / speed);
         m.x += v.x * dt;
         m.z += v.z * dt;
         m.tipX *= Math.exp(-12 * dt);
         m.tipZ *= Math.exp(-12 * dt);
         m.yaw += m.spin * dt;
         m.spin *= Math.exp(-10 * dt);
-        if (m.clip === motion.land && time - m.at > 0.3) this.play(m, motion.stunned, time);
+        if (m.clip === motion.land && time - m.at > 0.3 + speed * 0.05) this.play(m, motion.stunned, time);
         if (m.clip === motion.stunned && time - m.since > motion.LENGTH.stunned) this.flee(m, time);
         return;
       }
@@ -888,6 +1124,150 @@ export class Crowd {
           this.rest(m, time, 1 + this.r() * 2);
         }
         return;
+    }
+  }
+
+  /** Puts a Mii where its body is: feet, facing and tip. */
+  private place(m: Mii) {
+    const p = toss.pose(m.body, _a);
+    m.x = _a.x;
+    m.z = _a.z;
+    m.lift = _a.y;
+    m.yaw = p.yaw;
+    m.tipX = p.pitch;
+    m.tipZ = p.roll;
+  }
+
+  /** Keeps a body tumbling about inside the plaza you can see, rebounding off its edges. */
+  private fence(b: toss.Body) {
+    const { far, hero } = this.layout;
+    const room = far.halfWidth * 0.95;
+    if (Math.abs(b.com.x) > room) {
+      b.com.x = Math.sign(b.com.x) * room;
+      if (b.vel.x * b.com.x > 0) b.vel.x *= -0.3;
+    }
+    const back = far.z + 2;
+    const front = hero.z + 32;
+    if (b.com.z < back || b.com.z > front) {
+      const out = b.com.z < back ? -1 : 1;
+      b.com.z = clamp(b.com.z, back, front);
+      if (b.vel.z * out > 0) b.vel.z *= -0.3;
+    }
+  }
+
+  /** Whether Mii `m` is a loose body, tumbling or lying, moved by the physics alone. */
+  private loose(m: Mii, time: number) {
+    return m.act === 'flung' || (m.act === 'down' && time < m.until);
+  }
+
+  /** Whether Mii `m` can be bumped into while it stands, walks or gets up. */
+  private solid(m: Mii, time: number) {
+    return !m.stage && !this.loose(m, time) && m.act !== 'away' && m.act !== 'hover' && m.act !== 'fall' && m.act !== 'held';
+  }
+
+  /**
+   * Moves every loose body on by `dt`, and the one in your hand along its swing, in short steps,
+   * meeting whoever they touch on the way. A soft touch shoves someone standing aside; anything
+   * firmer knocks them loose too, staggering or over depending on where it struck. The one held
+   * rocks back from whatever it hits.
+   */
+  private physics(dt: number, time: number) {
+    if (dt <= 0) return;
+    const moving: Mii[] = [];
+    let fastest = 0;
+    for (const m of this.miis) {
+      if (m.act !== 'held' && !this.loose(m, time)) continue;
+      moving.push(m);
+      m.body.touched = 0;
+      m.body.hit = 0;
+      if (m.act === 'held') m.next.copy(m.body.com);
+      fastest = Math.max(fastest, m.body.vel.length());
+    }
+    if (!moving.length) return;
+    const n = Math.min(TICK.most, Math.max(Math.ceil(dt / TICK.step), Math.ceil((fastest * dt) / TICK.travel)));
+    const h = dt / n;
+    for (let s = 1; s <= n; s++) {
+      for (const m of moving) {
+        if (m.act === 'held') {
+          m.body.com.lerpVectors(m.last, m.next, s / n);
+          continue;
+        }
+        toss.step(m.body, h, motion.GRAVITY);
+        this.fence(m.body);
+      }
+      // Each pair of moving bodies once, then each against anyone in the way.
+      const count = moving.length;
+      for (let i = 0; i < count; i++) {
+        const a = moving[i];
+        for (let j = i + 1; j < moving.length; j++) this.bump(a, moving[j]);
+        for (const o of this.miis) {
+          if (!this.solid(o, time) || Math.abs(o.x - a.body.com.x) > 1.6 || Math.abs(o.z - a.body.com.z) > 1.6) continue;
+          // Someone on their feet is stood up as a body to be hit.
+          toss.stand(o.body, o.x, o.lift, o.z, o.yaw, o.tipX, o.tipZ, o.set.headTop(o.slot) * SIZE);
+          _c.copy(o.body.com);
+          const hit = this.bump(a, o);
+          if (hit < 0) continue;
+          if (hit < SHOVE) {
+            // Barely touched, they are only moved out of the way.
+            o.x += o.body.com.x - _c.x;
+            o.z += o.body.com.z - _c.z;
+            continue;
+          }
+          o.set.liven(o.slot);
+          if (o.spot) o.spot.owner = null;
+          o.spot = null;
+          o.vel = 0;
+          o.act = 'flung';
+          o.at = time;
+          this.play(o, motion.fall, time, true, 0.15);
+          o.body.touched = 0;
+          o.body.hit = 0;
+          moving.push(o);
+        }
+      }
+    }
+    for (const m of moving) {
+      if (m.act === 'held') m.body.com.copy(m.next);
+      else {
+        this.place(m);
+        if (m.act === 'flung') this.landed(m, time);
+      }
+    }
+  }
+
+  /** Two bodies meeting (see toss.collide); one held passes what it felt on to its swing. */
+  private bump(a: Mii, b: Mii) {
+    _a.copy(a.body.vel);
+    _b.copy(b.body.vel);
+    const hit = toss.collide(a.body, b.body);
+    if (hit < 0) return hit;
+    if (a.act === 'held') a.kick.add(a.body.vel).sub(_a);
+    if (b.act === 'held') b.kick.add(b.body.vel).sub(_b);
+    return hit;
+  }
+
+  /** A loose body that has come down: does it catch itself, go limp, or lie still at last? */
+  private landed(m: Mii, time: number) {
+    const b = m.body;
+    if (!b.touched) return;
+    // Down on its feet, near enough upright and not going too fast: it catches itself.
+    toss.upOf(b, _up);
+    if (b.touched === 1 && _up.y > CATCH.upright && Math.hypot(b.vel.x, b.vel.z) < CATCH.speed && b.omega.length() < CATCH.spin) {
+      m.lift = 0;
+      m.vel3.set(b.vel.x, 0, b.vel.z);
+      m.spin = b.omega.y;
+      m.act = 'stunned';
+      m.at = time;
+      this.play(m, motion.land, time, true, b.hit > 4 ? 0.12 : 0.25);
+      return;
+    }
+    // Anything else and it goes limp, rolling and sliding till it lies still.
+    if (b.touched & 6 && m.clip !== motion.sprawl) this.play(m, motion.sprawl, time, true, 0.18);
+    if (b.still > 0.25) {
+      this.play(m, motion.sprawl, time, false, 0.18);
+      m.act = 'down';
+      m.at = time;
+      m.until = time + DOWN.lie * (0.7 + m.k * 0.6);
     }
   }
 
@@ -1162,7 +1542,7 @@ export class Crowd {
     // Depth is squeezed before measuring, so the gap between two Miis looks the same from any side.
     const key = (x: number, z: number) => (Math.floor(x / cell) + 2048) * 4096 + Math.floor(z / DEEP / cell) + 2048;
     this.miis.forEach((m, i) => {
-      // Miis up in the air are no one's to step round.
+      // Miis up in the air are no one's to step round; one lying on the floor is.
       if (m.act === 'away' || m.act === 'held' || m.act === 'flung') return;
       const k = key(m.x, m.z);
       const list = grid.get(k);
@@ -1171,7 +1551,7 @@ export class Crowd {
     });
     const { hero } = this.layout;
     for (const m of this.miis) {
-      if (m.act === 'away' || m.friend || m.act === 'held' || m.act === 'flung' || m.act === 'stunned') continue;
+      if (m.act === 'away' || m.friend || m.stage || (HANDLED.has(m.act) && m.act !== 'flee')) continue;
       const cx = Math.floor(m.x / cell);
       const cz = Math.floor(m.z / DEEP / cell);
       for (let ix = cx - 1; ix <= cx + 1; ix++) {
@@ -1187,7 +1567,7 @@ export class Crowd {
             if (d2 > PERSONAL * PERSONAL || d2 < 1e-6) continue;
             const d = Math.sqrt(d2);
             // Whoever is standing gives way less than whoever is moving.
-            const give = (PERSONAL - d) * (o.friend ? 1 : m.act === 'dash' || m.act === 'stroll' ? 0.5 : 0.12);
+            const give = (PERSONAL - d) * (o.friend || o.stage ? 1 : m.act === 'dash' || m.act === 'stroll' ? 0.5 : 0.12);
             m.x += (dx / d) * give;
             m.z += (dz / d) * give * DEEP;
           }
@@ -1232,7 +1612,10 @@ export class Crowd {
     // Your Mii arches back to look up; friends take whichever way their own number gives them.
     const k = m.lead && clip === motion.skyward ? 0.5 : m.k;
     if (calm && gait) return;
-    clip(out, gait ? m.stride : Math.max(0, time - since), k);
+    // Dancing to the music keeps the beat from when it was first heard, so everyone on stage moves
+    // as one, however they came to start.
+    const onBeat = clip === motion.groove || clip === motion.idol;
+    clip(out, gait ? m.stride : Math.max(0, time - (onBeat ? this.grooveAt : since)), k);
     if (gait) {
       // Strides grow with speed: barely a shuffle when starting off, full swing at pace.
       motion.neutral(still);
@@ -1255,6 +1638,10 @@ export class Crowd {
       motion.blend(pose, other, 1 - w * w * w * (w * (w * 6 - 15) + 10));
     }
     motion.copyJoints(pose, m.shown);
+    if (m.dj) {
+      motion.carry(pose);
+      this.djBeat = m.clip === motion.groove ? motion.onBeat(time - this.grooveAt) : 0;
+    }
 
 
     // Friends follow you with their eyes as you come down, and look surprised to see you.

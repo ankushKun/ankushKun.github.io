@@ -1,6 +1,6 @@
 ---
 title: Privacy
-description: What ankush.one collects when you visit — static pages, zero cookies, no client-side tracking, and third-party embeds.
+description: "What ankush.one collects when you visit: static pages, zero cookies, no client-side tracking, and third-party embeds."
 updated: 2026-11-22
 ---
 
@@ -19,6 +19,7 @@ Like any static website, the hosting provider and CDN see standard request metad
 A small number of individual project and blog pages embed external content:
 
 - **YouTube (`youtube-nocookie.com`):** video embeds on older hardware and project write-ups use YouTube's privacy-enhanced domain.
+- **Music:** the site's radio and the Music app play tracks through a hidden YouTube player on the same privacy-enhanced domain. It loads once the plaza is up or when you reach for the music controls, and YouTube sees those requests under its own privacy policy. The site only keeps, for the length of your browser session, whether you stopped the music.
 - **itch.io:** game jam pages embed playable widgets hosted on `itch.io`.
 - **Arweave gateway:** the interactive DOOM-style renderer post embeds a standalone canvas demo hosted on Arweave.
 - **External links:** clicking links to GitHub, X, Product Hunt, Cal.com, or Construct Computer takes you to those services under their own privacy policies.

@@ -54,8 +54,9 @@
   align-items: center;
   gap: 14px;
   min-width: 0;
-  /* Room on the right for the light switch, which sits in the bar on an app's screen. */
-  padding: 0 84px 0 calc(var(--rail) + var(--gutter));
+  /* Room on the right for the light switch and the music widget, which sit in the bar on an app's
+     screen. */
+  padding: 0 122px 0 calc(var(--rail) + var(--gutter));
   background: linear-gradient(to bottom, #82dc3f, #5bc21f 55%, #51b517);
   box-shadow:
     inset 0 -1px 0 rgb(0 0 0 / 0.12),
@@ -1935,10 +1936,11 @@ button.face:hover {
     display: none;
   }
 
-  /* Clear of the plaza button and the light switch beside it on the left, the menu on the right. */
+  /* Clear of the plaza button, the light switch and the music widget on the left, the menu on the
+     right. */
   .chat-bar {
     gap: 8px;
-    padding: 0 70px 0 112px;
+    padding: 0 70px 0 156px;
   }
 
   html:has(.chat) .theme-toggle {

@@ -3,7 +3,8 @@
 // CRT's outline (sides bowed out, corners rounded) the shape of the game's picture, and the game
 // fades in inside it. A power button takes the plaza button's place meanwhile; pressing it removes
 // the game's frame, which ends it, and plays the morph in reverse. The TV's buttons stay where they
-// always are; the screen fits under them.
+// always are; the screen fits under them. The radio waits while a game plays.
+import { hold, release } from './music/engine';
 
 /** A CRT's outline on a 1000 unit square: a start point, then edge, corner, edge, corner... */
 const CRT: number[][] = [
@@ -90,9 +91,9 @@ const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const MORPH = { duration: 620, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' };
 
 export function wirePlay() {
-  const playBtn = document.querySelector<HTMLButtonElement>('[data-play]');
+  const playBtn = document.querySelector<HTMLButtonElement>('[data-game-play]');
   const screen = document.querySelector<HTMLElement>('[data-player]');
-  const stopBtn = document.querySelector<HTMLButtonElement>('[data-stop]');
+  const stopBtn = document.querySelector<HTMLButtonElement>('[data-game-stop]');
   const cover = document.querySelector<HTMLElement>('[data-cover]');
   const glass = document.querySelector<HTMLElement>('.tv-glass');
   const tube = screen?.querySelector<HTMLElement>('.tube');
@@ -133,6 +134,8 @@ export function wirePlay() {
     const morph = calm() ? undefined : glass.animate([{ clipPath: from }, { clipPath: to }], MORPH);
     morph?.finished.then(() => playing && stopBtn?.showPopover(), () => {});
 
+    // A game has sound of its own: the radio fades out and waits until it ends.
+    hold('game');
     const frame = document.createElement('iframe');
     frame.src = screen.dataset.src ?? '';
     frame.title = screen.dataset.title ?? 'Game';
@@ -155,6 +158,7 @@ export function wirePlay() {
     playing = false;
     removeEventListener('resize', onResize);
     tube.querySelector('iframe')?.remove();
+    release('game');
     stopBtn?.hidePopover();
     if (animate && !calm()) {
       await screen.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, easing: 'ease-in' }).finished;

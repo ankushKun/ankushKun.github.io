@@ -33,7 +33,7 @@ const external = game.play && !game.play.startsWith('/');
   }
   {
     game.play && !game.newTab && (
-      <button slot="action" type="button" class="play" data-play data-sfx>
+      <button slot="action" type="button" class="play" data-game-play data-sfx>
         Play
       </button>
     )
@@ -49,7 +49,7 @@ const external = game.play && !game.play.startsWith('/');
   }
   {
     game.play && !game.newTab && (
-      <button type="button" class="tv-btn tv-stop" aria-label="Stop playing" data-stop data-sfx="back" popover="manual">
+      <button type="button" class="tv-btn tv-stop" aria-label="Stop playing" data-game-stop data-sfx="back" popover="manual">
         <HugeIcon icon={PowerIcon} strokeWidth={1.9} />
       </button>
     )

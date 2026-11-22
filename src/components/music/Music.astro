@@ -1,0 +1,134 @@
+---
+// The Music app, laid out as iTunes 11 was, in the TV's materials: a toolbar with the transport and
+// volume on the left, the LCD in the middle (what is playing, where it is, shuffle and repeat) and
+// search on the right; Cover Flow under it; the songs; a status line. It fills the TV's whole screen
+// and is a view of the site's radio (src/scripts/music/engine.ts), so music started here keeps
+// playing everywhere else. src/scripts/music/app.ts runs it. Without JavaScript the songs still list.
+import {
+  MusicNote01Icon,
+  NextIcon,
+  PauseIcon,
+  PlayIcon,
+  PreviousIcon,
+  RepeatIcon,
+  RepeatOne01Icon,
+  Search01Icon,
+  ShuffleIcon,
+  VolumeHighIcon,
+  VolumeLowIcon,
+} from '@hugeicons/core-free-icons';
+import HugeIcon from '../ui/HugeIcon.astro';
+import { MUSIC, clock } from '../../data/music';
+import './music.css';
+
+const tracks = MUSIC.tracks;
+const total = tracks.reduce((sum, t) => sum + t.durationSec, 0);
+const hours = (total / 3600).toFixed(1);
+---
+
+<div class="mu" data-music-app>
+  <header class="mu-bar">
+    <div class="mu-transport">
+      <button type="button" class="mu-key" data-prev aria-label="Previous" data-sfx><HugeIcon icon={PreviousIcon} size={20} strokeWidth={2} /></button>
+      <button type="button" class="mu-key mu-play" data-play aria-label="Play" data-sfx>
+        <HugeIcon icon={PlayIcon} size={24} strokeWidth={2} class="i-play" />
+        <HugeIcon icon={PauseIcon} size={24} strokeWidth={2} class="i-pause" />
+      </button>
+      <button type="button" class="mu-key" data-next aria-label="Next" data-sfx><HugeIcon icon={NextIcon} size={20} strokeWidth={2} /></button>
+      <label class="mu-vol">
+        <HugeIcon icon={VolumeLowIcon} size={15} strokeWidth={2} />
+        <input type="range" class="music-range" data-volume min="0" max="100" step="1" value="25" aria-label="Volume" />
+        <HugeIcon icon={VolumeHighIcon} size={15} strokeWidth={2} />
+      </label>
+    </div>
+
+    <div class="mu-lcd" aria-live="polite">
+      <span class="mu-lcd-art">
+        <HugeIcon icon={MusicNote01Icon} size={22} strokeWidth={1.8} />
+        <img alt="" width="52" height="52" decoding="async" hidden />
+      </span>
+      <div class="mu-lcd-main">
+        <div class="mu-lcd-line">
+          <span class="mu-lcd-text">
+            <span class="mu-lcd-title">{MUSIC.title}</span>
+            <span class="mu-lcd-artist">{tracks.length} songs</span>
+          </span>
+          <button type="button" class="mu-toggle" data-shuffle aria-label="Shuffle" aria-pressed="true"><HugeIcon icon={ShuffleIcon} size={15} strokeWidth={2} /></button>
+          <button type="button" class="mu-toggle" data-repeat aria-label="Repeat all" aria-pressed="true">
+            <HugeIcon icon={RepeatIcon} size={15} strokeWidth={2} class="i-all" />
+            <HugeIcon icon={RepeatOne01Icon} size={15} strokeWidth={2} class="i-one" />
+          </button>
+        </div>
+        <div class="mu-lcd-scrub">
+          <span class="mu-time" data-at>0:00</span>
+          <input type="range" class="music-range" data-seek min="0" max="0" step="1" value="0" aria-label="Position" disabled />
+          <span class="mu-time" data-left>0:00</span>
+        </div>
+      </div>
+    </div>
+
+    <label class="mu-search">
+      <HugeIcon icon={Search01Icon} size={15} strokeWidth={2} />
+      <input type="search" data-filter placeholder="Search" aria-label="Search songs" autocomplete="off" spellcheck="false" />
+    </label>
+  </header>
+
+  <section class="mu-flow" aria-label="Cover Flow" tabindex="0" data-flow>
+    <div class="mu-flow-stage">
+      {
+        tracks.map((t, i) => (
+          <button type="button" class="mu-cover" data-i={i} aria-label={`${t.title} by ${t.artist}`} tabindex="-1">
+            <img src={t.thumb} alt="" width="220" height="220" loading={i < 8 ? 'eager' : 'lazy'} decoding="async" draggable="false" />
+            <img class="mu-reflect" src={t.thumb} alt="" width="220" height="220" loading="lazy" decoding="async" draggable="false" />
+          </button>
+        ))
+      }
+    </div>
+    <p class="mu-flow-caption">
+      <span class="mu-flow-title">{tracks[0]?.title}</span>
+      <span class="mu-flow-artist">{tracks[0]?.artist}</span>
+    </p>
+  </section>
+
+  <div class="mu-list">
+    <table class="mu-table">
+      <thead>
+        <tr>
+          <th class="mu-c-i" scope="col" aria-sort="ascending"><button type="button" data-sort="index">#</button></th>
+          <th class="mu-c-name" scope="col"><button type="button" data-sort="title">Name</button></th>
+          <th class="mu-c-artist" scope="col"><button type="button" data-sort="artist">Artist</button></th>
+          <th class="mu-c-time" scope="col"><button type="button" data-sort="time">Time</button></th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          tracks.map((t, i) => (
+            <tr data-i={i} data-title={t.title} data-artist={t.artist} data-time={t.durationSec}>
+              <td class="mu-c-i">
+                <span class="mu-n">{i + 1}</span>
+                <span class="mu-on" aria-hidden="true">
+                  <i />
+                  <i />
+                  <i />
+                </span>
+              </td>
+              <td class="mu-c-name">
+                <button type="button" class="mu-row-play">{t.title}</button>
+              </td>
+              <td class="mu-c-artist">{t.artist}</td>
+              <td class="mu-c-time">{clock(t.durationSec)}</td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <footer class="mu-status" data-status data-total={`${tracks.length} songs, ${hours} hours`}>
+    {tracks.length} songs, {hours} hours
+  </footer>
+</div>
+
+<script>
+  import '../../scripts/music/app';
+</script>

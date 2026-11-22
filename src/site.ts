@@ -55,6 +55,12 @@ export const NAV = [
   { label: 'Apps', href: '/apps/' },
 ];
 
+/**
+ * The home page's menu beside your floating Mii, for visitors who would rather not play
+ * (plaza/Lobby.astro). `wide` links show on big screens only; they stay in the page for crawlers.
+ */
+export const LOBBY_NAV: { label: string; href: string; wide?: boolean }[] = [...NAV, { label: 'Games', href: '/games/', wide: true }];
+
 /** The footer at the end of every page. Home is the plaza, settled (see the TV's plaza button). */
 export const FOOTER_NAV = [
   { label: 'Home', href: '/#0' },

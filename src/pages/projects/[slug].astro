@@ -14,9 +14,8 @@ const { data } = entry;
 <Entry entry={entry}>
   <div slot="meta" class="meta">
     {
-      (data.status === 'archived' || data.stack.length > 0) && (
+      data.stack.length > 0 && (
         <ul class="stack">
-          {data.status === 'archived' && <li class="pill">Archived</li>}
           {data.stack.map((s) => (
             <li class="chip">{s}</li>
           ))}

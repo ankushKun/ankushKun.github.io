@@ -1,16 +1,25 @@
 // Runs the plaza: builds the scene, plays the opening, then keeps the place alive and answers
-// zoom, the mouse and the cube links, in time with the sound.
+// zoom, the mouse and the cube links, in time with the sound. It stays alive for the whole visit:
+// going to another page puts it to sleep (no frames, the scene's clock stopped) and coming back
+// wakes it, pulling back out of the block you went in through (Plaza.astro).
 import * as THREE from 'three';
+import { navigate } from 'astro:transitions/client';
 import { sectionOf } from '../../lib/nav';
+import { previousPath } from '../../scripts/motion';
+import * as radio from '../../scripts/music/engine';
+import { closeOver, followPlayer, openOver, playerOpen, showOver, type Spot } from '../../scripts/music/widget';
 import { loadMiiKit } from '../mii/kit';
 import { SCORE, soundtrack } from './audio';
+import { Boombox, type BoomboxKind } from './boombox';
 import { Bubbles } from './bubbles';
+import { HeadGear } from './headgear';
 import { Crowd, SKYFALL } from './crowd';
 import { GRAVITY } from './motion';
 import { Cubes } from './cubes';
 import { Floor, HAZE } from './floor';
 import { HeadCards } from './heads';
 import { drawIcons, thumb } from './icons';
+import { NowPlaying } from './nowplaying';
 import { CUBE, applyView, blankView, copyView, makeLayout, mixViews, type Layout } from './layout';
 import type { PlazaData } from './types';
 import { clamp, damp, easeInOut, rng, smoothstep } from './util';
@@ -51,11 +60,15 @@ const TAG_MIN = 11;
 const DIVE = 0.7;
 const STEP_BACK = 1.5;
 
-/**
- * Starts the plaza. Built while the page is still being prerendered (Base.astro asks for that when
- * the pointer rests on the TV's plaza button), it draws its first frame the moment it is shown.
- */
-export async function start(root: HTMLElement, data: PlazaData) {
+export interface PlazaControl {
+  /** Leaving the plaza for another page: no more frames until it wakes. */
+  sleep(): void;
+  /** Back from `from`, the page just left. */
+  wake(from: string | null): void;
+}
+
+/** Starts the plaza. Its first frame is drawn once the page is shown. */
+export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaControl> {
   const need = <E extends Element>(el: E | null): E => {
     if (!el) throw new Error('Plaza markup is incomplete');
     return el;
@@ -64,7 +77,10 @@ export async function start(root: HTMLElement, data: PlazaData) {
   const bubbleLayer = need(root.querySelector<HTMLElement>('.plaza-bubbles'));
   const begin = need(root.querySelector<HTMLButtonElement>('.plaza-start'));
   const card = need(root.querySelector<HTMLElement>('.plaza-who'));
+  const djButton = need(root.querySelector<HTMLButtonElement>('.plaza-dj'));
   const links = [...root.querySelectorAll<HTMLAnchorElement>('a[data-cube]')];
+  /** On the plaza now, rather than asleep behind another page. */
+  let active = location.pathname === '/';
 
   const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let w = root.clientWidth;
@@ -145,6 +161,12 @@ export async function start(root: HTMLElement, data: PlazaData) {
       return tex;
     }),
   );
+  // The Music block shows what the radio is playing.
+  const musicCube = data.cubes.findIndex((c) => c.href === '/apps/music/');
+  const coverArt =
+    musicCube >= 0
+      ? new NowPlaying(cubes.items[musicCube].mesh.material.uniforms.uIcon, cubes.items[musicCube].mesh.material.uniforms.uIcon.value, renderer.capabilities.getMaxAnisotropy())
+      : null;
   const random = rng(2012);
   const crowd = new Crowd(scene, {
     kit,
@@ -153,9 +175,17 @@ export async function start(root: HTMLElement, data: PlazaData) {
     pool: data.pool,
     count: small || weak ? data.crowd.mobile : data.crowd.desktop,
     cubes: data.cubes.length,
+    djCube: musicCube,
+    dj: data.dj,
+    backup: data.backup,
     resolution: 128,
     random,
   });
+  // The DJ under the Music block, with the boombox on their shoulder.
+  const boombox = crowd.dj >= 0 ? new Boombox(scene, data.boombox, calm) : null;
+  // Headsets and ponytails for whoever's look has them.
+  const gear = crowd.gear.map(({ i, look }) => ({ i, worn: new HeadGear(scene, look) }));
+  let heard = false;
   sizeBehind();
   // Heads small on screen are drawn as flat pictures, all in one draw call.
   const cards = new HeadCards(scene, renderer, crowd.crowdSet, small || weak ? 56 : 80);
@@ -190,7 +220,11 @@ export async function start(root: HTMLElement, data: PlazaData) {
    * a refresh plays the opening as usual.
    */
   const traversed = (performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined)?.type === 'back_forward';
-  const returning = location.hash === '#0' || (traversed && sameSite(document.referrer) !== null);
+  // Started by the router after another page of the site (the first visit began elsewhere), the
+  // page before is the one the router came from; on a fresh load, the referrer.
+  const routed = previousPath() !== location.pathname ? previousPath() : null;
+  const cameFrom = routed ?? sameSite(document.referrer);
+  const returning = location.hash === '#0' || (traversed && cameFrom !== null);
   if (location.hash === '#0') whenShown(() => history.replaceState(history.state, '', location.pathname + location.search));
   /** No opening and no waiting: reduced motion, or coming back. */
   const quiet = calm || returning;
@@ -264,9 +298,52 @@ export async function start(root: HTMLElement, data: PlazaData) {
     crowd.applaud(start + INTRO.gaze, start + INTRO.pull + 0.4);
     crowd.arrive(start + INTRO.crowd, SCORE.settled - INTRO.crowd);
     cubes.launch(start + INTRO.cubes);
-    if (withSound) music.begin(() => (scored && since() < SCORE.settled ? since() : null));
-    else scored = false;
+    if (withSound) {
+      radio.prime();
+      music.begin(() => (scored && since() < SCORE.settled ? since() : null));
+    } else scored = false;
   }
+
+  /**
+   * The plaza's theme gives way to the radio: a random track fades in as the theme fades out, once
+   * the crowd is in (or as soon as the opening is skipped). If the radio can't start (YouTube is
+   * blocked, or the visitor stopped it this session), the theme plays on.
+   */
+  let handedOver = false;
+  let handing = false;
+  function handOver(seconds: number) {
+    if (handedOver || waiting) return;
+    handedOver = handing = true;
+    void radio.takeOver(seconds).then((ok) => {
+      handing = false;
+      if (ok) music.release(seconds);
+    });
+  }
+  // Whenever the radio is playing, the theme is not: started from the widget mid-opening, say, or
+  // let out by a press after the browser held it back. M mutes both.
+  let nowPlaying = -1;
+  radio.subscribe((s) => {
+    music.setMuted(s.muted);
+    const on = s.playing && !s.loading && !s.blocked && s.index >= 0;
+    coverArt?.set(s.playing && s.index >= 0 ? s.tracks[s.index].thumb : null, s.audible);
+    heard = s.audible;
+    crowd.setGroove(heard);
+    if (on && !handing && !music.released) {
+      handedOver = true;
+      music.release(1.5);
+    }
+    // A new track while you are here: the DJ says what it is (your Mii, without a DJ).
+    if (on && s.index !== nowPlaying) {
+      nowPlaying = s.index;
+      const t = s.tracks[s.index];
+      const said = t && { text: `Now playing: ${t.title} by ${t.artist}`, href: '/apps/music/', thumb: t.thumb };
+      const me = data.welcome[0];
+      if (active && said && !waiting && !opening) {
+        if (crowd.dj >= 0) bubbles.sayNext({ cube: musicCube, tag: data.cubes[musicCube].label, by: crowd.dj, ...said });
+        else if (me) bubbles.sayNext({ ...me, ...said });
+      }
+    }
+  });
 
   /** Skips the rest of the opening, if this visitor has already seen it once this session. */
   function skip() {
@@ -283,6 +360,7 @@ export async function start(root: HTMLElement, data: PlazaData) {
       cubes.settle();
       crowd.settle(time);
       music.settle();
+      handOver(1.5);
     }
   }
 
@@ -334,6 +412,7 @@ export async function start(root: HTMLElement, data: PlazaData) {
     bubbles.dismiss(keep);
     hideCard();
     letLook();
+    closeOver();
   }
 
   /**
@@ -390,6 +469,7 @@ export async function start(root: HTMLElement, data: PlazaData) {
       markSeen();
     }
     zoom = calm ? zoomTo : damp(zoom, zoomTo, 7, dt);
+    if (import.meta.env.DEV && closeUp) return closeOn(crowd.headTop(closeUp.mii, new THREE.Vector3()), zoomView(zoom, zoomed), closeUp.near, now);
     // Coming in close, the middle group gives a little show; the bubbles make way.
     if (zoom > ZOOM.close !== close) {
       close = !close;
@@ -409,6 +489,9 @@ export async function start(root: HTMLElement, data: PlazaData) {
     }
     return mixViews(now, zoomView(zoom, zoomed), calm ? 1 : 1 - Math.exp(-14 * dt), now);
   }
+
+  /** In dev, `__plaza.look(i)` holds the camera up close on Mii `i`. */
+  let closeUp: { mii: number; near: number } | null = null;
 
   /** The view actually shown: the aimed one, eased a little toward the pointer, as in a game. */
   function lean(v: typeof now, dt: number) {
@@ -434,11 +517,11 @@ export async function start(root: HTMLElement, data: PlazaData) {
   });
   begin.addEventListener('click', () => go());
   addEventListener('keydown', (e) => {
-    if (e.metaKey || e.ctrlKey || e.altKey) return;
-    // Keys pressed on the light switch are its own.
-    if (e.target instanceof Element && e.target.closest('[data-theme-toggle]')) return;
-    if (e.key === 'm' || e.key === 'M') music.toggle();
-    else if (e.key === '+' || e.key === '=') zoomBy(0.5);
+    if (!active || e.metaKey || e.ctrlKey || e.altKey) return;
+    // Keys pressed on the light switch, the music widget and the lobby's links are their own. M
+    // mutes the music everywhere (src/scripts/music/engine.ts); the theme follows it.
+    if (e.target instanceof Element && e.target.closest('[data-theme-toggle], [data-music-widget], [data-lobby]')) return;
+    if (e.key === '+' || e.key === '=') zoomBy(0.5);
     else if (e.key === '-' || e.key === '_') zoomBy(-0.5);
     else if (waiting && (e.key === 'Enter' || e.key === ' ')) go();
     else if (e.key === 'Escape') skip();
@@ -447,6 +530,7 @@ export async function start(root: HTMLElement, data: PlazaData) {
   const KONAMI = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
   let konami = 0;
   addEventListener('keydown', (e) => {
+    if (!active) return;
     const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
     konami = key === KONAMI[konami] ? konami + 1 : key === KONAMI[0] ? 1 : 0;
     if (konami < KONAMI.length) return;
@@ -459,9 +543,9 @@ export async function start(root: HTMLElement, data: PlazaData) {
   });
 
   /**
-   * Leaving through a block or a bubble: the camera dives into `point` while the page fades, and
-   * only then does the next page load. The page freezes on its last frame as soon as the next one
-   * starts loading, so the camera gets all the way in first; the next page then fades in.
+   * Leaving through a block or a bubble: the camera dives into `point` while the plaza fades into
+   * its haze, and only then does the router change the page, so the camera gets all the way in
+   * first; the next page then fades in. The radio takes over from the theme on the way out.
    */
   function leave(link: HTMLAnchorElement, point: THREE.Vector3, near: number, keep?: Element) {
     if (root.dataset.leaving) return;
@@ -472,16 +556,31 @@ export async function start(root: HTMLElement, data: PlazaData) {
     endOpening();
     dive(point, near, keep);
     music.duck(true, DIVE);
-    setTimeout(() => location.assign(link.href), calm ? 0 : DIVE * 1000);
+    handOver(DIVE);
+    setTimeout(() => travel(link.href), calm ? 0 : DIVE * 1000);
   }
 
-  // Pressing a speech bubble dives into whoever is saying it.
+  /** To another page of the site through the router, which keeps this document (and the music); anywhere else, a plain load. */
+  function travel(href: string) {
+    const to = new URL(href, location.href);
+    if (to.origin !== location.origin) return location.assign(to.href);
+    void navigate(to.pathname + to.search + to.hash);
+  }
+
+  // Pressing a speech bubble dives into whoever is saying it. The DJ's bubble opens the music
+  // player over them in its place.
   bubbleLayer.addEventListener('click', (e) => {
     const link = e.target instanceof Element ? e.target.closest<HTMLAnchorElement>('a.plaza-bubble') : null;
     if (!link || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     const speaker = bubbles.speakerOf(link);
     if (speaker < 0) return;
     e.preventDefault();
+    if (speaker === crowd.dj) {
+      bubbles.dismiss();
+      crowd.hush(speaker, time);
+      showOver(djSpot);
+      return;
+    }
     link.classList.add('is-chosen');
     leave(link, crowd.headTop(speaker, new THREE.Vector3()), 0.12, link);
   });
@@ -517,7 +616,7 @@ export async function start(root: HTMLElement, data: PlazaData) {
   const dropSpins: (() => void)[] = [];
   root.addEventListener('pointerdown', (e) => {
     if (e.pointerType !== 'touch') return;
-    const onBlock = !!(e.target as Element).closest('a') || press?.id === e.pointerId;
+    const onBlock = !!(e.target as Element).closest('a, .plaza-dj') || press?.id === e.pointerId;
     touches.set(e.pointerId, { x: e.clientX, y: e.clientY, onBlock });
     if (touches.size === 2) {
       pinch = spread();
@@ -574,6 +673,8 @@ export async function start(root: HTMLElement, data: PlazaData) {
   function letGoMii(tap: boolean) {
     if (!press) return;
     if (press.holding) crowd.release(press.mii, time);
+    // A tap on the DJ is a press of their button: it opens the music player.
+    else if (tap && press.mii === crowd.dj) djButton.click();
     else if (tap) crowd.poke(press.mii, time, camera.position);
     if (root.hasPointerCapture(press.id)) root.releasePointerCapture(press.id);
     press = null;
@@ -640,7 +741,8 @@ export async function start(root: HTMLElement, data: PlazaData) {
     const now = performance.now();
     if (now - lastPick > 90 || !mouse) {
       lastPick = now;
-      let over = mouse && !overUi && playful() && !press ? crowd.pick(camera, mouse.x, mouse.y, w, h, hovered) : -1;
+      // The DJ's button covers them, so pointing at it is pointing at them.
+      let over = djButton.matches(':hover') ? crowd.dj : mouse && !overUi && playful() && !press ? crowd.pick(camera, mouse.x, mouse.y, w, h, hovered) : -1;
       if (over < 0 && hovered >= 0 && mouse && !overUi && !press) {
         if (missedAt < 0) missedAt = now;
         if (now - missedAt < 350) over = hovered;
@@ -650,7 +752,7 @@ export async function start(root: HTMLElement, data: PlazaData) {
         hoverSince = now;
         hideCard();
       }
-      root.dataset.over = String(hovered >= 0);
+      root.dataset.over = String(hovered >= 0 && hovered !== crowd.dj);
     }
     const who = hovered >= 0 ? crowd.who(hovered) : null;
     if (who && shownCard !== hovered && now - hoverSince > 400) {
@@ -756,6 +858,46 @@ export async function start(root: HTMLElement, data: PlazaData) {
     });
   }
 
+  // The DJ: a button over them, so a press (or Enter) opens the music player over their head, and
+  // the player follows them while it is open.
+  djButton.hidden = crowd.dj < 0;
+  const djBox = { x: 0, top: 0, bottom: 0, on: false };
+  /** Where the DJ is in the viewport, for the player to open over; null while they can't be seen. */
+  const djSpot = (): Spot | null => {
+    if (!active || !djBox.on) return null;
+    const box = root.getBoundingClientRect();
+    return { x: box.left + djBox.x, top: box.top + djBox.top, bottom: box.top + djBox.bottom };
+  };
+  djButton.addEventListener('click', (e) => {
+    openOver(djSpot);
+    // Already open in its corner: it moves over the DJ rather than closing.
+    if (playerOpen() === 'corner') {
+      e.preventDefault();
+      followPlayer();
+    }
+  });
+  function placeDj() {
+    if (crowd.dj < 0) return;
+    djBox.on = crowd.djShown() && playful() && !diving;
+    if (djBox.on) {
+      const feet = crowd.headTop(crowd.dj, _at).setY(crowd.miis[crowd.dj].lift).project(camera);
+      const x = (feet.x + 1) * 0.5 * w;
+      const bottom = (1 - feet.y) * 0.5 * h;
+      crowd.headTop(crowd.dj, _at).project(camera);
+      const top = (1 - _at.y) * 0.5 * h;
+      djBox.on = _at.z < 1 && bottom > 0 && top < h && x > 0 && x < w;
+      Object.assign(djBox, { x, top, bottom });
+      // Tall enough for the Mii, wide enough for the boombox too, and never too small to press.
+      const tall = Math.max(36, bottom - top + 8);
+      const wide = Math.max(36, tall * 0.9);
+      djButton.style.width = `${Math.round(wide)}px`;
+      djButton.style.height = `${Math.round(tall)}px`;
+      djButton.style.transform = `translate3d(${Math.round(x - wide / 2)}px, ${Math.round(bottom + 4 - tall)}px, 0)`;
+    }
+    djButton.classList.toggle('is-on', djBox.on);
+    followPlayer();
+  }
+
   // Loop -----------------------------------------------------------------------------------------
 
   function tick(dt: number) {
@@ -772,11 +914,17 @@ export async function start(root: HTMLElement, data: PlazaData) {
     // The camera drifts with the pointer, so the hand is placed again every step, not only when it moves.
     if (press?.holding) crowd.carry(press.mii, rayAt(press.x, press.y));
     crowd.update(dt, time, camera.position, calm);
+    for (const { i, worn } of gear) worn.place(crowd.headOf(i));
+    if (boombox) {
+      const { yaw, scale } = crowd.djFrame();
+      boombox.update(crowd.djShown() ? crowd.djWrist : null, yaw, scale, crowd.djBeat, heard, time, dt);
+    }
     // Blocks belong to the wide views. Closer in than about two thirds of the standard view they fade.
     const open = (v.dist * Math.tan(THREE.MathUtils.degToRad(v.fov / 2))) / (layout.views[1].dist * Math.tan(THREE.MathUtils.degToRad(layout.views[1].fov / 2)));
     const showing = (opening && time < INTRO.wide) || stepping || diving ? 1 : smoothstep(0.55, 0.78, open);
     blocksShown = calm || dt === 0 ? showing : damp(blocksShown, showing, 4, dt);
     cubes.update(time, dt, calm, camera, v.dist, blocksShown);
+    coverArt?.update();
     return v;
   }
 
@@ -793,6 +941,7 @@ export async function start(root: HTMLElement, data: PlazaData) {
       renderer.autoClear = true;
     }
     placeLinks();
+    placeDj();
     if (press && !press.holding && performance.now() - press.at > 350) liftMii();
     hover();
     const talk = bubbles.greeting ? INTRO.greet : INTRO.talk;
@@ -887,6 +1036,10 @@ export async function start(root: HTMLElement, data: PlazaData) {
   /** Frames drawn so far. The loading veil lifts after the second, once the first frame's hitch is over. */
   let frames = 0;
   function frame(t: number) {
+    if (!active) {
+      raf = 0;
+      return;
+    }
     if (resized) applyResize();
     const real = Math.max(0, (t - last) / 1000);
     govern(real);
@@ -895,6 +1048,9 @@ export async function start(root: HTMLElement, data: PlazaData) {
     if (!built) built = crowd.build(performance.now() + 5);
     if (!carded) carded = cards.bake(performance.now() + 3);
     draw(advance(real).target);
+    // The crowd is in: the radio takes over from the theme. Coming back to a plaza already there,
+    // it does so at once.
+    if (!handedOver && !waiting && since() >= SCORE.settled) handOver(2.5);
     if (++frames === 2) {
       root.dataset.state = 'live';
       // Back from a page, the pull out of its block starts as the veil lifts.
@@ -902,11 +1058,13 @@ export async function start(root: HTMLElement, data: PlazaData) {
       root.dataset.waiting = String(waiting);
       // With nothing to wait for, sound joins whenever the browser lets it.
       if (!waiting) music.begin(() => null);
+      // The radio's player loads now the plaza is up, so it is ready by the time the theme hands over.
+      setTimeout(radio.prepare, 1200);
     }
     raf = requestAnimationFrame(frame);
   }
   function resume() {
-    if (raf) return;
+    if (raf || !active) return;
     last = performance.now();
     raf = requestAnimationFrame(frame);
   }
@@ -916,7 +1074,7 @@ export async function start(root: HTMLElement, data: PlazaData) {
    * wherever they have got to.
    */
   setInterval(() => {
-    if (document.visibilityState === 'visible' || prerendering()) return;
+    if (!active || document.visibilityState === 'visible' || prerendering()) return;
     const t = performance.now();
     if (!built) built = crowd.build(t + 5);
     advance(Math.max(0, (t - last) / 1000));
@@ -995,6 +1153,12 @@ export async function start(root: HTMLElement, data: PlazaData) {
           draw(tick(0).target);
         },
         crowd: () => crowd.stats(),
+        /** Holds the camera up close on Mii `i` (`near` is how much of the distance is left), or lets it go with no `i`. */
+        look(i?: number, near = 0.08) {
+          closeUp = i === undefined ? null : { mii: i, near };
+        },
+        /** Swaps the DJ's boombox: 'model' or 'drawn'. */
+        boombox: (kind: BoomboxKind) => boombox?.show(kind),
         /** Where Mii `i` is on screen (CSS pixels): its feet and the top of its head, and what it is doing. */
         mii(i: number) {
           crowd.headTop(i, _at).project(camera);
@@ -1026,9 +1190,9 @@ export async function start(root: HTMLElement, data: PlazaData) {
 
   // Back from another page: up close on its block, pulling back (`stepOut`). A page change that
   // came back to this very plaza from the back/forward cache does the same, and lets the sound up.
-  stepOut(returning ? sameSite(document.referrer) : null);
+  stepOut(returning ? cameFrom : null);
   addEventListener('pageshow', (e) => {
-    if (!e.persisted) return;
+    if (!e.persisted || !active) return;
     diving = false;
     bubbles.clear();
     delete root.dataset.leaving;
@@ -1040,38 +1204,43 @@ export async function start(root: HTMLElement, data: PlazaData) {
     resume();
   });
 
-  // The sound button: muted until the browser lets sound out (the first touch on the page), then
-  // the visitor's to turn off and on, in step with M. Pressed while the plaza still waits for its
-  // first tap, it is that tap: the opening starts, with sound.
-  const soundButton = document.querySelector<HTMLButtonElement>('[data-plaza-sound]');
-  if (soundButton && music.available) {
-    // Heard: the browser lets sound out, the music has started, and it isn't muted.
-    const heard = () => music.live && music.playing && !music.muted;
-    const paint = () => soundButton.setAttribute('aria-pressed', String(heard()));
-    // The press itself lets sound out, so whether it was heard is read before it lands.
-    let heardAtPress: boolean | null = null;
-    soundButton.addEventListener('pointerdown', () => {
-      heardAtPress = heard();
-    });
-    soundButton.addEventListener('click', () => {
-      const was = heardAtPress ?? heard();
-      heardAtPress = null;
-      if (waiting) {
-        music.setMuted(false);
-        go();
-      } else music.setMuted(was);
-      paint();
-    });
-    music.onChange(paint);
-    paint();
-    soundButton.hidden = false;
-  }
-
   // Prerendered, there are no frames to draw until the page is shown; then it starts at once.
   whenShown(() => {
     last = performance.now();
     raf = requestAnimationFrame(frame);
   });
+
+  return {
+    sleep() {
+      if (!active) return;
+      active = false;
+      cancelAnimationFrame(raf);
+      raf = 0;
+      // The dive is over: nothing of it may linger on the page that comes next.
+      diving = false;
+      delete root.dataset.leaving;
+      handOver(0.7);
+      music.duck(true, 0.4);
+      letGoMii(false);
+      touches.clear();
+      hideCard();
+      closeOver();
+    },
+    wake(from) {
+      if (active) return;
+      active = true;
+      // The TV's plaza button opens /#0; the mark comes off so a refresh plays the opening.
+      if (location.hash === '#0') history.replaceState(history.state, '', location.pathname + location.search);
+      diving = false;
+      bubbles.clear();
+      delete root.dataset.leaving;
+      music.duck(false, 0.6);
+      last = performance.now();
+      // The plaza fades in over about half a second (global.css): the pull back waits till then.
+      stepOut(from, 0.4);
+      resume();
+    },
+  };
 }
 
 /** Whether the page is still being prerendered, out of sight (Base.astro asks for that). */

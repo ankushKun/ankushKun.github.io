@@ -1,7 +1,7 @@
 // Build-time data for the home page plaza: cubes from the site nav, speech bubbles from every entry.
 import type { PlazaCube, PlazaData, PlazaMii, PlazaPost } from '../components/plaza/types';
 import { getImage } from 'astro:assets';
-import { CROWD, CUBES, FEATURED, HERO, ME, WELCOME } from '../data/plaza';
+import { BACKUP, BOOMBOX, CROWD, CUBES, DJ, FEATURED, HERO, LOOKS, ME, WELCOME } from '../data/plaza';
 import { existsSync } from 'node:fs';
 import { AUTHOR, FOOTER_NAV, NAV } from '../site';
 import { SECTION_PATH, getEntries, isoDate, urlOf, type Section } from './content';
@@ -58,11 +58,19 @@ export async function getPlazaData(): Promise<PlazaData> {
 
   // A Mii from a QR image is named after its file: "Steve Jobs.png" is Steve Jobs.
   const files = await folderMiis();
-  const named = (code: string, file: string | undefined, fallback: string): PlazaMii => ({ code, name: file ? file.replace(/\.[^.]+$/, '') : fallback });
+  const named = (code: string, file: string | undefined, fallback: string): PlazaMii => ({
+    code,
+    name: file ? file.replace(/\.[^.]+$/, '') : fallback,
+    ...(file ? LOOKS[file] : undefined),
+  });
   const fileOf = (code: string) => [...files].find(([, c]) => c === code)?.[0];
   const heroCodes = await Promise.all([ME, ...HERO].map((ref, i) => resolveMii(ref, i ? `HERO[${i - 1}]` : 'ME')));
   const hero = heroCodes.map((code, i) => named(code, fileOf(code), i ? '' : AUTHOR.name.split(' ')[0]));
-  const pool = [...files].filter(([, code]) => !heroCodes.includes(code)).map(([file, code]) => named(code, file, ''));
+  const djCode = DJ ? await resolveMii(DJ, 'DJ') : null;
+  const dj = djCode ? named(djCode, fileOf(djCode), '') : null;
+  const pool = [...files].filter(([, code]) => !heroCodes.includes(code) && code !== djCode).map(([file, code]) => named(code, file, ''));
 
-  return { cubes, posts, welcome, hero, pool, crowd: CROWD, featured };
+  const backup = await Promise.all(BACKUP.map(async ({ from, ...made }) => ({ ...made, code: await resolveMii(from, made.name) })));
+
+  return { cubes, posts, welcome, hero, pool, dj, backup, boombox: BOOMBOX, crowd: CROWD, featured };
 }

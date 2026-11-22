@@ -1,11 +1,9 @@
 ---
 // The plaza: the home page itself, by day or by night after the site's light or dark. Without
-// WebGL or JavaScript it shows a plain grid of links.
+// WebGL or JavaScript it is only its haze, under the lobby's links (Lobby.astro).
 import '@fontsource/m-plus-1p/latin-500.css';
 import '@fontsource/m-plus-1p/latin-700.css';
-import { VolumeHighIcon, VolumeMute02Icon } from '@hugeicons/core-free-icons';
 import { getPlazaData } from '../../lib/plaza';
-import HugeIcon from '../ui/HugeIcon.astro';
 
 const data = await getPlazaData();
 const json = JSON.stringify(data).replace(/</g, '\\u003c');
@@ -19,7 +17,7 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
 <link rel="preload" href="/fonts/monocraft-latin.otf" as="font" type="font/otf" crossorigin="anonymous" />
 {data.cubes.map((c) => c.art && !c.feature && <link rel="preload" href={c.art} as="image" />)}
 
-<section class="plaza" data-plaza data-state="static">
+<section class="plaza" data-plaza data-state="static" transition:persist="plaza">
   <script is:inline>
     document.currentScript.parentElement.dataset.state = 'loading';
   </script>
@@ -33,6 +31,7 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
       ))
     }
   </nav>
+  <button type="button" class="plaza-dj" popovertarget="music-pop" aria-label="Music player" hidden></button>
   <div class="plaza-bubbles" aria-hidden="true"></div>
   <!-- Shared outer-only drop shadow for speech bubbles: blurs the unified body+tail silhouette and
        punches out the interior so the frosted glass above it blurs only the plaza canvas. Kept out
@@ -55,96 +54,45 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
   <div class="plaza-veil" aria-hidden="true"><span></span><span></span><span></span></div>
   <script type="application/json" data-plaza-data set:html={json} />
 </section>
-<!-- The plaza's sound, beside the light switch: muted until the browser lets sound out (your first
-     touch), then yours to turn off and on. Outside the plaza, so pressing it is never a tap on the
-     scene. main.ts shows it once there is sound to play. -->
-<button type="button" class="plaza-sound" aria-label="Sound" aria-pressed="false" data-plaza-sound hidden>
-  <HugeIcon icon={VolumeHighIcon} size={22} strokeWidth={1.8} class="on" />
-  <HugeIcon icon={VolumeMute02Icon} size={22} strokeWidth={1.8} class="off" />
-</button>
-
 <script>
+  import type { TransitionBeforeSwapEvent } from 'astro:transitions/client';
+  import { previousPath } from '../../scripts/motion';
+  import type { PlazaControl } from './main';
   import type { PlazaData } from './types';
 
-  // Starts the plaza, unless the visitor saves data: then the blocks stay a plain grid of links.
+  // Starts the plaza, unless the visitor saves data: then the lobby's links are the page.
+  // Once started it is kept for the rest of the visit (data-plaza-boot tells the router to carry it
+  // over, src/scripts/motion.ts): going to another page puts it to sleep, coming back wakes it.
   const root = document.querySelector<HTMLElement>('[data-plaza]');
   const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
+  let plaza: PlazaControl | null = null;
   if (root && saveData) root.dataset.state = 'static';
   else if (root) {
-    const plaza: PlazaData = JSON.parse(root.querySelector('[data-plaza-data]')?.textContent ?? '{}');
+    root.setAttribute('data-plaza-boot', '');
+    if (root.dataset.state === 'static') root.dataset.state = 'loading';
+    const data: PlazaData = JSON.parse(root.querySelector('[data-plaza-data]')?.textContent ?? '{}');
     import('./main')
-      .then(({ start }) => start(root, plaza))
+      .then(({ start }) => start(root, data))
+      .then((started) => {
+        plaza = started;
+        // Left before it was ready.
+        if (location.pathname !== '/') started.sleep();
+      })
       .catch((err: unknown) => {
         console.error('Plaza failed to start', err);
         root.dataset.state = 'static';
+        root.removeAttribute('data-plaza-boot');
       });
   }
+  document.addEventListener('astro:before-swap', (e) => {
+    if ((e as TransitionBeforeSwapEvent).to.pathname !== '/') plaza?.sleep();
+  });
+  document.addEventListener('astro:after-swap', () => {
+    if (location.pathname === '/') plaza?.wake(previousPath());
+  });
 </script>
 
 <style is:global>
-  /* Left of the light switch (ThemeToggle.astro), in the same quiet style. */
-  .plaza-sound {
-    position: fixed;
-    z-index: 60;
-    top: max(12px, env(safe-area-inset-top));
-    right: calc(max(12px, env(safe-area-inset-right)) + 38px);
-    display: grid;
-    place-items: center;
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    border: 0;
-    border-radius: 50%;
-    background: none;
-    color: light-dark(rgb(63 68 70 / 0.45), rgb(220 230 235 / 0.5));
-    transition: color 0.2s ease;
-  }
-
-  .plaza-sound[hidden] {
-    display: none;
-  }
-
-  .plaza-sound:hover {
-    color: light-dark(rgb(63 68 70 / 0.8), rgb(220 230 235 / 0.85));
-  }
-
-  /* One icon swaps for the other, as the light switch's sun and moon do. A speaker is shorter than
-     the moon in its box (16 of 24 units against 19), so it is drawn a little larger to match. */
-  .plaza-sound svg {
-    grid-area: 1 / 1;
-    width: 21px;
-    height: 21px;
-    transition:
-      opacity 0.2s ease,
-      scale 0.35s var(--ease-spring);
-  }
-
-  .plaza-sound .on,
-  .plaza-sound[aria-pressed='false'] .on,
-  .plaza-sound[aria-pressed='true'] .off {
-    opacity: 0;
-    scale: 0.6;
-  }
-
-  .plaza-sound[aria-pressed='true'] .on,
-  .plaza-sound[aria-pressed='false'] .off {
-    opacity: 1;
-    scale: 1;
-  }
-
-  @media (max-width: 879px) {
-    .plaza-sound {
-      right: calc(max(12px, env(safe-area-inset-right)) + 44px);
-      width: 40px;
-      height: 40px;
-    }
-
-    .plaza-sound svg {
-      width: 24px;
-      height: 24px;
-    }
-  }
-
   .plaza {
     /* One unit is a hundredth of the screen's height on a 16:9 screen, as on the console. */
     --u: clamp(5.4px, min(1vh, 0.5625vw), 9px);
@@ -186,12 +134,12 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
     outline-offset: 4px;
   }
 
-  .plaza[data-state='static'] > :not(.plaza-links),
+  .plaza[data-state='static'] > *,
   .plaza[data-state='loading'] > .plaza-links {
     display: none;
   }
 
-  /* Section links: laid over the glass blocks when the plaza runs, a plain grid when it cannot. */
+  /* Section links, laid over the glass blocks. When the plaza cannot run, the lobby is the menu. */
 
   .plaza-links {
     position: absolute;
@@ -259,24 +207,6 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
     opacity: 1;
     translate: -50% 0;
     scale: 1;
-  }
-
-  .plaza[data-state='static'] .plaza-links {
-    display: flex;
-    flex-wrap: wrap;
-    place-content: center;
-    gap: 12px;
-    max-width: 40rem;
-    margin: auto;
-    padding: 24px;
-  }
-
-  .plaza[data-state='static'] .plaza-links a {
-    padding: 12px 22px;
-    border-radius: 18px;
-    background: light-dark(#fff, #262c30);
-    box-shadow: 0 2px 10px light-dark(rgb(60 90 95 / 0.14), rgb(0 0 0 / 0.5));
-    font-weight: 700;
   }
 
   /* Speech bubbles, as on the console: a wide, rounded card of frosted glass with a small icon in
@@ -498,6 +428,21 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
     cursor: grabbing;
   }
 
+  /* The DJ under the Music block opens the music player over their head (main.ts keeps the
+     button on them). */
+  .plaza-dj {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border-radius: 40%;
+    background: none;
+    visibility: hidden;
+  }
+
+  .plaza[data-state='live'] .plaza-dj.is-on {
+    visibility: visible;
+  }
+
   /* Name tags are set in Monocraft (Idrees Hassan, SIL Open Font License, public/fonts/), a pixel
      font after Minecraft's, cut down to Latin letters. */
   @font-face {
@@ -613,8 +558,9 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
 
   /* As the camera closes in, the whole page fades away, gently at first and gone by the time the
      camera is all the way in (--dive, set by main.ts), to the screen color every page fades
-     through (global.css). The next page then fades in from it. Coming back, it is simply there. */
-  body:has(.plaza[data-leaving]) {
+     through (global.css). The next page then fades in from it. Coming back, it is simply there.
+     Only on the plaza itself: the plaza stays in the page, asleep, while you are elsewhere. */
+  html[data-home] body:has(.plaza[data-leaving]) {
     opacity: 0;
     transition: opacity calc(var(--dive, 0.7s) * 0.75) cubic-bezier(0.45, 0, 0.55, 1) calc(var(--dive, 0.7s) * 0.2);
   }

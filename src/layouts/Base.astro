@@ -1,10 +1,11 @@
 ---
 // Page shell: every meta tag, Open Graph, JSON-LD, and the screen every page sits on. The home page
 // is the plaza and nothing else. Every other page is shown on the TV (Frame.astro): one column to
-// read down the middle of the screen, the site's other pages in its footer. Pages on the TV change
-// in place through Astro's router (src/scripts/motion.ts); to and from the plaza is a real page
-// load, so the plaza only ever runs while you are on it. On a big screen the next one is
-// prerendered as the pointer rests on its way there, so even that starts the moment you click.
+// read down the middle of the screen, the site's other pages in its footer. Every page change, to
+// and from the plaza too, happens in place through Astro's router (src/scripts/motion.ts), so the
+// site is one document for the whole visit and the radio (src/scripts/music/) never stops. Once
+// the plaza has run it is kept, asleep, while you are on the TV: every other page holds a place for
+// it (transition:persist).
 import type { ImageMetadata } from 'astro';
 import { getImage } from 'astro:assets';
 import { ClientRouter } from 'astro:transitions';
@@ -22,6 +23,8 @@ import { tileFor } from '../lib/tiles';
 import Frame from '../components/ui/Frame.astro';
 import ThemeToggle from '../components/ui/ThemeToggle.astro';
 import Plaza from '../components/plaza/Plaza.astro';
+import Lobby from '../components/plaza/Lobby.astro';
+import MusicWidget from '../components/music/Widget.astro';
 import '../styles/global.css';
 
 interface Props {
@@ -102,6 +105,7 @@ const year = new Date().getFullYear();
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="alternate" type="application/rss+xml" title={`${SITE.title} blog`} href="/blogs/index.xml" />
     <link rel="sitemap" href="/sitemap.xml" />
+    <link rel="alternate" type="text/plain" title="llms.txt" href="/llms.txt" />
 
     <meta property="og:type" content={type} />
     <meta property="og:site_name" content={SITE.title} />
@@ -144,18 +148,10 @@ const year = new Date().getFullYear();
       })();
     </script>
     <script is:inline>
-      // Going between the plaza and the TV is a real page load (the end of global.css). Leaving, the
-      // plaza has already zoomed into the block you pressed and faded into its haze (plaza/main.ts),
-      // so the page simply fades itself in, as a page opened directly does. Coming back, the page
-      // fades away and the plaza pulls back out of the block; meanwhile the column keeps no
-      // transition name of its own, so it goes with the whole screen.
+      // A page opened directly (by its address, a refresh, or from another site) fades in on its own.
+      // Every move within the site is the router's (src/scripts/motion.ts).
       (function () {
         var html = document.documentElement;
-        var home = html.hasAttribute('data-home');
-        addEventListener('pageswap', function (e) {
-          if (e.viewTransition && !home) html.dataset.plazaMove = 'return';
-        });
-        // A page opened directly (by its address, a refresh, or from another site) fades in on its own.
         function arrive() {
           html.setAttribute('data-arrive', '');
           setTimeout(function () {
@@ -164,48 +160,16 @@ const year = new Date().getFullYear();
         }
         if (!('onpagereveal' in window)) arrive();
         addEventListener('pagereveal', function (e) {
-          if (!e.viewTransition) return arrive();
-          if (!home) {
+          if (e.viewTransition) {
             // Skipping a move rejects its promise of being ready; nothing waits on it.
             e.viewTransition.ready.catch(function () {});
             e.viewTransition.skipTransition();
-            return arrive();
           }
-          html.dataset.plazaMove = 'return';
-          e.viewTransition.finished.finally(function () {
-            delete html.dataset.plazaMove;
-          });
-        });
-        addEventListener('pageshow', function () {
-          delete html.dataset.plazaMove;
+          arrive();
         });
       })();
     </script>
-    <script is:inline>
-      // On a big screen, the way between the plaza and the TV is prerendered while the pointer rests
-      // on it: the TV's plaza button, or a block on the plaza. A click then shows a page that is
-      // already built, so the move starts at once. Phones and data savers skip it: building the
-      // plaza in the background costs a second or two of work.
-      (function () {
-        var nav = navigator;
-        if (!(HTMLScriptElement.supports && HTMLScriptElement.supports('speculationrules'))) return;
-        if ((nav.connection && nav.connection.saveData) || (nav.deviceMemory || 8) < 4) return;
-        if (!matchMedia('(pointer: fine) and (min-width: 1000px)').matches) return;
-        var where = document.documentElement.hasAttribute('data-home') ? '.plaza-links a' : '.tv-home';
-        function add() {
-          if (document.querySelector('script[data-prerender]')) return;
-          var rules = document.createElement('script');
-          rules.type = 'speculationrules';
-          rules.setAttribute('data-prerender', '');
-          rules.textContent = JSON.stringify({ prerender: [{ where: { selector_matches: where }, eagerness: 'moderate' }] });
-          document.head.append(rules);
-        }
-        add();
-        // The router keeps only the next page's own head; the rules go back in after every swap.
-        document.addEventListener('astro:after-swap', add);
-      })();
-    </script>
-    {!fullscreen && <ClientRouter fallback="swap" />}
+    <ClientRouter fallback="swap" />
   </head>
   <body class:list={[fullscreen && 'm-0 h-svh overflow-hidden']} style={accent}>
     {
@@ -213,10 +177,10 @@ const year = new Date().getFullYear();
         <>
           <Plaza />
           <ThemeToggle />
-          <main id="main" class="sr-only">
-            <h1>{SITE.title}</h1>
+          <MusicWidget />
+          <Lobby>
             <slot />
-          </main>
+          </Lobby>
         </>
       ) : (
         <>
@@ -225,6 +189,8 @@ const year = new Date().getFullYear();
           </a>
           <Frame />
           <ThemeToggle />
+          <MusicWidget />
+          <section class="plaza" data-plaza transition:persist="plaza" />
           {app ? (
             <main id="main" class="col col-app">
               <slot />
@@ -237,7 +203,7 @@ const year = new Date().getFullYear();
               <footer class="site-foot">
                 <nav aria-label="Pages">
                   {FOOTER_NAV.map((l) => (
-                    <a href={l.href} data-astro-reload={l.href.startsWith('/#') ? '' : undefined}>
+                    <a href={l.href}>
                       {l.label}
                     </a>
                   ))}

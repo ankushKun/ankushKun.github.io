@@ -7,6 +7,8 @@ export interface FFLModule {
   HEAPU8: Uint8Array;
   /** 0 when the CharInfo is valid, else why not. */
   _FFLiVerifyCharInfoWithReason(info: number, allowInvalidName: number): number;
+  /** Reads 96 bytes of FFLStoreData into a CharInfo; false if they aren't a valid Mii. */
+  _FFLpGetCharInfoFromStoreData(info: number, storeData: number): boolean;
 }
 
 export interface CharModelDesc {

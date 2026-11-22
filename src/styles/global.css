@@ -17,6 +17,8 @@
   --color-ink-soft: light-dark(#747c80, #9ba6ab);
   --color-ink-faint: light-dark(#a3aaae, #6d787d);
   --color-ink-quiet: light-dark(#6f787c, #9aa5aa);
+  /* Quiet text that still reads at 4.5:1 on the plaza's haze, as the lobby's links. */
+  --color-ink-mid: light-dark(#5c6468, #a9b3b8);
   --color-haze: light-dark(#e4f0f2, #13171a);
   --color-casing: light-dark(#eceff1, #0f1214);
   --color-screen: light-dark(#f2f4f5, #181c1f);
@@ -1024,7 +1026,7 @@ html[data-playing] .tv-btn.tv-home {
    it (html[data-door]). Meanwhile the page under the app is named col-page, so neither is ever
    stretched to the other's box. From the plaza, its camera zooms into the block you pressed as the
    plaza fades into its haze, and the page fades in; back to it, the page fades out and the camera
-   pulls back out of the block you came from (plaza/main.ts; Base.astro sets html[data-plaza-move]).
+   pulls back out of the block you came from (plaza/main.ts; motion.ts sets html[data-plaza-move]).
    Lengths: --vt-out for what leaves, --vt-in for what arrives, --vt-big for the big moves. */
 
 @view-transition {
@@ -1047,7 +1049,8 @@ html[data-playing] .tv-btn.tv-home {
 ::view-transition-group(tv-home),
 ::view-transition-group(tv-open),
 ::view-transition-group(tv-menu),
-::view-transition-group(theme-toggle) {
+::view-transition-group(theme-toggle),
+::view-transition-group(music) {
   z-index: 5;
 }
 
@@ -1074,9 +1077,11 @@ html:not([data-door])::view-transition-group(col),
 html:not([data-nav^='app'])::view-transition-group(tv-home),
 html:not([data-nav^='app'])::view-transition-group(tv-open),
 html:not([data-nav^='app'])::view-transition-group(theme-toggle),
+html:not([data-nav^='app'])::view-transition-group(music),
 html:not([data-nav^='app'])::view-transition-new(tv-home),
 html:not([data-nav^='app'])::view-transition-new(tv-open),
-html:not([data-nav^='app'])::view-transition-new(theme-toggle) {
+html:not([data-nav^='app'])::view-transition-new(theme-toggle),
+html:not([data-nav^='app'])::view-transition-new(music) {
   animation: none;
 }
 
@@ -1084,7 +1089,8 @@ html:not([data-nav^='app'])::view-transition-new(theme-toggle) {
 ::view-transition-old(tv-menu),
 html:not([data-nav^='app'])::view-transition-old(tv-home),
 html:not([data-nav^='app'])::view-transition-old(tv-open),
-html:not([data-nav^='app'])::view-transition-old(theme-toggle) {
+html:not([data-nav^='app'])::view-transition-old(theme-toggle),
+html:not([data-nav^='app'])::view-transition-old(music) {
   display: none;
 }
 
@@ -1092,7 +1098,8 @@ html:not([data-nav^='app'])::view-transition-old(theme-toggle) {
    (the menu button, where an app lists the sections itself) fades. */
 html[data-nav^='app']::view-transition-group(tv-home),
 html[data-nav^='app']::view-transition-group(tv-open),
-html[data-nav^='app']::view-transition-group(theme-toggle) {
+html[data-nav^='app']::view-transition-group(theme-toggle),
+html[data-nav^='app']::view-transition-group(music) {
   animation-duration: var(--vt-big);
   animation-timing-function: var(--ease-page);
 }
@@ -1238,7 +1245,7 @@ html[data-door]::view-transition-new(col) {
 
 /* Switching between light and dark (src/scripts/theme.ts): the whole screen changes as one, the
    new lights spreading in a circle from the button. */
-html[data-theming] :is(.col, .tv-glass, .tv-btn, .tv-menu, .theme-toggle) {
+html[data-theming] :is(.col, .tv-glass, .tv-btn, .tv-menu, .theme-toggle, .music) {
   view-transition-name: none !important;
 }
 
@@ -1264,12 +1271,17 @@ html[data-theming='fade']::view-transition-new(root) {
   }
 }
 
-/* To and from the plaza, a real page load. Leaving it, the plaza has already faded into its haze as
-   the camera zoomed into the block you pressed (Plaza.astro), and the page fades itself in
-   (html[data-arrive] below). Coming back, Base.astro sets html[data-plaza-move]: the page has faded
-   out (or, going back in history, fades out now), and the plaza fades in, pulling back out of the
-   block. */
-html[data-plaza-move] :is(.col, .tv-glass, .tv-btn, .tv-menu, .theme-toggle) {
+/* The plaza, kept for the whole visit once it has run (Plaza.astro), is out of sight on every other
+   page. */
+html:not([data-home]) [data-plaza] {
+  display: none !important;
+}
+
+/* To and from the plaza, the whole screen fades (motion.ts sets html[data-plaza-move]). Leaving it,
+   the plaza has already faded into its haze as the camera zoomed into the block you pressed
+   (plaza/main.ts), and the page fades in over it. Coming back, the page fades out as the plaza fades
+   in, pulling back out of the block. */
+html[data-plaza-move] :is(.col, .tv-glass, .tv-btn, .tv-menu, .theme-toggle, .music) {
   view-transition-name: none !important;
 }
 
@@ -1283,24 +1295,17 @@ html[data-plaza-move]::view-transition-new(root) {
   mix-blend-mode: normal;
 }
 
-/* Going home, the page has already faded out before leaving (motion.ts), so the plaza simply fades
-   in over the empty screen. */
-html[data-going-home] body {
-  opacity: 0;
-  transition: opacity var(--vt-in) var(--ease-fade);
-}
-
 /* A page opened directly, with no page change to come from, fades in (Base.astro). */
 html[data-arrive] body {
   /* Backwards only: once in, it lets go, so a fade out (leaving the plaza) is never held up. */
   animation: fade-in var(--vt-big) var(--ease-fade) backwards;
 }
 
-html[data-plaza-move='return']::view-transition-old(root) {
+html[data-plaza-move]::view-transition-old(root) {
   animation: fade-out var(--vt-in) var(--ease-fade) both;
 }
 
-html[data-plaza-move='return']::view-transition-new(root) {
+html[data-plaza-move]::view-transition-new(root) {
   animation: fade-in var(--vt-big) var(--ease-fade) both;
 }
 

@@ -2,13 +2,14 @@
 // Loads a Mii from a QR code image, a Mii code, or shuffles through the Plaza's crowd of Miis.
 import { Copy01Icon, QrCode01Icon, ShuffleIcon } from '@hugeicons/core-free-icons';
 import HugeIcon from '../ui/HugeIcon.astro';
-import { ME } from '../../data/plaza';
+import { LOOKS, ME } from '../../data/plaza';
 import { folderMiis, resolveMii } from '../../lib/miis';
 
 const initial = await resolveMii(ME, 'ME');
 const crowd = [...(await folderMiis())].map(([file, code]) => ({
   name: file.replace(/\.[^.]+$/, ''),
   code,
+  parts: LOOKS[file]?.parts,
 }));
 ---
 

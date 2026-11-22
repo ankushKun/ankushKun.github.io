@@ -1,0 +1,149 @@
+---
+// The way in for visitors who would rather not play: your name and the site's sections beside your
+// floating Mii, as quiet text so the Mii stays what draws the eye. They are plain links: the lobby
+// sits outside the plaza, so its clicks never start the opening, and main.ts leaves its keys alone.
+// It shows while the plaza loads and waits for its click, and fades as the opening begins
+// (data-waiting, set by main.ts). Without JavaScript or WebGL it stays, with your portrait in the
+// middle. A column on the left on a big screen, a row across the top on a phone.
+import { LOBBY_NAV, SITE } from '../../site';
+---
+
+<main id="main" class="lobby" data-lobby>
+  <img class="lobby-me" src="/mii/me.webp" alt="" width="256" height="256" decoding="async" />
+  <div class="lobby-menu">
+    <h1>{SITE.title}</h1>
+    <nav aria-label="Menu">
+      <ul>
+        {
+          LOBBY_NAV.map((l) => (
+            <li class:list={[l.wide && 'is-wide']}>
+              <a href={l.href} data-sfx>
+                {l.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </div>
+  <slot />
+</main>
+
+<style is:global>
+  .lobby {
+    position: fixed;
+    z-index: 10;
+    inset: 0;
+    font-family: var(--font-sans);
+    pointer-events: none;
+    transition: opacity var(--vt-in) var(--ease-fade);
+  }
+
+  /* The opening has begun (or the plaza came up already settled): the plaza is the menu now. */
+  .plaza[data-waiting='false'] ~ .lobby {
+    visibility: hidden;
+    opacity: 0;
+    transition:
+      opacity var(--vt-in) var(--ease-fade),
+      visibility 0s linear var(--vt-in);
+  }
+
+  .lobby-menu {
+    position: absolute;
+    /* Level with the middle of your Mii, which floats a little below the screen's. */
+    top: 52%;
+    left: clamp(48px, 9vw, 160px);
+    translate: 0 -50%;
+  }
+
+  .lobby h1 {
+    margin: 0 0 14px;
+    color: var(--color-ink-strong);
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 28px;
+    letter-spacing: -0.01em;
+  }
+
+  .lobby ul {
+    display: grid;
+    justify-items: start;
+    margin: 0 0 0 -12px;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* Each link is a pill whose text lines up with the name; its padding is what you press. */
+  .lobby a {
+    display: block;
+    padding: 9px 12px;
+    border-radius: 99px;
+    color: var(--color-ink-mid);
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1;
+    text-decoration: none;
+    pointer-events: auto;
+    transition:
+      color 0.18s ease,
+      background-color 0.18s ease;
+  }
+
+  .lobby a:focus-visible {
+    color: var(--color-ink-strong);
+  }
+
+  @media (hover: hover) {
+    .lobby a:hover {
+      background: light-dark(rgb(42 47 49 / 0.065), rgb(255 255 255 / 0.07));
+      color: var(--color-ink-strong);
+    }
+  }
+
+  /* Without the plaza, your portrait stands in for your Mii. */
+  .lobby-me {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 160px;
+    height: 160px;
+    translate: -50% -50%;
+  }
+
+  .plaza[data-state='static'] ~ .lobby .lobby-me {
+    display: block;
+  }
+
+  /* A phone: the name level with the switches in the top right corner (ThemeToggle.astro), the
+     links spread across one line under it, ending under the light switch's icon. */
+  @media (max-width: 879px) {
+    .lobby-menu {
+      top: calc(max(22px, env(safe-area-inset-top)) + 5px);
+      right: max(25px, env(safe-area-inset-right));
+      left: max(25px, env(safe-area-inset-left));
+      translate: none;
+    }
+
+    .lobby h1 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 30px;
+    }
+
+    .lobby ul {
+      display: flex;
+      justify-content: space-between;
+      margin: 6px 0 0;
+    }
+
+    .lobby a {
+      padding: 12px 0;
+      font-size: 14px;
+    }
+
+    .lobby .is-wide {
+      display: none;
+    }
+  }
+</style>

@@ -28,7 +28,7 @@ export const APPS: App[] = [
     href: '/mii/',
   },
   { id: 'games', label: 'Games', description: 'My game jam entries and classics like DOOM and Quake III Arena, playing right on the TV.', href: '/games/' },
-  { id: 'music', label: 'Music', description: 'A player for game soundtracks and the mixes I work to.', href: '/apps/music/', soon: true },
+  { id: 'music', label: 'Music', description: 'An iTunes-style player for the game soundtracks and songs I work to, playing on across the site.', href: '/apps/music/' },
   { id: 'paint', label: 'Paint', description: 'A shared canvas to draw on together in real time.', href: '/apps/paint/', soon: true },
   { id: 'guestbook', label: 'Guestbook', description: 'Leave a Swapnote-style doodle or note for the next visitor.', href: '/apps/guestbook/', soon: true },
   { id: 'terminal', label: 'Terminal', description: 'A retro command line to explore the whole site.', href: '/apps/terminal/', soon: true },

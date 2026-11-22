@@ -1,5 +1,6 @@
 // The plaza's sound: one recording, cut from the console's own. It opens on the chime the plaza
-// appears to, runs through the passage the crowd pours in over, then circles on the main theme.
+// appears to, runs through the passage the crowd pours in over, then circles on the main theme
+// until the site's radio takes over (`release`, src/scripts/music/engine.ts).
 const SRC = '/media/warawara-plaza.mp3';
 const VOLUME = 0.5;
 
@@ -28,7 +29,10 @@ export interface Soundtrack {
   settle(): void;
   /** Fades out, for leaving the page. `false` brings the sound back. */
   duck(on: boolean, seconds?: number): void;
-  toggle(): void;
+  /** Fades out for good over `seconds`: the radio has taken over. */
+  release(seconds: number): void;
+  /** Whether it has given way to the radio. */
+  readonly released: boolean;
   /** Whether there is any sound to play here at all. */
   readonly available: boolean;
   /** Turned down by the visitor (the sound button, or M). */
@@ -47,7 +51,8 @@ const silent: Soundtrack = {
   position: () => null,
   settle() {},
   duck() {},
-  toggle() {},
+  release() {},
+  released: true,
   available: false,
   muted: true,
   playing: false,
@@ -70,8 +75,9 @@ export function soundtrack(): Soundtrack {
   let opening = false;
   let muted = false;
   let ducked = false;
+  let released = false;
 
-  const level = () => (muted || ducked ? 0 : VOLUME);
+  const level = () => (muted || ducked || released ? 0 : VOLUME);
   const fade = (to: number, seconds: number) => {
     const now = ctx.currentTime;
     out.gain.cancelScheduledValues(now);
@@ -83,7 +89,7 @@ export function soundtrack(): Soundtrack {
   const emit = () => listeners.forEach((fn) => fn());
 
   function play(at: number | null) {
-    if (!buffer) return;
+    if (!buffer || released) return;
     source?.stop();
     opening = at !== null && at < SCORE.settled;
     const offset = opening ? Math.max(0, at ?? 0) : SCORE.loop[0];
@@ -142,7 +148,7 @@ export function soundtrack(): Soundtrack {
       return opening ? at : null;
     },
     settle() {
-      if (!source || !opening) return;
+      if (!source || !opening || released) return;
       opening = false;
       fade(0, 0.18);
       setTimeout(() => play(null), 200);
@@ -151,8 +157,20 @@ export function soundtrack(): Soundtrack {
       ducked = on;
       fade(level(), seconds);
     },
-    toggle() {
-      this.setMuted(!muted);
+    release(seconds) {
+      if (released) return;
+      released = true;
+      fade(0, seconds);
+      const gone = source;
+      setTimeout(() => {
+        gone?.stop();
+        if (source === gone) source = null;
+        opening = false;
+        emit();
+      }, seconds * 1000 + 50);
+    },
+    get released() {
+      return released;
     },
     available: true,
     get muted() {
