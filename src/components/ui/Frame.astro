@@ -40,19 +40,25 @@ const items = NAV.map((l) => ({ ...l, tile: tileFor(l.href) }));
 </div>
 
 <style is:global>
-  /* The casing is a ring painted around the screen by a huge shadow, so the page scrolls under its
-     edge as under glass. It sits over the page; the buttons and menu sit over it. */
+  /* The casing is a ring painted around the screen by a shadow, so the page scrolls under its edge
+     as under glass. It sits over the page; the buttons and menu sit over it. The shadow reaches just
+     past the window's edges (the bezel, the corners' curve, and a margin), no further: iOS WebKit
+     only paints part of a fixed layer as large as a screen-sized spread made it, and left the page
+     showing above and below the screen. */
   .tv-glass {
+    --casing-reach: calc(160px + var(--bezel-top) + var(--bezel-bottom));
     position: fixed;
     z-index: 40;
     inset: var(--bezel-top) var(--bezel) var(--bezel-bottom);
     border-radius: var(--crt);
     box-shadow:
-      0 0 0 max(100vw, 100vh) var(--color-casing),
+      0 0 0 var(--casing-reach) var(--color-casing),
       inset 0 0 0 1.5px light-dark(rgb(10 30 50 / 0.14), rgb(0 0 0 / 0.7)),
       inset 0 0 18px light-dark(rgb(10 40 70 / 0.1), rgb(0 0 0 / 0.55));
     pointer-events: none;
-    contain: strict;
+    /* No paint containment: WebKit (Safari, every iOS browser) clips an element's own shadow to its
+       box under it, and the shadow is the whole casing. */
+    contain: layout style;
     view-transition-name: tv-glass;
     transition:
       inset 0.45s var(--ease-glide),
@@ -63,7 +69,7 @@ const items = NAV.map((l) => ({ ...l, tile: tileFor(l.href) }));
   /* An app has the whole screen: the casing slides off past the edges, and back when you leave. */
   html:has(.col-app) .tv-glass {
     box-shadow:
-      0 0 0 max(100vw, 100vh) var(--color-casing),
+      0 0 0 var(--casing-reach) var(--color-casing),
       inset 0 0 0 1.5px transparent,
       inset 0 0 18px transparent;
   }

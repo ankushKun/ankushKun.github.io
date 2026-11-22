@@ -145,7 +145,8 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   // Resolution steps the plaza can drop through if a device can't keep up (see `govern` below).
   const ratios = [Math.min(devicePixelRatio, 2), 1.5, 1.25, 1, 0.8, 0.65].filter((r, i, all) => r <= all[0] && all.indexOf(r) === i);
-  let ratioLevel = small || weak ? ratios.findIndex((r) => r <= 1.5) : 0;
+  // Sharp from the start: a phone draws its small screen at 2x easily, and `govern` steps down if not.
+  let ratioLevel = weak ? ratios.findIndex((r) => r <= 1.5) : 0;
   renderer.setPixelRatio(ratios[ratioLevel]);
   renderer.setSize(w, h, false);
   // Every shader here writes display colors directly, as the Mii shader does.
@@ -1082,15 +1083,24 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
    * Keeps the frame rate up on slow machines. It watches real frame times, and if they stay slow
    * for a moment it drops the resolution a step, easing back up later if there is room. Steps are
    * spaced out, so it settles rather than hunting.
+   *
+   * Slow means slower than the display's own pace, learnt from the quickest frames lately, not
+   * slower than 60 a second: a phone in Low Power Mode, or a browser holding a page to 30, shows
+   * every frame at 30 however light it is, and dropping the resolution then only blurs the plaza.
    */
   let slowFor = 0;
   let fastFor = 0;
   let lastChange = 0;
+  const recent: number[] = [];
   function govern(realDt: number) {
     if (realDt > 0.25) return; // a stall (tab switch, compile), not a slow device
-    if (realDt > 1 / 45) slowFor += realDt;
+    recent.push(realDt);
+    if (recent.length > 90) recent.shift();
+    if (recent.length < 45) return;
+    const pace = clamp([...recent].sort((a, b) => a - b)[Math.floor(recent.length * 0.2)], 1 / 144, 1 / 24);
+    if (realDt > pace * 1.4) slowFor += realDt;
     else slowFor = Math.max(0, slowFor - realDt * 0.5);
-    if (realDt < 1 / 57) fastFor += realDt;
+    if (realDt < pace * 1.12) fastFor += realDt;
     else fastFor = 0;
     const now = performance.now();
     if (now - lastChange < 2500) return;
