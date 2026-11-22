@@ -22,6 +22,8 @@ const PICTURE = INNER * 0.97;
 const RING = { x: CUBE.size * 0.445, z: CUBE.size * 0.34 };
 /** Seconds one block takes to fly in. */
 const FLIGHT = 0.85;
+/** Seconds its slow idle sway takes to build up once it has landed, so it starts from rest. */
+const SWAY_IN = 1.2;
 
 /** A point on the unit squircle at angle `a`, and the outward normal there. */
 function squircle(a: number) {
@@ -444,10 +446,13 @@ export class Cubes {
       mesh.quaternion.copy(REST).multiply(_spin.setFromEuler(_e));
 
       let bob = 0;
-      if (!calm && p >= 1) {
-        // A slow sway, enough for the picture to shift behind the glass.
-        bob = Math.sin(time * 0.75 + item.phase) * 0.055;
-        _e.set(Math.sin(time * 0.5 + item.phase) * 0.03, Math.sin(time * 0.37 + item.phase * 0.7) * 0.07, Math.sin(time * 0.43 + item.phase) * 0.01);
+      // A slow sway, enough for the picture to shift behind the glass. It builds up from nothing
+      // once the block has landed: switched on at full strength, it would jolt the block to
+      // wherever the sway happened to be.
+      const sway = calm ? 0 : smoothstep(0, SWAY_IN, time - this.launched - item.delay - FLIGHT);
+      if (sway > 0) {
+        bob = Math.sin(time * 0.75 + item.phase) * 0.055 * sway;
+        _e.set(Math.sin(time * 0.5 + item.phase) * 0.03 * sway, Math.sin(time * 0.37 + item.phase * 0.7) * 0.07 * sway, Math.sin(time * 0.43 + item.phase) * 0.01 * sway);
         mesh.quaternion.multiply(_spin.setFromEuler(_e));
       }
       item.hover = damp(item.hover, item.hovering ? 1 : 0, 14, dt);

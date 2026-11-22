@@ -7,6 +7,7 @@ import type { MiiKit } from '../mii/kit';
 import { MiiSet, randomMii, restPose, withParts, type Pose } from '../mii/rig';
 import { MIRRORED } from './floor';
 import type { Layout } from './layout';
+import { BeatClock } from './beat';
 import * as motion from './motion';
 import * as toss from './toss';
 import type { PlazaMii } from './types';
@@ -41,6 +42,18 @@ const KEEP_OUT = { x: -0.15, z: -2.3, r: 4.6 };
 const DJ_SPOT = { forward: 0.9, clear: 2.2 };
 /** The DJ's backup dancers stand this far to either side of them, and this far behind. */
 const BACKUP = { gap: 0.95, back: -0.3 };
+/** How far in front of the DJ the boombox is set down while they dance, clear of their feet. */
+const BOOMBOX_DOWN = 0.9;
+/**
+ * The stage, as an oval round the DJ, measured with depth squeezed: `z` moves its middle toward
+ * the camera, to take in the boombox. Nobody else stands within `keep` of it, so no one is hidden
+ * behind the dancers, and anyone walking by goes round it at `pass`.
+ */
+const STAGE = { z: 0.3, keep: 1.25, pass: 2.4 };
+/** Seconds after which a Mii still on its way somewhere is taken to be caught on something (`unstick`). */
+const STUCK = 30;
+/** How far each dancer may be ahead of or behind the beat, in seconds, picked afresh each visit. */
+const LAG = 0.09;
 /** Pants for the DJ and their dancers, as on a stage. */
 const STAGE_PANTS = 0x2a2c30;
 /** How much deeper than wide everything is spaced, to look even through the lens. */
@@ -166,6 +179,8 @@ interface Mii {
    * on (-1 left as you look, 1 right, 0 the DJ). Null for everyone else.
    */
   stage: { x: number; z: number; side: number } | null;
+  /** How far ahead of the beat (or behind, below 0) this dancer dances, in seconds. */
+  lag: number;
   spot: Spot | null;
   /** Which way it is going round the middle group on this trip: 1, -1, or 0 for not yet chosen. */
   detour: number;
@@ -227,6 +242,8 @@ const still = restPose();
 const _a = new THREE.Vector3();
 const _b = new THREE.Vector3();
 const _c = new THREE.Vector3();
+/** Where a walker heads this frame: its target, or a point round something in the way (`around`). */
+const _goal = { x: 0, z: 0 };
 const _up = new THREE.Vector3();
 const _e = new THREE.Euler();
 const _q = new THREE.Quaternion();
@@ -256,10 +273,18 @@ export class Crowd {
   private djAt = { x: 0, z: 0 };
   private djCube: number;
   private grooving = false;
-  /** When the music was first heard, on the scene's clock: everyone on stage keeps the beat from it. */
-  private grooveAt = 0;
-  /** How far into a beat the DJ's bob is: 1 on it, 0 between or while they are not grooving. */
-  djBeat = 0;
+  /** The music's beat, which everyone on stage dances to; main.ts moves it on with the radio. */
+  readonly beat = new BeatClock();
+  /** Beats gone by while the DJ dances, for the boombox to thump on; null while they stand. */
+  djBeats: number | null = null;
+  /**
+   * Whether the DJ is dancing, with both hands free: the boombox is set down on the floor in front
+   * of them (`djSpot`, facing you) until the music stops and they take it up again.
+   */
+  djDancing = false;
+  readonly djSpot = { x: 0, z: 0, yaw: 0 };
+  /** How much the DJ's left hand is up holding the boombox, eased: 1 holding, 0 dancing. */
+  private djHold = 1;
   /** Where the DJ's left wrist (the boombox hand) is in the world, rewritten every frame they are posed. */
   readonly djWrist: THREE.Matrix4 | null = null;
 
@@ -313,13 +338,18 @@ export class Crowd {
     const anyPants = (n: number) => Array.from({ length: n }, () => PANTS[Math.floor(Math.random() * PANTS.length)]);
     const middlePants = anyPants(middle.length);
     const crowdPants = anyPants(others.length);
-    const middleSet = new MiiSet(opts.kit, opts.renderer, [...middle, ...stage].map((c) => c.data), {
+    const near = [...middle, ...stage];
+    const middleSet = new MiiSet(opts.kit, opts.renderer, near.map((c) => c.data), {
       resolution: 512, happy: true, headScale, layer: MIRRORED,
       pants: (i) => (i === 0 ? YOUR_PANTS : i >= middle.length ? STAGE_PANTS : middlePants[i]),
+      // Short sleeves on stage, as in the dance the routine comes from, so arms crossing the body show.
+      sleeves: (i) => i >= middle.length,
+      noBun: (i) => !!near[i].who?.noBun,
     });
     const crowdSet = new MiiSet(opts.kit, opts.renderer, others.map((c) => c.data), {
       resolution: opts.resolution, headScale, layer: MIRRORED,
       pants: (i) => crowdPants[i],
+      noBun: (i) => !!others[i].who?.noBun,
     });
     middleSet.build();
     this.sets = [middleSet, crowdSet];
@@ -382,6 +412,7 @@ export class Crowd {
         tipZ: 0,
         pokes: 0,
         pokedAt: -Infinity,
+        lag: 0,
       });
     middle.forEach((c, i) => add(middleSet, i, true, c.who));
     // The DJ, then their dancers, out to either side in turn, left first.
@@ -392,8 +423,7 @@ export class Crowd {
       m.home = opts.djCube;
       const side = j === 0 ? 0 : j % 2 ? -1 : 1;
       m.stage = { x: side * BACKUP.gap * Math.ceil(j / 2), z: side ? BACKUP.back : 0, side };
-      // The two sides mirror each other (motion.idol).
-      if (side) m.k = side < 0 ? 0.25 : 0.75;
+      m.lag = (this.r() * 2 - 1) * LAG;
     });
     if (dj) {
       this.miis[middle.length].dj = true;
@@ -428,13 +458,11 @@ export class Crowd {
   /** Which way the DJ faces, and how big they are drawn. */
   djFrame() {
     const m = this.miis[this.dj];
-    return { yaw: m.yaw, scale: SIZE };
+    return { yaw: m.yaw + m.shown.yaw, scale: SIZE };
   }
 
-  /** Music is heard (`true`) or not: the DJ bobs along to it and their dancers dance, or they stand. */
+  /** Music is heard (`true`) or not: the DJ and their dancers dance the routine, or they stand. */
   setGroove(on: boolean) {
-    // The beat starts over when the music comes back, on the next frame's clock.
-    if (on && !this.grooving) this.grooveAt = NaN;
     this.grooving = on;
   }
 
@@ -893,8 +921,8 @@ export class Crowd {
   }
 
   update(dt: number, time: number, camera: THREE.Vector3, calm: boolean) {
-    if (Number.isNaN(this.grooveAt)) this.grooveAt = time;
     for (const m of this.miis) this.think(m, dt, time, camera, calm);
+    this.djHold += ((this.djDancing ? 0 : 1) - this.djHold) * Math.min(1, dt * 7);
     this.physics(dt, time);
     this.separate();
     for (const m of this.miis) this.draw(m, time, calm);
@@ -967,9 +995,11 @@ export class Crowd {
         return;
       case 'dash':
         if (this.step(m, RUN * m.pace, 1.75, dt)) this.rest(m, time, 1.5 + this.r() * 4);
+        else this.unstick(m, time);
         return;
       case 'stroll':
         if (this.step(m, WALK * m.pace, 5.6, dt)) this.rest(m, time, 2 + this.r() * 5);
+        else this.unstick(m, time);
         return;
       case 'speak':
         this.turn(m, toCamera, dt);
@@ -991,17 +1021,24 @@ export class Crowd {
   }
 
   /**
-   * The DJ and their dancers keep their places facing out: the DJ bobs while music is heard, the
-   * dancers dance, all on the same beat.
+   * The DJ and their dancers keep their places facing out, and while music is heard all three
+   * dance the routine as one, square on to you.
    */
   private onStage(m: Mii, dt: number, time: number, toCamera: number, calm: boolean) {
     const side = m.stage!.side;
-    // The DJ turns a touch to their right, so the boombox on the left shoulder faces you too; the
-    // dancers turn a little in toward them.
-    this.turn(m, toCamera + (side ? -side * 0.2 : -0.25), dt);
+    const dancing = this.grooving && !calm;
+    // Standing, the DJ turns a touch to their right, so the boombox on the left shoulder faces you
+    // too, and the dancers turn a little in toward them.
+    this.turn(m, toCamera + (dancing ? 0 : side ? -side * 0.2 : -0.25), dt);
     this.keepSpot(m, dt);
-    const clip = this.grooving && !calm ? (m.dj ? motion.groove : motion.idol) : motion.stand;
+    const clip = dancing ? motion.idol : motion.stand;
     if (m.clip !== clip) this.play(m, clip, time);
+    if (m.dj) {
+      this.djDancing = dancing;
+      this.djSpot.x = this.djAt.x + Math.sin(toCamera) * BOOMBOX_DOWN;
+      this.djSpot.z = this.djAt.z + Math.cos(toCamera) * BOOMBOX_DOWN;
+      this.djSpot.yaw = toCamera;
+    }
   }
 
   /** Held, flying, down, stunned or running off: the same for the crowd and the middle group. */
@@ -1294,9 +1331,20 @@ export class Crowd {
     this.play(m, motion.flee, time, false, 0.1);
   }
 
+  /**
+   * A Mii that has been on its way somewhere for far longer than any trip takes is caught on
+   * something: it makes for the nearest free spot from where it is instead.
+   */
+  private unstick(m: Mii, time: number) {
+    if (time - m.at < STUCK) return;
+    m.at = time;
+    this.claim(m, this.nearest(m.home, m.x, m.z));
+  }
+
   /** What a Mii in the crowd does next. */
   private decide(m: Mii, time: number, toCamera: number) {
     const roll = this.r();
+    m.at = time;
     const a = this.layout.anchors[m.home % this.layout.anchors.length];
     // A few at a time cross the plaza to another cube; the rest keep to their own.
     const dashing = this.miis.reduce((n, o) => n + (o.act === 'dash' ? 1 : 0), 0);
@@ -1463,8 +1511,8 @@ export class Crowd {
 
   /**
    * One frame of travel toward the target. If the straight way runs through the middle group's
-   * circle, the Mii heads for the point at its edge on the near side instead, so it walks round
-   * the circle rather than pushing against it. True on arrival.
+   * circle or across the stage, the Mii heads for a point at its edge on the near side instead, so
+   * it walks round rather than pushing against it. True on arrival.
    */
   private step(m: Mii, speed: number, cadence: number, dt: number, avoid = true) {
     const d = Math.hypot(m.tx - m.x, m.tz - m.z);
@@ -1472,39 +1520,16 @@ export class Crowd {
       m.detour = 0;
       return true;
     }
-    let gx = m.tx;
-    let gz = m.tz;
-    // Work in squeezed space, where the circle is round.
-    const { hero } = this.layout;
-    const cx = hero.x + KEEP_OUT.x;
-    const cz = hero.z + KEEP_OUT.z;
-    const sq = DEEP * 0.75;
-    const px = m.x - cx;
-    const pz = (m.z - cz) / sq;
-    const qx = m.tx - cx;
-    const qz = (m.tz - cz) / sq;
-    const ex = qx - px;
-    const ez = qz - pz;
-    const len2 = ex * ex + ez * ez || 1;
-    const u = clamp(-(px * ex + pz * ez) / len2, 0, 1);
-    const nx = px + ex * u;
-    const nz = pz + ez * u;
-    const clearance = KEEP_OUT.r + 0.9;
-    if (avoid && u > 0 && u < 1 && Math.hypot(nx, nz) < clearance) {
-      // Round the circle on whichever side the path already leans to, chosen once for the trip so
-      // a path straight through the middle cannot flip between the two.
-      if (!m.detour) {
-        const cross = px * ez - pz * ex;
-        m.detour = Math.abs(cross) > 0.3 ? Math.sign(cross) : this.r() < 0.5 ? 1 : -1;
-      }
-      const side = m.detour;
-      const r = Math.hypot(px, pz) || 1;
-      // A point a quarter of the way round from here, just outside the edge.
-      const ang = Math.atan2(pz, px) + side * -0.7;
-      const out = Math.max(clearance + 0.4, Math.min(r, clearance + 2));
-      gx = cx + Math.cos(ang) * out;
-      gz = cz + Math.sin(ang) * out * sq;
+    _goal.x = m.tx;
+    _goal.z = m.tz;
+    if (avoid) {
+      // Round the middle group, then round the stage on the way to wherever that leaves it heading.
+      const { hero } = this.layout;
+      this.around(m, hero.x + KEEP_OUT.x, hero.z + KEEP_OUT.z, DEEP * 0.75, KEEP_OUT.r + 0.9);
+      if (this.dj >= 0) this.around(m, this.djAt.x, this.djAt.z + STAGE.z, DEEP, STAGE.pass);
     }
+    const gx = _goal.x;
+    const gz = _goal.z;
     const want = Math.atan2(gx - m.x, gz - m.z);
     const turn = angleDelta(m.yaw, want);
     m.yaw += clamp(turn, -9 * dt, 9 * dt);
@@ -1517,6 +1542,33 @@ export class Crowd {
     m.z += Math.cos(m.yaw) * move;
     m.stride += move * cadence;
     return false;
+  }
+
+  /**
+   * If the straight way from Mii `m` to `_goal` runs within `clearance` of (cx, cz), where an oval
+   * is round once depth is divided by `sq`, moves `_goal` to a point a quarter of the way round its
+   * edge on the near side, and is true.
+   */
+  private around(m: Mii, cx: number, cz: number, sq: number, clearance: number) {
+    const px = m.x - cx;
+    const pz = (m.z - cz) / sq;
+    const ex = _goal.x - cx - px;
+    const ez = (_goal.z - cz) / sq - pz;
+    const len2 = ex * ex + ez * ez || 1;
+    const u = clamp(-(px * ex + pz * ez) / len2, 0, 1);
+    if (!(u > 0 && u < 1 && Math.hypot(px + ex * u, pz + ez * u) < clearance)) return false;
+    // Round on whichever side the path already leans to, chosen once for the trip so a path
+    // straight through the middle cannot flip between the two.
+    if (!m.detour) {
+      const cross = px * ez - pz * ex;
+      m.detour = Math.abs(cross) > 0.3 ? Math.sign(cross) : this.r() < 0.5 ? 1 : -1;
+    }
+    const r = Math.hypot(px, pz) || 1;
+    const ang = Math.atan2(pz, px) + m.detour * -0.7;
+    const out = Math.max(clearance + 0.4, Math.min(r, clearance + 2));
+    _goal.x = cx + Math.cos(ang) * out;
+    _goal.z = cz + Math.sin(ang) * out * sq;
+    return true;
   }
 
   /** A Mii standing about drifts back onto its spot if it has been nudged off it. */
@@ -1582,6 +1634,17 @@ export class Crowd {
         m.x += (ox / od) * inside;
         m.z += (oz / od) * inside;
       }
+      // Nobody stands on the stage, where the dancers would hide them: whoever is on it eases off.
+      if (this.dj >= 0) {
+        const ox = m.x - this.djAt.x;
+        const oz = (m.z - this.djAt.z - STAGE.z) / DEEP;
+        const od = Math.hypot(ox, oz);
+        if (od < STAGE.keep && od > 1e-6) {
+          const push = (STAGE.keep - od) * 0.2;
+          m.x += (ox / od) * push;
+          m.z += (oz / od) * push * DEEP;
+        }
+      }
     }
   }
 
@@ -1612,10 +1675,10 @@ export class Crowd {
     // Your Mii arches back to look up; friends take whichever way their own number gives them.
     const k = m.lead && clip === motion.skyward ? 0.5 : m.k;
     if (calm && gait) return;
-    // Dancing to the music keeps the beat from when it was first heard, so everyone on stage moves
-    // as one, however they came to start.
-    const onBeat = clip === motion.groove || clip === motion.idol;
-    clip(out, gait ? m.stride : Math.max(0, time - (onBeat ? this.grooveAt : since)), k);
+    // Dancing keeps the music's beat, so everyone on stage dances together however they came to
+    // start, each a touch ahead or behind (`lag`).
+    const t = clip === motion.idol ? (this.beat.loops + m.lag / this.beat.period) * motion.LOOP : gait ? m.stride : Math.max(0, time - since);
+    clip(out, t, k);
     if (gait) {
       // Strides grow with speed: barely a shuffle when starting off, full swing at pace.
       motion.neutral(still);
@@ -1639,8 +1702,8 @@ export class Crowd {
     }
     motion.copyJoints(pose, m.shown);
     if (m.dj) {
-      motion.carry(pose);
-      this.djBeat = m.clip === motion.groove ? motion.onBeat(time - this.grooveAt) : 0;
+      if (this.djHold > 0.001) motion.carry(pose, this.djHold);
+      this.djBeats = m.clip === motion.idol ? this.beat.beats : null;
     }
 
 
@@ -1655,7 +1718,7 @@ export class Crowd {
     pose.x = m.x;
     pose.z = m.z;
     pose.y += m.lift;
-    pose.yaw = m.yaw;
+    pose.yaw += m.yaw;
     pose.pitch += m.tipX;
     pose.roll += m.tipZ;
     pose.scale = SIZE;

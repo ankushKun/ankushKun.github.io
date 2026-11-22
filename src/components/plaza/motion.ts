@@ -1,5 +1,5 @@
 // What a Mii's body does: every clip writes joint angles for one moment. Where a Mii stands and
-// which way it faces belongs to the crowd; clips only touch height, joints and the face.
+// which way it faces belongs to the crowd; clips only touch height, joints, a turn on the spot and the face.
 import type { Pose } from '../mii/rig';
 
 /** `t` is seconds since the clip began (or stride phase for the two gaits), `k` a per Mii offset in 0..1. */
@@ -16,12 +16,19 @@ const smooth = (v: number) => {
 /** 0 to 1 over [a, b], eased. */
 const ramp = (t: number, a: number, b: number) => smooth((t - a) / (b - a));
 const mix = (a: number, b: number, t: number) => a + (b - a) * t;
+/** Every joint a clip writes, `yaw` being the body's turn on the spot from wherever the crowd faces it. */
+const FIELDS = [
+  'y', 'yaw', 'pitch', 'roll', 'crouch', 'sway', 'leanX', 'leanZ', 'twist', 'nod', 'tilt', 'headYaw',
+  'legL', 'legR', 'kneeL', 'kneeR', 'spread',
+  'swingL', 'outL', 'twistL', 'elbowL', 'swingR', 'outR', 'twistR', 'elbowR',
+] as const;
+
 /** For a value swinging between -1 and 1: 0 at the bottom, 1 at the top, smooth all the way, with no corner where it turns. */
 const fold = (v: number) => ((1 + v) / 2) ** 2;
 
 /** Arms hanging and legs straight: the base every clip starts from. */
 export function neutral(p: Pose) {
-  p.y = 0;
+  p.y = p.yaw = 0;
   p.pitch = p.roll = 0;
   p.crouch = p.sway = 0;
   p.leanX = p.leanZ = p.twist = 0;
@@ -626,92 +633,167 @@ export const wink: Clip = (p, t) => {
 };
 
 /**
- * Beats a second for everything that moves to the music. YouTube's sound plays in a frame of its
- * own, out of the page's reach, so this keeps its own steady time.
+ * How long the stage routine takes to come round at its own pace, in seconds: the 1.775 s loop of
+ * the chibi Miku dance it is matched to, frame by frame, danced at 72% of its speed. To music it
+ * is fitted to the beat at the nearest pace to this (plaza/beat.ts).
  */
-export const TEMPO = 112 / 60;
+export const LOOP = 1.775 / 0.72;
 
-/** Where `t` seconds falls in the beat: 1 on it, easing to 0 halfway to the next. */
-export const onBeat = (t: number) => fold(cos(t * TAU * TEMPO));
+/** Where a count of beats falls in its beat: 1 on it, easing to 0 halfway to the next. */
+export const pulse = (beats: number) => fold(cos(beats * TAU));
 
-/** Bobbing to the music: knees and head on every beat, hips swaying over two, the free hand keeping time. */
-export const groove: Clip = (p, t) => {
-  const into = ramp(t, 0, 0.5);
-  const bob = onBeat(t);
-  const s = sin(t * Math.PI * TEMPO);
-  p.crouch = (0.02 + bob * 0.08) * into;
-  p.nod = (0.02 + bob * 0.09) * into;
-  p.sway = s * 0.3 * into;
-  p.leanZ = -s * 0.04 * into;
-  p.tilt = s * 0.07 * into;
-  p.swingR = (0.2 + bob * 0.2) * into;
-  p.elbowR = mix(0.16, 1 + bob * 0.35, into);
-  p.twistR = 0.45 * into;
-  p.expr = 2;
-};
+type Joint = (typeof FIELDS)[number];
+type Key = Partial<Record<Joint, number>>;
 
 /**
- * Backup dancing beside the DJ, on the same beat: a step from side to side on every beat with a
- * bounce in the knees, the arms punching up and out in turn; then, for a bar out of every two, the
- * outside arm thrown up, pumping on the beat, and the other hand on the hip. `k` below a half is
- * the dancer on the left as you look, above it the one on the right, so the two mirror each other.
+ * The stage routine: poses keyed by how far round the loop they fall (0 to 1), read off the
+ * recording frame by frame. The arms were measured as where the upper arm and forearm point and
+ * solved for a Mii's joints, so the gestures keep their shape on a Mii's shorter arms. Left and
+ * right are the dancer's own.
  */
-export const idol: Clip = (p, t, k) => {
-  const into = ramp(t, 0, 0.5);
-  const beats = t * TEMPO;
-  const bob = onBeat(t);
-  const step = sin(beats * Math.PI);
-  // Eases from punching (0) to the arm up (1) and back, a bar of four beats each way.
-  const up = smooth((sin((beats * Math.PI) / 4) + 0.3) / 0.6) * into;
-  const left = k < 0.5;
-  p.crouch = (0.04 + bob * 0.12) * into;
-  p.sway = step * 0.5 * into;
-  p.leanZ = -step * 0.07 * into;
-  p.tilt = step * 0.1 * into;
-  p.nod = bob * 0.06 * into;
-  p.kneeL = fold(step) * 0.3 * into;
-  p.kneeR = fold(-step) * 0.3 * into;
-  // Facing you, the dancer on the left has their right arm outside. Arms punch on alternate beats.
-  const punch = (s: number) => ({ swing: 0.25 * into, out: mix(0.14, 0.5 + fold(s) * 1.3, into), twist: -0.4 * into, elbow: mix(0.16, 0.95 - fold(s) * 0.55, into) });
-  const a = punch(step);
-  const b = punch(-step);
-  // Thrown up a little forward, so it shows in front of big hair rather than behind it.
-  const outside = { swing: mix(a.swing, 0.5, up), out: mix(a.out, 2.3, up), twist: mix(a.twist, -0.5, up), elbow: mix(a.elbow, 0.2 + bob * 0.35, up) };
-  const inside = { swing: mix(b.swing, 0.05, up), out: mix(b.out, 0.7, up), twist: mix(b.twist, 1.3, up), elbow: mix(b.elbow, 1.75, up) };
-  const [r, l] = left ? [outside, inside] : [inside, outside];
-  p.swingR = r.swing;
-  p.outR = r.out;
-  p.twistR = r.twist;
-  p.elbowR = r.elbow;
-  p.swingL = l.swing;
-  p.outL = l.out;
-  p.twistL = l.twist;
-  p.elbowL = l.elbow;
-  p.headYaw = (left ? -1 : 1) * 0.12 * up;
-  p.expr = 2;
+const ROUTINE: [number, Key][] = [
+  // Hands low, the left forearm crossing down to the right hand.
+  [0.000, { crouch: 0.26, leanX: 0.06, nod: 0.05, kneeL: 0.12, sway: -0.04, outR: -0.05, swingR: 0.20, twistR: 0.90, elbowR: 0.30, outL: -0.01, swingL: 0.25, twistL: 1.17, elbowL: 0.94 }],
+  // Arms in an X: the left forearm across the waist, the right arm reaching down across it.
+  [0.042, { crouch: 0.32, leanX: 0.07, nod: 0.06, kneeL: 0.10, sway: -0.05, outR: -0.30, swingR: 0.43, twistR: 1.60, elbowR: 0.52, outL: 0.02, swingL: 0.25, twistL: 1.07, elbowL: 1.56 }],
+  // A squeeze: hands together low in front, knees bent.
+  [0.085, { crouch: 0.30, leanX: 0.09, nod: 0.08, sway: -0.04, outR: -0.12, swingR: 0.37, twistR: 1.39, elbowR: 0.41, outL: -0.12, swingL: 0.37, twistL: 1.39, elbowL: 0.41 }],
+  // Into the pivot: turning right, the right foot stepping out, the left arm swinging out.
+  [0.120, { yaw: -0.45, headYaw: -0.15, crouch: 0.24, spread: 0.22, sway: -0.12, leanX: 0.03, outR: 0.04, swingR: 0.15, twistR: 0.80, elbowR: 0.07, outL: 0.37, swingL: -0.15, twistL: -0.81, elbowL: 0.07 }],
+  // The pivot: turned right, feet split, the left arm thrown straight back and down.
+  [0.170, { yaw: -0.95, twist: -0.10, headYaw: -0.20, crouch: 0.24, legR: 0.35, legL: -0.30, spread: 0.30, sway: -0.20, outR: -0.07, swingR: 0.20, twistR: 0.28, elbowR: 0.16, outL: 0.56, swingL: -0.59, twistL: 0.00, elbowL: 0.00 }],
+  // Held.
+  [0.200, { yaw: -0.92, twist: -0.10, headYaw: -0.20, crouch: 0.25, legR: 0.35, legL: -0.30, spread: 0.30, sway: -0.20, outR: -0.07, swingR: 0.20, twistR: 0.28, elbowR: 0.16, outL: 0.66, swingL: -0.62, twistL: 0.00, elbowL: 0.00 }],
+  // Unwinding: the left arm coming down and in.
+  [0.230, { yaw: -0.55, twist: -0.05, headYaw: -0.15, crouch: 0.24, legR: 0.22, legL: -0.20, spread: 0.30, sway: -0.12, outR: -0.07, swingR: 0.20, twistR: 0.28, elbowR: 0.16, outL: 0.26, swingL: -0.25, twistL: 0.25, elbowL: 0.63 }],
+  // Front again, both hands down by the left thigh, the right foot still out.
+  [0.255, { yaw: -0.18, headYaw: -0.05, crouch: 0.22, spread: 0.30, sway: 0.06, outR: -0.34, swingR: 0.47, twistR: 1.72, elbowR: 0.44, outL: -0.07, swingL: 0.20, twistL: 0.64, elbowL: 0.13 }],
+  // The right forearm across the waist, the right knee coming up.
+  [0.283, { yaw: -0.05, crouch: 0.24, spread: 0.10, legR: 0.45, kneeR: 0.75, sway: 0.04, outR: -0.04, swingR: 0.28, twistR: 1.14, elbowR: 1.48, outL: -0.07, swingL: 0.25, twistL: 0.69, elbowL: 0.15 }],
+  // The cross step: right knee high across the left, forearms stacked, the right one high across the stomach.
+  [0.315, { yaw: 0.08, crouch: 0.28, legR: 1.30, kneeR: 1.65, spread: -0.12, leanX: -0.02, sway: 0.04, outR: 0.07, swingR: 0.39, twistR: 1.07, elbowR: 1.74, outL: 0.06, swingL: 0.20, twistL: 1.19, elbowL: 1.48 }],
+  // The right knee still up.
+  [0.345, { yaw: 0.06, crouch: 0.22, legR: 0.75, kneeR: 1.05, spread: -0.10, sway: 0.03, outR: 0.07, swingR: 0.39, twistR: 1.08, elbowR: 1.73, outL: 0.06, swingL: 0.20, twistL: 1.19, elbowL: 1.48 }],
+  // The right foot down, crossed in front of the left.
+  [0.375, { yaw: 0.05, crouch: 0.14, legR: 0.15, kneeR: 0.20, spread: -0.07, sway: 0.03, outR: 0.07, swingR: 0.39, twistR: 1.08, elbowR: 1.72, outL: 0.06, swingL: 0.20, twistL: 1.19, elbowL: 1.48 }],
+  // Forearms stacked, settling.
+  [0.440, { yaw: 0.03, crouch: 0.24, leanX: 0.03, sway: 0.05, outR: -0.01, swingR: 0.34, twistR: 1.19, elbowR: 1.54, outL: 0.04, swingL: 0.22, twistL: 1.21, elbowL: 1.40 }],
+  // The right fist pushed out past the left side, the left arm reaching down to the right.
+  [0.520, { yaw: 0.08, crouch: 0.24, leanX: 0.04, sway: 0.08, outR: -0.54, swingR: 0.58, twistR: 1.49, elbowR: 0.96, outL: -0.15, swingL: 0.45, twistL: 1.55, elbowL: 0.66 }],
+  // Stepping out to the left.
+  [0.585, { yaw: 0.05, crouch: 0.28, spread: 0.24, sway: 0.12, leanX: 0.04, outR: -0.47, swingR: 0.53, twistR: 1.50, elbowR: 0.91, outL: -0.17, swingL: 0.45, twistL: 1.57, elbowL: 0.58 }],
+  // Hands together low again, feet wide, knees bent.
+  [0.620, { crouch: 0.27, spread: 0.40, sway: 0.12, leanX: 0.05, outR: -0.17, swingR: 0.39, twistR: 1.44, elbowR: 0.36, outL: -0.17, swingL: 0.39, twistL: 1.44, elbowL: 0.36 }],
+  // The right arm out by the side, the left hand reaching across.
+  [0.650, { crouch: 0.28, spread: 0.44, sway: 0.12, leanX: 0.04, outR: 0.19, swingR: 0.08, twistR: 0.80, elbowR: 0.10, outL: 0.00, swingL: 0.41, twistL: 1.46, elbowL: 0.82 }],
+  // Wide stance, the right arm hanging out, the left hand on the belly.
+  [0.695, { crouch: 0.30, spread: 0.46, sway: 0.10, leanZ: -0.05, headYaw: -0.10, leanX: 0.03, outR: 0.24, swingR: 0.00, twistR: 0.23, elbowR: 0.08, outL: 0.20, swingL: 0.25, twistL: 0.93, elbowL: 1.79 }],
+  // The right elbow out, the left hand down on the thigh.
+  [0.735, { crouch: 0.27, spread: 0.40, sway: 0.06, leanZ: -0.03, leanX: 0.03, outR: 0.49, swingR: -0.10, twistR: 0.96, elbowR: 0.72, outL: 0.06, swingL: 0.20, twistL: 1.13, elbowL: 0.75 }],
+  // Feet coming in, arms hanging.
+  [0.785, { crouch: 0.25, spread: 0.18, leanX: 0.04, outR: -0.02, swingR: 0.18, twistR: 0.54, elbowR: 0.18, outL: -0.02, swingL: 0.18, twistL: 0.54, elbowL: 0.18 }],
+  // The right hand on the right thigh, the left heel up.
+  [0.840, { crouch: 0.15, legL: -0.10, kneeL: 0.55, leanX: 0.02, outR: 0.15, swingR: 0.31, twistR: 0.99, elbowR: 0.62, outL: 0.08, swingL: 0.10, twistL: 0.26, elbowL: 0.11 }],
+  // Standing tall, both hands on the hips.
+  [0.905, { crouch: 0.00, leanX: -0.03, nod: -0.04, outR: 0.72, swingR: -0.39, twistR: 0.89, elbowR: 1.87, outL: 0.72, swingL: -0.39, twistL: 0.89, elbowL: 1.87 }],
+  // Hands on the hips, a little lower.
+  [0.955, { crouch: 0.10, nod: -0.02, outR: 0.59, swingR: -0.34, twistR: 0.95, elbowR: 1.57, outL: 0.59, swingL: -0.34, twistL: 0.95, elbowL: 1.57 }],
+  // The right hand coming off the hip.
+  [0.985, { crouch: 0.16, leanX: 0.03, nod: 0.02, outR: 0.02, swingR: 0.25, twistR: 0.72, elbowR: 0.33, outL: 0.45, swingL: -0.25, twistL: -0.50, elbowL: 1.40 }],
+];
+
+/** The keys as whole poses (anything a key leaves out stays as `neutral` has it), with each joint's slope there. */
+const KEYS = ROUTINE.map(([at, key]) => {
+  const p = {} as Pose;
+  neutral(p);
+  Object.assign(p, key);
+  return { at, pose: FIELDS.map((f) => p[f]), slope: FIELDS.map(() => 0) };
+});
+/** How far round the loop it is from `a` to `b`, the way the routine goes. */
+const ahead = (a: number, b: number) => (b - a + 1) % 1 || 1;
+// Slopes for a smooth curve through every key that never overshoots one: flat where a joint turns
+// back, otherwise a weighted mean of the two sides (Fritsch and Butland's, as in PCHIP).
+KEYS.forEach((k, i) => {
+  const prev = KEYS[(i + KEYS.length - 1) % KEYS.length];
+  const next = KEYS[(i + 1) % KEYS.length];
+  const h0 = ahead(prev.at, k.at);
+  const h1 = ahead(k.at, next.at);
+  for (let j = 0; j < FIELDS.length; j++) {
+    const d0 = (k.pose[j] - prev.pose[j]) / h0;
+    const d1 = (next.pose[j] - k.pose[j]) / h1;
+    if (d0 * d1 <= 0) continue;
+    const w0 = 2 * h1 + h0;
+    const w1 = h1 + 2 * h0;
+    k.slope[j] = (w0 + w1) / (w0 / d0 + w1 / d1);
+  }
+});
+
+/** Sets `p` to the routine `u` of the way round (0 to 1). */
+function sample(p: Pose, u: number) {
+  let i = KEYS.length - 1;
+  while (i >= 0 && KEYS[i].at > u) i--;
+  const a = KEYS[i < 0 ? KEYS.length - 1 : i];
+  const b = KEYS[(i + 1) % KEYS.length];
+  const h = ahead(a.at, b.at);
+  const s = ((u - a.at + 1) % 1) / h;
+  const s2 = s * s;
+  const s3 = s2 * s;
+  // Cubic Hermite between the two keys.
+  const ka = 2 * s3 - 3 * s2 + 1;
+  const ma = (s3 - 2 * s2 + s) * h;
+  const kb = 3 * s2 - 2 * s3;
+  const mb = (s3 - s2) * h;
+  for (let j = 0; j < FIELDS.length; j++) p[FIELDS[j]] = ka * a.pose[j] + ma * a.slope[j] + kb * b.pose[j] + mb * b.slope[j];
+}
+
+const PAIRS = [['legL', 'legR'], ['kneeL', 'kneeR'], ['swingL', 'swingR'], ['outL', 'outR'], ['twistL', 'twistR'], ['elbowL', 'elbowR']] as const;
+const SIDEWAYS = ['yaw', 'roll', 'sway', 'leanZ', 'twist', 'tilt', 'headYaw'] as const;
+
+/** The same pose the other way round: left for right, and every lean, turn and shift reversed. */
+function mirror(p: Pose) {
+  for (const [l, r] of PAIRS) {
+    const v = p[l];
+    p[l] = p[r];
+    p[r] = v;
+  }
+  for (const f of SIDEWAYS) p[f] = -p[f];
+}
+
+/**
+ * Where in the loop the dancers change sides: both hands on the hips, a pose the same either way
+ * round, so the swap never shows.
+ */
+const SWAP = 0.93;
+
+/**
+ * The stage routine, danced by the DJ and both backup dancers together, with the recording's
+ * straight face. `t` is how far into it they are, in seconds at its own pace (LOOP to a time
+ * round); the crowd sets it from the music's beat. Every other time round it is danced the other
+ * way round, so the pivot goes right, then left, then right.
+ */
+export const idol: Clip = (p, t) => {
+  const u = t / LOOP;
+  sample(p, ((u % 1) + 1) % 1);
+  p.expr = 0;
+  if (Math.floor(u + 1 - SWAP) % 2 === 1) mirror(p);
 };
 
 /**
  * A boombox up on the left shoulder (a headset's mic is on the right), over whatever else the
  * body is doing: the upper arm out level, the forearm folded back up beside the head, which tips
- * away to make room.
+ * away to make room. `w` eases it on and off (1 holds it).
  */
-export function carry(p: Pose) {
-  p.swingL = 0.12;
-  p.outL = 1.45;
-  p.twistL = -1.5;
-  p.elbowL = 1.15;
-  p.tilt += 0.08;
+export function carry(p: Pose, w = 1) {
+  p.swingL = mix(p.swingL, 0.12, w);
+  p.outL = mix(p.outL, 1.45, w);
+  p.twistL = mix(p.twistL, -1.5, w);
+  p.elbowL = mix(p.elbowL, 1.15, w);
+  p.tilt += 0.08 * w;
 }
 
 /** How long the clips that end on their own last, in seconds. */
 export const LENGTH = { land: 0.75, thanks: 1.15, wave: 1.8, hop: 1.2, gaze: 2.8, hello: 2.2, stunned: 0.8, shock: 1.6, faint: 3.2, wink: 1.4 } as const;
 
-const FIELDS = [
-  'y', 'pitch', 'roll', 'crouch', 'sway', 'leanX', 'leanZ', 'twist', 'nod', 'tilt', 'headYaw',
-  'legL', 'legR', 'kneeL', 'kneeR', 'spread',
-  'swingL', 'outL', 'twistL', 'elbowL', 'swingR', 'outR', 'twistR', 'elbowR',
-] as const;
 
 /** Moves every joint of `p` toward `to` by `w`. The face snaps once it is past halfway. */
 export function blend(p: Pose, to: Pose, w: number) {

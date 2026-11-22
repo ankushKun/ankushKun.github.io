@@ -48,6 +48,8 @@ const INTRO = {
   greet: WIDE + 1.5,
   talk: SCORE.crowd + 2.5,
 };
+/** How far the camera drifts back while it holds on the middle group after you land, as a fraction of its distance. */
+const HOLD_DRIFT = 0.035;
 /** Zoom runs from 0 (farthest, where it starts) through 1 (the whole plaza) to 3 (the middle group up close). */
 const ZOOM = { min: 0, rest: 0, max: 3, close: 2.5 };
 /**
@@ -59,6 +61,8 @@ const TAG_MIN = 11;
 /** Seconds the camera takes to zoom into a block you pressed, and to pull back out of it when you come back. */
 const DIVE = 0.7;
 const STEP_BACK = 1.5;
+/** Seconds the "Now playing" bubble stays up when a new track starts. */
+const NOW_PLAYING = 3;
 
 export interface PlazaControl {
   /** Leaving the plaza for another page: no more frames until it wakes. */
@@ -77,6 +81,10 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
   const bubbleLayer = need(root.querySelector<HTMLElement>('.plaza-bubbles'));
   const begin = need(root.querySelector<HTMLButtonElement>('.plaza-start'));
   const card = need(root.querySelector<HTMLElement>('.plaza-who'));
+  // Frames a second, counted over each half second, shown while developing.
+  const fps = import.meta.env.DEV ? root.querySelector<HTMLElement>('.plaza-fps') : null;
+  if (fps) fps.hidden = false;
+  const counted = { frames: 0, from: 0 };
   const djButton = need(root.querySelector<HTMLButtonElement>('.plaza-dj'));
   const links = [...root.querySelectorAll<HTMLAnchorElement>('a[data-cube]')];
   /** On the plaza now, rather than asleep behind another page. */
@@ -203,6 +211,8 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
   let layout: Layout = makeLayout(w / h, data.cubes.length);
   const now = blankView();
   const landing = blankView();
+  /** The hold on the middle group after landing, where the pull back starts from. */
+  const held = blankView();
   const zoomed = blankView();
   const shown = blankView();
   /** Where zoom is headed, and where it is now; it eases between the two. */
@@ -332,15 +342,15 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
       handedOver = true;
       music.release(1.5);
     }
-    // A new track while you are here: the DJ says what it is (your Mii, without a DJ).
+    // A new track while you are here: the DJ says what it is (your Mii, without a DJ), briefly.
     if (on && s.index !== nowPlaying) {
       nowPlaying = s.index;
       const t = s.tracks[s.index];
       const said = t && { text: `Now playing: ${t.title} by ${t.artist}`, href: '/apps/music/', thumb: t.thumb };
       const me = data.welcome[0];
       if (active && said && !waiting && !opening) {
-        if (crowd.dj >= 0) bubbles.sayNext({ cube: musicCube, tag: data.cubes[musicCube].label, by: crowd.dj, ...said });
-        else if (me) bubbles.sayNext({ ...me, ...said });
+        if (crowd.dj >= 0) bubbles.sayNext({ cube: musicCube, tag: data.cubes[musicCube].label, by: crowd.dj, ...said }, NOW_PLAYING);
+        else if (me) bubbles.sayNext({ ...me, ...said }, NOW_PLAYING);
       }
     }
   });
@@ -455,15 +465,14 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
         now.target.y = ride + (now.target.y - ride) * e * e;
         return now;
       }
-      if (t < INTRO.pull) {
-        // Hold on the middle group, drifting back by a hair so the shot stays alive.
-        mixViews(views[3], views[3], 0, now);
-        now.dist *= 1 + ((t - INTRO.landed) / (INTRO.pull - INTRO.landed)) * 0.035;
-        return now;
-      }
+      // Hold on the middle group, drifting back by a hair so the shot stays alive, then pull back
+      // from exactly where the drift has got to, so the move out starts without a jump.
+      mixViews(views[3], views[3], 0, held);
+      held.dist *= 1 + (Math.min(1, (t - INTRO.landed) / (INTRO.pull - INTRO.landed)) * HOLD_DRIFT);
+      if (t < INTRO.pull) return copyView(held, now);
       if (t < INTRO.wide) {
         const p = (t - INTRO.pull) / (INTRO.wide - INTRO.pull);
-        return mixViews(views[3], zoomView(zoom, zoomed), easeInOut(p), now);
+        return mixViews(held, zoomView(zoom, zoomed), easeInOut(p), now);
       }
       opening = false;
       markSeen();
@@ -913,11 +922,14 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     cubes.setHaze(v.haze[0], v.haze[1]);
     // The camera drifts with the pointer, so the hand is placed again every step, not only when it moves.
     if (press?.holding) crowd.carry(press.mii, rayAt(press.x, press.y));
+    // The stage keeps the beat of whatever the radio plays, wherever it is in the track.
+    const playing = radio.snapshot();
+    crowd.beat.update(dt, heard && playing.index >= 0 ? playing.tracks[playing.index].beats : null, radio.playhead());
     crowd.update(dt, time, camera.position, calm);
     for (const { i, worn } of gear) worn.place(crowd.headOf(i));
     if (boombox) {
       const { yaw, scale } = crowd.djFrame();
-      boombox.update(crowd.djShown() ? crowd.djWrist : null, yaw, scale, crowd.djBeat, heard, time, dt);
+      boombox.update(crowd.djShown() ? crowd.djWrist : null, yaw, scale, crowd.djBeats, heard, time, dt, crowd.djDancing ? crowd.djSpot : null);
     }
     // Blocks belong to the wide views. Closer in than about two thirds of the standard view they fade.
     const open = (v.dist * Math.tan(THREE.MathUtils.degToRad(v.fov / 2))) / (layout.views[1].dist * Math.tan(THREE.MathUtils.degToRad(layout.views[1].fov / 2)));
@@ -1042,6 +1054,15 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     }
     if (resized) applyResize();
     const real = Math.max(0, (t - last) / 1000);
+    if (fps) {
+      if (!counted.from) counted.from = t;
+      counted.frames++;
+      if (t - counted.from >= 500) {
+        fps.textContent = String(Math.round((counted.frames * 1000) / (t - counted.from)));
+        counted.frames = 0;
+        counted.from = t;
+      }
+    }
     govern(real);
     last = t;
     // Crowd heads are made a few per frame, so the opening never stalls on them.
@@ -1157,6 +1178,10 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
         look(i?: number, near = 0.08) {
           closeUp = i === undefined ? null : { mii: i, near };
         },
+        /** Where the camera is and how wide it sees, as drawn last (for checking camera moves frame by frame). */
+        camera: () => ({ x: camera.position.x, y: camera.position.y, z: camera.position.z, fov: camera.fov }),
+        /** The stage dances as if music were heard, or stops with `false`, without the radio. */
+        groove: (on = true) => crowd.setGroove(on),
         /** Swaps the DJ's boombox: 'model' or 'drawn'. */
         boombox: (kind: BoomboxKind) => boombox?.show(kind),
         /** Where Mii `i` is on screen (CSS pixels): its feet and the top of its head, and what it is doing. */

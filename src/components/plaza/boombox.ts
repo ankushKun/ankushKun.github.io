@@ -1,4 +1,5 @@
-// The DJ's boombox, up on their left shoulder: it follows their hand, thumps on the beat while
+// The DJ's boombox, up on their left shoulder: it follows their hand, and while they dance it hops
+// down to the floor in front of them and back up when the music stops. It thumps on the beat while
 // music is heard, and lets a few notes float up out of it. Two of them to choose from (BOOMBOX in
 // src/data/plaza.ts): 'model' is Supersiv11's low poly boom box (public/plaza/boombox.glb, CC BY,
 // 596 triangles, 11 KB), 'drawn' is built here in the plaza's own style. Both are lit the way the
@@ -11,7 +12,7 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { miiUniforms } from '../mii/rig';
 import { MIRRORED } from './floor';
-import { TEMPO } from './motion';
+import { pulse } from './motion';
 
 export type BoomboxKind = 'model' | 'drawn';
 
@@ -25,6 +26,8 @@ const WIDTH = 0.5;
 const HOLD = { x: 0.17, y: 0.08, z: -0.03, tip: -0.12, turn: -0.3 };
 /** How much it swells on each beat. */
 const THUMP = 0.07;
+/** Its hop between the DJ's hand and the floor: how long it takes, in seconds, and how high it arcs. */
+const HOP = { time: 0.5, height: 0.28 };
 /** Notes: how many at once, how long each floats, how high it rises, its size. */
 const NOTES = { count: 4, life: 1.9, rise: 0.95, size: 0.2 };
 
@@ -93,7 +96,16 @@ export class Boombox {
   /** How much the music is heard, eased: the thump and the notes come and go with it. */
   private amp = 0;
   private readonly notes: { sprite: THREE.Sprite; born: number; drift: number; from: THREE.Vector3 }[] = [];
-  private nextNote = 0;
+  /** Which pair of beats the last note floated up on. */
+  private noted = -1;
+  /** Whether it is on the floor, or on its way there; when it last set off; where from. */
+  private down = false;
+  private hopAt = -Infinity;
+  private readonly hopFrom = new THREE.Vector3();
+  private readonly hopTurn = new THREE.Quaternion();
+  private placed = false;
+  /** How far below its middle its base is, at a unit wide. */
+  private base = 0.3;
   private readonly _p = new THREE.Vector3();
   private readonly _q = new THREE.Quaternion();
   private readonly _t = new THREE.Quaternion();
@@ -128,37 +140,67 @@ export class Boombox {
       this.shapes.set(kind, shape);
     }
     void shape.then((geometry) => {
-      if (geometry && this.kind === kind) this.mesh.geometry = geometry;
+      if (!geometry || this.kind !== kind) return;
+      this.mesh.geometry = geometry;
+      if (!geometry.boundingBox) geometry.computeBoundingBox();
+      this.base = -geometry.boundingBox!.min.y;
     });
   }
 
   /**
    * Each frame: `wrist` is the DJ's left wrist in the world (null while they are out of sight),
-   * `yaw` and `scale` how they stand, `beat` how far into a beat their bob is (0 to 1, 1 on it),
-   * and `heard` whether music is playing out loud.
+   * `yaw` and `scale` how they stand, `beats` how many beats of the music have gone by while the
+   * DJ dances (null while they stand), `heard` whether music is playing out loud, and `floor` where
+   * it rests while the DJ dances (null while it is in their hand).
    */
-  update(wrist: THREE.Matrix4 | null, yaw: number, scale: number, beat: number, heard: boolean, time: number, dt: number) {
+  update(wrist: THREE.Matrix4 | null, yaw: number, scale: number, beats: number | null, heard: boolean, time: number, dt: number, floor: { x: number; z: number; yaw: number } | null) {
     const shown = wrist !== null && !!this.mesh.geometry.attributes.position;
     this.group.visible = shown;
     this.amp += ((heard && !this.calm ? 1 : 0) - this.amp) * Math.min(1, dt * 3);
     if (shown) {
       const { _p, _q, _t, _o } = this;
-      _p.setFromMatrixPosition(wrist);
-      _q.setFromAxisAngle(_o.set(0, 1, 0), yaw);
-      _o.set(HOLD.x, HOLD.y, HOLD.z).multiplyScalar(scale).applyQuaternion(_q);
-      this.group.position.copy(_p).add(_o);
-      // Turned so the end by the head sits back behind it rather than in it, and tipped in
-      // toward the head, resting on the shoulder.
-      this.group.quaternion.copy(_q).multiply(_t.setFromAxisAngle(_o.set(0, 1, 0), HOLD.turn)).multiply(_t.setFromAxisAngle(_o.set(0, 0, 1), HOLD.tip));
-      this.group.scale.setScalar(WIDTH * scale * (1 + THUMP * this.amp * beat ** 3));
+      if (floor) {
+        // Standing on its base, facing you.
+        _p.set(floor.x, this.base * WIDTH * scale, floor.z);
+        _q.setFromAxisAngle(_o.set(0, 1, 0), floor.yaw);
+      } else {
+        _p.setFromMatrixPosition(wrist);
+        _q.setFromAxisAngle(_o.set(0, 1, 0), yaw);
+        _o.set(HOLD.x, HOLD.y, HOLD.z).multiplyScalar(scale).applyQuaternion(_q);
+        _p.add(_o);
+        // Turned so the end by the head sits back behind it rather than in it, and tipped in
+        // toward the head, resting on the shoulder.
+        _q.multiply(_t.setFromAxisAngle(_o.set(0, 1, 0), HOLD.turn)).multiply(_t.setFromAxisAngle(_o.set(0, 0, 1), HOLD.tip));
+      }
+      // Set down or taken up: it hops across from wherever it was, in an arc.
+      if (!!floor !== this.down) {
+        this.down = !!floor;
+        if (this.placed) {
+          this.hopAt = time;
+          this.hopFrom.copy(this.group.position);
+          this.hopTurn.copy(this.group.quaternion);
+        }
+      }
+      const s = (time - this.hopAt) / HOP.time;
+      if (s < 1 && !this.calm) {
+        const e = s * s * (3 - 2 * s);
+        _p.lerpVectors(this.hopFrom, _p, e);
+        _p.y += HOP.height * scale * 4 * s * (1 - s);
+        _q.slerpQuaternions(this.hopTurn, _t.copy(_q), e);
+      }
+      this.group.position.copy(_p);
+      this.group.quaternion.copy(_q);
+      this.group.scale.setScalar(WIDTH * scale * (1 + THUMP * this.amp * (beats === null ? 0 : pulse(beats) ** 3)));
+      this.placed = true;
     }
-    this.float(shown, time);
+    this.float(shown, beats, time);
   }
 
-  /** Notes float up out of the boombox while music is heard, one every other beat. */
-  private float(shown: boolean, time: number) {
-    if (shown && this.amp > 0.5 && time >= this.nextNote) {
-      this.nextNote = time + 2 / TEMPO;
+  /** Notes float up out of the boombox while the music plays and the DJ dances, one every other beat. */
+  private float(shown: boolean, beats: number | null, time: number) {
+    const pair = beats === null ? -1 : Math.floor(beats / 2);
+    if (shown && this.amp > 0.5 && pair !== this.noted && pair >= 0) {
+      this.noted = pair;
       const note = this.notes.find((n) => time - n.born > NOTES.life);
       if (note) {
         note.born = time;
