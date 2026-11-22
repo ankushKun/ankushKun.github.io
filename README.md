@@ -13,6 +13,15 @@ pnpm favicons # save the icons of linked sites (after adding links)
 
 Pushing to `main` deploys the site to GitHub Pages from `ankushKun/ankushKun.github.io` (`.github/workflows/deploy.yml`): it installs with pnpm, runs `pnpm check` and `pnpm build`, and publishes `dist/`. Pull requests run the same check and build without deploying, and the workflow can be run by hand from the Actions tab. The custom domain is set in the repo's Pages settings rather than by a `CNAME` file, since the site deploys from a workflow. `ankush.one` is proxied through Cloudflare, which serves HTTPS and redirects plain HTTP, so GitHub can't issue its own certificate and Enforce HTTPS stays off there. The repo has to be named `ankushKun.github.io`: only the user site's domain carries the other repos' Pages, so `ankush.one/3dsDL/` and the rest keep working.
 
+## Link previews
+
+Every page has its picture's alt text (`og:image:alt`, `twitter:image:alt`), and entries give Slack two short facts under the link (`facts` on `Base.astro`: when and how long for a post, year and stack for a project). The home page also has:
+
+- **A clip** (`og:video`, `public/media/plaza-preview.mp4`): eight seconds of the live plaza that loop without a cut, which iMessage plays in the bubble, Discord over the picture and Telegram large.
+- **A player on X**: `/player/` is the plaza alone for X to frame in a post (Base.astro `embed`: settled from the start, links open the site in a new tab). Only X's crawler is told about it, by a Cloudflare Worker on `ankush.one/` (`workers/twitter-player/`, deploy with `pnpm dlx wrangler deploy` from that folder), since iMessage and Telegram show a player card as a small picture.
+
+The cards' backdrop (`src/assets/og/plaza.jpg` with `plaza.json`) and the clip are recorded from the real plaza by `pnpm og:capture` while `pnpm dev` runs: headless Chrome on virtual time, with the chat and the radio blocked so nobody's messages end up in them. Run it again after the plaza changes look.
+
 ## Adding content
 
 Every entry is a folder with an `index.md` and its images. The folder name is the URL.
@@ -25,7 +34,7 @@ Every entry is a folder with an `index.md` and its images. The folder name is th
 
 Copy an existing entry to start a new one. All entries share `title`, `description`, `date`, `updated`, `tags`, `cover`, `coverAlt`, `canonical`, `links`, `faq`, `related` and `draft`; each section adds a few fields of its own, defined in `src/content.config.ts`. The build fails if a required field is missing.
 
-`cover` is optional: when set, it is used for the list thumbnail, detail hero image, and social preview. When omitted, a theme-agnostic 1200x630 card is generated at build time via `src/lib/og.ts` (`/og/<section>/<slug>.png`) for list thumbnails and social previews (configurable via `OG_THEME` in `src/lib/og.ts`). `description` is the meta description, social card text, RSS summary and `llms.txt` line, so keep it to one clear sentence. `draft: true` shows the entry in dev only.
+`cover` is optional: when set, it is used for the list thumbnail, detail hero image, and social preview. When omitted, a 1200x630 card is generated at build time by `src/lib/og.ts` (`/og/<section>/<slug>.jpg`) for list thumbnails and social previews: your Mii up close in the plaza, with its pixel name tag, beside a Miiverse style post holding the section's block art, a name pill, the title, the description and a date or year. `description` is the meta description, social card text, RSS summary and `llms.txt` line, so keep it to one clear sentence. `draft: true` shows the entry in dev only.
 
 Standalone pages (About, Privacy, Credits...) and the intro of every section index are Markdown files in `src/content/pages/`, named after the page. Resume data lives in `src/data/resume.ts` and also feeds the About page. Name, socials, nav, booking link and newsletter form target live in `src/site.ts`.
 

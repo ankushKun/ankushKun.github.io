@@ -1,7 +1,8 @@
 ---
 import Base from '../layouts/Base.astro';
 import { getPage } from '../lib/content';
-import { ogPathForPage } from '../lib/og';
+import { ogAlt, ogPathForPage } from '../lib/og';
+import { SITE } from '../site';
 import { PERSON_ID, webPage } from '../lib/schema';
 
 // The plaza itself is part of every page (Base.astro); on this one it is the page.
@@ -14,6 +15,8 @@ const { title, description, cover, updated } = page.data;
   {description}
   image={cover}
   imageUrl={cover ? undefined : ogPathForPage('home')}
+  imageAlt={cover ? undefined : ogAlt(SITE.title)}
+  video={{ url: '/media/plaza-preview.mp4', width: 1200, height: 630 }}
   type="profile"
   modified={updated}
   fullscreen

@@ -2,7 +2,8 @@
 // from src/pages, so adding a page adds it here without touching this file.
 import { absUrl, getAllEntries, isoDate, urlOf } from '../lib/content';
 
-const EXCLUDE = new Set(['/404/']);
+// The X player is the plaza again, for X to frame; the home page is the one to index.
+const EXCLUDE = new Set(['/404/', '/player/']);
 
 const staticPaths = Object.keys(import.meta.glob('./**/*.astro'))
   .filter((file) => !file.includes('['))

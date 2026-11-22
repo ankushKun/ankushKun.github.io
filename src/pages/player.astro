@@ -1,0 +1,11 @@
+---
+// The plaza, live, for X to play inside a post (twitter:player). Only X's crawler is told about it,
+// by the Cloudflare Worker in workers/twitter-player/, since iMessage and Telegram show a player
+// card as a small picture. Links open the site in a new tab; the home page is the one to index.
+import Base from '../layouts/Base.astro';
+import { absUrl, getPage } from '../lib/content';
+
+const { title, description } = (await getPage('home')).data;
+---
+
+<Base {title} {description} canonical={absUrl('/')} embed noindex />

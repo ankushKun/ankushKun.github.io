@@ -90,8 +90,10 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
   const counted = { frames: 0, from: 0 };
   const djButton = need(root.querySelector<HTMLButtonElement>('.plaza-dj'));
   const links = [...root.querySelectorAll<HTMLAnchorElement>('a[data-cube]')];
+  /** In a frame on another site (the X player, /player/, Base.astro `embed`): settled from the start, and links open the site in a new tab. */
+  const embedded = document.documentElement.hasAttribute('data-embed');
   /** On the plaza now, rather than asleep behind another page. */
-  let active = location.pathname === '/';
+  let active = location.pathname === '/' || embedded;
 
   const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let w = root.clientWidth;
@@ -275,7 +277,7 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
   // page before is the one the router came from; on a fresh load, the referrer.
   const routed = previousPath() !== location.pathname ? previousPath() : null;
   const cameFrom = routed ?? sameSite(document.referrer);
-  const returning = location.hash === '#0' || (traversed && cameFrom !== null);
+  const returning = embedded || location.hash === '#0' || (traversed && cameFrom !== null);
   if (location.hash === '#0') whenShown(() => history.replaceState(history.state, '', location.pathname + location.search));
   /** No opening and no waiting: reduced motion, or coming back. */
   const quiet = calm || returning;
@@ -599,6 +601,12 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
    */
   function leave(link: HTMLAnchorElement, point: THREE.Vector3, near: number, keep?: Element) {
     if (root.dataset.leaving) return;
+    // Framed on another site, the plaza stays where it is and the page opens beside it.
+    if (embedded) {
+      bubbles.dismiss();
+      window.open(link.href, '_blank', 'noopener');
+      return;
+    }
     document.documentElement.removeAttribute('data-arrive');
     document.documentElement.style.setProperty('--dive', `${DIVE}s`);
     root.dataset.leaving = 'true';

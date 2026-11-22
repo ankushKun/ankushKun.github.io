@@ -1,9 +1,9 @@
-// Static endpoint emitting 1200x630 PNG thumbnails & OG cards for every standalone page
-// and every entry that does not define a custom `cover` image.
+// The 1200 by 630 social cards (src/lib/og.ts) for every standalone page and every entry without a
+// `cover` of its own, also used as their thumbnails in lists.
 import type { APIRoute, GetStaticPaths } from 'astro';
 import { getCollection } from 'astro:content';
 import { getAllEntries } from '../../lib/content';
-import { renderOgPng, specForEntry, specForPage, type OgSpec } from '../../lib/og';
+import { renderOg, specForEntry, specForPage, type OgSpec } from '../../lib/og';
 
 export const getStaticPaths: GetStaticPaths = async () => {
   const [entries, pages] = await Promise.all([getAllEntries(), getCollection('pages')]);
@@ -26,10 +26,10 @@ export const getStaticPaths: GetStaticPaths = async () => {
 };
 
 export const GET: APIRoute = async ({ props }) => {
-  const png = await renderOgPng((props as { spec: OgSpec }).spec);
-  return new Response(new Uint8Array(png), {
+  const jpg = await renderOg((props as { spec: OgSpec }).spec);
+  return new Response(new Uint8Array(jpg), {
     headers: {
-      'Content-Type': 'image/png',
+      'Content-Type': 'image/jpeg',
       'Cache-Control': 'public, max-age=31536000, immutable',
     },
   });

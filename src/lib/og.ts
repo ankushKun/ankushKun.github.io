@@ -1,7 +1,9 @@
-// Build-time Wii U / Miiverse-inspired OG card generator.
-// Uses Satori + bundled M PLUS 1p & JetBrains Mono fonts + Sharp, cached in node_modules/.cache.
-// Edit OG_THEME below to adjust colors or typography globally for every generated social card.
-
+// Social cards (og:image), made at build time for every page and entry without a cover of its own.
+// Each one is a moment in the plaza: your Mii up close among friends (a real frame of the plaza,
+// src/assets/og/plaza.jpg, from `pnpm og:capture`), with the name tag the plaza shows over a Mii,
+// saying the page in a Miiverse post beside them: the section's block art, a name tag pill, the
+// title and the description. Satori lays it out, Sharp draws it; finished cards are cached in
+// node_modules/.cache.
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -9,96 +11,112 @@ import { join } from 'node:path';
 import satori from 'satori';
 import sharp from 'sharp';
 import { AUTHOR, SITE } from '../site';
-import { formatDate, type Entry } from './content';
+import { formatDate, readingMinutes, type Entry } from './content';
+import frame from '../assets/og/plaza.json';
 
 export const OG_WIDTH = 1200;
 export const OG_HEIGHT = 630;
 
-/** Bump when layout/visual design changes to invalidate the disk cache. */
-const TEMPLATE_VERSION = 'v3-wiiu';
+/** Bump when the design changes, to throw away cached cards. */
+const TEMPLATE_VERSION = 'v5-plaza-post';
 
-/** Wii U TV screen aesthetic: bright pale bezel, glossy white card, sky-blue accent, Mii portrait. */
-export const OG_THEME = {
-  outerBg: '#E6EEF2',
-  surfaceBg: '#FFFFFF',
-  border: 'rgba(42, 70, 88, 0.14)',
-  hairline: 'rgba(42, 70, 88, 0.10)',
-  title: '#232A2E',
-  subtitle: '#5A666E',
-  muted: '#6E7C84',
-  brandBg: '#2FB2E6',
-  brandInk: '#232A2E',
-};
+/**
+ * How the plaza frame sits on the card: scaled up and moved so your Mii stands right of center,
+ * the room on the left for the post. `head` is where the top of its head lands (from plaza.json).
+ */
+const SCALE = 1.45;
+const CROP = { left: 0, top: 57 };
+const HEAD = { x: Math.round(frame.head[0] * SCALE - CROP.left), y: Math.round(frame.head[1] * SCALE - CROP.top) };
+const POST = { left: 48, width: 712 };
 
-const SECTION_ACCENTS: Record<string, [string, string]> = {
-  BLOG: ['#FF9D52', '#EE4A4F'],
-  PROJECT: ['#45D3C6', '#1C6FD0'],
-  TIMELINE: ['#5FD16F', '#1F9457'],
-  PAGE: ['#62C4FF', '#2380DC'],
-};
+const INK = '#2c3134';
+const SOFT = '#5f6b72';
+const MUTED = '#8a959b';
 
 export interface OgSpec {
   seed: string;
-  eyebrow: string;
-  meta?: string;
+  /** The name on the post's pill: the section, or who is talking. */
+  tag: string;
   title: string;
   subtitle?: string;
-  footerLeft?: string;
-  accent?: [string, string];
+  /** A short line at the post's foot: a date, a year, a read time. */
+  meta?: string;
+  /** Block art from public/plaza/icons/, by file name without `.webp`. */
+  art: string;
 }
 
 const require = createRequire(import.meta.url);
 const CACHE_DIR = join(process.cwd(), 'node_modules', '.cache', 'ankush-og');
 
-let cachedFonts:
-  | { name: string; data: ArrayBuffer; weight: 400 | 500 | 700 | 800; style: 'normal' }[]
-  | null = null;
-let cachedMiiDataUrl: string | null = null;
+type Font = { name: string; data: ArrayBuffer; weight: 400 | 500 | 700 | 800; style: 'normal' };
+let fonts: Font[] | null = null;
+let backdrop: Promise<string> | null = null;
+const arts = new Map<string, Promise<string>>();
 
-function loadFont(pkgPath: string): ArrayBuffer {
-  const buf = readFileSync(require.resolve(pkgPath));
-  return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
+const bytes = (buf: Buffer) => buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
+const dataUrl = (buf: Buffer, type: string) => `data:${type};base64,${buf.toString('base64')}`;
+
+function getFonts(): Font[] {
+  fonts ??= [
+    ...([400, 500, 700, 800] as const).map((weight) => ({
+      name: 'M PLUS 1p',
+      data: bytes(readFileSync(require.resolve(`@fontsource/m-plus-1p/files/m-plus-1p-latin-${weight}-normal.woff`))),
+      weight,
+      style: 'normal' as const,
+    })),
+    // The plaza's name tags.
+    { name: 'Monocraft', data: bytes(readFileSync(join(process.cwd(), 'public/fonts/monocraft-latin.otf'))), weight: 400, style: 'normal' },
+  ];
+  return fonts;
 }
 
-function getFonts() {
-  if (!cachedFonts) {
-    cachedFonts = [
-      { name: 'M PLUS 1p', data: loadFont('@fontsource/m-plus-1p/files/m-plus-1p-latin-400-normal.woff'), weight: 400, style: 'normal' },
-      { name: 'M PLUS 1p', data: loadFont('@fontsource/m-plus-1p/files/m-plus-1p-latin-500-normal.woff'), weight: 500, style: 'normal' },
-      { name: 'M PLUS 1p', data: loadFont('@fontsource/m-plus-1p/files/m-plus-1p-latin-700-normal.woff'), weight: 700, style: 'normal' },
-      { name: 'M PLUS 1p', data: loadFont('@fontsource/m-plus-1p/files/m-plus-1p-latin-800-normal.woff'), weight: 800, style: 'normal' },
-      {
-        name: 'JetBrains Mono',
-        data: loadFont('@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff'),
-        weight: 400,
-        style: 'normal',
-      },
-      {
-        name: 'JetBrains Mono',
-        data: loadFont('@fontsource/jetbrains-mono/files/jetbrains-mono-latin-500-normal.woff'),
-        weight: 500,
-        style: 'normal',
-      },
-    ];
-  }
-  return cachedFonts;
-}
-
-async function getMiiAvatar(): Promise<string> {
-  if (!cachedMiiDataUrl) {
-    const png = await sharp(join(process.cwd(), 'public', 'mii', 'me-happy.webp'))
-      .resize(96, 96, { fit: 'cover' })
-      .png()
+/**
+ * The plaza frame cropped to the card, with a pale haze over its left side so the crowd stays
+ * behind the post rather than in its way.
+ */
+function getBackdrop() {
+  backdrop ??= (async () => {
+    const src = join(process.cwd(), 'src/assets/og/plaza.jpg');
+    const wide = Math.round(OG_WIDTH * SCALE);
+    const haze = Buffer.from(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${OG_WIDTH}" height="${OG_HEIGHT}">
+        <defs><linearGradient id="h" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0" stop-color="#eef5f7" stop-opacity="0.82"/>
+          <stop offset="0.5" stop-color="#eef5f7" stop-opacity="0.55"/>
+          <stop offset="0.7" stop-color="#eef5f7" stop-opacity="0"/>
+        </linearGradient></defs>
+        <rect width="100%" height="100%" fill="url(#h)"/>
+      </svg>`,
+    );
+    const jpg = await sharp(src)
+      .resize({ width: wide })
+      .extract({ left: CROP.left, top: CROP.top, width: OG_WIDTH, height: OG_HEIGHT })
+      .composite([{ input: haze }])
+      .jpeg({ quality: 88 })
       .toBuffer();
-    cachedMiiDataUrl = `data:image/png;base64,${png.toString('base64')}`;
+    return dataUrl(jpg, 'image/jpeg');
+  })();
+  return backdrop;
+}
+
+function getArt(name: string) {
+  let art = arts.get(name);
+  if (!art) {
+    const file = join(process.cwd(), 'public/plaza/icons', `${name}.webp`);
+    art = sharp(existsSync(file) ? file : join(process.cwd(), 'public/plaza/icons/about.webp'))
+      .resize(176, 176)
+      .png()
+      .toBuffer()
+      .then((b) => dataUrl(b, 'image/png'));
+    arts.set(name, art);
   }
-  return cachedMiiDataUrl;
+  return art;
 }
 
 function cleanText(raw: string): string {
   return raw
     .replace(/\p{Extended_Pictographic}/gu, '')
-    .replace(/\uFE0F/g, '')
+    .replace(/️/g, '')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -111,328 +129,163 @@ function clampText(raw: string, maxChars: number): string {
   return `${(lastSpace > maxChars * 0.6 ? cut.slice(0, lastSpace) : cut).replace(/[.,;:!?-]+$/, '')}...`;
 }
 
-function titleFontSize(len: number): number {
-  if (len <= 24) return 68;
-  if (len <= 42) return 56;
-  if (len <= 64) return 48;
-  return 42;
+function titleSize(len: number): number {
+  if (len <= 22) return 52;
+  if (len <= 40) return 44;
+  if (len <= 64) return 38;
+  return 34;
 }
 
 export function ogPathForEntry(entry: Entry): string {
-  return `/og/${entry.collection}/${entry.id}.png`;
+  return `/og/${entry.collection}/${entry.id}.jpg`;
 }
 
 export function ogPathForPage(id: string): string {
-  return `/og/pages/${id}.png`;
+  return `/og/pages/${id}.jpg`;
 }
+
+/** What a generated card shows, for og:image:alt. */
+export function ogAlt(title: string): string {
+  return `${AUTHOR.name}'s Mii in a Wii U style plaza, beside a post that reads "${cleanText(title)}"`;
+}
+
+const ENTRY_LOOK = {
+  blog: { tag: 'Blog', art: 'blogs' },
+  projects: { tag: 'Project', art: 'projects' },
+  timeline: { tag: 'Timeline', art: 'timeline' },
+} as const;
 
 export function specForEntry(entry: Entry): OgSpec {
-  const year = String(entry.data.date.getUTCFullYear());
-  const dateLabel = formatDate(entry.data.date, 'short').toUpperCase();
-
-  let eyebrow: string = entry.collection.toUpperCase();
-  let meta = dateLabel;
-  let footerItems: string[] = entry.data.tags.slice(0, 3).map((t) => `#${t}`);
-  let accent: [string, string] = SECTION_ACCENTS.PAGE;
-
-  switch (entry.collection) {
-    case 'blog':
-      eyebrow = 'BLOG';
-      meta = dateLabel;
-      accent = SECTION_ACCENTS.BLOG;
-      break;
-    case 'projects':
-      eyebrow = 'PROJECT';
-      meta = entry.data.status === 'archived' ? `${year} · ARCHIVED` : year;
-      accent = SECTION_ACCENTS.PROJECT;
-      if (entry.data.stack.length > 0) {
-        footerItems = entry.data.stack.slice(0, 4);
-      }
-      break;
-    case 'timeline':
-      eyebrow = `TIMELINE · ${entry.data.kind.map((k) => k.toUpperCase()).join(' · ')}`;
-      meta = dateLabel;
-      accent = SECTION_ACCENTS.TIMELINE;
-      break;
-  }
-
-  return {
-    seed: `${entry.collection}/${entry.id}`,
-    eyebrow,
-    meta,
-    title: entry.data.title,
-    subtitle: entry.data.description,
-    footerLeft: footerItems.join('  ·  ') || AUTHOR.name,
-    accent,
-  };
+  const { tag, art } = ENTRY_LOOK[entry.collection];
+  let meta = formatDate(entry.data.date, 'long');
+  if (entry.collection === 'blog') meta = `${meta}  ·  ${readingMinutes(entry)} min read`;
+  if (entry.collection === 'projects') meta = `${entry.data.date.getUTCFullYear()}${entry.data.status === 'archived' ? '  ·  Archived' : ''}`;
+  return { seed: `${entry.collection}/${entry.id}`, tag, title: entry.data.title, subtitle: entry.data.description, meta, art };
 }
+
+/** Block art for pages whose name isn't their art's: the apps' are named after their paths. */
+const PAGE_ART: Record<string, string> = { home: 'about', blog: 'blogs', chat: 'apps-chat', music: 'apps-music' };
 
 export function specForPage(id: string, title: string, description: string): OgSpec {
-  const isHome = id === 'home';
-  const pageAccents: Record<string, [string, string]> = {
-    blog: SECTION_ACCENTS.BLOG,
-    projects: SECTION_ACCENTS.PROJECT,
-    timeline: SECTION_ACCENTS.TIMELINE,
-    apps: ['#B184FF', '#6A3FD6'],
-    chat: ['#5CBF2A', '#3A9617'],
-    about: ['#FFD23F', '#F29A12'],
-    mii: ['#FFD23F', '#F29A12'],
-    resume: ['#9FB0C8', '#526984'],
-  };
-  return {
-    seed: `pages/${id}`,
-    eyebrow: isHome ? 'WARAWARA PLAZA' : title.toUpperCase(),
-    meta: isHome ? AUTHOR.worksFor.name.toUpperCase() : SITE.title.toUpperCase(),
-    title: isHome ? SITE.title : title,
-    subtitle: description,
-    footerLeft: isHome ? 'AI Agents  ·  Developer Tools  ·  3DS Homebrew' : `${AUTHOR.name}  ·  ${AUTHOR.worksFor.name}`,
-    accent: pageAccents[id] ?? SECTION_ACCENTS.PAGE,
-  };
+  if (id === 'home') return { seed: 'pages/home', tag: AUTHOR.name, title: SITE.title, subtitle: description, meta: AUTHOR.worksFor.name, art: PAGE_ART.home };
+  return { seed: `pages/${id}`, tag: title, title, subtitle: description, art: PAGE_ART[id] ?? id };
 }
 
-export async function renderOgPng(spec: OgSpec): Promise<Buffer> {
+const div = (style: Record<string, unknown>, children?: unknown) => ({ type: 'div', props: { style: { display: 'flex', ...style }, children } });
+
+export async function renderOg(spec: OgSpec): Promise<Buffer> {
+  const plaza = readFileSync(join(process.cwd(), 'src/assets/og/plaza.jpg'));
   const hash = createHash('sha256')
-    .update(JSON.stringify({ v: TEMPLATE_VERSION, theme: OG_THEME, spec }))
+    .update(JSON.stringify({ v: TEMPLATE_VERSION, spec, frame }))
+    .update(plaza)
     .digest('hex')
     .slice(0, 24);
-  const cachePath = join(CACHE_DIR, `${hash}.png`);
+  const cachePath = join(CACHE_DIR, `${hash}.jpg`);
+  if (existsSync(cachePath)) return readFileSync(cachePath);
 
-  if (existsSync(cachePath)) {
-    return readFileSync(cachePath);
-  }
-
-  const title = clampText(spec.title, 96);
-  const subtitle = spec.subtitle ? clampText(spec.subtitle, 132) : '';
-  const eyebrow = clampText(spec.eyebrow, 32);
-  const meta = spec.meta ? clampText(spec.meta, 38) : '';
-  const footerLeft = spec.footerLeft ? clampText(spec.footerLeft, 54) : AUTHOR.name;
+  const title = clampText(spec.title, 90);
+  const subtitle = spec.subtitle ? clampText(spec.subtitle, 150) : '';
+  const tag = clampText(spec.tag, 28);
   const host = SITE.url.replace(/^https?:\/\/|\/$/g, '');
-  const [c1, c2] = spec.accent ?? SECTION_ACCENTS.PAGE;
-  const miiSrc = await getMiiAvatar();
+  const [bg, art] = await Promise.all([getBackdrop(), getArt(spec.art)]);
+  const firstName = AUTHOR.name.split(' ')[0];
 
-  const tree = {
-    type: 'div',
-    props: {
-      style: {
-        width: `${OG_WIDTH}px`,
-        height: `${OG_HEIGHT}px`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: OG_THEME.outerBg,
-        backgroundImage: `radial-gradient(circle at 12% 14%, ${c1}33 0%, transparent 45%), radial-gradient(circle at 88% 88%, ${c2}28 0%, transparent 48%)`,
-        fontFamily: 'M PLUS 1p',
-      },
-      children: [
+  // Where the post's tail points: your Mii's face.
+  const faceY = HEAD.y + 40;
+
+  const tree = div(
+    { position: 'relative', width: OG_WIDTH, height: OG_HEIGHT, fontFamily: 'M PLUS 1p', color: INK, backgroundColor: '#e4f0f2' },
+    [
+      { type: 'img', props: { src: bg, width: OG_WIDTH, height: OG_HEIGHT, style: { position: 'absolute', top: 0, left: 0 } } },
+      // The name tag over your Mii, square and see-through in a pixel font, as in the plaza.
+      div(
         {
-          type: 'div',
-          props: {
-            style: {
-              position: 'relative',
-              width: '1128px',
-              height: '558px',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              backgroundColor: OG_THEME.surfaceBg,
-              border: `2px solid ${OG_THEME.border}`,
-              borderRadius: '34px',
-              padding: '44px 54px 36px 54px',
-              boxShadow: '0 22px 44px rgba(30, 56, 72, 0.14)',
-              overflow: 'hidden',
-            },
-            children: [
-              // Top Nintendo accent bar
-              {
-                type: 'div',
-                props: {
-                  style: {
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: '12px',
-                    backgroundImage: `linear-gradient(90deg, ${c1}, ${c2})`,
-                  },
-                },
-              },
-              // Top metadata bar
-              {
-                type: 'div',
-                props: {
-                  style: {
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    width: '100%',
-                  },
-                  children: [
-                    {
-                      type: 'div',
-                      props: {
-                        style: {
-                          display: 'flex',
-                          alignItems: 'center',
-                          fontFamily: 'M PLUS 1p',
-                          fontWeight: 800,
-                          fontSize: '18px',
-                          letterSpacing: '0.08em',
-                          color: '#FFFFFF',
-                          backgroundImage: `linear-gradient(180deg, ${c1}, ${c2})`,
-                          borderRadius: '999px',
-                          padding: '8px 20px',
-                        },
-                        children: eyebrow,
-                      },
-                    },
-                    meta
-                      ? {
-                          type: 'div',
-                          props: {
-                            style: {
-                              display: 'flex',
-                              fontFamily: 'JetBrains Mono',
-                              fontWeight: 500,
-                              fontSize: '18px',
-                              letterSpacing: '0.05em',
-                              color: OG_THEME.muted,
-                            },
-                            children: meta,
-                          },
-                        }
-                      : { type: 'div', props: { style: { display: 'flex' } } },
-                  ],
-                },
-              },
-              // Center title + description
-              {
-                type: 'div',
-                props: {
-                  style: {
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '18px',
-                    maxWidth: '960px',
-                  },
-                  children: [
-                    {
-                      type: 'div',
-                      props: {
-                        style: {
-                          display: 'flex',
-                          fontSize: `${titleFontSize(title.length)}px`,
-                          fontWeight: 800,
-                          lineHeight: 1.14,
-                          letterSpacing: '-0.025em',
-                          color: OG_THEME.title,
-                        },
-                        children: title,
-                      },
-                    },
-                    subtitle
-                      ? {
-                          type: 'div',
-                          props: {
-                            style: {
-                              display: 'flex',
-                              fontSize: '24px',
-                              fontWeight: 400,
-                              lineHeight: 1.45,
-                              color: OG_THEME.subtitle,
-                              maxWidth: '880px',
-                            },
-                            children: subtitle,
-                          },
-                        }
-                      : null,
-                  ].filter(Boolean),
-                },
-              },
-              // Footer bar with Ankush's Mii
-              {
-                type: 'div',
-                props: {
-                  style: {
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    width: '100%',
-                    borderTop: `2px solid ${OG_THEME.hairline}`,
-                    paddingTop: '18px',
-                  },
-                  children: [
-                    {
-                      type: 'div',
-                      props: {
-                        style: {
-                          display: 'flex',
-                          fontFamily: 'JetBrains Mono',
-                          fontWeight: 500,
-                          fontSize: '18px',
-                          color: OG_THEME.muted,
-                        },
-                        children: footerLeft,
-                      },
-                    },
-                    {
-                      type: 'div',
-                      props: {
-                        style: {
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '12px',
-                        },
-                        children: [
-                          {
-                            type: 'img',
-                            props: {
-                              src: miiSrc,
-                              width: 46,
-                              height: 46,
-                              style: {
-                                borderRadius: '999px',
-                                backgroundColor: '#E3F1F6',
-                                border: `2px solid ${c1}`,
-                              },
-                            },
-                          },
-                          {
-                            type: 'div',
-                            props: {
-                              style: {
-                                display: 'flex',
-                                fontFamily: 'M PLUS 1p',
-                                fontWeight: 800,
-                                fontSize: '22px',
-                                color: OG_THEME.brandInk,
-                              },
-                              children: host,
-                            },
-                          },
-                        ],
-                      },
-                    },
-                  ],
-                },
-              },
-            ],
-          },
+          position: 'absolute',
+          left: HEAD.x - 70,
+          top: HEAD.y - 150,
+          width: 140,
+          justifyContent: 'center',
         },
-      ],
-    },
-  };
+        div({ padding: '2px 12px 6px', backgroundColor: 'rgba(0, 0, 0, 0.42)', color: '#fff', fontFamily: 'Monocraft', fontSize: 30 }, firstName),
+      ),
+      // The post: a white card with the plaza's soft shadow, its tail pointing at your Mii.
+      div(
+        {
+          position: 'absolute',
+          left: POST.left,
+          top: 0,
+          bottom: 0,
+          width: POST.width + 40,
+          alignItems: 'center',
+        },
+        [
+          div(
+            {
+              position: 'relative',
+              flexDirection: 'column',
+              width: POST.width,
+              padding: '44px 44px 34px',
+              backgroundColor: '#fbfcfc',
+              borderRadius: 40,
+              boxShadow: '0 18px 44px rgba(42, 74, 88, 0.26), 0 2px 6px rgba(42, 74, 88, 0.12)',
+            },
+            [
+              // The name on a dark pill over the post's corner, as the plaza's bubbles carry it.
+              div(
+                {
+                  position: 'absolute',
+                  top: -22,
+                  left: -10,
+                  padding: '4px 22px 6px',
+                  borderRadius: 999,
+                  backgroundColor: 'rgba(66, 70, 72, 0.94)',
+                  color: '#fff',
+                  fontSize: 24,
+                  fontWeight: 500,
+                  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.18)',
+                },
+                tag,
+              ),
+              div({ gap: 30, alignItems: 'flex-start' }, [
+                {
+                  type: 'img',
+                  props: {
+                    src: art,
+                    width: 132,
+                    height: 132,
+                    style: { borderRadius: 30, boxShadow: '0 0 0 2px rgba(0, 0, 0, 0.05), 0 6px 14px rgba(42, 74, 88, 0.18)' },
+                  },
+                },
+                div({ flexDirection: 'column', flex: 1, gap: 12 }, [
+                  div({ fontSize: titleSize(title.length), fontWeight: 800, lineHeight: 1.12, letterSpacing: '-0.02em' }, title),
+                  subtitle ? div({ fontSize: 23, lineHeight: 1.42, color: SOFT }, subtitle) : null,
+                ].filter(Boolean)),
+              ]),
+              div({ marginTop: 26, paddingTop: 18, borderTop: '2px solid rgba(42, 74, 88, 0.08)', justifyContent: 'space-between', fontSize: 21, color: MUTED }, [
+                div({}, spec.meta ?? ''),
+                div({ fontWeight: 800, color: INK }, host),
+              ]),
+            ],
+          ),
+          // The tail: a rounded square turned on its corner, half tucked under the post's edge.
+          div({
+            width: 50,
+            height: 50,
+            marginLeft: -28,
+            marginTop: (faceY - OG_HEIGHT / 2) * 2,
+            borderRadius: 9,
+            backgroundColor: '#fbfcfc',
+            transform: 'rotate(45deg)',
+            boxShadow: '5px -5px 10px rgba(42, 74, 88, 0.16)',
+          }),
+        ],
+      ),
+    ],
+  );
 
-  const svg = await satori(tree as Parameters<typeof satori>[0], {
-    width: OG_WIDTH,
-    height: OG_HEIGHT,
-    fonts: getFonts(),
-  });
-
-  const png = await sharp(Buffer.from(svg))
-    .png({ palette: true, quality: 88, compressionLevel: 9 })
-    .toBuffer();
-
+  const svg = await satori(tree as Parameters<typeof satori>[0], { width: OG_WIDTH, height: OG_HEIGHT, fonts: getFonts() });
+  const jpg = await sharp(Buffer.from(svg)).jpeg({ quality: 84, mozjpeg: true }).toBuffer();
   mkdirSync(CACHE_DIR, { recursive: true });
-  writeFileSync(cachePath, png);
-  return png;
+  writeFileSync(cachePath, jpg);
+  return jpg;
 }

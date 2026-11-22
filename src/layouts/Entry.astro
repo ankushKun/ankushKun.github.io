@@ -44,6 +44,26 @@ const canonicalHost = data.canonical ? new URL(data.canonical).hostname.replace(
 
 const readMoreEntries = await getReadMore(entry, 4);
 
+// Two facts Slack shows under the link: when and how long for a post, when and with what for a
+// project, when and what kind for a timeline event.
+function factsOf(e: Entry): [string, string][] {
+  switch (e.collection) {
+    case 'blog':
+      return [
+        ['Published', formatDate(e.data.date)],
+        ['Reading time', `${readingMinutes(e)} min`],
+      ];
+    case 'projects':
+      return [['Year', String(e.data.date.getUTCFullYear())], ...(e.data.stack.length ? [['Built with', e.data.stack.slice(0, 3).join(', ')] as [string, string]] : [])];
+    default:
+      return [
+        ['Date', formatDate(e.data.date)],
+        ['Kind', e.data.kind.map((k: string) => k[0].toUpperCase() + k.slice(1)).join(', ')],
+      ];
+  }
+}
+const facts = factsOf(entry);
+
 const schemaNodes = [
   entryNode(entry, schemaImage),
   breadcrumbs([
@@ -59,7 +79,8 @@ const schemaNodes = [
   description={data.description}
   image={data.cover}
   imageUrl={generatedOgPath}
-  imageAlt={data.coverAlt || data.title}
+  imageAlt={data.cover ? data.coverAlt || data.title : undefined}
+  facts={facts}
   canonical={data.canonical}
   type="article"
   published={data.date}

@@ -76,8 +76,8 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
       .then(({ start }) => start(root, data))
       .then((started) => {
         plaza = started;
-        // Left before it was ready.
-        if (location.pathname !== '/') started.sleep();
+        // Left before it was ready (a framed plaza, /player/, is never left).
+        if (location.pathname !== '/' && !document.documentElement.hasAttribute('data-embed')) started.sleep();
       })
       .catch((err: unknown) => {
         console.error('Plaza failed to start', err);

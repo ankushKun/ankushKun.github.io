@@ -13,6 +13,7 @@
     "check": "astro check",
     "transitions": "node scripts/transitions.mjs",
     "favicons": "node scripts/favicons.mjs",
+    "og:capture": "node scripts/og-capture.mjs",
     "music": "node scripts/music.mjs",
     "bpm": "node scripts/bpm.mjs"
   },

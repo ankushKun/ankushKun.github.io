@@ -1,0 +1,7 @@
+# The X player card (src/index.js), on the home page only. Deploy with
+# `pnpm dlx wrangler deploy` from this folder.
+name = "ankush-twitter-player"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+workers_dev = false
+routes = [{ pattern = "ankush.one/", zone_name = "ankush.one" }]
