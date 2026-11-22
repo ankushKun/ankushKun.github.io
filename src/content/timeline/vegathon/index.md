@@ -2,7 +2,7 @@
 title: "1st Prize at C-DAC's GCON Vegathon"
 description: "Selected for C-DAC's VEGA RISC-V hardware track, shortlisted to the top 6 POC teams, and won 1st prize at IIT Guwahati with our custom flight controller."
 date: 2023-06-10
-kind: "win"
+kind: ["win", "hackathon", "hardware"]
 tags: ["hackathon", "hardware"]
 links:
   - label: "Flight controller firmware on GitHub"

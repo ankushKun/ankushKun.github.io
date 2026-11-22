@@ -2,7 +2,7 @@
 title: "Won Best Educational Game at WeMakeDevs x Stream"
 description: "Built a Unity educational game for the WeMakeDevs x Stream Devpost hackathon and won the Best Educational Game track."
 date: 2022-12-07
-kind: "win"
+kind: ["win", "hackathon"]
 tags: ["hackathon", "game-dev"]
 links:
   - label: "View on Devpost"

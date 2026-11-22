@@ -2,7 +2,7 @@
 title: "Won Bounties at ETHIndia '24"
 description: "Built Hack-A-Dome at ETHIndia '24 and won 3rd place plus two pool prizes from Coinbase Developer Platform."
 date: 2024-12-09
-kind: "win"
+kind: ["win", "hackathon"]
 tags: ["hackathon", "web3"]
 links:
   - label: "Hack-A-Dome on Devfolio"

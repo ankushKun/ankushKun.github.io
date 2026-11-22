@@ -2,7 +2,7 @@
 title: "Top 5 at UPES Hackathon 8.0"
 description: "Built a lightweight client-side AI browser that detects phishing and suspicious DOM patterns, placing in the top 5 at UPES Dehradun."
 date: 2024-03-16
-kind: "win"
+kind: ["win", "hackathon"]
 tags: ["hackathon", "machine-learning"]
 links:
   - label: "GitHub"

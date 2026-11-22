@@ -1,62 +1,125 @@
 ---
 // The timeline as the Wii's message board: each event a memo under its year, dated by a little
-// calendar page whose top is the color of its kind (a win, a launch, work...).
+// calendar page whose top is the color of its kind (a win, a launch, work...), with a color-coded
+// kind legend & filter bar at the top.
 import type { CollectionEntry } from 'astro:content';
 import { byYear, isoDate, urlOf } from '../lib/content';
+import { TIMELINE_KINDS, timelineKindMeta } from '../lib/timeline';
 
 interface Props {
   items: CollectionEntry<'timeline'>[];
 }
 
-const KINDS: Record<string, string> = {
-  win: '#f2a312',
-  launch: '#ee4a4f',
-  work: '#2380dc',
-  hackathon: '#7a4fe0',
-  hardware: '#1f9457',
-  milestone: '#24b3cc',
-};
-const kindColor = (k: string) => KINDS[k] ?? '#8a9497';
 const month = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
+
+const counts = new Map<string, number>();
+for (const e of Astro.props.items) {
+  for (const k of e.data.kind) counts.set(k, (counts.get(k) ?? 0) + 1);
+}
+const presentKinds = Object.entries(TIMELINE_KINDS).filter(([k]) => (counts.get(k) ?? 0) > 0);
 ---
 
-<div class="board">
+<div class="filter-bar" role="toolbar" aria-label="Filter timeline by kind" data-timeline-filters>
+  <button type="button" class="filter-pill" data-kind="all" aria-pressed="true" style="--dot:#2fb2e6" data-sfx>
+    <span class="dot" aria-hidden="true" />
+    All <span class="count">{Astro.props.items.length}</span>
+  </button>
+  {
+    presentKinds.map(([key, meta]) => (
+      <button type="button" class="filter-pill" data-kind={key} aria-pressed="false" style={`--dot:${meta.color}`} data-sfx>
+        <span class="dot" aria-hidden="true" />
+        {meta.label} <span class="count">{counts.get(key)}</span>
+      </button>
+    ))
+  }
+</div>
+
+<div class="board" data-timeline-board>
   {
     byYear(Astro.props.items).map(([year, events]) => (
-      <section>
+      <section data-year-group>
         <h2 class="year">{year}</h2>
         <ol>
-          {events.map((e) => (
-            <li>
-              <a href={urlOf(e)} class="memo" data-sfx>
-                <time class="cal" datetime={isoDate(e.data.date)} style={`--k:${kindColor(e.data.kind)}`} title={e.data.kind}>
-                  <span>{month(e.data.date)}</span>
-                  <b>{e.data.date.getUTCDate()}</b>
-                </time>
-                <span class="text">
-                  <span class="title">{e.data.title}</span>
-                  <span class="desc">{e.data.description}</span>
-                </span>
-              </a>
-            </li>
-          ))}
+          {events.map((e) => {
+            const metas = e.data.kind.map((k) => timelineKindMeta(k));
+            const primary = metas[0];
+            const calTitle = metas.map((m) => m.label).join(' / ');
+            return (
+              <li data-kinds={e.data.kind.join(' ')}>
+                <a href={urlOf(e)} class="memo" data-sfx>
+                  <time class="cal" datetime={isoDate(e.data.date)} style={`--k:${primary.color}`} title={calTitle}>
+                    <span>{month(e.data.date)}</span>
+                    <b>{e.data.date.getUTCDate()}</b>
+                  </time>
+                  <span class="text">
+                    <span class="top-row">
+                      <span class="title">{e.data.title}</span>
+                      <span class="kind-tags">
+                        {metas.map((meta) => (
+                          <span class="kind-tag" style={`--k:${meta.color}`}>
+                            {meta.label}
+                          </span>
+                        ))}
+                      </span>
+                    </span>
+                    <span class="desc">{e.data.description}</span>
+                  </span>
+                </a>
+              </li>
+            );
+          })}
         </ol>
       </section>
     ))
   }
 </div>
 
+<script>
+  function wireTimelineFilters() {
+    const bar = document.querySelector<HTMLElement>('[data-timeline-filters]');
+    const board = document.querySelector<HTMLElement>('[data-timeline-board]');
+    if (!bar || !board || bar.dataset.wired) return;
+    bar.dataset.wired = '1';
+    const buttons = [...bar.querySelectorAll<HTMLButtonElement>('[data-kind]')];
+    const groups = [...board.querySelectorAll<HTMLElement>('[data-year-group]')];
+
+    bar.addEventListener('click', (e) => {
+      const btn = e.target instanceof Element ? e.target.closest<HTMLButtonElement>('[data-kind]') : null;
+      if (!btn) return;
+      const picked = btn.dataset.kind ?? 'all';
+      for (const b of buttons) b.setAttribute('aria-pressed', String(b === btn));
+      for (const group of groups) {
+        const items = [...group.querySelectorAll<HTMLElement>('li[data-kinds]')];
+        let visible = 0;
+        for (const li of items) {
+          const itemKinds = (li.dataset.kinds ?? '').split(' ');
+          const hide = picked !== 'all' && !itemKinds.includes(picked);
+          li.hidden = hide;
+          if (!hide) visible++;
+        }
+        group.hidden = visible === 0;
+      }
+    });
+  }
+  document.addEventListener('astro:page-load', wireTimelineFilters);
+</script>
+
 <style>
   .year {
     margin: 30px 0 6px;
     color: var(--color-ink-faint);
     font-size: 0.8125rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
+    font-weight: 800;
+    letter-spacing: 0.06em;
   }
 
   section:first-child .year {
     margin-top: 0;
+  }
+
+  section[hidden],
+  li[hidden] {
+    display: none;
   }
 
   .memo {
@@ -70,13 +133,15 @@ const month = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', timeZ
     text-decoration: none;
     transition:
       box-shadow 0.18s ease,
-      background 0.18s ease;
+      background 0.18s ease,
+      translate 0.3s var(--ease-spring);
   }
 
   .memo:hover,
   .memo:focus-visible {
     background: var(--color-raise);
     box-shadow: var(--glow);
+    translate: 0 -1px;
   }
 
   /* A page off a desk calendar: the month on a band of the kind's color, the day under it. */
@@ -115,7 +180,15 @@ const month = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', timeZ
     display: grid;
     gap: 4px;
     min-width: 0;
+    flex: 1;
     padding-top: 2px;
+  }
+
+  .top-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
   }
 
   .title {
@@ -123,6 +196,27 @@ const month = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', timeZ
     font-size: 1rem;
     font-weight: 700;
     line-height: 1.4;
+  }
+
+  .kind-tags {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .kind-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 8px;
+    border-radius: 99px;
+    background: color-mix(in srgb, var(--k) 15%, transparent);
+    color: color-mix(in srgb, var(--k) 88%, var(--color-ink-strong));
+    font-size: 0.6875rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    line-height: 20px;
+    text-transform: uppercase;
   }
 
   .desc {

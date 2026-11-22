@@ -2,7 +2,7 @@
 title: "Won Two Track Prizes at Neighbourhood Hacks 2"
 description: "Won both 'Best Use of DeSo' and 'Most Creative Use of GitHub' at Neighbourhood Hacks 2.0."
 date: 2022-11-06
-kind: "win"
+kind: ["win", "hackathon"]
 tags: ["hackathon", "web3"]
 links:
   - label: "View on Devpost"

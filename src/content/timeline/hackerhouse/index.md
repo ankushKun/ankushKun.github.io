@@ -2,7 +2,7 @@
 title: "Won the Arweave India Hackerhouse (Cohort 1)"
 description: "Won the grand prize at Arweave India's first Bangalore hackerhouse by building the original web IDE that became BetterIDEa."
 date: 2023-12-07
-kind: "win"
+kind: ["win", "hackathon"]
 tags: ["hackathon", "arweave"]
 links:
   - label: "Announcement on X"

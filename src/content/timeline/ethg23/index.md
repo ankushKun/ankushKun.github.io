@@ -2,7 +2,7 @@
 title: "Tableland Prize at ETHOnline 2023"
 description: "Rebuilt GitRaven on Tableland for ETHGlobal's ETHOnline 2023 and won a share of the Tableland prize pool."
 date: 2023-10-20
-kind: "win"
+kind: ["win", "hackathon"]
 tags: ["hackathon", "web3"]
 links:
   - label: "ETHGlobal showcase"

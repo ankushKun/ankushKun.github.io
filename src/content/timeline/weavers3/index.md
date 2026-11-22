@@ -2,7 +2,7 @@
 title: "3rd Place at Weavers Raid III"
 description: "Built DumDumDeploy, a Vercel-like permaweb deployment platform, and won third place at Weavers Raid III."
 date: 2024-08-01
-kind: "win"
+kind: ["win", "hackathon"]
 tags: ["hackathon", "arweave"]
 links:
   - label: "Results on X"

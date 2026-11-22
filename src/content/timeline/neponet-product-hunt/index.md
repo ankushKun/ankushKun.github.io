@@ -2,7 +2,7 @@
 title: "Launched NepoNet on Product Hunt (#9 Product of the Day)"
 description: "Launched NepoNet, a warm-intro finder for X, on Product Hunt with Vibhansh Alok and finished #9 Product of the Day."
 date: 2026-09-18
-kind: "launch"
+kind: ["launch", "win"]
 tags: ["construct", "ai-agents", "product-hunt"]
 links:
   - label: "NepoNet on Product Hunt"

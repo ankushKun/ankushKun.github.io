@@ -2,6 +2,7 @@
 import Entry from '../../layouts/Entry.astro';
 import MenuButton from '../../components/ui/MenuButton.astro';
 import { getEntries } from '../../lib/content';
+import { timelineKindMeta } from '../../lib/timeline';
 
 export async function getStaticPaths() {
   return (await getEntries('timeline')).map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
@@ -9,11 +10,21 @@ export async function getStaticPaths() {
 
 const { entry } = Astro.props;
 const { data } = entry;
+const kinds = data.kind.map((k) => timelineKindMeta(k));
 ---
 
 <Entry entry={entry}>
   <div slot="meta" class="meta">
-    <span class="pill">{data.kind.charAt(0).toUpperCase() + data.kind.slice(1)}</span>
+    <ul class="kinds">
+      {
+        kinds.map((meta) => (
+          <li class="kind-badge" style={`--k:${meta.color}`}>
+            <span class="dot" aria-hidden="true" />
+            {meta.label}
+          </li>
+        ))
+      }
+    </ul>
     {
       data.links.length > 0 && (
         <div class="links">
@@ -33,9 +44,38 @@ const { data } = entry;
     gap: 16px;
   }
 
+  .kinds {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .kind-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 2px 11px;
+    border: 1px solid color-mix(in srgb, var(--k) 35%, transparent);
+    border-radius: 99px;
+    background: color-mix(in srgb, var(--k) 15%, transparent);
+    color: color-mix(in srgb, var(--k) 82%, var(--color-ink-strong));
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    line-height: 1.8;
+    text-transform: uppercase;
+  }
+
+  .kind-badge .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--k);
+  }
+
   .links {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(235px, 1fr));
     gap: 10px;
     width: 100%;
   }

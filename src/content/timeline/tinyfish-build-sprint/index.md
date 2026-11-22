@@ -2,7 +2,7 @@
 title: "TinyFish Accelerator Build Sprint"
 description: "Construct Computer joined the TinyFish Accelerator Build Sprint, a two-week virtual intensive for founders building web-native AI agents."
 date: 2026-03-31
-kind: "milestone"
+kind: ["milestone", "work"]
 tags: ["construct", "ai-agents"]
 links:
   - label: "Construct on TinyFish"

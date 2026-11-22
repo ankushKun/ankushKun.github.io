@@ -96,6 +96,6 @@ export function entryNode(entry: Entry, image?: string): Node {
         ...(data.links.length && { sameAs: data.links.map((l) => l.url) }),
       };
     case 'timeline':
-      return { '@type': 'Article', headline: data.title, articleSection: entry.data.kind, ...base, ...dated };
+      return { '@type': 'Article', headline: data.title, articleSection: entry.data.kind[0], ...base, ...dated };
   }
 }

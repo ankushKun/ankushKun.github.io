@@ -2,7 +2,7 @@
 title: "1st Prize at IIT Roorkee Intel oneAPI Hackathon"
 description: "Won 1st prize in the Intel oneAPI SYCL hackathon during Cognizance 2023 at IIT Roorkee (plus competed in Blockathon)."
 date: 2023-03-05
-kind: "win"
+kind: ["win", "hackathon"]
 tags: ["hackathon", "graphics"]
 related: ["/blogs/mandelbrot-intel-oneapi"]
 ---

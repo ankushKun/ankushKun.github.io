@@ -2,7 +2,7 @@
 title: "Co-founded Construct Computer"
 description: "Co-founded Construct Computer with Nischal Naik to build AI employees that each get their own cloud computer."
 date: 2026-02-20
-kind: "work"
+kind: ["work", "milestone"]
 tags: ["job", "construct", "ai-agents"]
 links:
   - label: "Construct Computer"

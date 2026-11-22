@@ -53,8 +53,8 @@ const timeline = defineCollection({
   loader: bundle('timeline'),
   schema: (ctx) =>
     entry(ctx).extend({
-      /** Groups events on the timeline page, for example work, win, launch, hackathon or milestone. */
-      kind: z.string(),
+      /** Groups events on the timeline page (one or multiple), for example work, win, launch, hackathon, hardware, or milestone. */
+      kind: z.union([z.string(), z.array(z.string()).min(1)]).transform((k) => (Array.isArray(k) ? k : [k])),
     }),
 });
 

@@ -2,7 +2,7 @@
 title: "Published Construct Technical Report 2026-01"
 description: "Co-authored 'Compatible APIs, Incompatible Thresholds' with Nischal Naik, benchmarking Cloudflare's Clef against TypeSafe's Jev across 1,053 agent calls."
 date: 2026-10-05
-kind: "launch"
+kind: ["launch", "milestone"]
 tags: ["construct", "ai-agents", "machine-learning"]
 links:
   - label: "Read the PDF"

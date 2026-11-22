@@ -2,7 +2,7 @@
 title: "2nd Place at Hack-O-Octo 1.0"
 description: "Won 2nd place at Hack-O-Octo 1.0 with GitRaven, an open-source web3 bounty platform — the hackathon that changed my trajectory."
 date: 2023-10-22
-kind: "win"
+kind: ["win", "hackathon"]
 tags: ["hackathon", "web3"]
 links:
   - label: "GitRaven on Devfolio"

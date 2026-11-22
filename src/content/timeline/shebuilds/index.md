@@ -2,7 +2,7 @@
 title: "Concordium Track Runner-Up at SheBuilds"
 description: "Picked up Rust for the first time at SheBuilds Hackathon, built Concordium smart contracts, and took the track runner-up prize."
 date: 2023-01-05
-kind: "win"
+kind: ["win", "hackathon"]
 tags: ["hackathon", "web3"]
 links:
   - label: "Project on Devfolio"
