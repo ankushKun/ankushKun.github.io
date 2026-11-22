@@ -1,11 +1,26 @@
 ---
-// Page shell: every meta tag, Open Graph, JSON-LD, header and footer live here.
+// Page shell: every meta tag, Open Graph, JSON-LD, and the screen every page sits on. The home page
+// is the plaza and nothing else. Every other page is shown on the TV (Frame.astro): one column to
+// read down the middle of the screen, the site's other pages in its footer. Pages on the TV change
+// in place through Astro's router (src/scripts/motion.ts); to and from the plaza is a real page
+// load, so the plaza only ever runs while you are on it.
 import type { ImageMetadata } from 'astro';
 import { getImage } from 'astro:assets';
-import { AUTHOR, FOOTER_NAV, NAV, SITE } from '../site';
-import { absUrl } from '../lib/content';
+import { ClientRouter } from 'astro:transitions';
+import '@fontsource/m-plus-1p/latin-300.css';
+import '@fontsource/m-plus-1p/latin-400.css';
+import '@fontsource/m-plus-1p/latin-500.css';
+import '@fontsource/m-plus-1p/latin-700.css';
+import '@fontsource/m-plus-1p/latin-800.css';
+import '@fontsource/jetbrains-mono/latin-400.css';
+import { AUTHOR, FOOTER_NAV, SITE } from '../site';
+import { absUrl, pagePath } from '../lib/content';
 import { OG_HEIGHT, OG_WIDTH, ogPathForPage } from '../lib/og';
 import { person, website } from '../lib/schema';
+import { tileFor } from '../lib/tiles';
+import Frame from '../components/ui/Frame.astro';
+import ThemeToggle from '../components/ui/ThemeToggle.astro';
+import Plaza from '../components/plaza/Plaza.astro';
 import '../styles/global.css';
 
 interface Props {
@@ -20,8 +35,10 @@ interface Props {
   modified?: Date;
   schema?: Record<string, unknown>[];
   noindex?: boolean;
-  /** Fullscreen stage mode (home page WaraWara Plaza): no header, nav, footer, or scroll sections. */
+  /** The home page: the plaza is the page, with no TV around it. */
   fullscreen?: boolean;
+  /** An app: it fills the TV's whole screen instead of the reading column, with no footer. */
+  app?: boolean;
 }
 
 const {
@@ -37,11 +54,13 @@ const {
   schema = [],
   noindex = false,
   fullscreen = false,
+  app = false,
 } = Astro.props;
 
-const isHome = Astro.url.pathname === '/';
+const path = pagePath(Astro.url);
+const isHome = path === '/';
 const fullTitle = isHome ? `${SITE.title} | ${AUTHOR.jobTitle}` : `${title} | ${SITE.title}`;
-const pageUrl = absUrl(Astro.url.pathname);
+const pageUrl = absUrl(path);
 const canonical = canonicalOverride ?? pageUrl;
 
 let ogUrl: string;
@@ -58,16 +77,18 @@ if (image) {
 }
 
 const jsonLd = { '@context': 'https://schema.org', '@graph': [website(), person(), ...schema] };
-const current = (href: string) => Astro.url.pathname.startsWith(href);
-const hero = !fullscreen && Astro.slots.has('hero') ? (await Astro.slots.render('hero')).trim() : '';
-const hasHero = hero !== '';
+// The section's two colors tint its pages.
+const colors = tileFor(path)?.colors;
+const accent = colors ? `--c1:${colors[0]};--c2:${colors[1]}` : undefined;
+const year = new Date().getFullYear();
 ---
 
 <!doctype html>
-<html lang={SITE.lang}>
+<html lang={SITE.lang} data-home={fullscreen ? '' : undefined}>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content={fullscreen ? '#e4f0f2' : '#eceff1'} data-light={fullscreen ? '#e4f0f2' : '#eceff1'} data-dark={fullscreen ? '#13171a' : '#0f1214'} />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <meta name="author" content={AUTHOR.name} />
@@ -101,43 +122,95 @@ const hasHero = hero !== '';
     <meta name="twitter:image" content={ogUrl} />
 
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    <script is:inline>
+      // The lights, set before anything is drawn so a dark page never flashes white: your choice
+      // if you have made one, else the device's (src/scripts/theme.ts switches them).
+      (function () {
+        var html = document.documentElement;
+        var theme;
+        try {
+          theme = localStorage.getItem('theme');
+        } catch (e) {}
+        if (theme !== 'light' && theme !== 'dark') theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        html.dataset.theme = theme;
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta && theme === 'dark') meta.content = meta.getAttribute('data-dark');
+      })();
+    </script>
+    <script is:inline>
+      // Going between the plaza and the TV is a real page load, drawn as the TV switching on or
+      // off (the end of global.css). The column keeps no transition name of its own meanwhile, so
+      // it goes with the rest of the screen.
+      (function () {
+        var html = document.documentElement;
+        var home = html.hasAttribute('data-home');
+        addEventListener('pageswap', function (e) {
+          if (e.viewTransition) html.dataset.crt = home ? 'on' : 'off';
+        });
+        addEventListener('pagereveal', function (e) {
+          if (!e.viewTransition) return;
+          var from = window.navigation && navigation.activation && navigation.activation.from;
+          var fromHome = from && from.url ? new URL(from.url).pathname === '/' : true;
+          if (!home && !fromHome) return e.viewTransition.skipTransition();
+          html.dataset.crt = home ? 'off' : 'on';
+          e.viewTransition.finished.finally(function () {
+            delete html.dataset.crt;
+          });
+        });
+        addEventListener('pageshow', function () {
+          delete html.dataset.crt;
+        });
+      })();
+    </script>
+    {!fullscreen && <ClientRouter fallback="swap" />}
   </head>
-  <body class:list={[fullscreen && 'm-0 h-svh overflow-hidden']}>
+  <body class:list={[fullscreen && 'm-0 h-svh overflow-hidden']} style={accent}>
     {
       fullscreen ? (
-        <main class="h-svh w-full overflow-hidden">
-          <slot />
-        </main>
+        <>
+          <Plaza />
+          <ThemeToggle />
+          <main id="main" class="sr-only">
+            <h1>{SITE.title}</h1>
+            <slot />
+          </main>
+        </>
       ) : (
         <>
-          <div class:list={[hasHero && 'relative']}>
-            <header
-              data-site-header
-              class:list={[
-                'mx-auto flex max-w-2xl flex-wrap justify-between gap-4 px-4 pt-8',
-                hasHero ? 'pointer-events-none absolute inset-x-0 top-0 z-10 [&_a]:pointer-events-auto' : 'mb-12',
-              ]}
-            >
-              <a href="/" class="font-semibold">{SITE.title}</a>
-              <nav class="flex flex-wrap gap-4">
-                {NAV.map((l) => <a href={l.href} aria-current={current(l.href) ? 'page' : undefined}>{l.label}</a>)}
-              </nav>
-            </header>
-            {hasHero && <Fragment set:html={hero} />}
-          </div>
-
-          <div class:list={['mx-auto max-w-2xl px-4 pb-8', hasHero && 'pt-12']}>
-            <main>
+          <a class="skip-link b-btn" href="#main">
+            Skip to content
+          </a>
+          <Frame />
+          <ThemeToggle />
+          {app ? (
+            <main id="main" class="col col-app">
               <slot />
             </main>
-
-            <footer class="mt-16 flex flex-wrap gap-4 border-t pt-4 text-sm">
-              <span>&copy; {new Date().getFullYear()} {AUTHOR.name}</span>
-              {FOOTER_NAV.map((l) => <a href={l.href}>{l.label}</a>)}
-            </footer>
-          </div>
+          ) : (
+            <main id="main" class="col">
+              <div class="col-body">
+                <slot />
+              </div>
+              <footer class="site-foot">
+                <nav aria-label="Pages">
+                  {FOOTER_NAV.map((l) => (
+                    <a href={l.href}>{l.label}</a>
+                  ))}
+                </nav>
+                <span>
+                  &copy; {year} {AUTHOR.name}
+                </span>
+              </footer>
+            </main>
+          )}
         </>
       )
     }
+    <script>
+      import '../scripts/sfx';
+      import '../scripts/motion';
+      import '../scripts/theme';
+    </script>
   </body>
 </html>
+

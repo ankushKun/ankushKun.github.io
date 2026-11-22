@@ -1,0 +1,26 @@
+---
+// An icon from Hugeicons (@hugeicons/core-free-icons), drawn at build time as a plain inline SVG:
+// no runtime, and it takes the text color. Pass the icon's data, for example `Sun03Icon`.
+type IconData = readonly (readonly [string, Readonly<Record<string, string | number>>])[];
+
+interface Props {
+  icon: IconData;
+  size?: number;
+  strokeWidth?: number;
+  class?: string;
+}
+
+const { icon, size = 24, strokeWidth, class: className } = Astro.props;
+const kebab = (k: string) => k.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
+const inner = icon
+  .map(([tag, attrs]) => {
+    const list = Object.entries(attrs)
+      .filter(([k]) => k !== 'key')
+      .map(([k, v]) => `${kebab(k)}="${k === 'strokeWidth' && strokeWidth ? strokeWidth : v}"`)
+      .join(' ');
+    return `<${tag} ${list}/>`;
+  })
+  .join('');
+---
+
+<svg class={className} width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true" set:html={inner} />

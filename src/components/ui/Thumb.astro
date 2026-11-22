@@ -1,0 +1,43 @@
+---
+// An entry's picture: its cover, or drawn art when it has none. Marked so the router can fly it
+// between a list and the entry's own page (see src/scripts/motion.ts). `main` is the entry page's
+// own copy, which always carries the name.
+import { Image } from 'astro:assets';
+import { urlOf, type Entry } from '../../lib/content';
+import { artPath } from '../../lib/tiles';
+
+interface Props {
+  entry: Entry;
+  width?: number;
+  main?: boolean;
+  eager?: boolean;
+  class?: string;
+}
+
+const { entry, width = 480, main = false, eager = false, class: className } = Astro.props;
+const { cover, coverAlt, title } = entry.data;
+const alt = main ? coverAlt || title : '';
+---
+
+<div class:list={['thumb', className]} data-hero={urlOf(entry)} data-hero-main={main ? '' : undefined}>
+  {
+    cover ? (
+      <Image
+        src={cover}
+        {alt}
+        width={width}
+        loading={eager ? 'eager' : 'lazy'}
+        fetchpriority={eager ? 'high' : undefined}
+        decoding="async"
+      />
+    ) : (
+      <img src={artPath(entry)} {alt} width={width} height={width} loading={eager ? 'eager' : 'lazy'} decoding="async" />
+    )
+  }
+</div>
+
+<style>
+  [data-hero-main] {
+    view-transition-name: hero;
+  }
+</style>

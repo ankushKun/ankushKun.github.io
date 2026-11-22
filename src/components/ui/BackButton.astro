@@ -1,0 +1,11 @@
+---
+// The dark button that closes a page, as the plaza's panels close. B on a keyboard presses it.
+interface Props {
+  href: string;
+  label: string;
+}
+
+const { href, label } = Astro.props;
+---
+
+<a {href} class="b-btn" data-back data-sfx="back" data-astro-reload={href === '/' ? '' : undefined}><span class="b" aria-hidden="true">B</span>{label}</a>

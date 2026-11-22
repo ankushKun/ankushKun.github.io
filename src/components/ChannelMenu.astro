@@ -1,0 +1,156 @@
+---
+// Entries as channels on the console's menu: art in a glossy frame with the name under it, two
+// across the column or more as it widens, newest first. The art flies to the entry's own page when one is opened.
+import Thumb from './ui/Thumb.astro';
+import { urlOf, type Entry } from '../lib/content';
+
+interface Props {
+  items: Entry[];
+  /** A play mark on the art, for talks with a recording. */
+  play?: (entry: Entry) => boolean;
+  /** How many pictures are on screen as the page opens: those load at once, the rest when near. */
+  eager?: number;
+}
+
+// About the first two rows of a section's list.
+const { items, play = () => false, eager = 6 } = Astro.props;
+---
+
+<ul class="channels">
+  {
+    items.map((entry, i) => (
+      <li>
+        <a href={urlOf(entry)} class="channel" data-sfx>
+          <span class="glass">
+            <Thumb {entry} width={480} class="art" eager={i < eager} />
+            {play(entry) && (
+              <span class="play" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M8 5.5v13l10.5-6.5z" />
+                </svg>
+              </span>
+            )}
+          </span>
+          <span class="name">{entry.data.title}</span>
+        </a>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .channels {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 18px;
+  }
+
+  .channel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 7px 7px 0;
+    border-radius: 20px;
+    background: linear-gradient(
+      to bottom,
+      var(--color-gloss-top) 0%,
+      light-dark(#f3f4f5, #30373b) 48%,
+      light-dark(#e9ecee, #292f33) 52%,
+      light-dark(#f1f2f3, #2c3236) 100%
+    );
+    box-shadow:
+      var(--rim),
+      inset 0 1px 0 light-dark(#fff, rgb(255 255 255 / 0.08)),
+      0 3px 8px -3px light-dark(rgb(30 50 60 / 0.22), rgb(0 0 0 / 0.5));
+    color: inherit;
+    text-decoration: none;
+    transition:
+      translate 0.3s var(--ease-spring),
+      box-shadow 0.18s ease;
+  }
+
+  .channel:hover,
+  .channel:focus-visible {
+    translate: 0 -2px;
+    box-shadow:
+      var(--glow),
+      0 10px 22px -10px light-dark(rgb(30 50 60 / 0.4), rgb(0 0 0 / 0.6));
+  }
+
+  .channel:active {
+    translate: 0 0;
+    transition-duration: 0.08s;
+  }
+
+  .glass {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    border-radius: 15px / 19px;
+  }
+
+  .glass :global(.art) {
+    aspect-ratio: 16 / 10;
+    border-radius: inherit;
+  }
+
+  /* A little gloss across the top of the art, as on the console's channels. */
+  .glass::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(to bottom, rgb(255 255 255 / 0.2), transparent 42%);
+    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.08);
+    pointer-events: none;
+  }
+
+  .name {
+    display: block;
+    overflow: hidden;
+    padding: 9px 8px 10px;
+    color: var(--color-ink-strong);
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .play {
+    position: absolute;
+    z-index: 1;
+    right: 8px;
+    bottom: 8px;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 0.94);
+    box-shadow: 0 3px 10px -2px rgb(0 0 0 / 0.4);
+  }
+
+  .play svg {
+    width: 16px;
+    height: 16px;
+    margin-left: 2px;
+    fill: var(--color-ink-strong);
+  }
+
+  @media (max-width: 479px) {
+    .channels {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .channel {
+      padding: 5px 5px 0;
+      border-radius: 16px;
+    }
+
+    .name {
+      font-size: 0.8125rem;
+    }
+  }
+</style>

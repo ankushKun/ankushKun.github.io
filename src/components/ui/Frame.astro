@@ -1,0 +1,323 @@
+---
+// The TV every page but the plaza is shown on: a casing around a rounded screen (white, or black
+// in the dark), a round button back to the plaza in the top left corner and one in the top right
+// that opens the menu of sections. It is the same element across page changes (Base.astro persists
+// it), so it never flickers; src/scripts/motion.ts moves the menu's marker and closes it as you go.
+import { Cancel01Icon, DashboardSquare01Icon, Home01Icon } from '@hugeicons/core-free-icons';
+import HugeIcon from './HugeIcon.astro';
+import { NAV } from '../../site';
+import { sectionOf } from '../../lib/nav';
+import { tileFor } from '../../lib/tiles';
+
+const here = sectionOf(Astro.url.pathname);
+const items = NAV.map((l) => ({ ...l, tile: tileFor(l.href) }));
+---
+
+<div class="tv" data-frame transition:persist="frame">
+  <div class="tv-glass" aria-hidden="true"></div>
+  <a href="/#0" class="tv-btn tv-home" aria-label="Plaza" data-astro-reload data-sfx="back">
+    <HugeIcon icon={Home01Icon} strokeWidth={1.9} />
+  </a>
+  <button type="button" class="tv-btn tv-open" popovertarget="tv-menu" aria-label="Menu" data-sfx>
+    <HugeIcon icon={DashboardSquare01Icon} strokeWidth={1.9} class="grid" />
+    <HugeIcon icon={Cancel01Icon} strokeWidth={2.1} class="close" />
+  </button>
+  <nav id="tv-menu" class="tv-menu" popover="manual" aria-label="Sections">
+    {
+      items.map((item) => (
+        <a
+          href={item.href}
+          class="tv-item"
+          aria-current={sectionOf(item.href) === here ? 'page' : undefined}
+          data-sfx
+        >
+          <span class="tv-name">{item.label}</span>
+          <span class="tv-tile">{item.tile && <img src={item.tile.src} alt="" width="104" height="104" decoding="async" />}</span>
+        </a>
+      ))
+    }
+  </nav>
+</div>
+
+<style is:global>
+  /* The casing is a ring painted around the screen by a huge shadow, so the page scrolls under its
+     edge as under glass. It sits over the page; the buttons and menu sit over it. */
+  .tv-glass {
+    position: fixed;
+    z-index: 40;
+    inset: var(--bezel-top) var(--bezel) var(--bezel-bottom);
+    border-radius: var(--crt);
+    box-shadow:
+      0 0 0 max(100vw, 100vh) var(--color-casing),
+      inset 0 0 0 1.5px light-dark(rgb(10 30 50 / 0.14), rgb(0 0 0 / 0.7)),
+      inset 0 0 18px light-dark(rgb(10 40 70 / 0.1), rgb(0 0 0 / 0.55));
+    pointer-events: none;
+    contain: strict;
+    view-transition-name: tv-glass;
+    transition:
+      inset 0.45s var(--ease-glide),
+      border-radius 0.45s var(--ease-glide),
+      box-shadow 0.45s ease;
+  }
+
+  /* An app has the whole screen: the casing slides off past the edges, and back when you leave. */
+  html:has(.col-app) .tv-glass {
+    box-shadow:
+      0 0 0 max(100vw, 100vh) var(--color-casing),
+      inset 0 0 0 1.5px transparent,
+      inset 0 0 18px transparent;
+  }
+
+  .tv-btn {
+    position: fixed;
+    z-index: 50;
+    top: calc(var(--bezel-top) + 22px);
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 30%, var(--color-gloss-top) 40%, light-dark(#eaeff1, #262c30));
+    box-shadow:
+      0 0 0 3px light-dark(#a8def4, #2a6d8e),
+      0 4px 10px -4px light-dark(rgb(30 50 60 / 0.3), rgb(0 0 0 / 0.6));
+    color: light-dark(#8a9499, #a3b0b6);
+    transition:
+      box-shadow 0.18s ease,
+      color 0.18s ease,
+      scale 0.3s var(--ease-spring),
+      translate 0.35s var(--ease-glide),
+      top 0.35s var(--ease-glide),
+      opacity 0.25s ease;
+  }
+
+  /* The glass's gloss, over its top half. */
+  .tv-tile::after {
+    content: '';
+    position: absolute;
+    inset: 1px 1px 50%;
+    border-radius: 28% 28% 50% 50% / 34% 34% 12% 12%;
+    background: var(--aero-gloss);
+    opacity: 0.55;
+    pointer-events: none;
+  }
+
+  .tv-btn:hover,
+  .tv-btn:focus-visible,
+  .tv-open:has(+ .tv-menu:popover-open:not([data-closing])) {
+    color: var(--color-sky);
+    box-shadow:
+      var(--glow),
+      0 4px 10px -4px light-dark(rgb(30 50 60 / 0.3), rgb(0 0 0 / 0.6));
+  }
+
+  .tv-btn:active {
+    scale: 0.92;
+    transition-duration: 0.08s;
+  }
+
+  .tv-btn svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .tv-home {
+    left: calc(var(--bezel) + 26px);
+    view-transition-name: tv-home;
+  }
+
+  .tv-open {
+    right: calc(var(--bezel) + 26px);
+    view-transition-name: tv-open;
+  }
+
+  /* The menu button's grid turns into a cross while the menu is open, and back. */
+  .tv-open svg {
+    grid-area: 1 / 1;
+    width: 22px;
+    height: 22px;
+    transition:
+      opacity 0.16s ease,
+      rotate 0.32s var(--ease-spring),
+      scale 0.32s var(--ease-spring);
+  }
+
+  .tv-open .close {
+    opacity: 0;
+    rotate: -90deg;
+    scale: 0.6;
+  }
+
+  .tv-open:has(+ .tv-menu:popover-open:not([data-closing])) .grid {
+    opacity: 0;
+    rotate: 90deg;
+    scale: 0.6;
+  }
+
+  .tv-open:has(+ .tv-menu:popover-open:not([data-closing])) .close {
+    opacity: 1;
+    rotate: 0deg;
+    scale: 1;
+  }
+
+  /* The menu of sections: its tiles drop out of the button one under another, each with its name
+     on a tag to its left, and fold back up into it in turn (src/scripts/menu.ts). It stays until
+     the button (or Escape) closes it. */
+  .tv-menu {
+    --tile: 52px;
+    position: fixed;
+    inset: auto;
+    top: calc(var(--bezel-top) + 22px + 56px + 14px);
+    right: calc(var(--bezel) + 28px);
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    overflow: visible;
+    background: none;
+    color: #fff;
+    /* Above the column while pages change, as the buttons are. */
+    view-transition-name: tv-menu;
+  }
+
+  .tv-menu:popover-open {
+    display: flex;
+  }
+
+  /* The page stays as it is behind it, and can be used with the menu open. */
+  .tv-menu::backdrop {
+    display: none;
+  }
+
+  /* Each item drops out of the button and folds back into it (src/scripts/menu.ts). */
+  .tv-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: inherit;
+    text-decoration: none;
+    transform-origin: calc(100% - var(--tile) / 2) 50%;
+  }
+
+  .tv-item:focus-visible {
+    box-shadow: none;
+  }
+
+  /* The name, on the plaza's dark tag; the section you are in has a blue one. */
+  .tv-name {
+    padding: 0 12px;
+    border-radius: 99px;
+    background: light-dark(rgb(63 67 70 / 0.92), rgb(78 88 94 / 0.95));
+    box-shadow: 0 2px 8px -2px rgb(0 0 0 / 0.3);
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 30px;
+    white-space: nowrap;
+    transition: background 0.18s ease;
+  }
+
+  .tv-item[aria-current] .tv-name {
+    background: #1f9fdb;
+  }
+
+  .tv-tile {
+    position: relative;
+    flex: none;
+    width: var(--tile);
+    height: var(--tile);
+    padding: 5px;
+    border-radius: 28%;
+    background: var(--aero-bg);
+    box-shadow: var(--aero-shadow);
+    backdrop-filter: blur(10px) saturate(1.4);
+    transition:
+      box-shadow 0.18s ease,
+      scale 0.3s var(--ease-spring);
+  }
+
+  .tv-item:hover .tv-tile,
+  .tv-item:focus-visible .tv-tile {
+    scale: 1.08;
+    box-shadow:
+      var(--glow),
+      var(--aero-shadow);
+  }
+
+  .tv-item:active .tv-tile {
+    scale: 0.96;
+    transition-duration: 0.08s;
+  }
+
+  .tv-tile img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 22%;
+    object-fit: cover;
+    box-shadow: 0 0 0 1px light-dark(rgb(60 90 105 / 0.18), rgb(0 0 0 / 0.4));
+  }
+
+  /* A phone: a thinner casing, and smaller buttons that step aside while you read down the page. */
+  @media (max-width: 879px) {
+    .tv-btn {
+      top: calc(var(--bezel-top) + 14px);
+      width: 48px;
+      height: 48px;
+    }
+
+    .tv-btn svg {
+      width: 21px;
+      height: 21px;
+    }
+
+    .tv-open svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .tv-home {
+      left: calc(var(--bezel) + 12px);
+    }
+
+    .tv-open {
+      right: calc(var(--bezel) + 12px);
+    }
+
+    html[data-reading] .tv-btn:not(:focus-visible) {
+      opacity: 0;
+      translate: 0 -90px;
+      pointer-events: none;
+    }
+
+    html[data-reading] .tv-open:has(+ .tv-menu:popover-open:not([data-closing])) {
+      opacity: 1;
+      translate: 0 0;
+      pointer-events: auto;
+    }
+
+    .tv-menu {
+      --tile: 48px;
+      top: calc(var(--bezel-top) + 14px + 48px + 12px);
+      right: calc(var(--bezel) + 12px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tv-open svg {
+      rotate: 0deg !important;
+      scale: 1 !important;
+    }
+  }
+
+  @media print {
+    .tv {
+      display: none !important;
+    }
+  }
+</style>

@@ -4,7 +4,8 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   site: 'https://ankush.one',
-  trailingSlash: 'always',
+  // Pages load ahead on hover, so moving between them starts the moment you click.
+  prefetch: { prefetchAll: true, defaultStrategy: 'hover' },
   redirects: {
     '/schedule/': '/contact/',
     '/wins/': '/timeline/',
@@ -117,5 +118,17 @@ export default defineConfig({
   },
   vite: {
     plugins: [tailwindcss()],
+    server: {
+      // The chat's GIF search in dev: the site worker only answers ankush.one, so the dev server
+      // asks it as ankush.one (GIF_PROXY in src/site.ts, src/components/chat/gifs.ts).
+      proxy: {
+        '/__gif': {
+          target: 'https://ankush-site-worker.ankushkun.workers.dev',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/__gif/, '/gif'),
+          headers: { Origin: 'https://ankush.one', Referer: 'https://ankush.one/apps/chat/' },
+        },
+      },
+    },
   },
 });

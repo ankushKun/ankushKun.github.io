@@ -1,0 +1,100 @@
+---
+// Your profiles elsewhere, as a friend roster: a round badge, the place and the handle.
+import { SOCIALS } from '../site';
+
+const COLORS: Record<string, string> = {
+  GitHub: '#2b3137',
+  X: '#16181c',
+  LinkedIn: '#0a66c2',
+  YouTube: '#f0262d',
+  Telegram: '#2aabee',
+  Discord: '#5865f2',
+  Instagram: '#e1306c',
+  Reddit: '#ff4500',
+  Medium: '#242424',
+};
+---
+
+<ul class="roster">
+  {
+    SOCIALS.map((s, i) => (
+      <li>
+        <a href={s.url} rel="me" class="friend" data-sfx data-pop style={`--i:${i};--b:${COLORS[s.platform] ?? '#7a8286'}`}>
+          <span class="badge" aria-hidden="true">
+            {s.platform.charAt(0)}
+          </span>
+          <span class="who">
+            <span class="name">{s.platform}</span>
+            <span class="handle">{s.handle}</span>
+          </span>
+        </a>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .roster {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+  }
+
+  .friend {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 14px 9px 9px;
+    border-radius: 16px;
+    background: linear-gradient(to bottom, var(--color-gloss-top), var(--color-gloss-bottom));
+    box-shadow:
+      var(--rim),
+      inset 0 -2px 0 rgb(0 0 0 / 0.04);
+    color: inherit;
+    text-decoration: none;
+    transition:
+      box-shadow 0.18s ease,
+      translate 0.35s var(--ease-spring);
+  }
+
+  .friend:hover,
+  .friend:focus-visible {
+    translate: 0 -2px;
+    box-shadow: var(--glow);
+  }
+
+  .badge {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--b);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.3),
+      inset 0 -2px 0 rgb(0 0 0 / 0.2);
+    color: #fff;
+    font-size: 1.05rem;
+    font-weight: 800;
+  }
+
+  .who {
+    display: grid;
+    min-width: 0;
+  }
+
+  .name {
+    color: var(--color-ink-strong);
+    font-size: 0.9375rem;
+    font-weight: 700;
+  }
+
+  .handle {
+    overflow: hidden;
+    color: var(--color-ink-soft);
+    font-size: 0.8125rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+</style>

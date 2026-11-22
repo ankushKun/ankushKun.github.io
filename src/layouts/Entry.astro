@@ -1,10 +1,15 @@
 ---
-// Detail page for any dated entry: blog post, project, timeline event, talk or console.
-// Section specific details go in the "meta" slot, extra content after the body in the default slot.
-import { Image, getImage } from 'astro:assets';
+// Detail page for any dated entry, to read down the TV's column: the B button back to its section,
+// the title, a byline signed by your Mii, the entry's picture, then its text. Section specific
+// details (links, stack, where) go in the "meta" slot, extra content after the body in the default
+// slot; a talk can put its recording in the "screen" slot in place of the picture.
+import { getImage } from 'astro:assets';
 import { render } from 'astro:content';
 import Base from './Base.astro';
-import { SECTION_PATH, absUrl, formatDate, getAllEntries, getPage, isoDate, urlOf, type Entry } from '../lib/content';
+import ChannelMenu from '../components/ChannelMenu.astro';
+import Thumb from '../components/ui/Thumb.astro';
+import { AUTHOR } from '../site';
+import { SECTION_PATH, absUrl, formatDate, getAllEntries, getPage, isoDate, pagePath, readingMinutes, urlOf, type Entry } from '../lib/content';
 import { inline } from '../lib/inline';
 import { OG_HEIGHT, OG_WIDTH, ogPathForEntry } from '../lib/og';
 import { breadcrumbs, entryNode, faqPage } from '../lib/schema';
@@ -15,9 +20,16 @@ interface Props {
 
 const { entry } = Astro.props;
 const { data } = entry;
+const post = entry.collection === 'blog';
+const hero = entry.collection !== 'timeline' || Boolean(data.cover);
+// A short entry with no picture above or in its text has Related in view as the page opens, so its
+// first row (two across) loads at once; anywhere else Related is further down and its pictures wait.
+const body = entry.body ?? '';
+const relatedInView = !hero && !/<iframe|<img|!\[/.test(body) && body.trim().length < 520;
 const { Content } = await render(entry);
 const section = await getPage(entry.collection);
 const sectionPath = SECTION_PATH[entry.collection];
+const sectionTitle = section.data.title;
 
 const generatedOgPath = data.cover ? undefined : ogPathForEntry(entry);
 const schemaImage = data.cover
@@ -38,8 +50,8 @@ if (data.related.length > 0) {
 const schemaNodes = [
   entryNode(entry, schemaImage),
   breadcrumbs([
-    { name: section.data.title, path: sectionPath },
-    { name: data.title, path: Astro.url.pathname },
+    { name: sectionTitle, path: sectionPath },
+    { name: data.title, path: pagePath(Astro.url) },
   ]),
   ...(data.faq.length > 0 ? [faqPage(data.faq)] : []),
 ];
@@ -58,54 +70,231 @@ const schemaNodes = [
   schema={schemaNodes}
 >
   <article>
-    <header class="mb-8">
-      <p class="text-sm"><a href={sectionPath}>{section.data.title}</a></p>
-      <h1 class="text-3xl font-bold">{data.title}</h1>
-      <p>{data.description}</p>
-      <p class="text-sm">
-        <time datetime={isoDate(data.date)}>{formatDate(data.date, 'long')}</time>
-        {data.updated && <> &middot; Updated <time datetime={isoDate(data.updated)}>{formatDate(data.updated, 'long')}</time></>}
-        {data.canonical && canonicalHost && (
-          <> &middot; Originally published on <a href={data.canonical}>{canonicalHost}</a></>
-        )}
-      </p>
-      <slot name="meta" />
-      {data.tags.length > 0 && <ul class="flex flex-wrap gap-2 text-sm">{data.tags.map((t) => <li>#{t}</li>)}</ul>}
-    </header>
+    <a href={sectionPath} class="back" data-back data-sfx="back"><span class="b" aria-hidden="true">B</span>{sectionTitle}</a>
+    <h1>{data.title}</h1>
+    <p class="byline">
+      <img src="/mii/me.webp" alt="" width="64" height="64" />
+      <span class="who">{AUTHOR.name.split(' ')[0]}</span>
+      <time datetime={isoDate(data.date)}>{formatDate(data.date)}</time>
+      {post && <span>{readingMinutes(entry)} min read</span>}
+      {
+        data.updated && (
+          <span>
+            Updated <time datetime={isoDate(data.updated)}>{formatDate(data.updated)}</time>
+          </span>
+        )
+      }
+      {
+        data.canonical && canonicalHost && (
+          <span>
+            First on <a href={data.canonical}>{canonicalHost}</a>
+          </span>
+        )
+      }
+    </p>
+    {!post && <p class="lead">{data.description}</p>}
+    {
+      Astro.slots.has('screen') ? (
+        <div class="screen">
+          <slot name="screen" />
+        </div>
+      ) : (
+        hero && <Thumb {entry} main eager width={1280} class="cover" />
+      )
+    }
+    {
+      Astro.slots.has('meta') && (
+        <div class="meta">
+          <slot name="meta" />
+        </div>
+      )
+    }
 
-    {data.cover && <Image src={data.cover} alt={data.coverAlt || data.title} width={1200} class="mb-8" loading="eager" fetchpriority="high" />}
-
-    <div class="prose dark:prose-invert">
+    <div class="prose">
       <Content />
     </div>
 
     <slot />
 
-    {data.faq.length > 0 && (
-      <section class="mt-12 border-t pt-8">
-        <h2 class="mb-4 text-xl font-semibold">Frequently asked questions</h2>
-        <dl class="space-y-4">
-          {data.faq.map((item) => (
-            <div>
-              <dt class="font-semibold">{item.q}</dt>
-              <dd class="mt-1" set:html={inline(item.a)} />
-            </div>
-          ))}
-        </dl>
-      </section>
-    )}
-
-    {relatedEntries.length > 0 && (
-      <section class="mt-12 border-t pt-8">
-        <h2 class="mb-4 text-xl font-semibold">Related</h2>
-        <ul class="space-y-2">
-          {relatedEntries.map((item) => (
-            <li>
-              <a href={urlOf(item)}>{item.data.title}</a> &mdash; {item.data.description}
-            </li>
+    {
+      data.tags.length > 0 && (
+        <ul class="tags">
+          {data.tags.map((t) => (
+            <li class="chip">{t.replace(/-/g, ' ')}</li>
           ))}
         </ul>
-      </section>
-    )}
+      )
+    }
+
+    {
+      data.faq.length > 0 && (
+        <section class="faq">
+          <h2>Frequently asked questions</h2>
+          <dl>
+            {data.faq.map((item) => (
+              <div>
+                <dt>{item.q}</dt>
+                <dd set:html={inline(item.a)} />
+              </div>
+            ))}
+          </dl>
+        </section>
+      )
+    }
+
+    {
+      relatedEntries.length > 0 && (
+        <section class="related">
+          <h2>Related</h2>
+          <ChannelMenu items={relatedEntries} eager={relatedInView ? 2 : 0} />
+        </section>
+      )
+    }
   </article>
 </Base>
+
+<style>
+  /* An entry reads at a comfortable measure, centered on the column however wide it is. */
+  article {
+    max-width: 44rem;
+    margin-inline: auto;
+  }
+
+  /* Back to the section: B on a keyboard presses it. */
+  .back {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    margin-left: -6px;
+    padding: 4px 13px 4px 4px;
+    border-radius: 99px;
+    color: var(--color-ink-quiet);
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition:
+      box-shadow 0.18s ease,
+      color 0.18s ease;
+  }
+
+  .back:hover {
+    color: var(--color-ink-strong);
+    box-shadow: var(--glow);
+  }
+
+  .b {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--color-tag);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 800;
+  }
+
+  h1 {
+    margin-top: 22px;
+    font-size: clamp(1.75rem, 1.35rem + 1.8vw, 2.25rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.16;
+  }
+
+  .byline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 12px;
+    margin-top: 16px;
+    color: var(--color-ink-quiet);
+    font-size: 0.875rem;
+  }
+
+  .byline img {
+    width: 28px;
+    height: 28px;
+    margin-right: -4px;
+    border-radius: 50%;
+    background: light-dark(#e3f1f6, #2c3a40);
+  }
+
+  .who {
+    color: var(--color-ink);
+    font-weight: 700;
+  }
+
+  .byline a {
+    text-decoration: underline;
+    text-decoration-color: light-dark(rgb(55 70 78 / 0.3), rgb(255 255 255 / 0.3));
+    text-underline-offset: 2px;
+  }
+
+  .lead {
+    margin-top: 16px;
+    color: var(--color-ink-soft);
+    font-size: 1.0625rem;
+    line-height: 1.7;
+  }
+
+  article :global(.cover),
+  .screen {
+    margin-top: 28px;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: 14px;
+  }
+
+  .screen :global(.video) {
+    width: 100%;
+    height: 100%;
+    border-radius: 14px;
+  }
+
+  .meta {
+    margin-top: 28px;
+  }
+
+  .prose {
+    margin-top: 30px;
+  }
+
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 2.5rem;
+  }
+
+  .faq,
+  .related {
+    margin-top: 3.5rem;
+  }
+
+  .faq h2,
+  .related h2 {
+    margin-bottom: 1.1rem;
+    font-size: 1.25rem;
+    font-weight: 800;
+  }
+
+  .faq dl {
+    display: grid;
+    gap: 1.1rem;
+  }
+
+  .faq dt {
+    font-weight: 700;
+  }
+
+  .faq dd {
+    margin-top: 4px;
+    color: var(--color-ink-soft);
+    line-height: 1.7;
+  }
+
+  .faq dd :global(a) {
+    text-decoration: underline;
+  }
+</style>

@@ -1,2 +1,901 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
+
+/* The home page is the plaza. Every other page is shown on a TV (Frame.astro): a white casing round
+   a pale screen, one white column to read down its middle, and a round button in each top corner.
+   What is on the column is made of the console's own furniture, kept quiet: icon frames, channel
+   tiles, the dark B button, menu buttons with green icons, pill tags, and the blue glow on
+   whatever is pointed at. Each section brings its block's two colors as --c1 (light) and --c2
+   (deep), set on <body> by Base.astro. */
+
+@theme {
+  --font-sans: 'M PLUS 1p', ui-rounded, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  /* Every color that changes in the dark is a light-dark() pair: the light TV, then the black one. */
+  --color-ink: light-dark(#3d4245, #d3dadd);
+  --color-ink-strong: light-dark(#2a2f31, #f0f4f6);
+  --color-ink-soft: light-dark(#747c80, #9ba6ab);
+  --color-ink-faint: light-dark(#a3aaae, #6d787d);
+  --color-ink-quiet: light-dark(#6f787c, #9aa5aa);
+  --color-haze: light-dark(#e4f0f2, #13171a);
+  --color-casing: light-dark(#eceff1, #0f1214);
+  --color-screen: light-dark(#f2f4f5, #181c1f);
+  --color-surface: light-dark(#fff, #212629);
+  --color-raise: light-dark(#fff, #2c3236);
+  --color-line: light-dark(rgb(55 70 78 / 0.1), rgb(255 255 255 / 0.08));
+  --color-gloss-top: light-dark(#fff, #363d42);
+  --color-gloss-bottom: light-dark(#eceff0, #272d31);
+  --color-sky: #2fb2e6;
+  --color-tag: light-dark(#3f4346, #4d575d);
+  --color-leaf: #5cbf2a;
+  --color-leaf-deep: #3a9617;
+  --ease-spring: cubic-bezier(0.3, 1.45, 0.5, 1);
+  --ease-glide: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@layer base {
+  html {
+    background: var(--color-haze);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+    /* The console's glow, for focus and for whatever is pointed at. */
+    --glow: 0 0 0 3px #46c3f0, 0 0 18px 3px rgb(70 195 240 / 0.5);
+    --rim: 0 0 0 1px light-dark(rgb(55 70 78 / 0.2), rgb(0 0 0 / 0.6));
+    --lift:
+      0 2px 3px light-dark(rgb(30 50 60 / 0.08), rgb(0 0 0 / 0.3)),
+      0 10px 24px -10px light-dark(rgb(30 50 60 / 0.3), rgb(0 0 0 / 0.6));
+  }
+
+  /* Light or dark: the device's choice unless you have picked one (Base.astro sets data-theme
+     before the page draws). */
+  :root {
+    color-scheme: light;
+  }
+
+  :root[data-theme='dark'] {
+    color-scheme: dark;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) {
+      color-scheme: dark;
+    }
+  }
+
+  /* The TV's measurements, shared by the casing (Frame.astro) and the column. */
+  :root {
+    --bezel: 14px;
+    --bezel-top: max(var(--bezel), env(safe-area-inset-top));
+    --bezel-bottom: max(var(--bezel), env(safe-area-inset-bottom));
+    --crt: clamp(36px, 5vw, 72px) / clamp(48px, 10vh, 96px);
+    scrollbar-color: light-dark(rgb(55 70 78 / 0.28), rgb(255 255 255 / 0.2)) transparent;
+    scrollbar-gutter: stable;
+  }
+
+  @media (max-width: 879px) {
+    :root {
+      --bezel: 8px;
+      --crt: 34px / 44px;
+    }
+  }
+
+  html:not([data-home]) {
+    background: var(--color-screen);
+  }
+
+  body {
+    --c1: #62c4ff;
+    --c2: #2380dc;
+    min-height: 100svh;
+  }
+
+  ::selection {
+    background: rgb(70 195 240 / 0.28);
+  }
+
+  :focus-visible {
+    outline: none;
+    box-shadow: var(--glow);
+  }
+
+  h1,
+  h2,
+  h3 {
+    color: var(--color-ink-strong);
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* The pointer is a white glove, as on the console, over anything that can be pressed. */
+  a,
+  button,
+  summary,
+  label[for],
+  [role='button'] {
+    cursor:
+      url('/ui/hand.svg') 11 1,
+      pointer;
+  }
+}
+
+@layer components {
+  .skip-link {
+    position: fixed;
+    z-index: 60;
+    top: 12px;
+    left: 12px;
+    translate: 0 -200%;
+    transition: translate 0.25s var(--ease-glide);
+  }
+
+  .skip-link:focus {
+    translate: 0 0;
+  }
+
+  /* A section of a page: a heading and what is under it, no box. */
+  .panel + .panel {
+    margin-top: 56px;
+  }
+
+  .panel-head {
+    margin-bottom: 18px;
+    color: var(--color-ink-strong);
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+
+  /* Frosted glass, as the Wii U home menu frames its icons: a pale pane with a bright rim, a faint
+     blue depth low down and a gloss across its top half. Icons, the TV's buttons and the menu's
+     tiles are all made of it. */
+  :root {
+    --aero-bg: linear-gradient(
+      to bottom,
+      light-dark(rgb(255 255 255 / 0.96), rgb(255 255 255 / 0.17)),
+      light-dark(rgb(246 251 253 / 0.7), rgb(255 255 255 / 0.07)) 46%,
+      light-dark(rgb(214 233 243 / 0.62), rgb(110 170 205 / 0.12)) 54%,
+      light-dark(rgb(240 248 252 / 0.9), rgb(255 255 255 / 0.12))
+    );
+    --aero-shadow:
+      inset 0 0 0 1.5px light-dark(rgb(255 255 255 / 0.95), rgb(255 255 255 / 0.2)),
+      0 0 0 1px light-dark(rgb(95 125 142 / 0.38), rgb(0 0 0 / 0.6)),
+      inset 0 -12px 18px -10px light-dark(rgb(110 175 210 / 0.5), rgb(80 160 210 / 0.35)),
+      inset 0 2px 2px light-dark(rgb(255 255 255 / 0.9), rgb(255 255 255 / 0.18)),
+      0 7px 14px -6px light-dark(rgb(25 60 85 / 0.38), rgb(0 0 0 / 0.5));
+    --aero-gloss: linear-gradient(
+      to bottom,
+      light-dark(rgb(255 255 255 / 0.7), rgb(255 255 255 / 0.24)),
+      light-dark(rgb(255 255 255 / 0.12), rgb(255 255 255 / 0.02))
+    );
+  }
+
+  .tile {
+    --s: 56px;
+    position: relative;
+    display: inline-block;
+    flex: none;
+    width: var(--s);
+    height: var(--s);
+    padding: calc(var(--s) * 0.08);
+    border-radius: 24%;
+    background: var(--aero-bg);
+    box-shadow: var(--aero-shadow);
+    backdrop-filter: blur(10px) saturate(1.4);
+  }
+
+  .tile::after {
+    content: '';
+    position: absolute;
+    inset: 1px 1px 50%;
+    border-radius: 24% 24% 50% 50% / 30% 30% 12% 12%;
+    background: var(--aero-gloss);
+    opacity: 0.55;
+    pointer-events: none;
+  }
+
+  .tile img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 19%;
+    object-fit: cover;
+    box-shadow: 0 0 0 1px light-dark(rgb(60 90 105 / 0.18), rgb(0 0 0 / 0.4));
+  }
+
+  /* An entry's picture: its cover, or drawn art for entries without one. */
+  .thumb {
+    position: relative;
+    overflow: hidden;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--c1), var(--c2));
+  }
+
+  .thumb img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* The plaza's dark name tag. */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0 0.85em;
+    border-radius: 99px;
+    background: light-dark(rgb(63 67 70 / 0.92), rgb(78 88 94 / 0.95));
+    color: #fff;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.9;
+    white-space: nowrap;
+  }
+
+  /* A light tag, for tags and stacks. */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    padding: 0.05em 0.75em;
+    border-radius: 99px;
+    background: linear-gradient(to bottom, var(--color-gloss-top), var(--color-gloss-bottom));
+    box-shadow: var(--rim);
+    color: var(--color-ink);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.75;
+    white-space: nowrap;
+  }
+
+  /* The plaza's menu buttons: a white bar with a green icon at its start. */
+  .menu-btn {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 54px;
+    padding: 7px 22px 7px 8px;
+    border: 0;
+    border-radius: 15px;
+    background: linear-gradient(to bottom, var(--color-gloss-top), var(--color-gloss-bottom));
+    box-shadow:
+      var(--rim),
+      inset 0 -2px 0 rgb(0 0 0 / 0.045),
+      0 2px 5px -1px light-dark(rgb(30 50 60 / 0.16), rgb(0 0 0 / 0.4));
+    color: var(--color-ink-strong);
+    font: inherit;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    text-align: left;
+    text-decoration: none;
+    transition:
+      box-shadow 0.18s ease,
+      translate 0.35s var(--ease-spring),
+      scale 0.35s var(--ease-spring);
+  }
+
+  .menu-btn:hover {
+    box-shadow:
+      var(--glow),
+      0 2px 5px -1px light-dark(rgb(30 50 60 / 0.16), rgb(0 0 0 / 0.4));
+    translate: 0 -1px;
+  }
+
+  .menu-btn:active {
+    scale: 0.97;
+    transition-duration: 0.08s;
+  }
+
+  .menu-btn .ico {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    background: linear-gradient(to bottom, #86d84c, var(--color-leaf-deep));
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.45),
+      inset 0 -2px 0 rgb(0 0 0 / 0.12),
+      0 1px 2px rgb(0 0 0 / 0.18);
+    color: #fff;
+  }
+
+  .menu-btn .ico svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .menu-btn .sub {
+    display: block;
+    color: var(--color-ink-soft);
+    font-size: 0.8125rem;
+    font-weight: 500;
+  }
+
+  .menu-btn.go .ico {
+    background: linear-gradient(to bottom, #6fd2ff, #1f96d6);
+  }
+
+  /* The dark button that closes a panel. B on a keyboard presses it. */
+  .b-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    height: 46px;
+    padding: 0 24px 0 8px;
+    border: 0;
+    border-radius: 99px;
+    background: linear-gradient(to bottom, #575b5e, #2f3234);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.16),
+      0 4px 10px -3px rgb(0 0 0 / 0.4);
+    color: #fff;
+    font: inherit;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition:
+      box-shadow 0.18s ease,
+      scale 0.35s var(--ease-spring);
+  }
+
+  .b-btn:hover {
+    box-shadow:
+      var(--glow),
+      inset 0 1px 0 rgb(255 255 255 / 0.16);
+  }
+
+  .b-btn:active {
+    scale: 0.96;
+    transition-duration: 0.08s;
+  }
+
+  .b-btn .b {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 2px rgb(255 255 255 / 0.85);
+    font-size: 0.875rem;
+    font-weight: 800;
+  }
+
+  /* The column: the one thing on the screen, white, down its middle. The page scrolls under the
+     casing's edge as under glass. */
+  /* Wider as the screen allows, up to two thirds of it. Reading text keeps its own measure
+     (.prose, Entry.astro); lists and grids use the room. */
+  .col {
+    --col-pad: clamp(40px, 4.5vw, 72px);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: min(66vw, 1280px);
+    min-height: 100svh;
+    margin-inline: auto;
+    background: var(--color-surface);
+    box-shadow:
+      -1px 0 0 var(--color-line),
+      1px 0 0 var(--color-line);
+    view-transition-name: col;
+  }
+
+  .col-body {
+    flex: 1;
+    padding: calc(var(--bezel-top) + 48px) var(--col-pad) 0;
+  }
+
+  /* A page's title and the line under it. */
+  .head h1 {
+    font-size: clamp(1.875rem, 1.5rem + 1.6vw, 2.25rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.16;
+  }
+
+  .head .intro {
+    max-width: 44rem;
+    margin-top: 10px;
+    color: var(--color-ink-quiet);
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+
+  /* Only an intro's first paragraph shows under the title, as it always has. */
+  .head .intro :where(p + p) {
+    display: none;
+  }
+
+  .head .intro :where(a) {
+    color: var(--color-ink-strong);
+    font-weight: 500;
+    text-decoration: underline;
+    text-decoration-color: rgb(47 178 230 / 0.5);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+    transition: text-decoration-color 0.2s ease;
+  }
+
+  .head .intro :where(a):hover {
+    text-decoration-color: var(--color-sky);
+  }
+
+  .head + * {
+    margin-top: 28px;
+  }
+
+  /* The site's other pages, at the very end of every page. */
+  .site-foot {
+    display: grid;
+    gap: 14px;
+    margin: 72px var(--col-pad) 0;
+    padding: 24px 0 calc(var(--bezel-bottom) + 32px);
+    border-top: 1px solid var(--color-line);
+    color: var(--color-ink-faint);
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .site-foot nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 20px;
+  }
+
+  .site-foot a {
+    color: var(--color-ink-quiet);
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+
+  .site-foot a:hover {
+    color: var(--color-sky);
+  }
+
+  /* A phone: the column fills the screen under the two buttons, its top corners rounded. */
+  @media (max-width: 879px) {
+    .col {
+      width: min(640px, 100%);
+      min-height: calc(100svh - var(--bezel-top) - 76px);
+      margin-top: calc(var(--bezel-top) + 76px);
+      border-radius: 24px 24px 0 0;
+      box-shadow: 0 -1px 0 var(--color-line);
+    }
+
+    .col {
+      --col-pad: 22px;
+    }
+
+    .col-body {
+      padding-top: 26px;
+    }
+
+    .col.col-app {
+      width: auto;
+      min-height: 0;
+      margin: 0;
+      border-radius: var(--crt);
+      box-shadow: none;
+    }
+  }
+}
+
+/* Apps. Outside the layers, so these win over the TV's own unlayered styles (Frame.astro,
+   ThemeToggle.astro). An app fills the whole screen, edge to edge with no casing (it slides off
+   past the edges, Frame.astro), and scrolls inside itself. Its TV buttons sit a little higher, level
+   with the app's title bar. */
+html:has(.col-app) {
+  --bezel: 0px;
+  --crt: 0px;
+  overflow: hidden;
+}
+
+.col.col-app {
+  position: fixed;
+  inset: var(--bezel-top) var(--bezel) var(--bezel-bottom);
+  width: auto;
+  min-height: 0;
+  margin: 0;
+  overflow: hidden;
+  border-radius: var(--crt);
+  box-shadow: none;
+}
+
+html:has(.col-app) .tv-btn {
+  top: calc(var(--bezel-top) + 14px);
+}
+
+html:has(.col-app) .tv-menu {
+  top: calc(var(--bezel-top) + 14px + 56px + 14px);
+}
+
+/* An app that lists the sections itself (the chat's rail, data-app-nav) has no need of the TV's
+   menu button on a big screen; the light switch takes its corner, in the app's bar. */
+@media (min-width: 880px) {
+  html:has([data-app-nav]) .tv-open {
+    display: none;
+  }
+
+  html:has(.col-app) .theme-toggle {
+    top: 26px;
+    right: 30px;
+    bottom: auto;
+    left: auto;
+    color: rgb(255 255 255 / 0.85);
+  }
+
+  html:has(.col-app) .theme-toggle:hover {
+    color: #fff;
+  }
+}
+
+@media (max-width: 879px) {
+  html:has(.col-app) .tv-menu {
+    top: calc(var(--bezel-top) + 14px + 48px + 12px);
+  }
+}
+
+/* Reading text. Outside the layers, so it wins over the typography plugin's own rules. */
+.prose {
+  --tw-prose-body: var(--color-ink);
+  --tw-prose-headings: var(--color-ink-strong);
+  --tw-prose-lead: var(--color-ink-soft);
+  --tw-prose-links: var(--color-ink-strong);
+  --tw-prose-bold: var(--color-ink-strong);
+  --tw-prose-counters: var(--color-ink-soft);
+  --tw-prose-bullets: var(--color-sky);
+  --tw-prose-hr: light-dark(rgb(55 70 78 / 0.14), rgb(255 255 255 / 0.1));
+  --tw-prose-quotes: var(--color-ink);
+  --tw-prose-quote-borders: var(--color-sky);
+  --tw-prose-captions: var(--color-ink-soft);
+  --tw-prose-code: var(--color-ink-strong);
+  --tw-prose-pre-code: #e6edf3;
+  --tw-prose-pre-bg: light-dark(#24292e, #14181b);
+  --tw-prose-th-borders: light-dark(rgb(55 70 78 / 0.22), rgb(255 255 255 / 0.18));
+  --tw-prose-td-borders: var(--color-line);
+  max-width: 44rem;
+  font-size: 1.0625rem;
+  line-height: 1.8;
+}
+
+.prose :where(h2, h3, h4) {
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.prose :where(a) {
+  font-weight: 500;
+  text-decoration-color: rgb(47 178 230 / 0.5);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  transition: text-decoration-color 0.2s ease;
+}
+
+.prose :where(a):hover {
+  text-decoration-color: var(--color-sky);
+}
+
+.prose :where(img, video) {
+  border-radius: 14px;
+  box-shadow: var(--rim);
+}
+
+.prose :where(pre) {
+  border-radius: 14px;
+  padding: 1.1em 1.3em;
+  font-size: 0.875rem;
+  line-height: 1.65;
+}
+
+.prose :where(:not(pre) > code) {
+  padding: 0.12em 0.4em;
+  border-radius: 6px;
+  background: light-dark(rgb(63 67 70 / 0.07), rgb(255 255 255 / 0.09));
+  font-size: 0.875em;
+  font-weight: 500;
+}
+
+.prose :where(:not(pre) > code)::before,
+.prose :where(:not(pre) > code)::after {
+  content: none;
+}
+
+.prose :where(blockquote) {
+  border-inline-start-width: 4px;
+  font-style: normal;
+  font-weight: 500;
+}
+
+.prose :where(table) {
+  font-size: 0.9375rem;
+}
+
+.prose > :first-child {
+  margin-top: 0;
+}
+
+.prose > :last-child {
+  margin-bottom: 0;
+}
+
+/* Page transitions ------------------------------------------------------------------------------
+   On the TV only the column changes; the casing and its buttons are the same element throughout.
+   The router sets html[data-nav] to the kind of move (src/scripts/motion.ts): deeper and shallower
+   (into an entry and back out), left and right (between sections, in the menu's order). --vt-dy
+   puts the old column back where it was scrolled to. An entry's picture flies between a list and
+   its page on its own. All of it is quick: the new page is there in under a third of a second. */
+
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root) {
+  display: none;
+}
+
+::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-group(col) {
+  animation: none;
+}
+
+/* The casing and its buttons are lifted out with the column, above it, and simply stay put: the
+   CRT's edge is always in front of whatever the screen shows. */
+::view-transition-group(tv-glass),
+::view-transition-group(tv-home),
+::view-transition-group(tv-open),
+::view-transition-group(theme-toggle),
+::view-transition-group(tv-menu),
+::view-transition-new(tv-menu),
+::view-transition-old(tv-glass),
+::view-transition-new(tv-glass),
+::view-transition-old(tv-home),
+::view-transition-new(tv-home),
+::view-transition-old(tv-open),
+::view-transition-new(tv-open),
+::view-transition-old(theme-toggle),
+::view-transition-new(theme-toggle) {
+  animation: none;
+}
+
+::view-transition-old(tv-glass),
+::view-transition-old(tv-home),
+::view-transition-old(tv-open),
+::view-transition-old(theme-toggle),
+::view-transition-old(tv-menu) {
+  display: none;
+}
+
+::view-transition-old(col),
+::view-transition-new(col) {
+  mix-blend-mode: normal;
+  animation-fill-mode: both;
+}
+
+::view-transition-old(col) {
+  translate: 0 var(--vt-dy, 0px);
+  animation: vt-out 0.16s ease-in both;
+}
+
+::view-transition-new(col) {
+  animation: vt-in 0.3s var(--ease-glide) 0.04s both;
+}
+
+html[data-nav='right']::view-transition-old(col) {
+  --vt-x: -36px;
+}
+
+html[data-nav='right']::view-transition-new(col) {
+  --vt-x: 48px;
+}
+
+html[data-nav='left']::view-transition-old(col) {
+  --vt-x: 36px;
+}
+
+html[data-nav='left']::view-transition-new(col) {
+  --vt-x: -48px;
+}
+
+html[data-nav='deeper']::view-transition-old(col) {
+  --vt-s: 0.985;
+}
+
+html[data-nav='deeper']::view-transition-new(col) {
+  --vt-y: 22px;
+}
+
+html[data-nav='shallower']::view-transition-old(col) {
+  --vt-y: 18px;
+}
+
+html[data-nav='shallower']::view-transition-new(col) {
+  --vt-s: 0.985;
+}
+
+::view-transition-group(hero) {
+  overflow: clip;
+  border-radius: 14px;
+  animation-duration: 0.34s;
+  animation-timing-function: var(--ease-glide);
+}
+
+::view-transition-old(hero),
+::view-transition-new(hero) {
+  height: 100%;
+  object-fit: cover;
+  animation-duration: 0.34s;
+}
+
+@keyframes vt-out {
+  to {
+    opacity: 0;
+    transform: translate(var(--vt-x, 0px), var(--vt-y, 0px)) scale(var(--vt-s, 1));
+  }
+}
+
+@keyframes vt-in {
+  from {
+    opacity: 0;
+    transform: translate(var(--vt-x, 0px), var(--vt-y, 0px)) scale(var(--vt-s, 1));
+  }
+}
+
+/* Switching between light and dark (src/scripts/theme.ts): the whole screen changes as one, the
+   new lights spreading in a circle from the button. */
+html[data-theming] :is(.col, .tv-glass, .tv-btn, .tv-menu, .theme-toggle, [data-hero-main]) {
+  view-transition-name: none !important;
+}
+
+html[data-theming]::view-transition-old(root) {
+  display: block;
+  animation: none;
+}
+
+html[data-theming='reveal']::view-transition-new(root) {
+  animation: theme-reveal 0.6s cubic-bezier(0.45, 0, 0.2, 1) both;
+}
+
+html[data-theming='fade']::view-transition-new(root) {
+  animation: vt-in 0.2s ease both;
+}
+
+@keyframes theme-reveal {
+  from {
+    clip-path: circle(0 at var(--tx, 50%) var(--ty, 50%));
+  }
+  to {
+    clip-path: circle(var(--tr, 150vmax) at var(--tx, 50%) var(--ty, 50%));
+  }
+}
+
+/* To and from the plaza, a real page load: the TV switches on, a bright line opening out into the
+   picture, and switches off, the picture folding into a line and then a point. Base.astro sets
+   html[data-crt] for the length of it. */
+html[data-crt] :is(.col, .tv-glass, .tv-btn, .tv-menu, .theme-toggle) {
+  view-transition-name: none !important;
+}
+
+html[data-crt='on']::view-transition-old(root) {
+  display: block;
+  animation: vt-out 0.22s ease both;
+}
+
+html[data-crt='on']::view-transition-new(root) {
+  animation: crt-on 0.46s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+html[data-crt='off']::view-transition-old(root) {
+  display: block;
+  animation: crt-off 0.34s cubic-bezier(0.6, 0, 0.8, 0.4) both;
+}
+
+html[data-crt='off']::view-transition-new(root) {
+  animation: vt-in 0.4s ease 0.26s both;
+}
+
+html[data-crt]::view-transition-image-pair(root) {
+  isolation: auto;
+}
+
+@keyframes crt-on {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.18, 0.004);
+    filter: brightness(3);
+  }
+  35% {
+    opacity: 1;
+    transform: scale(1, 0.006);
+    filter: brightness(2.4);
+  }
+  100% {
+    transform: none;
+    filter: none;
+  }
+}
+
+@keyframes crt-off {
+  0% {
+    transform: none;
+    filter: none;
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1, 0.006);
+    filter: brightness(2.4);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0, 0.004);
+    filter: brightness(4);
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    translate: 0;
+  }
+  20%,
+  60% {
+    translate: -6px 0;
+  }
+  40%,
+  80% {
+    translate: 6px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0.15s !important;
+    animation-delay: 0s !important;
+    --vt-x: 0px !important;
+    --vt-y: 0px !important;
+    --vt-s: 1 !important;
+  }
+
+  html[data-crt]::view-transition-old(root),
+  html[data-crt]::view-transition-new(root) {
+    animation-name: vt-out !important;
+  }
+
+  html[data-crt]::view-transition-new(root) {
+    animation-name: vt-in !important;
+  }
+}
+
+@media print {
+  .skip-link,
+  .site-foot {
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: #fff;
+  }
+
+  .col {
+    width: auto;
+    margin: 0;
+    box-shadow: none;
+  }
+
+  .col-body {
+    padding: 0;
+  }
+}

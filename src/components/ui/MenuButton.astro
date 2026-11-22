@@ -1,0 +1,25 @@
+---
+// One of the plaza's menu buttons: a white bar with a green icon at its start.
+import Icon from './Icon.astro';
+
+interface Props {
+  href: string;
+  label: string;
+  sub?: string;
+  icon?: 'link' | 'code' | 'play' | 'mail' | 'phone' | 'doc' | 'post' | 'person' | 'download' | 'star' | 'rss' | 'grid';
+  /** The blue icon, for the one thing a page is mostly for. */
+  go?: boolean;
+  download?: string;
+}
+
+const { href, label, sub, icon = 'link', go = false, download } = Astro.props;
+const external = /^https?:/.test(href);
+---
+
+<a {href} class:list={['menu-btn', { go }]} rel={external ? 'noopener' : undefined} {download} data-sfx>
+  <span class="ico"><Icon name={icon} /></span>
+  <span>
+    {label}
+    {sub && <span class="sub">{sub}</span>}
+  </span>
+</a>

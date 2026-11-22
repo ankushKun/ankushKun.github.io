@@ -1,0 +1,27 @@
+---
+// A section's tile: its block's art behind a white glass rim. `name` makes it the page's tile, the
+// one that flies from the plaza's block and between pages.
+import { tileFor } from '../../lib/tiles';
+
+interface Props {
+  path: string;
+  size?: number;
+  name?: boolean;
+  class?: string;
+}
+
+const { path, size = 56, name = false, class: className } = Astro.props;
+const tile = tileFor(path);
+---
+
+{
+  tile && (
+    <span
+      class:list={['tile', className]}
+      style={`--s:${size}px;${name ? 'view-transition-name:tile' : ''}`}
+      data-tile={tile.href}
+    >
+      <img src={tile.src} alt="" width={size * 2} height={size * 2} decoding="async" />
+    </span>
+  )
+}

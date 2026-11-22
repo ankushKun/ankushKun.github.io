@@ -34,6 +34,15 @@ export async function getPage(id: string) {
 export const urlOf = (entry: Entry) => `${SECTION_PATH[entry.collection]}${entry.id}/`;
 export const absUrl = (path: string) => new URL(path, SITE.url).href;
 
+/**
+ * A page's path in its one canonical form, with the trailing slash, however it was asked for
+ * (pages answer with or without it). Files such as /blogs/index.xml keep theirs as they are.
+ */
+export const pagePath = (url: URL) => {
+  const p = url.pathname;
+  return p.endsWith('/') || /\.[a-z0-9]+$/i.test(p) ? p : `${p}/`;
+};
+
 export function byYear<T extends Entry>(entries: T[]): [number, T[]][] {
   const groups = new Map<number, T[]>();
   for (const e of entries) {
@@ -44,6 +53,9 @@ export function byYear<T extends Entry>(entries: T[]): [number, T[]][] {
 }
 
 export const isoDate = (d: Date) => d.toISOString().slice(0, 10);
+
+/** Minutes to read an entry, at about 230 words a minute. */
+export const readingMinutes = (entry: Entry) => Math.max(1, Math.round((entry.body ?? '').split(/\s+/).length / 230));
 
 export const formatDate = (d: Date, month: 'short' | 'long' = 'short') =>
   d.toLocaleDateString('en-US', { year: 'numeric', month, day: 'numeric', timeZone: 'UTC' });

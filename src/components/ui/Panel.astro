@@ -1,0 +1,14 @@
+---
+// A section of a page on the column: its heading and what is under it.
+interface Props {
+  title?: string;
+  class?: string;
+}
+
+const { title, class: className } = Astro.props;
+---
+
+<section class:list={['panel', className]}>
+  {title && <h2 class="panel-head">{title}</h2>}
+  <slot />
+</section>

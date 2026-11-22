@@ -1,9 +1,11 @@
 ---
-// A page whose title, description and intro text come from src/content/pages/<id>.md.
-// Section indexes put their lists in the default slot, below the intro.
+// A page whose title, description and text come from src/content/pages/<id>.md, on the TV's
+// column. `panel` pages (the default) set their text under the title with anything in the default
+// slot after it; `menu` pages (section lists) put the text under the title as a short intro and
+// their list below; `bare` pages lay out everything under the title themselves.
 import { render } from 'astro:content';
 import Base from './Base.astro';
-import { getPage } from '../lib/content';
+import { formatDate, getPage, isoDate, pagePath } from '../lib/content';
 import { ogPathForPage } from '../lib/og';
 import { PERSON_ID, breadcrumbs, webPage } from '../lib/schema';
 
@@ -13,15 +15,17 @@ interface Props {
   pageType?: string;
   schema?: Record<string, unknown>[];
   type?: 'website' | 'profile';
+  layout?: 'menu' | 'panel' | 'bare';
 }
 
-const { id, pageType = 'WebPage', schema = [], type } = Astro.props;
+const { id, pageType = 'WebPage', schema = [], type, layout = 'panel' } = Astro.props;
 const page = await getPage(id);
 const { Content } = await render(page);
 const { title, description, cover, updated } = page.data;
-const path = Astro.url.pathname;
+const path = pagePath(Astro.url);
 const aboutYou = ['ProfilePage', 'AboutPage', 'ContactPage'].includes(pageType) ? { mainEntity: { '@id': PERSON_ID } } : {};
 const crumbs = path === '/' ? [] : [breadcrumbs([{ name: title, path }])];
+const hasText = Boolean(page.body?.trim());
 ---
 
 <Base
@@ -33,11 +37,37 @@ const crumbs = path === '/' ? [] : [breadcrumbs([{ name: title, path }])];
   modified={updated}
   schema={[webPage(pageType, path, title, description, aboutYou), ...crumbs, ...schema]}
 >
-  <h1 class="mb-4 text-3xl font-bold">{title}</h1>
-  {updated && <p class="text-sm">Updated <time datetime={updated.toISOString()}>{updated.toLocaleDateString('en-US', { dateStyle: 'long', timeZone: 'UTC' })}</time></p>}
-  <div class="prose dark:prose-invert mb-8">
-    <Content />
-  </div>
+  <header class="head">
+    <h1>{title}</h1>
+    {
+      layout === 'menu' && hasText && (
+        <div class="intro">
+          <Content />
+        </div>
+      )
+    }
+  </header>
+  {
+    layout === 'panel' && hasText && (
+      <div class="prose">
+        <Content />
+      </div>
+    )
+  }
   <slot />
-  <Fragment slot="hero"><slot name="hero" /></Fragment>
+  {
+    layout === 'panel' && updated && (
+      <p class="updated">
+        Updated <time datetime={isoDate(updated)}>{formatDate(updated, 'long')}</time>
+      </p>
+    )
+  }
 </Base>
+
+<style>
+  .updated {
+    margin-top: 2.5rem;
+    color: var(--color-ink-soft);
+    font-size: 0.8125rem;
+  }
+</style>
