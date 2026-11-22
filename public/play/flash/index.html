@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flash</title>
+<!-- Plays one of the Flash games in games/ (?game=<name>) with Ruffle, self-hosted (ruffle.rs). -->
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  ruffle-player { display: block; width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+<script src="ruffle.js"></script>
+<script>
+  const GAMES = ['alien_hominid', 'flyguy', 'marvin_spectrum', 'wasted_sky'];
+  const game = new URLSearchParams(location.search).get('game');
+  if (GAMES.includes(game)) {
+    window.RufflePlayer = window.RufflePlayer || {};
+    const player = window.RufflePlayer.newest().createPlayer();
+    document.body.appendChild(player);
+    player.ruffle().load({ url: `games/${game}.swf`, autoplay: 'on', letterbox: 'on', quality: 'high', splashScreen: true, contextMenu: 'on' });
+    player.focus();
+  }
+</script>
+</body>
+</html>

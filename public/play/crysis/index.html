@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crysis</title>
+<!-- The old site's joke, kept: it starts loading Crysis and gets nowhere. -->
+<style>
+  html, body { margin: 0; height: 100%; background: #050807; color: #e8f2ea; overflow: hidden; font: 600 16px/1.4 system-ui, sans-serif; }
+  main { display: grid; place-content: center; gap: 18px; height: 100%; padding: 24px; text-align: center; }
+  h1 { margin: 0; font-size: clamp(40px, 9vw, 96px); font-weight: 900; letter-spacing: 0.3em; text-indent: 0.3em; }
+  .bar { width: min(420px, 80vw); height: 6px; margin: 0 auto; border-radius: 3px; background: #1b2620; overflow: hidden; }
+  .bar i { display: block; width: 0; height: 100%; background: #7dd56f; transition: width 0.4s ease; }
+  p { margin: 0; min-height: 1.4em; color: #9fb5a5; }
+  .no { color: #fff; font-size: clamp(18px, 3vw, 26px); }
+</style>
+</head>
+<body>
+<main>
+  <h1>CRYSIS</h1>
+  <div class="bar"><i></i></div>
+  <p></p>
+</main>
+<script>
+  const bar = document.querySelector('.bar i');
+  const line = document.querySelector('p');
+  const steps = [
+    [8, 'Checking your GPU'], [21, 'Compiling shaders'], [37, 'Compiling more shaders'],
+    [52, 'Warming up the jungle'], [68, 'Rendering one (1) leaf'], [83, 'Asking the GPU nicely'],
+    [97, 'Almost there'], [99, 'Almost there'],
+  ];
+  let i = 0;
+  const tick = () => {
+    if (i < steps.length) {
+      const [pct, text] = steps[i++];
+      bar.style.width = `${pct}%`;
+      line.textContent = `${text}...`;
+      setTimeout(tick, i === steps.length ? 2600 : 900 + Math.random() * 700);
+    } else {
+      line.className = 'no';
+      line.textContent = 'But can it run Crysis? No. No it cannot.';
+    }
+  };
+  tick();
+</script>
+</body>
+</html>

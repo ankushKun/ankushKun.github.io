@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  <title>DOOM - Chocolate Doom WebAssembly</title>
+  <meta charset="utf-8">
+  <meta name="viewport"
+    content="minimal-ui, width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <style>
+    @font-face {
+      font-family: "VT323";
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+      src: url(vt323.woff2) format("woff2");
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      background-color: #000;
+      overflow: hidden;
+      font-family: "VT323", monospace;
+    }
+
+    #container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Canvas fills the screen */
+    canvas {
+      background-color: #000;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      cursor: crosshair;
+    }
+
+    /* Loading overlay */
+    #loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    #loading h1 {
+      color: #cc0000;
+      font-size: 48px;
+      text-shadow: 0 0 20px #cc0000;
+      animation: pulse 1s infinite;
+    }
+
+    #loading p {
+      color: #666;
+      font-size: 18px;
+      margin-top: 20px;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    /* Controls hint */
+    #controls-hint {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: #888;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      text-align: center;
+      opacity: 1;
+      transition: opacity 0.5s;
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    #controls-hint.hidden {
+      opacity: 0;
+    }
+
+    #controls-hint kbd {
+      background: #333;
+      padding: 2px 6px;
+      border-radius: 3px;
+      border: 1px solid #555;
+      color: #cc0000;
+    }
+
+    /* Status bar */
+    #status {
+      position: fixed;
+      bottom: 5px;
+      right: 5px;
+      color: #444;
+      font-size: 11px;
+      font-family: monospace;
+      z-index: 50;
+    }
+
+    /* Mobile touch joysticks */
+    .joystick {
+      position: fixed;
+      bottom: 50px;
+      width: 120px;
+      height: 120px;
+      z-index: 200;
+    }
+
+    #joystick-left {
+      left: 30px;
+    }
+
+    #joystick-right {
+      right: 30px;
+    }
+
+    /* Hide joysticks on desktop */
+    @media (hover: hover) and (pointer: fine) {
+      .joystick {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="container">
+    <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
+  </div>
+
+  <div id="loading">
+    <h1>DOOM</h1>
+    <p id="loading-text">Loading...</p>
+  </div>
+
+  <div id="controls-hint">
+    <kbd>WASD</kbd> or <kbd>Arrows</kbd> move •
+    <kbd>Ctrl</kbd> shoot •
+    <kbd>Space</kbd> use •
+    <kbd>Mouse</kbd> look & fire
+  </div>
+
+  <div id="status"></div>
+
+  <!-- Mobile joysticks -->
+  <div id="joystick-left" class="joystick"></div>
+  <div id="joystick-right" class="joystick"></div>
+
+  <script>
+    // Common DOOM arguments for solo play
+    const commonArgs = [
+      "-iwad", "doom1.wad",
+      "-window",
+      "-nogui",
+      "-nomusic",
+      "-config", "default.cfg"
+    ];
+
+    const loadingEl = document.getElementById('loading');
+    const loadingText = document.getElementById('loading-text');
+    const controlsHint = document.getElementById('controls-hint');
+    const statusEl = document.getElementById('status');
+    const canvas = document.getElementById('canvas');
+
+    // Track loading progress
+    let loadedFiles = 0;
+    const totalFiles = 2; // doom1.wad and default.cfg
+
+    function updateLoadingProgress(file) {
+      loadedFiles++;
+      loadingText.textContent = `Loading ${file}... (${loadedFiles}/${totalFiles})`;
+    }
+
+    // Emscripten Module configuration
+    var Module = {
+      noInitialRun: true,
+
+      // Returning false skips the frame; see pauseGame() below
+      preMainLoop: function () {
+        return !gamePaused;
+      },
+
+      preRun: function () {
+        // Preload the WAD file and config
+        Module.FS.createPreloadedFile("", "doom1.wad", "doom1.wad", true, true);
+        updateLoadingProgress("doom1.wad");
+        Module.FS.createPreloadedFile("", "default.cfg", "default.cfg", true, true);
+        updateLoadingProgress("default.cfg");
+      },
+
+      onRuntimeInitialized: function () {
+        // Hide loading screen
+        loadingEl.style.display = 'none';
+
+        // Start the game
+        callMain(commonArgs);
+
+        // Focus canvas for keyboard input
+        canvas.focus();
+
+        // Hide controls hint after a few seconds
+        setTimeout(() => {
+          controlsHint.classList.add('hidden');
+        }, 5000);
+      },
+
+      canvas: (function () {
+        canvas.addEventListener("webglcontextlost", function (e) {
+          alert("WebGL context lost. Please reload the page.");
+          e.preventDefault();
+        }, false);
+        return canvas;
+      })(),
+
+      print: function (text) {
+        console.log('[DOOM]', text);
+        // Parse status messages
+        if (text.startsWith('doom: 10')) {
+          statusEl.textContent = 'Game started';
+        }
+      },
+
+      printErr: function (text) {
+        console.error('[DOOM Error]', text);
+      },
+
+      setStatus: function (text) {
+        if (text) {
+          loadingText.textContent = text;
+        }
+      },
+
+      totalDependencies: 0,
+
+      monitorRunDependencies: function (left) {
+        this.totalDependencies = Math.max(this.totalDependencies, left);
+        if (left) {
+          Module.setStatus('Preparing... (' + (this.totalDependencies - left) + '/' + this.totalDependencies + ')');
+        } else {
+          Module.setStatus('Ready');
+        }
+      }
+    };
+
+    // Handle errors
+    window.onerror = function (event) {
+      loadingText.textContent = 'Error loading DOOM';
+      loadingText.style.color = '#ff4444';
+      console.error('DOOM Error:', event);
+    };
+
+    // Click to focus canvas
+    canvas.addEventListener('click', function () {
+      canvas.focus();
+    });
+
+    // Pause / resume hooks for the desktop shell, which calls them on this
+    // iframe's contentWindow when the DOOM window is minimized and restored.
+    // While paused, Module.preMainLoop skips every game frame and SDL audio is
+    // suspended. (Module.pauseMainLoop is not usable here: this build is
+    // Asyncify-based and pauses/resumes the main loop itself on every sleep.)
+    let gamePaused = false;
+    let audioSuspended = false;
+
+    function sdlAudioContext() {
+      return Module.SDL2 && Module.SDL2.audioContext;
+    }
+
+    window.pauseGame = function () {
+      if (gamePaused) return false;
+      gamePaused = true;
+      const audio = sdlAudioContext();
+      if (audio && audio.state === 'running') {
+        audio.suspend();
+        audioSuspended = true;
+      }
+      return true;
+    };
+
+    window.resumeGame = function () {
+      if (!gamePaused) return false;
+      gamePaused = false;
+      const audio = sdlAudioContext();
+      if (audioSuspended && audio) audio.resume();
+      audioSuspended = false;
+      return true;
+    };
+
+    // Mobile joystick support
+    if ('ontouchstart' in window) {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.9.0/nipplejs.min.js';
+      script.onload = function () {
+        // Left joystick for movement
+        const joystickLeft = nipplejs.create({
+          zone: document.getElementById('joystick-left'),
+          mode: 'static',
+          position: { left: '50%', top: '50%' },
+          color: '#cc0000',
+          size: 100
+        });
+
+        // Right joystick for looking/shooting
+        const joystickRight = nipplejs.create({
+          zone: document.getElementById('joystick-right'),
+          mode: 'static',
+          position: { left: '50%', top: '50%' },
+          color: '#cc0000',
+          size: 100
+        });
+
+        // Map joystick to keyboard events (simplified)
+        joystickLeft.on('move', function (evt, data) {
+          // Would need to inject key events into the WASM module
+          // This is a simplified placeholder
+        });
+      };
+      document.head.appendChild(script);
+    }
+  </script>
+
+  <!-- Load the Emscripten-compiled DOOM -->
+  <script type="text/javascript" src="websockets-doom.js"></script>
+</body>
+
+</html>
