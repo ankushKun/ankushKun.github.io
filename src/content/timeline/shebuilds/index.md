@@ -12,6 +12,6 @@ First hackathon win of 2023 — picked up **Rust** for the very first time, love
 
 <figure class="my-6">
   <div class="aspect-video w-full overflow-hidden">
-    <iframe src="https://www.youtube-nocookie.com/embed/djPtzrCkqIY" title="SheBuilds hackathon demo" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="h-full w-full border-0"></iframe>
+    <iframe src="https://www.youtube-nocookie.com/embed/djPtzrCkqIY" title="SheBuilds hackathon demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="h-full w-full border-0"></iframe>
   </div>
 </figure>

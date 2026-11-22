@@ -1,11 +1,11 @@
 ---
 import Page from '../../layouts/Page.astro';
-import YearGroups from '../../components/YearGroups.astro';
+import Feed from '../../components/Feed.astro';
 import { getEntries } from '../../lib/content';
 
 const posts = await getEntries('blog');
 ---
 
-<Page id="blog" pageType="CollectionPage">
-  <YearGroups items={posts} />
+<Page id="blog" pageType="CollectionPage" layout="menu">
+  <Feed items={posts} />
 </Page>

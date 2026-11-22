@@ -1,11 +1,11 @@
 ---
 import Page from '../../layouts/Page.astro';
-import YearGroups from '../../components/YearGroups.astro';
+import Timeline from '../../components/Timeline.astro';
 import { getEntries } from '../../lib/content';
 
 const events = await getEntries('timeline');
 ---
 
-<Page id="timeline" pageType="CollectionPage">
-  <YearGroups items={events} />
+<Page id="timeline" pageType="CollectionPage" layout="menu">
+  <Timeline items={events} />
 </Page>

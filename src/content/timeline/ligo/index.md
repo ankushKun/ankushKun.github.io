@@ -13,12 +13,12 @@ Replicated the optical physics behind **LIGO** (Laser Interferometer Gravitation
 <div class="my-6 grid gap-4 sm:grid-cols-2">
   <figure>
     <div class="aspect-video w-full overflow-hidden">
-      <iframe src="https://www.youtube-nocookie.com/embed/31bJZI1SMn4" title="Tabletop light interferometer setup" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="h-full w-full border-0"></iframe>
+      <iframe src="https://www.youtube-nocookie.com/embed/31bJZI1SMn4" title="Tabletop light interferometer setup" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="h-full w-full border-0"></iframe>
     </div>
   </figure>
   <figure>
     <div class="aspect-video w-full overflow-hidden">
-      <iframe src="https://www.youtube-nocookie.com/embed/1WsnnyR_AOg" title="Light interference fringes demo" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="h-full w-full border-0"></iframe>
+      <iframe src="https://www.youtube-nocookie.com/embed/1WsnnyR_AOg" title="Light interference fringes demo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="h-full w-full border-0"></iframe>
     </div>
   </figure>
 </div>

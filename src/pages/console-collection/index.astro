@@ -1,11 +1,11 @@
 ---
 import Page from '../../layouts/Page.astro';
-import EntryList from '../../components/EntryList.astro';
+import ChannelMenu from '../../components/ChannelMenu.astro';
 import { getEntries } from '../../lib/content';
 
 const consoles = await getEntries('consoles');
 ---
 
-<Page id="consoles" pageType="CollectionPage">
-  <EntryList items={consoles} />
+<Page id="consoles" pageType="CollectionPage" layout="menu">
+  <ChannelMenu items={consoles} />
 </Page>

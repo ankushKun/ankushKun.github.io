@@ -4,23 +4,63 @@ import { NEWSLETTER } from '../site';
 ---
 
 <Page id="newsletter">
-  {NEWSLETTER.action ? (
-    <form action={NEWSLETTER.action} method="post" class="flex flex-wrap gap-2">
-      <label for="newsletter-email" class="sr-only">Email</label>
-      <input
-        id="newsletter-email"
-        type="email"
-        name={NEWSLETTER.emailField}
-        required
-        autocomplete="email"
-        placeholder="you@example.com"
-        class="border px-2 py-1"
-      />
-      <button type="submit" class="border px-3 py-1">Subscribe</button>
-    </form>
-  ) : (
-    <p>
-      Signup is not live yet. In the meantime, you can follow new posts via the <a href="/blogs/index.xml">RSS feed</a> or reach out on <a href="/contact/">Contact</a>.
-    </p>
-  )}
+  {
+    NEWSLETTER.action ? (
+      <form action={NEWSLETTER.action} method="post" class="form" data-astro-reload>
+        <label for="newsletter-email" class="sr-only">
+          Email
+        </label>
+        <input id="newsletter-email" type="email" name={NEWSLETTER.emailField} required autocomplete="email" placeholder="you@example.com" />
+        <button type="submit" class="b-btn" data-sfx>
+          Subscribe
+        </button>
+      </form>
+    ) : (
+      <p class="note">
+        Signup is not live yet. In the meantime, you can follow new posts via the <a href="/blogs/index.xml">RSS feed</a> or reach out on <a href="/contact/">Contact</a>.
+      </p>
+    )
+  }
 </Page>
+
+<style>
+  .form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 1.5rem;
+  }
+
+  input {
+    flex: 1 1 240px;
+    min-width: 0;
+    height: 46px;
+    padding: 0 1.1em;
+    border: 0;
+    border-radius: 14px;
+    background: var(--color-raise);
+    box-shadow:
+      var(--rim),
+      inset 0 2px 4px light-dark(rgb(0 30 40 / 0.07), rgb(0 0 0 / 0.3));
+    color: var(--color-ink-strong);
+    font: inherit;
+  }
+
+  input:focus-visible {
+    box-shadow: var(--glow);
+  }
+
+  .note {
+    margin-top: 1.5rem;
+    color: var(--color-ink-soft);
+    line-height: 1.7;
+  }
+
+  .note a {
+    color: var(--color-ink-strong);
+    text-decoration: underline;
+    text-decoration-color: rgb(47 178 230 / 0.5);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+  }
+</style>

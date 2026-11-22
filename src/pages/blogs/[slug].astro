@@ -1,5 +1,6 @@
 ---
 import Entry from '../../layouts/Entry.astro';
+import MenuButton from '../../components/ui/MenuButton.astro';
 import { getEntries } from '../../lib/content';
 
 export async function getStaticPaths() {
@@ -11,9 +12,21 @@ const { data } = entry;
 ---
 
 <Entry entry={entry}>
-  {data.links.length > 0 && (
-    <ul slot="meta" class="flex flex-wrap gap-4 text-sm">
-      {data.links.map((l) => <li><a href={l.url}>{l.label}</a></li>)}
-    </ul>
-  )}
+  {
+    data.links.length > 0 && (
+      <div slot="meta" class="links">
+        {data.links.map((l) => (
+          <MenuButton href={l.url} label={l.label} />
+        ))}
+      </div>
+    )
+  }
 </Entry>
+
+<style>
+  .links {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+  }
+</style>

@@ -1,69 +1,188 @@
 ---
 import Page from '../layouts/Page.astro';
+import MenuButton from '../components/ui/MenuButton.astro';
 import { resume } from '../data/resume';
 import { formatMonth } from '../lib/content';
 import { inline } from '../lib/inline';
 ---
 
 <Page id="resume">
-  <p class="mb-8"><a href={resume.pdf} download={resume.pdfDownloadName}>Download PDF</a></p>
+  <div class="top">
+    <p class="summary" set:html={inline(resume.summary)} />
+    <MenuButton href={resume.pdf} download={resume.pdfDownloadName} label="Download PDF" icon="download" go />
+  </div>
 
-  <section class="mb-8">
-    <h2 class="mb-2 text-xl font-semibold">Summary</h2>
-    <p set:html={inline(resume.summary)} />
-  </section>
-
-  <section class="mb-8">
-    <h2 class="mb-2 text-xl font-semibold">Experience</h2>
+  <section>
+    <h2>Experience</h2>
     {
       resume.experience.map((e) => (
-        <article class="mb-6">
-          <h3 class="font-semibold">{e.role}, <a href={e.url}>{e.org}</a></h3>
-          <p class="text-sm">
+        <div class="item">
+          <p class="when">
             {formatMonth(e.start)} to {formatMonth(e.end)}
-            {e.location && <> &middot; {e.location}</>}
           </p>
-          <ul class="list-disc pl-5">{e.highlights.map((h) => <li set:html={inline(h)} />)}</ul>
-        </article>
+          <div>
+            <h3>
+              {e.role}, <a href={e.url}>{e.org}</a>
+            </h3>
+            {e.location && <p class="where">{e.location}</p>}
+            <ul>
+              {e.highlights.map((h) => (
+                <li set:html={inline(h)} />
+              ))}
+            </ul>
+          </div>
+        </div>
       ))
     }
   </section>
 
-  {resume.projects.length > 0 && (
-    <section class="mb-8">
-      <h2 class="mb-2 text-xl font-semibold">Selected Projects</h2>
-      {
-        resume.projects.map((p) => (
-          <article class="mb-6">
-            <h3 class="font-semibold">
-              <a href={p.url}>{p.name}</a>
-              {p.more && <> (<a href={p.more}>write-up</a>)</>}
-            </h3>
-            <p class="text-sm">{formatMonth(p.start)} &middot; {p.tech.join(', ')}</p>
-            <ul class="list-disc pl-5">{p.highlights.map((h) => <li set:html={inline(h)} />)}</ul>
-          </article>
-        ))
-      }
-      <p class="text-sm"><a href="/projects/">View all projects</a></p>
-    </section>
-  )}
+  {
+    resume.projects.length > 0 && (
+      <section>
+        <h2>Selected projects</h2>
+        {resume.projects.map((p) => (
+          <div class="item">
+            <p class="when">{formatMonth(p.start)}</p>
+            <div>
+              <h3>
+                <a href={p.more ?? p.url}>{p.name}</a>
+              </h3>
+              <p class="where">{p.tech.join(', ')}</p>
+              <ul>
+                {p.highlights.map((h) => (
+                  <li set:html={inline(h)} />
+                ))}
+              </ul>
+            </div>
+          </div>
+        ))}
+      </section>
+    )
+  }
 
-  <section class="mb-8">
-    <h2 class="mb-2 text-xl font-semibold">Education</h2>
-    <ul>
-      {
-        resume.education.map((e) => (
-          <li>
-            {e.degree} in {e.field}, {e.school}
-            {e.start && <> ({formatMonth(e.start)} to {formatMonth(e.end)})</>}
-          </li>
-        ))
-      }
-    </ul>
+  <section>
+    <h2>Education</h2>
+    {
+      resume.education.map((e) => (
+        <div class="item">
+          <p class="when">{e.start ? <>{formatMonth(e.start)} to {formatMonth(e.end)}</> : ''}</p>
+          <div>
+            <h3>
+              {e.degree} in {e.field}
+            </h3>
+            <p class="where">{e.school}</p>
+          </div>
+        </div>
+      ))
+    }
   </section>
 
   <section>
-    <h2 class="mb-2 text-xl font-semibold">Skills</h2>
-    <ul>{resume.skills.map((s) => <li><strong>{s.label}:</strong> {s.items.join(', ')}</li>)}</ul>
+    <h2>Skills</h2>
+    {
+      resume.skills.map((s) => (
+        <div class="item">
+          <p class="when">{s.label}</p>
+          <ul class="skills">
+            {s.items.map((x) => (
+              <li class="chip">{x}</li>
+            ))}
+          </ul>
+        </div>
+      ))
+    }
   </section>
 </Page>
+
+<style>
+  .top {
+    display: grid;
+    gap: 18px;
+    justify-items: start;
+  }
+
+  .summary {
+    font-size: 1.0625rem;
+    line-height: 1.75;
+  }
+
+  .summary :global(strong) {
+    color: var(--color-ink-strong);
+  }
+
+  section {
+    margin-top: 2.75rem;
+  }
+
+  h2 {
+    margin-bottom: 1.1rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--color-line);
+    font-size: 1.125rem;
+    font-weight: 800;
+  }
+
+  .item {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr);
+    gap: 4px 20px;
+  }
+
+  .item + .item {
+    margin-top: 1.4rem;
+  }
+
+  .when {
+    padding-top: 2px;
+    color: var(--color-ink-soft);
+    font-size: 0.875rem;
+  }
+
+  h3 {
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  h3 a,
+  .summary :global(a),
+  li :global(a) {
+    text-decoration: underline;
+    text-decoration-color: rgb(47 178 230 / 0.5);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+  }
+
+  .where {
+    color: var(--color-ink-soft);
+    font-size: 0.875rem;
+  }
+
+  ul:not(.skills) {
+    margin-top: 0.4rem;
+    padding-left: 1.1rem;
+    list-style: disc;
+    line-height: 1.7;
+  }
+
+  ul:not(.skills) li::marker {
+    color: var(--color-sky);
+  }
+
+  .skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  @media (max-width: 600px) {
+    .item {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media print {
+    .top :global(.menu-btn) {
+      display: none;
+    }
+  }
+</style>

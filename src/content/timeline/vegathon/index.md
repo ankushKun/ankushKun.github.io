@@ -15,6 +15,6 @@ In June we flew out to **IIT Guwahati** for the IEEE GCON conference finals and 
 
 <figure class="my-6">
   <div class="aspect-video w-full overflow-hidden">
-    <iframe src="https://www.youtube-nocookie.com/embed/wUQSdlbZMoU" title="VEGA RISC-V flight controller at GCON Vegathon" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="h-full w-full border-0"></iframe>
+    <iframe src="https://www.youtube-nocookie.com/embed/wUQSdlbZMoU" title="VEGA RISC-V flight controller at GCON Vegathon" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="h-full w-full border-0"></iframe>
   </div>
 </figure>

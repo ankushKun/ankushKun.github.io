@@ -25,7 +25,6 @@ faq:
     <iframe
       src="https://7jiiceni3iqjhaxe44sesz2qjd5q7m5l3kumbu2gzmoerv5ifi3a.arweave.net/-lCBEajaIJOC5OckSWdQSPsPs6vaqMDTRsscSNeoKjY?"
       title="DOOM-style renderer demo"
-      loading="lazy"
       class="h-full w-full border-0"
     ></iframe>
   </div>

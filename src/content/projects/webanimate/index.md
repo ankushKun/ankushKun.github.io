@@ -16,7 +16,7 @@ links:
 Built with React, PixiJS, and FFmpeg for video processing, it makes creating web animations simple and intuitive.
 
 <figure class="my-6">
-<video controls preload="metadata">
+<video controls muted preload="metadata">
   <source src="https://github.com/user-attachments/assets/520cded8-32e8-475a-84b4-69ceef17727d" type="video/mp4">
   Your browser does not support the video tag.
 </video>

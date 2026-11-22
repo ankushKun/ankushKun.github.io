@@ -1,21 +1,11 @@
 ---
 import Page from '../../layouts/Page.astro';
-import EntryList from '../../components/EntryList.astro';
-import YearGroups from '../../components/YearGroups.astro';
+import ChannelMenu from '../../components/ChannelMenu.astro';
 import { getEntries } from '../../lib/content';
 
 const projects = await getEntries('projects');
-const featured = projects.filter((p) => p.data.featured && p.data.status === 'active');
 ---
 
-<Page id="projects" pageType="CollectionPage">
-  {
-    featured.length > 0 && (
-      <section class="mb-10">
-        <h2 class="mb-4 text-xl font-semibold">Featured</h2>
-        <EntryList items={featured} />
-      </section>
-    )
-  }
-  <YearGroups items={projects} />
+<Page id="projects" pageType="CollectionPage" layout="menu">
+  <ChannelMenu items={projects} />
 </Page>

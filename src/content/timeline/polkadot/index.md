@@ -12,6 +12,6 @@ Built an in-game item marketplace on Polkadot with `ink!`. Didn't win a prize th
 
 <figure class="my-6">
   <div class="aspect-video w-full overflow-hidden">
-    <iframe src="https://www.youtube-nocookie.com/embed/siBlujF9kt0" title="Polkadot ink! hackathon pitch" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="h-full w-full border-0"></iframe>
+    <iframe src="https://www.youtube-nocookie.com/embed/siBlujF9kt0" title="Polkadot ink! hackathon pitch" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="h-full w-full border-0"></iframe>
   </div>
 </figure>

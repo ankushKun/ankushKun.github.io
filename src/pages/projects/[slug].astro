@@ -1,5 +1,6 @@
 ---
 import Entry from '../../layouts/Entry.astro';
+import MenuButton from '../../components/ui/MenuButton.astro';
 import { getEntries } from '../../lib/content';
 
 export async function getStaticPaths() {
@@ -11,9 +12,44 @@ const { data } = entry;
 ---
 
 <Entry entry={entry}>
-  <ul slot="meta" class="flex flex-wrap gap-4 text-sm">
-    {data.status === "archived" && <li>Archived</li>}
-    {data.stack.length > 0 && <li>{data.stack.join(", ")}</li>}
-    {data.links.map((l) => <li><a href={l.url}>{l.label}</a></li>)}
-  </ul>
+  <div slot="meta" class="meta">
+    {
+      (data.status === 'archived' || data.stack.length > 0) && (
+        <ul class="stack">
+          {data.status === 'archived' && <li class="pill">Archived</li>}
+          {data.stack.map((s) => (
+            <li class="chip">{s}</li>
+          ))}
+        </ul>
+      )
+    }
+    {
+      data.links.length > 0 && (
+        <div class="links">
+          {data.links.map((l, i) => (
+            <MenuButton href={l.url} label={l.label} icon={i === 0 ? 'star' : /github/i.test(l.url) ? 'code' : 'link'} go={i === 0} />
+          ))}
+        </div>
+      )
+    }
+  </div>
 </Entry>
+
+<style>
+  .meta {
+    display: grid;
+    gap: 18px;
+  }
+
+  .stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .links {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+  }
+</style>

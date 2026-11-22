@@ -15,6 +15,6 @@ Made lifelong friends there, and that weekend build turned directly into [Better
 
 <figure class="my-6">
   <div class="aspect-video w-full overflow-hidden">
-    <iframe src="https://www.youtube-nocookie.com/embed/LWW4BCZPIUg" title="Arweave India Hackerhouse story" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="h-full w-full border-0"></iframe>
+    <iframe src="https://www.youtube-nocookie.com/embed/LWW4BCZPIUg" title="Arweave India Hackerhouse story" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="h-full w-full border-0"></iframe>
   </div>
 </figure>

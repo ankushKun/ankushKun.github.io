@@ -1,5 +1,6 @@
 ---
 import Entry from '../../layouts/Entry.astro';
+import MenuButton from '../../components/ui/MenuButton.astro';
 import { getEntries } from '../../lib/content';
 
 export async function getStaticPaths() {
@@ -8,13 +9,118 @@ export async function getStaticPaths() {
 
 const { entry } = Astro.props;
 const { data } = entry;
+// A YouTube recording plays in the frame, loaded only once it is asked for.
+const youtube = data.video?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]{11})/)?.[1];
+const links = [
+  ...(data.video ? [{ label: 'Video', url: data.video }] : []),
+  ...(data.slides ? [{ label: 'Slides', url: data.slides }] : []),
+  ...data.links,
+];
 ---
 
 <Entry entry={entry}>
-  <ul slot="meta" class="flex flex-wrap gap-4 text-sm">
-    <li>{data.event}</li>
-    {data.location && <li>{data.location}</li>}
-    {data.video && <li><a href={data.video}>Video</a></li>}
-    {data.slides && <li><a href={data.slides}>Slides</a></li>}
-  </ul>
+  {
+    youtube && (
+      <button type="button" slot="screen" class="video" data-video={youtube} data-hero-main aria-label={`Play ${data.title}`} data-sfx style="view-transition-name: hero">
+        <span class="play" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M8 5.5v13l10.5-6.5z" />
+          </svg>
+        </span>
+      </button>
+    )
+  }
+  <div slot="meta" class="meta">
+    <ul class="where">
+      <li class="pill">{data.event}</li>
+      {data.location && <li class="chip">{data.location}</li>}
+    </ul>
+    {
+      links.length > 0 && (
+        <div class="links">
+          {links.map((l) => (
+            <MenuButton href={l.url} label={l.label} icon={l.label === 'Video' ? 'play' : 'link'} />
+          ))}
+        </div>
+      )
+    }
+  </div>
 </Entry>
+
+<script>
+  document.addEventListener('click', (e) => {
+    const button = e.target instanceof Element ? e.target.closest<HTMLButtonElement>('[data-video]') : null;
+    if (!button) return;
+    const frame = document.createElement('iframe');
+    frame.src = `https://www.youtube-nocookie.com/embed/${button.dataset.video}?autoplay=1`;
+    frame.title = button.getAttribute('aria-label') ?? 'Video';
+    frame.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+    frame.allowFullscreen = true;
+    frame.className = 'video';
+    frame.style.cssText = 'display:block;width:100%;aspect-ratio:16/9;border:0;border-radius:14px';
+    button.replaceWith(frame);
+  });
+</script>
+
+<style>
+  .meta {
+    display: grid;
+    gap: 18px;
+  }
+
+  .where {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .links {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+  }
+
+  .video {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 100%;
+    border: 0;
+    background:
+      radial-gradient(60% 60% at 50% 45%, rgb(255 255 255 / 0.25), transparent),
+      linear-gradient(135deg, var(--c1), var(--c2));
+  }
+
+  .play {
+    display: grid;
+    place-items: center;
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 0.94);
+    box-shadow: 0 10px 30px -8px rgb(0 0 0 / 0.45);
+    transition: scale 0.4s var(--ease-spring);
+  }
+
+  .play svg {
+    width: 36px;
+    height: 36px;
+    margin-left: 5px;
+    fill: var(--color-ink-strong);
+  }
+
+  .video:hover .play {
+    scale: 1.1;
+  }
+
+  /* The recording fades in where its button was. */
+  :global(iframe.video) {
+    animation: video-in 0.35s ease both;
+  }
+
+  @keyframes video-in {
+    from {
+      opacity: 0;
+    }
+  }
+</style>
