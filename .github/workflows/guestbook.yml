@@ -1,0 +1,54 @@
+# The Guestbook's daily snapshot (scripts/guestbook.mjs): reads every note from the relay into
+# src/data/guestbook.json, commits it if it changed, and redeploys so the built board has it.
+# Read only towards the relay; notes on src/data/guestbook-hidden.json are left out.
+name: Guestbook snapshot
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: guestbook-snapshot
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      # Leaves the snapshot alone when the relay can't be reached; fails, writing nothing, on a flood.
+      - run: node scripts/guestbook.mjs
+
+      - name: Commit the snapshot if it changed
+        id: commit
+        run: |
+          if git diff --quiet -- src/data/guestbook.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/data/guestbook.json
+          git commit -m "Update the guestbook snapshot"
+          git push || (git pull --rebase && git push)
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      # A push made with the workflow's token doesn't start the deploy by itself, so ask for one.
+      - name: Deploy the new snapshot
+        if: steps.commit.outputs.changed == 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy.yml --ref main

@@ -1,0 +1,853 @@
+/* The Guestbook (Guestbook.astro): a green board under the app's bar with notes pinned to it, each a
+   Swapnote page (its paper, what was written on its lines, what was drawn over them) with a white
+   strip at the foot signed by its writer's Mii. Notes stay paper by night; the board darkens. The
+   sheet you sign in is the same note, bigger, beside its tools. */
+
+.gb {
+  --board: #3b9467;
+  --board-top: #43a172;
+  --board-bottom: #358a5e;
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: var(--app-bar) minmax(0, 1fr);
+  overflow: hidden;
+  color: var(--mv-ink);
+}
+
+:root[data-theme='dark'] .gb {
+  --board: #1d4232;
+  --board-top: #234d3a;
+  --board-bottom: #183a2b;
+}
+
+.gb-count {
+  color: var(--color-ink-soft);
+  font-size: 0.9375rem;
+  white-space: nowrap;
+}
+
+/* The board ------------------------------------------------------------------------------------ */
+
+.gb-board {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background:
+    radial-gradient(rgb(0 40 20 / 0.16) 1px, transparent 1.2px) 0 0 / 6px 6px,
+    linear-gradient(var(--board-top), var(--board-bottom)) fixed,
+    var(--board);
+  box-shadow: inset 0 8px 18px rgb(0 30 15 / 0.25);
+}
+
+.gb-wall {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 38px 30px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 44px var(--gutter) 130px;
+  list-style: none;
+}
+
+/* A note --------------------------------------------------------------------------------------- */
+
+.note {
+  --paper: #fff;
+  --line: #d6e0e6;
+  position: relative;
+  color-scheme: light;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow:
+    0 6px 14px rgb(0 30 15 / 0.28),
+    0 1px 2px rgb(0 0 0 / 0.2);
+  color: #2a2f31;
+  rotate: var(--tilt, 0deg);
+  transition:
+    rotate 0.35s var(--ease-spring),
+    scale 0.35s var(--ease-spring);
+}
+
+.gb-wall .note:hover,
+.gb-wall .note:focus-within {
+  z-index: 1;
+  rotate: 0deg;
+  scale: 1.02;
+}
+
+.note.is-new {
+  animation: note-in 0.55s var(--ease-spring) both;
+}
+
+@keyframes note-in {
+  from {
+    opacity: 0;
+    scale: 0.85;
+    translate: 0 -18px;
+  }
+}
+
+.note[hidden] {
+  display: none;
+}
+
+.note-pin {
+  --pin: #d63b2c;
+  --pin-hi: #ff8f80;
+  position: absolute;
+  z-index: 1;
+  top: -8px;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, var(--pin-hi), var(--pin) 60%);
+  box-shadow: 0 2px 3px rgb(0 0 0 / 0.35);
+  translate: -50% 0;
+}
+
+.note-pin[data-pin='blue'] {
+  --pin: #2f8fe0;
+  --pin-hi: #8fd0ff;
+}
+
+.note-pin[data-pin='yellow'] {
+  --pin: #e3ac12;
+  --pin-hi: #ffe58a;
+}
+
+/* The page itself, 4 by 3 as Swapnote's was. Everything on it is sized in its own width (cqw), so
+   writing wraps the same on every note, as big or small as the board makes it: 1cqw is 3.2 of
+   the note's 320 dots. */
+.note-paper {
+  position: relative;
+  container-type: inline-size;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 6px 6px 0 0;
+}
+
+.note-sheet {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 3.125cqw 5cqw 0;
+  background:
+    linear-gradient(transparent calc(7.5cqw - 1px), var(--line) 0) 0 3.125cqw / 100% 7.5cqw,
+    var(--paper);
+}
+
+.note[data-paper='yellow'] {
+  --paper: #fff8dc;
+  --line: #ead9a0;
+}
+
+.note[data-paper='mint'] {
+  --paper: #effaf3;
+  --line: #c9e6d4;
+}
+
+.note[data-paper='grid'] .note-sheet {
+  background:
+    linear-gradient(#d7e9f5 1px, transparent 1px) 0 0 / 6.25cqw 6.25cqw,
+    linear-gradient(90deg, #d7e9f5 1px, transparent 1px) 0 0 / 6.25cqw 6.25cqw,
+    #f4fbff;
+}
+
+.note[data-paper='dots'] .note-sheet {
+  background:
+    radial-gradient(#f6c6d6 0.55cqw, transparent 0.65cqw) 0 0 / 5cqw 5cqw,
+    #fff2f6;
+}
+
+.note-text {
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #2a2f31;
+  font-size: 5.3cqw;
+  font-weight: 500;
+  line-height: 7.5cqw;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+/* A note with nothing on it but a name, as the old site's were: the name, signed across it. */
+.note-sig {
+  margin: auto;
+  padding-bottom: 6cqw;
+  color: #2f6fd0;
+  font-size: 9cqw;
+  font-style: italic;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  rotate: -4deg;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.note-doodle {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+.note-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px 12px;
+  border-top: 1px solid rgb(55 70 78 / 0.1);
+}
+
+.note .face {
+  --s: 36px;
+  border-radius: 9px;
+}
+
+.note-who {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.note-who b,
+.note-who span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-who b {
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.note-who span,
+.note-foot time {
+  color: #6f787c;
+  font-size: 0.75rem;
+}
+
+.note-foot time {
+  flex: none;
+  margin-left: 2px;
+}
+
+.note-links {
+  display: flex;
+  flex: none;
+  gap: 4px;
+}
+
+.note-links:empty {
+  display: none;
+}
+
+.note-link {
+  display: block;
+  border-radius: 7px;
+  transition: scale 0.2s var(--ease-spring);
+}
+
+.note-link:hover {
+  scale: 1.12;
+}
+
+.note-link:focus-visible {
+  outline: none;
+  box-shadow: var(--glow);
+}
+
+.gb-badge {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: var(--badge-bg, #5c6468);
+}
+
+.gb-badge svg {
+  display: block;
+}
+
+/* A mod's Hide, only for names in CHAT_MODS. */
+.note-hide {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: none;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 99px;
+  background: rgb(0 0 0 / 0.65);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.gb[data-mod] .note:hover .note-hide,
+.gb[data-mod] .note-hide:focus-visible {
+  display: block;
+}
+
+/* Sign ----------------------------------------------------------------------------------------- */
+
+.gb-sign {
+  position: absolute;
+  z-index: 2;
+  right: 34px;
+  bottom: 32px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 64px;
+  padding: 0 28px 0 22px;
+  border: 0;
+  border-radius: 32px;
+  background: linear-gradient(var(--color-gloss-top), var(--color-gloss-bottom));
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.12),
+    0 8px 20px rgb(0 30 15 / 0.35);
+  color: var(--color-ink-strong);
+  font-size: 1.1875rem;
+  font-weight: 800;
+  transition: scale 0.3s var(--ease-spring);
+}
+
+.gb-sign svg {
+  color: #2f9a68;
+}
+
+.gb-sign:hover {
+  scale: 1.04;
+}
+
+.gb-sign:active {
+  scale: 0.97;
+}
+
+.gb-sign:focus-visible {
+  outline: none;
+  box-shadow:
+    var(--glow),
+    0 8px 20px rgb(0 30 15 / 0.35);
+}
+
+.gb-sign[hidden] {
+  display: none;
+}
+
+/* The sheet you sign in ------------------------------------------------------------------------ */
+
+.gb-sheet {
+  position: fixed;
+  inset: 0;
+  width: min(1040px, calc(100% - 32px));
+  max-width: none;
+  max-height: calc(100% - 32px);
+  margin: auto;
+  padding: 28px;
+  overflow-y: auto;
+  border: 0;
+  border-radius: 26px;
+  background: var(--mv-panel);
+  box-shadow: 0 24px 60px rgb(0 20 10 / 0.4);
+  color: var(--mv-ink);
+  overscroll-behavior: contain;
+}
+
+.gb-sheet[open] {
+  animation: sheet-in 0.45s var(--ease-spring) both;
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    scale: 0.94;
+    translate: 0 16px;
+  }
+}
+
+.gb-sheet::backdrop {
+  background: rgb(10 30 20 / 0.5);
+}
+
+.gb-close {
+  position: absolute;
+  z-index: 3;
+  top: 16px;
+  right: 16px;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-tag);
+  color: #fff;
+  font-size: 1.0625rem;
+  font-weight: 800;
+}
+
+.gb-close:focus-visible {
+  outline: none;
+  box-shadow: var(--glow);
+}
+
+.gb-sheet > .gate {
+  min-height: 460px;
+}
+
+.gb-sheet:has(> .gate:not([hidden])) .gb-editor {
+  display: none;
+}
+
+.gb-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 640px) minmax(260px, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+
+.note.is-editing {
+  rotate: 0deg;
+  box-shadow:
+    0 0 0 1px rgb(55 70 78 / 0.14),
+    0 6px 16px rgb(40 60 70 / 0.12);
+}
+
+.note.is-editing .note-text {
+  resize: none;
+  outline: none;
+  overflow: hidden;
+}
+
+.note.is-editing .note-doodle {
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.gb-editor[data-mode='type'] .note-doodle {
+  pointer-events: none;
+}
+
+.gb-editor[data-mode='type'] .note-text {
+  cursor: text;
+}
+
+.note.is-editing .face {
+  --s: 44px;
+  border-radius: 10px;
+}
+
+.note.is-editing .note-who b {
+  font-size: 1rem;
+}
+
+.note.is-editing .note-who span {
+  font-size: 0.8125rem;
+}
+
+.gb-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  /* Clear of the B button. */
+  padding-top: 0;
+}
+
+.gb-tabs {
+  display: flex;
+  margin-right: 60px;
+  padding: 4px;
+  border-radius: 14px;
+  background: light-dark(#edf0f2, #353e44);
+}
+
+.gb-tabs button {
+  flex: 1;
+  height: 42px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--mv-soft);
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.gb-tabs button[aria-selected='true'] {
+  background: var(--mv-panel);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.14);
+  color: var(--mv-ink);
+}
+
+.gb-draw {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: opacity 0.2s ease;
+}
+
+.gb-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.gb-gap {
+  flex: 1;
+}
+
+.gb-tool {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 15px;
+  background: none;
+  color: var(--mv-soft);
+}
+
+.gb-tool:hover {
+  background: light-dark(#f2f4f5, #353e44);
+}
+
+.gb-tool[aria-pressed='true'] {
+  background: light-dark(#ecf8f1, rgb(47 154 104 / 0.18));
+  box-shadow: 0 0 0 3px #2f9a68;
+  color: light-dark(#23784f, #7fd3a6);
+}
+
+.gb-ink {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--ink);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.18);
+}
+
+.gb-ink[aria-checked='true'],
+.gb-paper[aria-checked='true'] {
+  box-shadow: var(--glow);
+}
+
+.gb-paper {
+  width: 48px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.16);
+}
+
+.gb-paper[data-paper='white'] {
+  background: linear-gradient(transparent 7px, #c9d5dc 0) 0 0 / 100% 8px, #fff;
+}
+
+.gb-paper[data-paper='yellow'] {
+  background: linear-gradient(transparent 7px, #e6d08e 0) 0 0 / 100% 8px, #fff8dc;
+}
+
+.gb-paper[data-paper='grid'] {
+  background:
+    linear-gradient(#cfe3f1 1px, transparent 1px) 0 0 / 8px 8px,
+    linear-gradient(90deg, #cfe3f1 1px, transparent 1px) 0 0 / 8px 8px,
+    #f4fbff;
+}
+
+.gb-paper[data-paper='dots'] {
+  background:
+    radial-gradient(#f2b6ca 1.2px, transparent 1.4px) 0 0 / 7px 7px,
+    #fff2f6;
+}
+
+.gb-paper[data-paper='mint'] {
+  background: linear-gradient(transparent 7px, #b9dfc8 0) 0 0 / 100% 8px, #effaf3;
+}
+
+.gb-tools hr {
+  height: 1px;
+  margin: 2px 0;
+  border: 0;
+  background: var(--mv-line);
+}
+
+.gb-field,
+.gb-links legend {
+  color: var(--mv-soft);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.gb-field {
+  display: grid;
+  gap: 6px;
+}
+
+.gb-field input,
+.gb-link {
+  height: 46px;
+  border: 2px solid light-dark(#d9dfe2, #47525a);
+  border-radius: 12px;
+  background: var(--mv-panel);
+  color: var(--mv-ink);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.gb-field input {
+  padding: 0 14px;
+}
+
+.gb-field input:focus,
+.gb-link:focus-within {
+  border-color: #46c3f0;
+  outline: none;
+}
+
+.gb-links {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.gb-links legend {
+  margin-bottom: 6px;
+  padding: 0;
+}
+
+.gb-link-list {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+}
+
+.gb-link-list:empty {
+  display: none;
+}
+
+.gb-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 0 6px 0 9px;
+}
+
+.gb-link-add {
+  border-style: dashed;
+}
+
+.gb-link-add[hidden] {
+  display: none;
+}
+
+.gb-link-add input,
+.gb-link-add input:focus,
+.gb-link-add input:focus-visible {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: none;
+  box-shadow: none;
+}
+
+.gb-link-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gb-badge.is-add {
+  background: light-dark(#edf0f2, #353e44);
+  color: var(--mv-soft);
+}
+
+.gb-link-x {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--mv-soft);
+}
+
+.gb-link-x:hover {
+  background: light-dark(#f2f4f5, #353e44);
+}
+
+.gb-handle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  animation: gate-in 0.3s var(--ease-spring) both;
+}
+
+.gb-handle[hidden] {
+  display: none;
+}
+
+.gb-handle-pick {
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  transition: scale 0.2s var(--ease-spring);
+}
+
+.gb-handle-pick .gb-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+}
+
+.gb-handle-pick:hover {
+  scale: 1.08;
+}
+
+.gb-handle-pick:focus-visible {
+  outline: none;
+  box-shadow: var(--glow);
+}
+
+.gb-error {
+  color: #d9473b;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.gb-error[hidden] {
+  display: none;
+}
+
+.gb-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.gb-pin {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 58px;
+  border: 0;
+  border-radius: 29px;
+  background: linear-gradient(#6fd3a0, #2f9a68);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.5),
+    0 4px 10px rgb(20 100 60 / 0.3);
+  color: #fff;
+  font-size: 1.125rem;
+  font-weight: 800;
+  text-shadow: 0 1px 1px rgb(0 60 30 / 0.3);
+  transition: scale 0.25s var(--ease-spring);
+}
+
+.gb-pin:active {
+  scale: 0.97;
+}
+
+.gb-pin:focus-visible,
+.gb-remove:focus-visible {
+  outline: none;
+  box-shadow: var(--glow);
+}
+
+.gb-remove {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: light-dark(#f2f4f5, #353e44);
+  color: #d9473b;
+}
+
+.gb-remove[hidden] {
+  display: none;
+}
+
+/* A phone ------------------------------------------------------------------------------------- */
+
+@media (max-width: 879px) {
+  .gb-count {
+    display: none;
+  }
+
+  .gb-wall {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+    padding: 30px 22px 120px;
+  }
+
+  .gb-sign {
+    right: 18px;
+    bottom: calc(22px + env(safe-area-inset-bottom));
+    height: 58px;
+    padding: 0 24px 0 18px;
+    font-size: 1.0625rem;
+  }
+
+  .gb-sheet {
+    width: 100%;
+    max-height: calc(100% - 24px);
+    margin: auto 0 0;
+    padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+    border-radius: 24px 24px 0 0;
+  }
+
+  .gb-editor {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .gb-close {
+    top: 12px;
+    right: 12px;
+  }
+
+  .gb-editor .note {
+    margin-top: 58px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .note,
+  .note.is-new,
+  .gb-sheet[open] {
+    animation: none;
+    transition: none;
+  }
+}

@@ -1,0 +1,151 @@
+---
+// The Guestbook: notes pinned to a green board, as Swapnote's were drawn and written, each signed with
+// its writer's Mii. The board is built from the snapshot (src/data/guestbook.json) so it reads with
+// no JavaScript; main.ts adds what the relay holds that's newer, and runs the sheet you sign in.
+// Signing asks for your name and the live apps' agreement first (the gate, in the sheet).
+import { Add01Icon, Cancel01Icon, Delete02Icon, EraserIcon, HighlighterIcon, PencilEdit02Icon, Pin02Icon, UndoIcon } from '@hugeicons/core-free-icons';
+import HugeIcon from '../ui/HugeIcon.astro';
+import AppBar from '../ui/AppBar.astro';
+import Gate from '../live/Gate.astro';
+import Note from './Note.astro';
+import { INKS, MAX_BLURB, MAX_FROM, PAPERS, type Entry } from './entry';
+import { HANDLE_BADGES } from './links';
+import './guestbook.css';
+
+interface Props {
+  entries: Entry[];
+  /** Notes a mod has hidden for good (src/data/guestbook-hidden.json), kept off the board whatever the relay holds. */
+  hidden: string[];
+}
+
+const { entries, hidden } = Astro.props;
+const PAPER_NAMES: Record<(typeof PAPERS)[number], string> = {
+  white: 'White, ruled',
+  yellow: 'Yellow, ruled',
+  grid: 'Blue grid',
+  dots: 'Pink dots',
+  mint: 'Mint, ruled',
+};
+const count = (n: number) => `${n} ${n === 1 ? 'note' : 'notes'}`;
+---
+
+<div class="gb live-app" data-guestbook data-hidden={JSON.stringify(hidden)}>
+  <AppBar path="/apps/guestbook/" title="Guestbook">
+    <span slot="title" class="gb-count" data-count>{count(entries.length)}</span>
+  </AppBar>
+
+  <section class="gb-board" aria-label="Notes" data-board>
+    <ol class="gb-wall" data-wall>
+      {entries.map((entry) => <Note {entry} />)}
+    </ol>
+  </section>
+
+  <button type="button" class="gb-sign" data-sign hidden data-sfx>
+    <HugeIcon icon={PencilEdit02Icon} size={26} strokeWidth={2} />
+    <span data-sign-label>Sign</span>
+  </button>
+
+  <dialog class="gb-sheet" data-sheet aria-label="Sign the guestbook">
+    <button type="button" class="gb-close" data-close aria-label="Close" data-sfx="back">B</button>
+    <Gate action="Continue" />
+    <form class="gb-editor" data-editor data-mode="draw" autocomplete="off">
+      <article class="note is-editing" data-paper="white" data-note>
+        <div class="note-paper">
+          <div class="note-sheet">
+            <label class="sr-only" for="gb-text">What you want to say</label>
+            <textarea class="note-text" id="gb-text" data-text maxlength={MAX_BLURB} rows="9" spellcheck="true"></textarea>
+          </div>
+          <canvas class="note-doodle" data-pad aria-label="Drawing paper"></canvas>
+        </div>
+        <footer class="note-foot">
+          <span class="face" data-face="me"><img alt="" /></span>
+          <div class="note-who">
+            <b data-my-name></b>
+            <span data-my-from></span>
+          </div>
+          <span class="note-links" data-my-links></span>
+          <time>Today</time>
+        </footer>
+      </article>
+
+      <div class="gb-tools">
+        <div class="gb-tabs" role="tablist" aria-label="Note">
+          <button type="button" role="tab" aria-selected="true" data-mode-pick="draw" data-sfx>Draw</button>
+          <button type="button" role="tab" aria-selected="false" data-mode-pick="type" data-sfx>Write</button>
+        </div>
+
+        <div class="gb-draw">
+          <div class="gb-row" role="toolbar" aria-label="Pen">
+            <button type="button" class="gb-tool" data-tool="pen" aria-pressed="true" aria-label="Pen"><HugeIcon icon={PencilEdit02Icon} size={22} strokeWidth={1.9} /></button>
+            <button type="button" class="gb-tool" data-tool="thick" aria-pressed="false" aria-label="Marker"><HugeIcon icon={HighlighterIcon} size={22} strokeWidth={1.9} /></button>
+            <button type="button" class="gb-tool" data-tool="eraser" aria-pressed="false" aria-label="Eraser"><HugeIcon icon={EraserIcon} size={22} strokeWidth={1.9} /></button>
+            <span class="gb-gap"></span>
+            <button type="button" class="gb-tool" data-undo aria-label="Undo"><HugeIcon icon={UndoIcon} size={21} strokeWidth={1.9} /></button>
+            <button type="button" class="gb-tool" data-clear aria-label="Clear the drawing"><HugeIcon icon={Delete02Icon} size={21} strokeWidth={1.9} /></button>
+          </div>
+          <div class="gb-row" role="radiogroup" aria-label="Ink">
+            {INKS.map((ink, i) => <button type="button" role="radio" class="gb-ink" style={`--ink:${ink.color}`} data-ink={ink.color} aria-checked={i === 0 ? 'true' : 'false'} aria-label={ink.name} />)}
+          </div>
+        </div>
+
+        <div class="gb-row" role="radiogroup" aria-label="Paper">
+          {PAPERS.map((p, i) => <button type="button" role="radio" class="gb-paper" data-paper={p} data-paper-pick={i} aria-checked={i === 0 ? 'true' : 'false'} aria-label={PAPER_NAMES[p]} />)}
+        </div>
+
+        <hr />
+
+        <label class="gb-field">
+          <span>From</span>
+          <input data-from maxlength={MAX_FROM} enterkeyhint="next" />
+        </label>
+
+        <fieldset class="gb-links">
+          <legend>Links</legend>
+          <ul class="gb-link-list" data-link-list></ul>
+          <div class="gb-link gb-link-add" data-link-add>
+            <span class="gb-badge is-add" aria-hidden="true"><HugeIcon icon={Add01Icon} size={14} strokeWidth={2.4} /></span>
+            <input data-link-input placeholder="Handle, email or address" aria-label="Add a link" enterkeyhint="done" autocapitalize="off" spellcheck="false" />
+          </div>
+          <div class="gb-handle" data-handle role="group" aria-label="Which one is it?" hidden>
+            {
+              HANDLE_BADGES.map((b) => (
+                <button type="button" class="gb-handle-pick" data-handle-pick={b.id} aria-label={b.label} title={b.label}>
+                  <span class="gb-badge" style={`--badge-bg:${b.bg};color:${b.ink}`} aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="14" height="14">
+                      {b.stroke ? <path d={b.path} fill="none" stroke="currentColor" stroke-width="2" /> : <path d={b.path} fill="currentColor" />}
+                    </svg>
+                  </span>
+                </button>
+              ))
+            }
+          </div>
+        </fieldset>
+
+        <p class="gb-error" data-error role="alert" hidden></p>
+
+        <div class="gb-actions">
+          <button type="button" class="gb-remove" data-remove hidden aria-label="Take your note down" title="Take your note down"><HugeIcon icon={Cancel01Icon} size={20} strokeWidth={2.2} /></button>
+          <button type="submit" class="gb-pin" data-pin data-sfx>
+            <HugeIcon icon={Pin02Icon} size={22} strokeWidth={2} />
+            <span data-pin-label>Pin it</span>
+          </button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+</div>
+
+<script>
+  // Pages change in place, so the Guestbook starts on each visit and stops when you go.
+  let stopping: Promise<() => void> | null = null;
+  document.addEventListener('astro:page-load', () => {
+    const root = document.querySelector<HTMLElement>('[data-guestbook]');
+    if (!root || root.dataset.live !== undefined) return;
+    root.dataset.live = '';
+    stopping = import('./main').then(({ mount }) => mount(root));
+  });
+  document.addEventListener('astro:before-swap', () => {
+    stopping?.then((stop) => stop());
+    stopping = null;
+  });
+</script>
