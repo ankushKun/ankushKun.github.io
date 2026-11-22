@@ -11,7 +11,7 @@ pnpm favicons # save the icons of linked sites (after adding links)
 
 ## Deploying
 
-Pushing to `main` deploys the site to GitHub Pages from `ankushKun/ankushKun.github.io` (`.github/workflows/deploy.yml`): it installs with pnpm, runs `pnpm check` and `pnpm build`, and publishes `dist/`. Pull requests run the same check and build without deploying, and the workflow can be run by hand from the Actions tab. The custom domain is set in the repo's Pages settings rather than by a `CNAME` file, since the site deploys from a workflow.
+Pushing to `main` deploys the site to GitHub Pages from `ankushKun/ankushKun.github.io` (`.github/workflows/deploy.yml`): it installs with pnpm, runs `pnpm check` and `pnpm build`, and publishes `dist/`. Pull requests run the same check and build without deploying, and the workflow can be run by hand from the Actions tab. The custom domain is set in the repo's Pages settings rather than by a `CNAME` file, since the site deploys from a workflow. `ankush.one` is proxied through Cloudflare, which serves HTTPS and redirects plain HTTP, so GitHub can't issue its own certificate and Enforce HTTPS stays off there. The repo has to be named `ankushKun.github.io`: only the user site's domain carries the other repos' Pages, so `ankush.one/3dsDL/` and the rest keep working.
 
 ## Adding content
 
