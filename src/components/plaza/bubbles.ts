@@ -1,4 +1,5 @@
-// Speech bubbles: now and then a Mii says something real from the site, and the bubble links to it.
+// Speech bubbles: now and then a Mii says an entry from anywhere on the site, and the bubble links to it.
+// Your own Mii opens with a greeting, alone on screen; the rest only start once it has finished.
 import * as THREE from 'three';
 import type { Crowd } from './crowd';
 import type { PlazaPost } from './types';
@@ -28,15 +29,33 @@ export class Bubbles {
   private active: Active[] = [];
   private queue: PlazaPost[];
   private last = -Infinity;
+  /** Said before anything else, once: the greeting, or something asked for with `sayNext`. */
+  private first: PlazaPost | null;
+  /** While it is up, nobody else speaks. */
+  private alone: Active | null = null;
 
   constructor(
     private layer: HTMLElement,
     posts: PlazaPost[],
     /** Icon image URL for each cube. */
     private thumbs: string[],
+    greeting: PlazaPost | null = null,
   ) {
-    // Your own Mii speaks first.
-    this.queue = [...posts.filter((p) => p.me), ...posts.filter((p) => !p.me)];
+    this.first = greeting;
+    // After the greeting, every entry in a new order on every visit, never two from one block running.
+    this.queue = shuffled(posts);
+  }
+
+  /** Whether something is waiting to be said first (the greeting), which may come sooner than the rest. */
+  get greeting() {
+    return this.first !== null;
+  }
+
+  /** Says `post` next, alone, as soon as it can, clearing whatever is up. */
+  sayNext(post: PlazaPost) {
+    this.dismiss();
+    this.first = post;
+    this.last = -Infinity;
   }
 
   /** Removes every bubble at once. */
@@ -45,10 +64,18 @@ export class Bubbles {
     this.active = [];
   }
 
-  /** Lets every bubble fade away. */
-  dismiss() {
-    for (const a of this.active) this.close(a);
-    this.active = [];
+  /** Lets every bubble fade away, but `keep` if given, which stays up for good (it was pressed). */
+  dismiss(keep?: Element) {
+    for (const a of this.active) {
+      if (a.el === keep) a.until = Infinity;
+      else this.close(a);
+    }
+    this.active = this.active.filter((a) => a.el === keep);
+  }
+
+  /** Who is saying the bubble `el`, or -1. */
+  speakerOf(el: Element) {
+    return this.active.find((a) => a.el === el)?.speaker ?? -1;
   }
 
   /** `avoid` lists screen boxes a new bubble must not cover: the section blocks. */
@@ -67,7 +94,9 @@ export class Bubbles {
       }
     }
 
-    const post = this.queue[0];
+    if (this.alone && this.active.includes(this.alone)) return;
+    const post = this.first ?? this.queue[0];
+    if (this.active.some((a) => a.until === Infinity)) return;
     if (!open || !post || this.active.length >= (w < 720 ? 1 : 2) || time - this.last < EVERY) return;
     this.last = time;
 
@@ -93,12 +122,17 @@ export class Bubbles {
       el.classList.add('is-in');
       crowd.say(speaker, time, LIFE);
       this.active.push(a);
-      this.queue.push(this.queue.shift()!);
+      if (post === this.first) {
+        // Alone until it ends; the others follow a beat after.
+        this.first = null;
+        this.alone = a;
+        this.last = a.until - EVERY + 0.8;
+      } else this.queue.push(this.queue.shift()!);
       return;
     }
-    // Nobody suitable in view: try the next post soon.
+    // Nobody suitable in view: try again soon, with the next post unless this one goes first.
     el.remove();
-    this.queue.push(this.queue.shift()!);
+    if (post !== this.first) this.queue.push(this.queue.shift()!);
     this.last = time - EVERY * 0.75;
   }
 
@@ -119,7 +153,8 @@ export class Bubbles {
     const sx = (_v.x + 1) * 0.5 * w;
     const sy = (1 - _v.y) * 0.5 * h;
     const x = clamp(sx - bw * 0.42, MARGIN, Math.max(MARGIN, w - bw - MARGIN));
-    const y = sy - bh - 14;
+    // Room under the bubble for its tail, which ends just over the head.
+    const y = sy - bh - 20;
     return {
       box: { x, y, w: bw, h: bh },
       tail: clamp(sx - x, 30, bw - 30),
@@ -144,6 +179,23 @@ export class Bubbles {
     el.append(tag, img, text);
     return el;
   }
+}
+
+/** Posts in a random order, taking turns between blocks so the same block never speaks twice running. */
+function shuffled(posts: PlazaPost[]) {
+  const mix = <T>(list: T[]) => {
+    for (let i = list.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [list[i], list[j]] = [list[j], list[i]];
+    }
+    return list;
+  };
+  const byCube = new Map<number, PlazaPost[]>();
+  for (const p of posts) byCube.set(p.cube, [...(byCube.get(p.cube) ?? []), p]);
+  const groups = mix([...byCube.values()].map(mix));
+  const out: PlazaPost[] = [];
+  for (let i = 0; groups.some((g) => i < g.length); i++) for (const g of groups) if (g[i]) out.push(g[i]);
+  return out;
 }
 
 /** How much of two boxes overlaps, in square pixels. */

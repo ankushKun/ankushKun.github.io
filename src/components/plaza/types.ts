@@ -24,7 +24,7 @@ export interface PlazaPost {
   tag: string;
   text: string;
   href: string;
-  /** Spoken by your own Mii in the middle instead of someone in the crowd. */
+  /** Spoken by your own Mii in the middle instead of someone in the crowd (the welcome). */
   me?: boolean;
 }
 
@@ -32,13 +32,13 @@ export interface PlazaPost {
 export interface PlazaMii {
   code: string;
   name: string;
-  /** The QR code image, shown on the hover card. */
-  qr?: string;
 }
 
 export interface PlazaData {
   cubes: PlazaCube[];
   posts: PlazaPost[];
+  /** What your own Mii may open with; one is picked on each visit and said before anything else. */
+  welcome: PlazaPost[];
   /** The group in the middle. You are first. */
   hero: PlazaMii[];
   /** Miis from QR images, walked by the crowd before random Miis fill the rest. */

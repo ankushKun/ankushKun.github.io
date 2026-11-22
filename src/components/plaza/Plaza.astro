@@ -1,33 +1,23 @@
 ---
 // The plaza: the home page itself, by day or by night after the site's light or dark. Without
 // WebGL or JavaScript it shows a plain grid of links.
-// `lazy` leaves its data and the early downloads out: other pages fetch /plaza.json if and when
-// the plaza starts behind them.
 import '@fontsource/m-plus-1p/latin-500.css';
 import '@fontsource/m-plus-1p/latin-700.css';
+import { VolumeHighIcon, VolumeMute02Icon } from '@hugeicons/core-free-icons';
 import { getPlazaData } from '../../lib/plaza';
+import HugeIcon from '../ui/HugeIcon.astro';
 
-interface Props {
-  lazy?: boolean;
-}
-
-const { lazy = false } = Astro.props;
-const data = lazy ? null : await getPlazaData();
-const json = data ? JSON.stringify(data).replace(/</g, '\\u003c') : '';
+const data = await getPlazaData();
+const json = JSON.stringify(data).replace(/</g, '\\u003c');
 ---
 
-{
-  data && (
-    <>
-      <link rel="preload" href="/ffl/FFLResHigh.dat" as="fetch" crossorigin="anonymous" />
-      <link rel="preload" href="/ffl/ffl.wasm" as="fetch" crossorigin="anonymous" />
-      <link rel="preload" href="/ffl/body-m.glb" as="fetch" crossorigin="anonymous" />
-      <link rel="preload" href="/ffl/body-f.glb" as="fetch" crossorigin="anonymous" />
-      <link rel="preload" href="/media/warawara-plaza.mp3" as="fetch" crossorigin="anonymous" />
-      {data.cubes.map((c) => c.art && !c.feature && <link rel="preload" href={c.art} as="image" />)}
-    </>
-  )
-}
+<link rel="preload" href="/ffl/FFLResHigh.dat" as="fetch" crossorigin="anonymous" />
+<link rel="preload" href="/ffl/ffl.wasm" as="fetch" crossorigin="anonymous" />
+<link rel="preload" href="/ffl/body-m.glb" as="fetch" crossorigin="anonymous" />
+<link rel="preload" href="/ffl/body-f.glb" as="fetch" crossorigin="anonymous" />
+<link rel="preload" href="/media/warawara-plaza.mp3" as="fetch" crossorigin="anonymous" />
+<link rel="preload" href="/fonts/monocraft-latin.otf" as="font" type="font/otf" crossorigin="anonymous" />
+{data.cubes.map((c) => c.art && !c.feature && <link rel="preload" href={c.art} as="image" />)}
 
 <section class="plaza" data-plaza data-state="static">
   <script is:inline>
@@ -36,7 +26,7 @@ const json = data ? JSON.stringify(data).replace(/</g, '\\u003c') : '';
   <canvas aria-hidden="true"></canvas>
   <nav class="plaza-links" aria-label="Sections">
     {
-      data?.cubes.map((c, i) => (
+      data.cubes.map((c, i) => (
         <a href={c.href} data-cube={i} aria-label={c.label}>
           <span>{c.label}</span>
         </a>
@@ -44,55 +34,105 @@ const json = data ? JSON.stringify(data).replace(/</g, '\\u003c') : '';
     }
   </nav>
   <div class="plaza-bubbles" aria-hidden="true"></div>
-  <div class="plaza-who" aria-hidden="true"><img alt="" width="188" height="188" /><span></span></div>
-  <div class="plaza-ghost tile" aria-hidden="true"><img alt="" /></div>
+  <div class="plaza-who" aria-hidden="true"></div>
   <button type="button" class="plaza-start" aria-label="Start">
     <svg class="plaza-start-hand" viewBox="0 0 64 64" aria-hidden="true">
       <path d="M24 30V9.5a5 5 0 0 1 10 0V27l2-.6a5 5 0 0 1 6.300 3.300l.2.700 1.900-.5a5 5 0 0 1 6.100 3.400l.3 1 1-.2a5 5 0 0 1 5.900 3.900l1.200 6.300a17 17 0 0 1-3.700 14.200L52 60H28.500L16.600 45.900a5.300 5.300 0 0 1 .7-7.600 5.300 5.300 0 0 1 6.700.2z"></path>
     </svg>
   </button>
   <div class="plaza-veil" aria-hidden="true"><span></span><span></span><span></span></div>
-  {data && <script type="application/json" data-plaza-data set:html={json} />}
+  <script type="application/json" data-plaza-data set:html={json} />
 </section>
+<!-- The plaza's sound, beside the light switch: muted until the browser lets sound out (your first
+     touch), then yours to turn off and on. Outside the plaza, so pressing it is never a tap on the
+     scene. main.ts shows it once there is sound to play. -->
+<button type="button" class="plaza-sound" aria-label="Sound" aria-pressed="false" data-plaza-sound hidden>
+  <HugeIcon icon={VolumeHighIcon} size={22} strokeWidth={1.8} class="on" />
+  <HugeIcon icon={VolumeMute02Icon} size={22} strokeWidth={1.8} class="off" />
+</button>
 
 <script>
   import type { PlazaData } from './types';
 
-  // The plaza starts once and then lives on across page changes (see src/scripts/motion.ts). On the
-  // home page it starts at once. Behind another page it starts only where there is room for it (a
-  // big screen, a fine pointer, memory to spare), once the page itself has loaded, and fades in.
+  // Starts the plaza, unless the visitor saves data: then the blocks stay a plain grid of links.
+  const root = document.querySelector<HTMLElement>('[data-plaza]');
   const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
-  const roomy = () => {
-    const device = navigator as Navigator & { deviceMemory?: number };
-    return matchMedia('(pointer: fine) and (min-width: 1000px) and (min-height: 620px)').matches && (device.deviceMemory ?? 8) >= 4;
-  };
-
-  function boot() {
-    const root = document.querySelector<HTMLElement>('[data-plaza]');
-    if (!root || root.dataset.boot) return;
-    const home = location.pathname === '/';
-    if (saveData) {
-      root.dataset.state = 'static';
-      return;
-    }
-    if (!home && !roomy()) return;
-    root.dataset.boot = '1';
-    const inline = root.querySelector('[data-plaza-data]')?.textContent;
-    const data: Promise<PlazaData> = inline ? Promise.resolve(JSON.parse(inline)) : fetch('/plaza.json').then((r) => r.json());
-    const later = home ? Promise.resolve() : new Promise((done) => setTimeout(done, 400));
-    Promise.all([import('./main'), data, later])
-      .then(([{ start }, plaza]) => start(root, plaza, { backdrop: location.pathname === '/' ? undefined : location.pathname }))
+  if (root && saveData) root.dataset.state = 'static';
+  else if (root) {
+    const plaza: PlazaData = JSON.parse(root.querySelector('[data-plaza-data]')?.textContent ?? '{}');
+    import('./main')
+      .then(({ start }) => start(root, plaza))
       .catch((err: unknown) => {
         console.error('Plaza failed to start', err);
         root.dataset.state = 'static';
-        delete root.dataset.boot;
       });
   }
-  boot();
-  document.addEventListener('astro:page-load', boot);
 </script>
 
 <style is:global>
+  /* Left of the light switch (ThemeToggle.astro), in the same quiet style. */
+  .plaza-sound {
+    position: fixed;
+    z-index: 60;
+    top: max(12px, env(safe-area-inset-top));
+    right: calc(max(12px, env(safe-area-inset-right)) + 38px);
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: light-dark(rgb(63 68 70 / 0.45), rgb(220 230 235 / 0.5));
+    transition: color 0.2s ease;
+  }
+
+  .plaza-sound[hidden] {
+    display: none;
+  }
+
+  .plaza-sound:hover {
+    color: light-dark(rgb(63 68 70 / 0.8), rgb(220 230 235 / 0.85));
+  }
+
+  /* One icon swaps for the other, as the light switch's sun and moon do. A speaker is shorter than
+     the moon in its box (16 of 24 units against 19), so it is drawn a little larger to match. */
+  .plaza-sound svg {
+    grid-area: 1 / 1;
+    width: 21px;
+    height: 21px;
+    transition:
+      opacity 0.2s ease,
+      scale 0.35s var(--ease-spring);
+  }
+
+  .plaza-sound .on,
+  .plaza-sound[aria-pressed='false'] .on,
+  .plaza-sound[aria-pressed='true'] .off {
+    opacity: 0;
+    scale: 0.6;
+  }
+
+  .plaza-sound[aria-pressed='true'] .on,
+  .plaza-sound[aria-pressed='false'] .off {
+    opacity: 1;
+    scale: 1;
+  }
+
+  @media (max-width: 879px) {
+    .plaza-sound {
+      right: calc(max(12px, env(safe-area-inset-right)) + 44px);
+      width: 40px;
+      height: 40px;
+    }
+
+    .plaza-sound svg {
+      width: 24px;
+      height: 24px;
+    }
+  }
+
   .plaza {
     /* One unit is a hundredth of the screen's height on a 16:9 screen, as on the console. */
     --u: clamp(5.4px, min(1vh, 0.5625vw), 9px);
@@ -253,22 +293,12 @@ const json = data ? JSON.stringify(data).replace(/</g, '\\u003c') : '';
     padding: calc(var(--b) * 2.4) calc(var(--b) * 3.6) calc(var(--b) * 2.4) calc(var(--b) * 2.4);
     border-radius: calc(var(--b) * 3.6);
     corner-shape: squircle;
-    background: light-dark(rgb(250 252 253 / 0.8), rgb(36 42 46 / 0.78));
-    backdrop-filter: blur(calc(var(--b) * 1.2)) saturate(1.15);
-    -webkit-backdrop-filter: blur(calc(var(--b) * 1.2)) saturate(1.15);
-    box-shadow:
-      inset 0 0 0 1px light-dark(rgb(255 255 255 / 0.7), rgb(255 255 255 / 0.1)),
-      0 0 0 1px light-dark(rgb(80 100 110 / 0.14), rgb(0 0 0 / 0.5)),
-      0 calc(var(--b) * 0.6) calc(var(--b) * 2.4) light-dark(rgb(60 85 95 / 0.12), rgb(0 0 0 / 0.4));
     color: light-dark(#3a3f42, #e3eaed);
-    transition:
-      background-color 0.5s ease,
-      color 0.5s ease;
+    transition: color 0.5s ease;
     text-decoration: none;
-    opacity: 0;
     pointer-events: auto;
     /* Grows out of its tail, which points at whoever is speaking (bubbles.ts sets --tail). */
-    transform-origin: var(--tail, 30%) calc(100% + 14px);
+    transform-origin: var(--tail, 30%) calc(100% + 20px);
     will-change: transform;
   }
 
@@ -279,12 +309,77 @@ const json = data ? JSON.stringify(data).replace(/</g, '\\u003c') : '';
     }
   }
 
+  /* The frosted glass, as two siblings: the body (::before) and the tail (::after), a corner of the
+     same glass hanging from the bottom edge and pointing down at whoever is speaking (bubbles.ts sets
+     --tail to their head's place along the bubble). Glass that blurs what is behind it hides that
+     from anything inside it, so neither sits in the other: both blur the plaza itself. The tail is
+     a square turned on its point, cut to the half below the edge, so it never doubles over the body. */
+  .plaza-bubble::before,
+  .plaza-bubble::after {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    background: light-dark(rgb(250 252 253 / 0.8), rgb(36 42 46 / 0.78));
+    backdrop-filter: blur(calc(var(--b) * 1.2)) saturate(1.15);
+    -webkit-backdrop-filter: blur(calc(var(--b) * 1.2)) saturate(1.15);
+    transition: background-color 0.5s ease;
+    pointer-events: none;
+  }
+
+  .plaza-bubble::before {
+    inset: 0;
+    border-radius: inherit;
+    corner-shape: squircle;
+    box-shadow: 0 calc(var(--b) * 0.6) calc(var(--b) * 2.4) light-dark(rgb(60 85 95 / 0.12), rgb(0 0 0 / 0.4));
+  }
+
+  .plaza-bubble::after {
+    --t: calc(var(--b) * 4.2);
+    top: calc(100% - 0.5px);
+    left: var(--tail, 30%);
+    width: var(--t);
+    height: var(--t);
+    border-bottom-right-radius: calc(var(--b) * 0.8);
+    translate: -50% -50%;
+    rotate: 45deg;
+    clip-path: polygon(100% 0, 100% 100%, 0 100%);
+  }
+
+  /* A bubble pops in and out: the whole grows or shrinks, and each part fades on its own, since
+     fading the whole would stop its glass from blurring the plaza while it did. */
   .plaza-bubble.is-in {
     animation: plaza-pop 0.3s cubic-bezier(0.3, 1.5, 0.5, 1) both;
   }
 
   .plaza-bubble.is-out {
     animation: plaza-pop 0.26s ease-in reverse both;
+  }
+
+  .plaza-bubble.is-in > *,
+  .plaza-bubble.is-in::before,
+  .plaza-bubble.is-in::after {
+    animation: plaza-fade 0.2s ease both;
+  }
+
+  .plaza-bubble.is-out > *,
+  .plaza-bubble.is-out::before,
+  .plaza-bubble.is-out::after {
+    animation: plaza-fade 0.26s ease-in reverse both;
+  }
+
+  /* Pressed: as the camera dives into whoever is saying it, the bubble grows toward you from its
+     tail and goes with the rest of the plaza (main.ts, --dive). */
+  .plaza-bubble.is-chosen {
+    animation: plaza-bubble-dive var(--dive, 0.7s) cubic-bezier(0.4, 0, 0.6, 1) both;
+  }
+
+  @keyframes plaza-bubble-dive {
+    from {
+      scale: 1;
+    }
+    to {
+      scale: 1.9;
+    }
   }
 
   .plaza-bubble-tag {
@@ -330,62 +425,39 @@ const json = data ? JSON.stringify(data).replace(/</g, '\\u003c') : '';
     cursor: grabbing;
   }
 
-  /* Who a Mii is, over its head once the pointer rests on it: its name and its QR code. */
+  /* Name tags are set in Monocraft (Idrees Hassan, SIL Open Font License, public/fonts/), a pixel
+     font after Minecraft's, cut down to Latin letters. */
+  @font-face {
+    font-family: 'Monocraft';
+    src: url('/fonts/monocraft-latin.otf') format('opentype');
+    font-display: block;
+  }
+
+  /* Who a Mii is: its name over its head on a square, see-through black tag, as name tags are in
+     Minecraft, once the pointer rests on it (main.ts keeps it over the head as the Mii moves). */
   .plaza-who {
-    --b: clamp(3.8px, min(0.72vh, 0.4vw), 5.4px);
     position: absolute;
     z-index: 4;
     top: 0;
     left: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: calc(var(--b) * 1.6);
-    padding: calc(var(--b) * 2.2);
-    border-radius: calc(var(--b) * 3.6);
-    corner-shape: squircle;
-    background: light-dark(rgb(250 252 253 / 0.86), rgb(36 42 46 / 0.84));
-    backdrop-filter: blur(calc(var(--b) * 1.2)) saturate(1.15);
-    -webkit-backdrop-filter: blur(calc(var(--b) * 1.2)) saturate(1.15);
-    box-shadow:
-      inset 0 0 0 1px light-dark(rgb(255 255 255 / 0.7), rgb(255 255 255 / 0.1)),
-      0 0 0 1px light-dark(rgb(80 100 110 / 0.14), rgb(0 0 0 / 0.5)),
-      0 calc(var(--b) * 0.6) calc(var(--b) * 2.4) light-dark(rgb(60 85 95 / 0.12), rgb(0 0 0 / 0.4));
+    padding: 0.19em 0.31em 0.125em;
+    background: rgb(0 0 0 / 0.3);
+    color: #fff;
+    font-family: 'Monocraft', ui-monospace, monospace;
+    /* Set by main.ts to the tag's size in the world at the Mii's distance. */
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.25;
+    white-space: nowrap;
+    -webkit-font-smoothing: none;
+    font-smooth: never;
     opacity: 0;
-    scale: 0.85;
-    /* Grows out of the head it names, wherever the card had to sit to stay on screen (main.ts). */
-    transform-origin: var(--ox, 50%) var(--oy, 100%);
-    transition:
-      opacity 0.16s ease,
-      scale 0.22s cubic-bezier(0.3, 1.5, 0.5, 1);
+    transition: opacity 0.15s ease;
     pointer-events: none;
   }
 
   .plaza-who.is-in {
     opacity: 1;
-    scale: 1;
-  }
-
-  .plaza-who img {
-    display: block;
-    width: calc(var(--b) * 24);
-    height: calc(var(--b) * 24);
-    border-radius: calc(var(--b) * 1.2);
-    image-rendering: pixelated;
-  }
-
-  .plaza-who img[hidden] {
-    display: none;
-  }
-
-  .plaza-who span {
-    padding: 0 calc(var(--b) * 1.8);
-    border-radius: 99px;
-    background: rgb(66 70 72 / 0.92);
-    color: #fff;
-    font-size: calc(var(--b) * 2.9);
-    line-height: calc(var(--b) * 4.6);
-    white-space: nowrap;
   }
 
   /* The prompt over your floating Mii: a tapping hand. */
@@ -459,20 +531,19 @@ const json = data ? JSON.stringify(data).replace(/</g, '\\u003c') : '';
     }
   }
 
-  /* Diving into a block: a flat copy of its art grows over it, and flies on into the next page. */
-  .plaza-ghost {
-    position: absolute;
-    z-index: 3;
-    top: 0;
-    left: 0;
-    display: none !important;
+  /* Diving into a block (main.ts): its name and the others' are no longer pointed at. Each link sets
+     its own visibility as it follows its block, so they go by opacity. */
+  .plaza[data-leaving] .plaza-links {
     opacity: 0;
-    pointer-events: none;
-    will-change: transform, opacity;
+    transition: opacity 0.15s ease;
   }
 
-  .plaza-ghost[data-on] {
-    display: block !important;
+  /* As the camera closes in, the whole page fades away, gently at first and gone by the time the
+     camera is all the way in (--dive, set by main.ts), to the screen color every page fades
+     through (global.css). The next page then fades in from it. Coming back, it is simply there. */
+  body:has(.plaza[data-leaving]) {
+    opacity: 0;
+    transition: opacity calc(var(--dive, 0.7s) * 0.75) cubic-bezier(0.45, 0, 0.55, 1) calc(var(--dive, 0.7s) * 0.2);
   }
 
   /* White out while loading. Three orbs wait with you if it is slow. */
@@ -484,7 +555,7 @@ const json = data ? JSON.stringify(data).replace(/</g, '\\u003c') : '';
     place-content: center;
     place-items: center;
     gap: calc(var(--u) * 2.4);
-    background: light-dark(#e9f3f4, #13171a);
+    background: var(--color-haze);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.5s ease;
@@ -517,12 +588,16 @@ const json = data ? JSON.stringify(data).replace(/</g, '\\u003c') : '';
 
   @keyframes plaza-pop {
     from {
-      opacity: 0;
       scale: 0.82;
     }
     to {
-      opacity: 1;
       scale: 1;
+    }
+  }
+
+  @keyframes plaza-fade {
+    from {
+      opacity: 0;
     }
   }
 

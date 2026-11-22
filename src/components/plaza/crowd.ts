@@ -500,6 +500,18 @@ export class Crowd {
     this.applause = { from, to };
   }
 
+  /**
+   * Everyone who is free turns to the camera and dances, for a few seconds each (the Konami code).
+   * You stay out of it, to say why.
+   */
+  party(time: number, camera: THREE.Vector3) {
+    for (const m of this.miis) {
+      if (m.lead || HANDLED.has(m.act) || m.act === 'away' || m.act === 'hover' || m.act === 'fall') continue;
+      m.face = Math.atan2(camera.x - m.x, camera.z - m.z);
+      this.perform(m, motion.dance, time, 3 + this.r() * 2);
+    }
+  }
+
   /** The camera has come in close (`true`) or gone back out: the middle group turns to look at it, or goes back to its own business. */
   notice(on: boolean, time: number) {
     if (on === this.noticed) return;

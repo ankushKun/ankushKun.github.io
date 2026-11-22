@@ -28,25 +28,39 @@ export interface Soundtrack {
   settle(): void;
   /** Fades out, for leaving the page. `false` brings the sound back. */
   duck(on: boolean, seconds?: number): void;
-  /** Muffled and quiet, as if heard from another room: while the plaza is behind another page. */
-  muffle(on: boolean): void;
   toggle(): void;
+  /** Whether there is any sound to play here at all. */
+  readonly available: boolean;
+  /** Turned down by the visitor (the sound button, or M). */
+  readonly muted: boolean;
+  /** Whether the recording has started (it keeps running while muted). */
+  readonly playing: boolean;
+  setMuted(on: boolean): void;
+  /** Calls `fn` whenever the sound starts or stops being heard: muted, unmuted, or let out by the browser. */
+  onChange(fn: () => void): () => void;
 }
 
-const silent: Soundtrack = { ready: () => Promise.resolve(), live: true, begin() {}, position: () => null, settle() {}, duck() {}, muffle() {}, toggle() {} };
+const silent: Soundtrack = {
+  ready: () => Promise.resolve(),
+  live: true,
+  begin() {},
+  position: () => null,
+  settle() {},
+  duck() {},
+  toggle() {},
+  available: false,
+  muted: true,
+  playing: false,
+  setMuted() {},
+  onChange: () => () => {},
+};
 
 export function soundtrack(): Soundtrack {
   if (typeof AudioContext === 'undefined') return silent;
   const ctx = new AudioContext();
   const out = ctx.createGain();
   out.gain.value = 0;
-  // Everything passes a low-pass filter, wide open on the plaza and closed down behind other pages.
-  const tone = ctx.createBiquadFilter();
-  tone.type = 'lowpass';
-  tone.frequency.value = 20000;
-  tone.Q.value = 0.7;
-  out.connect(tone);
-  tone.connect(ctx.destination);
+  out.connect(ctx.destination);
 
   let buffer: AudioBuffer | null = null;
   let source: AudioBufferSourceNode | null = null;
@@ -56,15 +70,17 @@ export function soundtrack(): Soundtrack {
   let opening = false;
   let muted = false;
   let ducked = false;
-  let muffled = false;
 
-  const level = () => (muted || ducked ? 0 : muffled ? VOLUME * 0.32 : VOLUME);
+  const level = () => (muted || ducked ? 0 : VOLUME);
   const fade = (to: number, seconds: number) => {
     const now = ctx.currentTime;
     out.gain.cancelScheduledValues(now);
     out.gain.setValueAtTime(out.gain.value, now);
     out.gain.linearRampToValueAtTime(to, now + seconds);
   };
+
+  const listeners = new Set<() => void>();
+  const emit = () => listeners.forEach((fn) => fn());
 
   function play(at: number | null) {
     if (!buffer) return;
@@ -81,6 +97,7 @@ export function soundtrack(): Soundtrack {
     origin = ctx.currentTime - offset;
     // From the top the chime keeps its attack. Anywhere else the sound eases in.
     fade(level(), offset < 0.3 ? 0.01 : 0.35);
+    emit();
   }
 
   const start = () => {
@@ -98,7 +115,10 @@ export function soundtrack(): Soundtrack {
       })
       .catch((err: unknown) => console.warn(err)));
 
-  ctx.addEventListener('statechange', start);
+  ctx.addEventListener('statechange', () => {
+    start();
+    emit();
+  });
   const unlock = () => {
     if (ctx.state === 'suspended' && document.visibilityState === 'visible') void ctx.resume();
   };
@@ -131,18 +151,25 @@ export function soundtrack(): Soundtrack {
       ducked = on;
       fade(level(), seconds);
     },
-    muffle(on) {
-      if (on === muffled) return;
-      muffled = on;
-      const now = ctx.currentTime;
-      tone.frequency.cancelScheduledValues(now);
-      tone.frequency.setValueAtTime(tone.frequency.value, now);
-      tone.frequency.exponentialRampToValueAtTime(on ? 650 : 20000, now + (on ? 0.5 : 0.9));
-      fade(level(), on ? 0.5 : 0.9);
-    },
     toggle() {
-      muted = !muted;
+      this.setMuted(!muted);
+    },
+    available: true,
+    get muted() {
+      return muted;
+    },
+    get playing() {
+      return source !== null;
+    },
+    setMuted(on) {
+      if (on === muted) return;
+      muted = on;
       fade(level(), 0.15);
+      emit();
+    },
+    onChange(fn) {
+      listeners.add(fn);
+      return () => listeners.delete(fn);
     },
   };
 }

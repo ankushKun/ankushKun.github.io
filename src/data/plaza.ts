@@ -15,7 +15,7 @@ export const CUBES: Record<string, CubeStyle> = {
   '/apps/#irc-chat': { label: 'IRC Chat', icon: 'chat', colors: ['#62c4ff', '#2380dc'] },
   '/apps/#music': { label: 'Music', icon: 'music', colors: ['#ff8fc4', '#dd3f85'] },
   '/timeline/': { icon: 'flag', colors: ['#5fd16f', '#1f9457'] },
-  '/resume/': { icon: 'doc', colors: ['#9fb0c8', '#526984'] },
+  '/resume/': { label: 'Resume', icon: 'doc', colors: ['#9fb0c8', '#526984'] },
   '/about/': { icon: 'smile', colors: ['#ffd23f', '#f29a12'] },
   '/blogs/': { icon: 'pencil', colors: ['#ff9d52', '#ee4a4f'] },
   '/projects/': { icon: 'code', colors: ['#45d3c6', '#1c6fd0'] },
@@ -36,3 +36,51 @@ export const HERO: string[] = [];
 
 /** Crowd size, not counting the group in the middle. */
 export const CROWD = { desktop: 110, mobile: 70 };
+
+/**
+ * What your Mii says first on every visit, one picked at random, before anyone else in the plaza
+ * speaks. Keep each to about 70 characters: a bubble shows three lines. The Konami code one is
+ * true: typing it on the plaza starts a party (plaza/main.ts).
+ */
+export const WELCOME: string[] = [
+  // Plain hellos.
+  'Hi, welcome to my plaza! Tap a block to look around.',
+  'Hey, thanks for stopping by. Make yourself at home.',
+  'Oh, a visitor! Pick a block, any block.',
+  'Welcome in. Everyone here is a real Mii, a few of them famous.',
+  // Puns and nonsense.
+  'Welcome! Mii casa es su casa.',
+  'You look nice today. Yes, you, behind the screen.',
+  "I'd shake your hand, but Miis don't really have fingers.",
+  'Fun fact: I am mostly head.',
+  'This plaza runs on three.js, WebAssembly and vibes.',
+  'No cookies here. Just Miis. So many Miis.',
+  'Please keep your Miis inside the plaza at all times.',
+  'Go ahead, pick someone up. They love it. They told me.',
+  // Unhinged.
+  'I have been standing here since the page loaded. Please send snacks.',
+  "The crowd is friendly. Mostly. Don't look at the one in the back.",
+  'Throw someone across the plaza. They respawn. Probably.',
+  'Every Mii here knows what you did. Welcome anyway!',
+  'I fell out of the sky for you. The least you can do is click something.',
+  // Easter eggs and references.
+  'Up, up, down, down, left, right, left, right, B, A. Go on, try it.',
+  'The cake is a lie. The projects are real, though.',
+  'Rise and shine, visitor. Rise and... shine.',
+  'In my restless dreams, I see this plaza.',
+  "It's dangerous to go alone! Take a block.",
+  'Kept you waiting, huh?',
+  'A wild visitor appeared!',
+  'Thank you, visitor! But your project is in another block.',
+  'Hey! Listen!',
+  'Would you kindly tap a block?',
+  'Stay a while and listen.',
+  'Praise the sun! Then come check out the blog.',
+  'You feel like you are going to have a good time.',
+  'All your base are belong to us. Welcome!',
+  "It's-a me, Ankush!",
+  'StreetPass! You met a new Mii: me.',
+  'Achievement unlocked: found the website.',
+  'This is a safe room. The typewriter is broken, sorry.',
+  'The Mii Channel music is playing in your head now. You are welcome.',
+];
