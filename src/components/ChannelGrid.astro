@@ -12,8 +12,6 @@ export interface Channel {
   art?: string;
   /** Art painted for the channel on white (dark name), rather than a crop of busy art (white name). */
   banner?: boolean;
-  /** Shows the green Live tag. */
-  live?: boolean;
   /** Opens, but to a placeholder: shows the Soon tag and a quieter picture. */
   soon?: boolean;
   /** Opens an app that grows out of the channel (see motion.ts). */
@@ -48,7 +46,6 @@ const empty = Math.ceil(Math.max(channels.length, 1) / PAGE) * PAGE - channels.l
               >
                 {app.art && <img class="art" src={app.art} alt="" width="560" height="315" decoding="async" />}
                 <span class="name">{app.label}</span>
-                {app.live && <span class="status live">Live</span>}
                 {app.soon && <span class="status soon">Soon</span>}
               </a>
             ) : (
@@ -273,11 +270,6 @@ const empty = Math.ceil(Math.max(channels.length, 1) / PAGE) * PAGE - channels.l
     letter-spacing: 0.03em;
     text-transform: uppercase;
     box-shadow: 0 2px 6px rgb(0 0 0 / 0.35);
-  }
-
-  .status.live {
-    background: linear-gradient(to bottom, #7de042, #389614);
-    color: #fff;
   }
 
   .status.soon {

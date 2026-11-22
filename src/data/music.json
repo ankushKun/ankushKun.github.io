@@ -336,25 +336,6 @@
       ]
     },
     {
-      "id": "6022189fe1d6",
-      "videoId": "7qlU0bWMzUU",
-      "title": "Never Ending Story",
-      "artist": "Gaten Matarazzo & Gabriella Pizzolo",
-      "durationSec": 126,
-      "thumb": "/music/covers/7qlU0bWMzUU.jpg",
-      "bpm": 135.81,
-      "beats": [
-        [0.481, 132.26],
-        [9.398, 139.86],
-        [16.338, 143.87],
-        [23.082, 142.42],
-        [36.502, 136.61],
-        [43.514, 138.61],
-        [71.297, 135.81],
-        [115.344, 137.82]
-      ]
-    },
-    {
       "id": "1c4bdadf1bc0",
       "videoId": "wjZMcWaniA4",
       "title": "Should I Stay or Should I Go (Remastered)",

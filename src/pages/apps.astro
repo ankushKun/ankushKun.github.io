@@ -6,7 +6,7 @@ import { channelFor } from '../lib/tiles';
 
 const channels = APPS.map((app) => {
   const ch = channelFor(appPath(app));
-  return { ...app, art: ch?.src, banner: ch?.banner, live: Boolean(app.href) && !app.soon, grow: app.href?.startsWith('/apps/') };
+  return { ...app, art: ch?.src, banner: ch?.banner, grow: app.href?.startsWith('/apps/') };
 });
 const live = APPS.filter((a) => a.href && !a.soon).map((a) => a.label);
 const listed = live.length > 1 ? `${live.slice(0, -1).join(', ')} and ${live.at(-1)}` : live[0];
@@ -15,6 +15,9 @@ const listed = live.length > 1 ? `${live.slice(0, -1).join(', ')} and ${live.at(
 <Page id="apps" pageType="CollectionPage" layout="menu">
   <ChannelGrid
     {channels}
-    hint={{ title: 'Pick a channel!', text: `${listed} ${live.length > 1 ? 'are' : 'is'} live right now. Point at any channel to see what it does.` }}
+    hint={{
+      title: 'Pick a channel!',
+      text: `${live.length === APPS.length ? '' : `${listed} ${live.length > 1 ? 'are' : 'is'} live right now. `}Point at any channel to see what it does.`,
+    }}
   />
 </Page>

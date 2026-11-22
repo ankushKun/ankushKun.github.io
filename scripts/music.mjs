@@ -3,6 +3,7 @@
 // Syncs the radio's mix (src/data/music.json) from a YouTube playlist: titles, artists, lengths and
 // a square cover for each track (public/music/covers/<videoId>.jpg). Tracks added by hand in
 // src/data/music-extra.json ({ videoId, title, artist }) follow the playlist's, whatever its length.
+// Songs listed in src/data/music-skip.json are left out even though they're on the playlist.
 // --extra only brings those up to date, keeping the playlist's tracks as they are in music.json
 // (hand-added tracks are marked `byHand` there, so one taken out of the file goes too). Metadata and thumbnail stills
 // only: no audio is ever downloaded, and the run fails if any turns up. Every track plays through
@@ -21,6 +22,7 @@ import sharp from 'sharp';
 const ROOT = new URL('..', import.meta.url).pathname;
 const OUT = join(ROOT, 'src/data/music.json');
 const EXTRA = join(ROOT, 'src/data/music-extra.json');
+const SKIP = join(ROOT, 'src/data/music-skip.json');
 const COVERS = join(ROOT, 'public/music/covers');
 const DEFAULT_URL = 'https://www.youtube.com/playlist?list=PLGYjQsvvGQYQ';
 const MAX = 30;
@@ -94,10 +96,12 @@ const tracks = [];
 // With --extra, the playlist's tracks stay exactly as they are.
 const extraIds = new Set(extras.map((x) => x.videoId));
 if (extraOnly) tracks.push(...(current.tracks ?? []).filter((t) => !t.byHand && !extraIds.has(t.videoId)));
+// Songs on the playlist that are left out of the mix anyway.
+const skip = new Set(existsSync(SKIP) ? JSON.parse(readFileSync(SKIP, 'utf8')).videoIds ?? [] : []);
 for (const entry of playlist.entries ?? []) {
   if (!entry || tracks.length >= limit) continue;
   const id = String(entry.id ?? '').match(/^[\w-]{11}$/)?.[0];
-  if (!id) continue;
+  if (!id || skip.has(id)) continue;
   let title = clean(entry.title ?? entry.track ?? 'Unknown', 80);
   let artist = clean(entry.artist ?? entry.uploader ?? entry.channel ?? entry.creator, 60).replace(/\s+-\s+Topic$/, '');
   if (!artist && title.includes(' - ')) [artist, title] = title.split(' - ', 2).map((s) => clean(s, 80));

@@ -29,7 +29,7 @@ export const APPS: App[] = [
   },
   { id: 'games', label: 'Games', description: 'My game jam entries and classics like DOOM and Quake III Arena, playing right on the TV.', href: '/games/' },
   { id: 'music', label: 'Music', description: 'An iTunes-style player for the game soundtracks and songs I work to, playing on across the site.', href: '/apps/music/' },
-  { id: 'paint', label: 'Paint', description: 'A shared canvas to draw on together in real time.', href: '/apps/paint/', soon: true },
-  { id: 'guestbook', label: 'Guestbook', description: 'Leave a Swapnote-style doodle or note for the next visitor.', href: '/apps/guestbook/', soon: true },
-  { id: 'terminal', label: 'Terminal', description: 'A retro command line to explore the whole site.', href: '/apps/terminal/', soon: true },
+  { id: 'paint', label: 'Paint', description: 'One shared canvas a day that everyone draws on at once, with a prompt and a replay.', href: '/apps/paint/' },
+  { id: 'guestbook', label: 'Guestbook', description: 'Pin a Swapnote-style note for the next visitor, drawn or written and signed with your Mii.', href: '/apps/guestbook/' },
+  { id: 'terminal', label: 'Terminal', description: 'A command line over the whole site, with a real Linux to boot and things hidden in it.', href: '/apps/terminal/' },
 ];

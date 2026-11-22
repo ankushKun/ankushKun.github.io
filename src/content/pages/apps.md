@@ -3,4 +3,4 @@ title: Apps
 description: Interactive Wii-style channels and small web toys built into ankush.one.
 ---
 
-Small interactive channels built straight into the TV. Jump into the live Miiverse chat, inspect Miis in 3D or play my games right now. The greyed-out channels are still warming up in the workshop.
+Small interactive channels built straight into the TV. Jump into the live Miiverse chat, draw on today's shared canvas, pin a note to the guestbook, boot a real Linux in the terminal, or play my games.

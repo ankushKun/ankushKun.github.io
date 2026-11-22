@@ -9,7 +9,9 @@ description: Open-source software, fonts, and assets that power ankush.one.
 - [Tailwind CSS](https://tailwindcss.com/) and `@tailwindcss/typography`: base layout and prose styling
 - [three.js](https://threejs.org/): powers the 3D WaraWara Plaza and Mii Studio stages
 - [FFL.js](https://github.com/ariankordi/FFL.js) by ariankordi, through the [Mii Creator](https://github.com/ankushKun/mii-creator) fork: renders genuine Wii U Mii heads via WebAssembly
-- [GUN](https://gun.eco/): decentralized real-time sync behind the Miiverse chat room
+- [GUN](https://gun.eco/): decentralized real-time sync behind the Miiverse chat room, Paint and the Guestbook
+- [v86](https://github.com/copy/v86) (BSD-2-Clause) by Fabian Hemmer: the x86 emulator that boots the Terminal's Linux and the Portal demo, with its Buildroot Linux image (Linux and BusyBox, GPLv2)
+- [xterm.js](https://xtermjs.org/) (MIT): draws the Terminal's Linux console
 - [jsQR](https://github.com/cozmo/jsQR): decodes Wii U / 3DS Mii QR codes in the browser
 - [Hugeicons](https://hugeicons.com/) (`@hugeicons/core-free-icons`): the TV's buttons and the glyphs in link buttons
 - [Simple Icons](https://simpleicons.org/) (`simple-icons`, CC0): the real platform marks in link buttons; any other site's button shows that site's own icon
