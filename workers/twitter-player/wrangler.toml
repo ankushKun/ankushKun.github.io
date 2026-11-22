@@ -1,6 +1,8 @@
 # The X player card (src/index.js), on the home page only. Deploy with
 # `pnpm dlx wrangler deploy` from this folder.
 name = "ankush-twitter-player"
+# The Cloudflare account ankush.one is on, so a deploy never lands on another one wrangler is signed in to.
+account_id = "c19bfc6b0c700c267321ea7affb78bbd"
 main = "src/index.js"
 compatibility_date = "2026-10-01"
 workers_dev = false
