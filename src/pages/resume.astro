@@ -1,137 +1,177 @@
 ---
 import Page from '../layouts/Page.astro';
-import MenuButton from '../components/ui/MenuButton.astro';
 import { resume } from '../data/resume';
 import { formatMonth } from '../lib/content';
 import { inline } from '../lib/inline';
 import { NEW_TAB, extAttrs, isExternal } from '../lib/external';
+import { AUTHOR, SITE } from '../site';
 ---
 
 <Page id="resume">
-  <div class="top">
+  <article class="sheet">
+    <header class="doc-head">
+      <a class="get-pdf" href={resume.pdf} target="_blank" rel="noopener">
+        Get PDF<span class="sr-only"> {NEW_TAB}</span>
+      </a>
+      <p class="name">{AUTHOR.name}</p>
+      <p class="contact">
+        <a href={`mailto:${AUTHOR.email}`}>{AUTHOR.email}</a>
+        <span aria-hidden="true">&middot;</span>
+        <a href={SITE.url}>{SITE.url.replace(/^https?:\/\//, '')}</a>
+        <span aria-hidden="true">&middot;</span>
+        <span>{AUTHOR.location}</span>
+      </p>
+    </header>
+
     <p class="summary" set:html={inline(resume.summary)} />
-    <div class="resume-actions">
-      <MenuButton href={resume.pdf} download={resume.pdfDownloadName} label="Download PDF" tile="/resume/" />
-      <MenuButton id="resume-print" label="Print page" icon="print" />
-    </div>
-  </div>
 
-  <section>
-    <h2>Experience</h2>
-    {
-      resume.experience.map((e) => (
-        <div class="item">
-          <p class="when">
-            {formatMonth(e.start)} to {formatMonth(e.end)}
-          </p>
-          <div>
-            <h3>
-              {e.role},{' '}
-              <a href={e.url} class:list={[{ ext: isExternal(e.url) }]} {...extAttrs(e.url)}>
-                {e.org}
-                {isExternal(e.url) && <span class="sr-only">{NEW_TAB}</span>}
-              </a>
-            </h3>
-            {e.location && <p class="where">{e.location}</p>}
-            <ul>
-              {e.highlights.map((h) => (
-                <li set:html={inline(h)} />
-              ))}
-            </ul>
-          </div>
-        </div>
-      ))
-    }
-  </section>
-
-  {
-    resume.projects.length > 0 && (
-      <section>
-        <h2>Selected projects</h2>
-        {resume.projects.map((p) => (
+    <section>
+      <h2>Experience</h2>
+      {
+        resume.experience.map((e) => (
           <div class="item">
-            <p class="when">{formatMonth(p.start)}</p>
+            <p class="when">
+              {formatMonth(e.start)} to {formatMonth(e.end)}
+            </p>
             <div>
               <h3>
-                <a href={p.more ?? p.url} class:list={[{ ext: isExternal(p.more ?? p.url) }]} {...extAttrs(p.more ?? p.url)}>
-                  {p.name}
-                  {isExternal(p.more ?? p.url) && <span class="sr-only">{NEW_TAB}</span>}
+                {e.role},{' '}
+                <a href={e.url} class:list={[{ ext: isExternal(e.url) }]} {...extAttrs(e.url)}>
+                  {e.org}
+                  {isExternal(e.url) && <span class="sr-only">{NEW_TAB}</span>}
                 </a>
               </h3>
-              <p class="where">{p.tech.join(', ')}</p>
+              {e.location && <p class="where">{e.location}</p>}
               <ul>
-                {p.highlights.map((h) => (
+                {e.highlights.map((h) => (
                   <li set:html={inline(h)} />
                 ))}
               </ul>
             </div>
           </div>
-        ))}
-      </section>
-    )
-  }
+        ))
+      }
+    </section>
 
-  <section>
-    <h2>Education</h2>
     {
-      resume.education.map((e) => (
-        <div class="item">
-          <p class="when">{e.start ? <>{formatMonth(e.start)} to {formatMonth(e.end)}</> : ''}</p>
-          <div>
-            <h3>
-              {e.degree} in {e.field}
-            </h3>
-            <p class="where">{e.school}</p>
+      resume.projects.length > 0 && (
+        <section>
+          <h2>Selected projects</h2>
+          {resume.projects.map((p) => (
+            <div class="item">
+              <p class="when">{formatMonth(p.start)}</p>
+              <div>
+                <h3>
+                  <a href={p.more ?? p.url} class:list={[{ ext: isExternal(p.more ?? p.url) }]} {...extAttrs(p.more ?? p.url)}>
+                    {p.name}
+                    {isExternal(p.more ?? p.url) && <span class="sr-only">{NEW_TAB}</span>}
+                  </a>
+                </h3>
+                <p class="where">{p.tech.join(', ')}</p>
+                <ul>
+                  {p.highlights.map((h) => (
+                    <li set:html={inline(h)} />
+                  ))}
+                </ul>
+              </div>
+            </div>
+          ))}
+        </section>
+      )
+    }
+
+    <section>
+      <h2>Education</h2>
+      {
+        resume.education.map((e) => (
+          <div class="item">
+            <p class="when">{e.start ? <>{formatMonth(e.start)} to {formatMonth(e.end)}</> : ''}</p>
+            <div>
+              <h3>
+                {e.degree} in {e.field}
+              </h3>
+              <p class="where">{e.school}</p>
+            </div>
           </div>
-        </div>
-      ))
-    }
-  </section>
+        ))
+      }
+    </section>
 
-  <section>
-    <h2>Skills</h2>
-    {
-      resume.skills.map((s) => (
-        <div class="item">
-          <p class="when">{s.label}</p>
-          <ul class="skills">
-            {s.items.map((x) => (
-              <li class="chip">{x}</li>
-            ))}
-          </ul>
-        </div>
-      ))
-    }
-  </section>
+    <section>
+      <h2>Skills</h2>
+      {
+        resume.skills.map((s) => (
+          <div class="item">
+            <p class="when">{s.label}</p>
+            <p class="skills">{s.items.join(', ')}</p>
+          </div>
+        ))
+      }
+    </section>
+  </article>
 </Page>
 
-<script>
-  document.addEventListener('astro:page-load', () => {
-    const btn = document.getElementById('resume-print');
-    if (!btn || btn.dataset.wired) return;
-    btn.dataset.wired = '1';
-    btn.addEventListener('click', () => window.print());
-  });
-</script>
-
 <style>
-  .top {
-    display: grid;
-    gap: 18px;
-    justify-items: start;
+  /* A sheet of paper on the TV's column, the way a PDF viewer shows a page. It stays light in the
+     dark theme, like paper does, by resolving every light-dark() token to its light side. */
+  .sheet {
+    color-scheme: light;
+    margin-top: 1.5rem;
+    padding: clamp(24px, 7%, 56px);
+    aspect-ratio: 8.5 / 11;
+    border-radius: 3px;
+    background: #fff;
+    box-shadow:
+      0 0 0 1px rgb(55 70 78 / 0.08),
+      0 2px 4px rgb(30 50 60 / 0.06),
+      0 18px 40px -16px rgb(30 50 60 / 0.35);
+    color: var(--color-ink);
+    font-size: 0.9375rem;
   }
 
-  .resume-actions {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-    gap: 12px;
-    width: 100%;
-    max-width: 560px;
+  .doc-head {
+    position: relative;
+    padding-bottom: 1.1rem;
+    border-bottom: 2px solid var(--color-ink-strong);
+  }
+
+  .get-pdf {
+    position: absolute;
+    top: 0;
+    right: 0;
+    color: var(--color-ink-soft);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-color: rgb(47 178 230 / 0.5);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+  }
+
+  .get-pdf:hover {
+    color: var(--color-ink-strong);
+  }
+
+  .name {
+    padding-right: 5rem;
+    color: var(--color-ink-strong);
+    font-size: 1.75rem;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .contact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 0.5em;
+    margin-top: 0.35rem;
+    color: var(--color-ink-soft);
+    font-size: 0.875rem;
   }
 
   .summary {
-    font-size: 1.0625rem;
-    line-height: 1.75;
+    margin-top: 1.25rem;
+    line-height: 1.7;
   }
 
   .summary :global(strong) {
@@ -139,39 +179,44 @@ import { NEW_TAB, extAttrs, isExternal } from '../lib/external';
   }
 
   section {
-    margin-top: 2.75rem;
+    margin-top: 2rem;
   }
 
   h2 {
-    margin-bottom: 1.1rem;
-    padding-bottom: 0.6rem;
+    margin-bottom: 0.9rem;
+    padding-bottom: 0.4rem;
     border-bottom: 1px solid var(--color-line);
-    font-size: 1.125rem;
+    color: var(--color-ink-strong);
+    font-size: 0.8125rem;
     font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
 
   .item {
     display: grid;
-    grid-template-columns: 150px minmax(0, 1fr);
-    gap: 4px 20px;
+    grid-template-columns: 130px minmax(0, 1fr);
+    gap: 2px 18px;
   }
 
   .item + .item {
-    margin-top: 1.4rem;
+    margin-top: 1.1rem;
   }
 
   .when {
     padding-top: 2px;
     color: var(--color-ink-soft);
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
   }
 
   h3 {
+    color: var(--color-ink-strong);
     font-weight: 700;
     line-height: 1.4;
   }
 
   h3 a,
+  .contact a,
   .summary :global(a),
   li :global(a) {
     text-decoration: underline;
@@ -182,24 +227,22 @@ import { NEW_TAB, extAttrs, isExternal } from '../lib/external';
 
   .where {
     color: var(--color-ink-soft);
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
   }
 
-  ul:not(.skills) {
-    margin-top: 0.4rem;
+  ul {
+    margin-top: 0.35rem;
     padding-left: 1.1rem;
     list-style: disc;
-    line-height: 1.7;
+    line-height: 1.65;
   }
 
-  ul:not(.skills) li::marker {
-    color: var(--color-sky);
+  li::marker {
+    color: var(--color-ink-faint);
   }
 
   .skills {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
+    line-height: 1.65;
   }
 
   @media (max-width: 600px) {
@@ -209,8 +252,14 @@ import { NEW_TAB, extAttrs, isExternal } from '../lib/external';
   }
 
   @media print {
-    .top :global(.menu-btn) {
+    .get-pdf {
       display: none;
+    }
+
+    .sheet {
+      margin: 0;
+      padding: 0;
+      box-shadow: none;
     }
   }
 </style>

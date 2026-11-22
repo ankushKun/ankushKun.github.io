@@ -35,7 +35,6 @@ export interface SkillGroup {
 
 export const resume: {
   pdf: string;
-  pdfDownloadName: string;
   summary: string;
   experience: ExperienceItem[];
   projects: ResumeProject[];
@@ -43,7 +42,6 @@ export const resume: {
   skills: SkillGroup[];
 } = {
   pdf: '/resume.pdf',
-  pdfDownloadName: 'Ankush-Singh-Resume.pdf',
   summary:
     'Co-founder of Construct Computer, a workforce of AI employees with their own cloud computers, launched as **#1 Product of the Day on Product Hunt**. Full-stack engineer building AI agents, MCP servers, Cloudflare backends, Solana programs, and firmware. Previously built BetterIDEa, **acquired by Forward Research**.',
   experience: [
