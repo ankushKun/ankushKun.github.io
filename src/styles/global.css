@@ -578,7 +578,22 @@
     padding: calc(var(--bezel-top) + 48px) var(--col-pad) 0;
   }
 
-  /* A page's title and the line under it. */
+  /* A page's title, its frosted-glass section tile, and the line under it. */
+  .head-bar {
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+  }
+
+  .head-tile {
+    margin-top: 2px;
+  }
+
+  .head-copy {
+    min-width: 0;
+    flex: 1;
+  }
+
   .head h1 {
     font-size: clamp(1.875rem, 1.5rem + 1.6vw, 2.25rem);
     font-weight: 800;
@@ -594,9 +609,10 @@
     line-height: 1.7;
   }
 
-  /* Only an intro's first paragraph shows under the title, as it always has. */
   .head .intro :where(p + p) {
-    display: none;
+    margin-top: 0.65rem;
+    font-size: 0.9375rem;
+    color: var(--color-ink-soft);
   }
 
   .head .intro :where(a) {
@@ -945,9 +961,21 @@ html[data-playing] .tv-btn.tv-home {
   text-decoration-color: var(--color-sky);
 }
 
-.prose :where(img, video) {
+.prose :where(img, video, iframe) {
+  display: block;
+  margin-inline: auto;
   border-radius: 14px;
   box-shadow: var(--rim);
+}
+
+.prose :where(figure) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.prose :where(figcaption) {
+  text-align: center;
 }
 
 .prose :where(pre) {

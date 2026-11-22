@@ -1,6 +1,6 @@
 ---
 // Entries as channels on the console's menu: art in a glossy frame with the name under it, two
-// across the column or more as it widens, newest first. The art flies to the entry's own page when one is opened.
+// across the column or more as it widens, newest first.
 import Thumb from './ui/Thumb.astro';
 import { urlOf, type Entry } from '../lib/content';
 
@@ -8,32 +8,74 @@ interface Props {
   items: Entry[];
   /** How many pictures are on screen as the page opens: those load at once, the rest when near. */
   eager?: number;
+  /** Larger 2-up featured shelf with descriptions. */
+  featured?: boolean;
+  /** Enable data-categories attributes for client-side filtering on /projects/. */
+  filterable?: boolean;
+  /** Show a subtle section label pill (Blog / Project / Timeline) for mixed cross-section lists. */
+  showKind?: boolean;
 }
 
-// About the first two rows of a section's list.
-const { items, eager = 6 } = Astro.props;
+const { items, eager = 6, featured = false, filterable = false, showKind = false } = Astro.props;
+
+const KIND_LABEL: Record<Entry['collection'], string> = {
+  blog: 'Blog',
+  projects: 'Project',
+  timeline: 'Timeline',
+};
+
+function categoriesFor(entry: Entry): string[] {
+  const tags = new Set(entry.data.tags);
+  const cats = new Set<string>();
+  if (tags.has('ai-agents') || tags.has('machine-learning') || tags.has('construct')) cats.add('ai');
+  if (tags.has('game-dev') || tags.has('handheld') || tags.has('pokemon') || tags.has('tcg') || tags.has('doom')) cats.add('games');
+  if (tags.has('web3') || tags.has('arweave') || tags.has('ao') || tags.has('solana')) cats.add('web3');
+  if (tags.has('hardware')) cats.add('hardware');
+  if (tags.has('developer-tools') || tags.has('web') || tags.has('cloudflare') || tags.has('productivity')) cats.add('tools');
+  if (entry.collection === 'projects' && entry.data.status === 'archived') cats.add('archived');
+  if (cats.size === 0) cats.add('tools');
+  return [...cats];
+}
 ---
 
-<ul class="channels">
+<ul class:list={['channels', { 'is-featured': featured }]}>
   {
-    items.map((entry, i) => (
-      <li>
-        <a href={urlOf(entry)} class="channel" data-sfx>
-          <span class="glass">
-            <Thumb {entry} width={480} class="art" eager={i < eager} />
-          </span>
-          <span class="name">{entry.data.title}</span>
-        </a>
-      </li>
-    ))
+    items.map((entry, i) => {
+      const archived = entry.collection === 'projects' && entry.data.status === 'archived';
+      const cats = filterable ? categoriesFor(entry).join(' ') : undefined;
+      return (
+        <li data-cats={cats}>
+          <a href={urlOf(entry)} class="channel" data-sfx>
+            <span class="glass">
+              <Thumb {entry} width={featured ? 640 : 480} class="art" eager={i < eager} />
+              {showKind && <span class={`badge-kind is-${entry.collection}`}>{KIND_LABEL[entry.collection]}</span>}
+              {archived && !featured && !showKind && <span class="badge-archived">Archived</span>}
+            </span>
+            <span class="info">
+              <span class="name">{entry.data.title}</span>
+              {featured && <span class="summary">{entry.data.description}</span>}
+            </span>
+          </a>
+        </li>
+      );
+    })
   }
 </ul>
 
 <style>
   .channels {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
     gap: 18px;
+  }
+
+  .channels.is-featured {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+  }
+
+  .channels li[hidden] {
+    display: none;
   }
 
   .channel {
@@ -81,7 +123,7 @@ const { items, eager = 6 } = Astro.props;
   }
 
   .glass :global(.art) {
-    aspect-ratio: 16 / 10;
+    aspect-ratio: 16 / 9;
     border-radius: inherit;
   }
 
@@ -96,10 +138,51 @@ const { items, eager = 6 } = Astro.props;
     pointer-events: none;
   }
 
+  .badge-archived,
+  .badge-kind {
+    position: absolute;
+    top: 8px;
+    z-index: 2;
+    padding: 1px 8px;
+    border-radius: 99px;
+    backdrop-filter: blur(4px);
+    color: #fff;
+    font-size: 0.6875rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+  }
+
+  .badge-archived {
+    right: 8px;
+    background: rgb(25 32 36 / 0.72);
+  }
+
+  .badge-kind {
+    left: 8px;
+    background: rgb(25 32 36 / 0.74);
+  }
+
+  .badge-kind.is-blog {
+    background: rgb(228 74 79 / 0.9);
+  }
+
+  .badge-kind.is-projects {
+    background: rgb(28 111 208 / 0.9);
+  }
+
+  .badge-kind.is-timeline {
+    background: rgb(31 148 87 / 0.9);
+  }
+
+  .info {
+    display: grid;
+    gap: 4px;
+    padding: 9px 10px 11px;
+  }
+
   .name {
     display: block;
     overflow: hidden;
-    padding: 9px 8px 10px;
     color: var(--color-ink-strong);
     font-size: 0.875rem;
     font-weight: 700;
@@ -108,8 +191,28 @@ const { items, eager = 6 } = Astro.props;
     white-space: nowrap;
   }
 
+  .is-featured .info {
+    padding: 11px 12px 14px;
+  }
+
+  .is-featured .name {
+    font-size: 1rem;
+    font-weight: 800;
+    text-align: left;
+  }
+
+  .summary {
+    display: -webkit-box;
+    overflow: hidden;
+    color: var(--color-ink-soft);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
   @media (max-width: 479px) {
-    .channels {
+    .channels:not(.is-featured) {
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 12px;
     }

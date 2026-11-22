@@ -1,11 +1,116 @@
 ---
 import Page from '../../layouts/Page.astro';
 import Feed from '../../components/Feed.astro';
+import Icon from '../../components/ui/Icon.astro';
 import { getEntries } from '../../lib/content';
 
 const posts = await getEntries('blog');
+
+const TOPICS = [
+  { id: 'all', label: 'All posts', dot: '#ee4a4f' },
+  { id: 'ai', label: 'AI & Infra', dot: '#6a3fd6' },
+  { id: 'games', label: '3DS & Graphics', dot: '#2fb2e6' },
+  { id: 'craft', label: 'Guides & Tools', dot: '#f29a12' },
+];
 ---
 
 <Page id="blog" pageType="CollectionPage" layout="menu">
+  <div class="blog-tools">
+    <div class="filter-bar" role="toolbar" aria-label="Filter posts" data-blog-filters>
+      {
+        TOPICS.map((t, i) => (
+          <button
+            type="button"
+            class="filter-pill"
+            data-filter={t.id}
+            aria-pressed={i === 0 ? 'true' : 'false'}
+            style={`--dot:${t.dot}`}
+            data-sfx
+          >
+            <span class="dot" aria-hidden="true" />
+            {t.label}
+          </button>
+        ))
+      }
+    </div>
+    <a href="/blogs/index.xml" class="rss-pill" data-sfx>
+      <Icon name="rss" size={16} />
+      RSS Feed
+    </a>
+  </div>
+
   <Feed items={posts} />
 </Page>
+
+<script>
+  function wireBlogFilters() {
+    const bar = document.querySelector<HTMLElement>('[data-blog-filters]');
+    const feed = document.querySelector<HTMLElement>('[data-blog-feed]');
+    if (!bar || !feed || bar.dataset.wired) return;
+    bar.dataset.wired = '1';
+    const buttons = [...bar.querySelectorAll<HTMLButtonElement>('[data-filter]')];
+    const groups = [...feed.querySelectorAll<HTMLElement>('[data-year-group]')];
+
+    bar.addEventListener('click', (e) => {
+      const btn = e.target instanceof Element ? e.target.closest<HTMLButtonElement>('[data-filter]') : null;
+      if (!btn) return;
+      const picked = btn.dataset.filter ?? 'all';
+      for (const b of buttons) b.setAttribute('aria-pressed', String(b === btn));
+      for (const group of groups) {
+        const items = [...group.querySelectorAll<HTMLElement>('li[data-topics]')];
+        let visible = 0;
+        for (const li of items) {
+          const topics = (li.dataset.topics ?? '').split(' ');
+          const hide = picked !== 'all' && !topics.includes(picked);
+          li.hidden = hide;
+          if (!hide) visible++;
+        }
+        group.hidden = visible === 0;
+      }
+    });
+  }
+  document.addEventListener('astro:page-load', wireBlogFilters);
+</script>
+
+<style>
+  .blog-tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 16px;
+    margin-bottom: 24px;
+  }
+
+  .blog-tools .filter-bar {
+    margin-bottom: 0;
+  }
+
+  .rss-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 34px;
+    padding: 0 14px;
+    border-radius: 99px;
+    background: linear-gradient(to bottom, #ffb052, #e56a1f);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.4),
+      0 2px 6px -2px rgb(229 106 31 / 0.5);
+    color: #fff;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition:
+      box-shadow 0.16s ease,
+      scale 0.25s var(--ease-spring);
+  }
+
+  .rss-pill:hover {
+    box-shadow: var(--glow);
+  }
+
+  .rss-pill:active {
+    scale: 0.95;
+  }
+</style>

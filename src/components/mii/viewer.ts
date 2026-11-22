@@ -16,8 +16,12 @@ export async function mount(root: HTMLElement): Promise<() => void> {
   const file = need(root.querySelector<HTMLInputElement>('[data-file]'));
   const code = need(root.querySelector<HTMLInputElement>('[data-code]'));
   const copy = need(root.querySelector<HTMLButtonElement>('[data-copy]'));
+  const shuffle = root.querySelector<HTMLButtonElement>('[data-shuffle]');
+  const crowdEl = root.querySelector<HTMLScriptElement>('[data-crowd]');
   const name = need(root.querySelector<HTMLElement>('[data-name]'));
   const status = need(root.querySelector<HTMLElement>('[data-status]'));
+  const crowd: { name: string; code: string }[] = crowdEl?.textContent ? JSON.parse(crowdEl.textContent) : [];
+  let lastPick = -1;
 
   const kit = await loadMiiKit();
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
@@ -36,13 +40,13 @@ export async function mount(root: HTMLElement): Promise<() => void> {
     code.setAttribute('aria-invalid', String(error));
   };
 
-  function show(mii: Uint8Array) {
+  function show(mii: Uint8Array, labelOverride?: string) {
     set?.dispose();
     set = new MiiSet(kit, renderer, [mii], { resolution: 512, happy: true, shadows: true });
     set.build();
     scene.add(set.group);
     const info = miiInfo(mii);
-    name.textContent = info.creator ? `${info.name} by ${info.creator}` : info.name;
+    name.textContent = labelOverride || (info.creator ? `${info.name} by ${info.creator}` : info.name);
     code.value = encodeMii(mii);
     yaw = 0;
     shown = performance.now();
@@ -75,7 +79,19 @@ export async function mount(root: HTMLElement): Promise<() => void> {
   });
   copy.addEventListener('click', async () => {
     await navigator.clipboard.writeText(code.value);
-    say('Copied');
+    say('Mii code copied to clipboard!');
+  });
+  shuffle?.addEventListener('click', () => {
+    if (crowd.length === 0) return;
+    let idx = Math.floor(Math.random() * crowd.length);
+    if (crowd.length > 1 && idx === lastPick) idx = (idx + 1) % crowd.length;
+    lastPick = idx;
+    const pick = crowd[idx];
+    const mii = decodeMii(pick.code);
+    if (mii) {
+      show(mii, pick.name);
+      say(`Pulled ${pick.name} from the plaza crowd!`);
+    }
   });
   const onPaste = (e: ClipboardEvent) => {
     const item = [...(e.clipboardData?.items ?? [])].find((i) => i.type.startsWith('image/'));

@@ -61,3 +61,64 @@ export const formatDate = (d: Date, month: 'short' | 'long' = 'short') =>
 /** Formats a "YYYY-MM" string, or "Present" when empty. */
 export const formatMonth = (ym?: string) =>
   ym ? new Date(`${ym}-01T00:00:00Z`).toLocaleDateString('en-US', { year: 'numeric', month: 'short', timeZone: 'UTC' }) : 'Present';
+
+function seedHash(input: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < input.length; i++) {
+    h ^= input.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+/**
+ * Picks entries for the "Read more" shelf at the bottom of a blog post, project, or timeline entry:
+ * 1) explicit `related` links first,
+ * 2) relevant entries ranked by shared tags (with a nudge for same section and real cover art),
+ * 3) deterministic pseudo-random picks across the site so every page gets a balanced, varied set.
+ */
+export async function getReadMore(entry: Entry, minCount = 4): Promise<Entry[]> {
+  const all = await getAllEntries();
+  const selfKey = `${entry.collection}/${entry.id}`;
+  const byUrl = new Map(all.map((e) => [urlOf(e).replace(/\/$/, ''), e]));
+
+  const picked: Entry[] = [];
+  const seen = new Set<string>([selfKey]);
+  const add = (candidate: Entry) => {
+    const key = `${candidate.collection}/${candidate.id}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    picked.push(candidate);
+    return true;
+  };
+
+  for (const relPath of entry.data.related) {
+    const found = byUrl.get(relPath.replace(/\/$/, ''));
+    if (found) add(found);
+  }
+
+  if (picked.length >= minCount) return picked;
+
+  const entryTags = new Set(entry.data.tags);
+  const scored = all
+    .filter((e) => !seen.has(`${e.collection}/${e.id}`))
+    .map((e) => {
+      let sharedTags = 0;
+      for (const t of e.data.tags) if (entryTags.has(t)) sharedTags++;
+      const sameSection = e.collection === entry.collection ? 1 : 0;
+      const hasCover = e.data.cover ? 1 : 0;
+      // Deterministic jitter per (current page, candidate) so pages without tag overlap vary nicely.
+      const jitter = (seedHash(`${selfKey}=>${e.collection}/${e.id}`) % 1000) / 1000;
+      const score = sharedTags * 4 + (sharedTags > 0 ? sameSection * 1.5 : 0) + hasCover * 1.2 + jitter;
+      return { entry: e, sharedTags, hasCover, score };
+    })
+    .sort((a, b) => b.score - a.score);
+
+  // Fill with top relevant matches first, then varied picks (preferring entries with covers).
+  for (const item of scored) {
+    if (picked.length >= minCount) break;
+    add(item.entry);
+  }
+
+  return picked;
+}

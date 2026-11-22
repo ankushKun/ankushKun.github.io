@@ -1,11 +1,76 @@
 ---
 import Page from '../../layouts/Page.astro';
 import ChannelMenu from '../../components/ChannelMenu.astro';
+import Panel from '../../components/ui/Panel.astro';
 import { getEntries } from '../../lib/content';
 
 const projects = await getEntries('projects');
+const featured = projects.filter((p) => p.data.featured);
+const rest = projects.filter((p) => !p.data.featured);
+
+const FILTERS = [
+  { id: 'all', label: 'All', dot: '#2fb2e6' },
+  { id: 'ai', label: 'AI & Agents', dot: '#6a3fd6' },
+  { id: 'games', label: '3DS & Games', dot: '#ee4a4f' },
+  { id: 'web3', label: 'Web3 & AO', dot: '#1c6fd0' },
+  { id: 'hardware', label: 'Hardware', dot: '#1f9457' },
+  { id: 'tools', label: 'Tools & Web', dot: '#f29a12' },
+  { id: 'archived', label: 'Archived', dot: '#7a8891' },
+];
 ---
 
 <Page id="projects" pageType="CollectionPage" layout="menu">
-  <ChannelMenu items={projects} />
+  {
+    featured.length > 0 && (
+      <Panel title="Featured builds">
+        <ChannelMenu items={featured} eager={6} featured />
+      </Panel>
+    )
+  }
+
+  <Panel title={`All projects (${projects.length})`}>
+    <div class="filter-bar" role="toolbar" aria-label="Filter projects" data-proj-filters>
+      {
+        FILTERS.map((f, i) => (
+          <button
+            type="button"
+            class="filter-pill"
+            data-filter={f.id}
+            aria-pressed={i === 0 ? 'true' : 'false'}
+            style={`--dot:${f.dot}`}
+            data-sfx
+          >
+            <span class="dot" aria-hidden="true" />
+            {f.label}
+          </button>
+        ))
+      }
+    </div>
+    <div data-proj-grid>
+      <ChannelMenu items={[...featured, ...rest]} eager={0} filterable />
+    </div>
+  </Panel>
 </Page>
+
+<script>
+  function wireProjectsFilter() {
+    const bar = document.querySelector<HTMLElement>('[data-proj-filters]');
+    const grid = document.querySelector<HTMLElement>('[data-proj-grid]');
+    if (!bar || !grid || bar.dataset.wired) return;
+    bar.dataset.wired = '1';
+    const buttons = [...bar.querySelectorAll<HTMLButtonElement>('[data-filter]')];
+    const items = [...grid.querySelectorAll<HTMLElement>('li[data-cats]')];
+
+    bar.addEventListener('click', (e) => {
+      const btn = e.target instanceof Element ? e.target.closest<HTMLButtonElement>('[data-filter]') : null;
+      if (!btn) return;
+      const picked = btn.dataset.filter ?? 'all';
+      for (const b of buttons) b.setAttribute('aria-pressed', String(b === btn));
+      for (const li of items) {
+        const cats = (li.dataset.cats ?? '').split(' ');
+        li.hidden = picked !== 'all' && !cats.includes(picked);
+      }
+    });
+  }
+  document.addEventListener('astro:page-load', wireProjectsFilter);
+</script>

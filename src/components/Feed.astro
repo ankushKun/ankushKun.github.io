@@ -1,6 +1,6 @@
 ---
-// The blog: every post as a row to read down the column, newest first, under its year. The
-// picture flies to the post's own page when one is opened (see src/scripts/motion.ts).
+// The blog: every post as a row to read down the column, newest first, under its year,
+// with thumbnail, title, 1-line summary, date, reading time and topic filter support.
 import Thumb from './ui/Thumb.astro';
 import { byYear, formatDate, isoDate, readingMinutes, urlOf, type Entry } from '../lib/content';
 
@@ -13,25 +13,36 @@ const EAGER = 6;
 let row = 0;
 
 const day = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+
+function topicFor(entry: Entry): string[] {
+  const t = new Set(entry.data.tags);
+  const out = new Set<string>();
+  if (t.has('ai-agents') || t.has('machine-learning') || t.has('construct') || t.has('cloudflare') || t.has('product-hunt')) out.add('ai');
+  if (t.has('game-dev') || t.has('handheld') || t.has('pokemon') || t.has('doom') || t.has('hardware')) out.add('games');
+  if (t.has('developer-tools') || t.has('web') || t.has('tutorial') || t.has('productivity') || t.has('graphics')) out.add('craft');
+  if (out.size === 0) out.add('craft');
+  return [...out];
+}
 ---
 
-<div class="feed">
+<div class="feed" data-blog-feed>
   {
     byYear(Astro.props.items).map(([year, posts]) => (
-      <section>
+      <section data-year-group>
         <h2 class="year">{year}</h2>
         <ol>
           {posts.map((post) => (
-            <li>
+            <li data-topics={topicFor(post).join(' ')}>
               <a href={urlOf(post)} class="row" data-sfx>
-                <Thumb entry={post} width={320} class="art" eager={row++ < EAGER} />
+                <Thumb entry={post} width={360} class="art" eager={row++ < EAGER} />
                 <span class="text">
                   <span class="title">{post.data.title}</span>
+                  <span class="desc">{post.data.description}</span>
                   <span class="meta">
                     <time datetime={isoDate(post.data.date)} title={formatDate(post.data.date, 'long')}>
                       {day(post.data.date)}
                     </time>
-                    {` · ${readingMinutes(post)} min`}
+                    {` · ${readingMinutes(post)} min read`}
                   </span>
                 </span>
               </a>
@@ -45,15 +56,20 @@ const day = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'n
 
 <style>
   .year {
-    margin: 30px 0 6px;
+    margin: 30px 0 8px;
     color: var(--color-ink-faint);
     font-size: 0.8125rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
+    font-weight: 800;
+    letter-spacing: 0.06em;
   }
 
   section:first-child .year {
     margin-top: 0;
+  }
+
+  section[hidden],
+  li[hidden] {
+    display: none;
   }
 
   .row {
@@ -61,26 +77,29 @@ const day = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'n
     align-items: center;
     gap: 18px;
     margin: 0 -14px;
-    padding: 12px 14px;
-    border-radius: 16px;
+    padding: 13px 14px;
+    border-radius: 18px;
     color: inherit;
     text-decoration: none;
     transition:
       box-shadow 0.18s ease,
-      background 0.18s ease;
+      background 0.18s ease,
+      translate 0.3s var(--ease-spring);
   }
 
   .row:hover,
   .row:focus-visible {
     background: var(--color-raise);
     box-shadow: var(--glow);
+    translate: 0 -1px;
   }
 
   .row :global(.art) {
     flex: none;
-    width: 132px;
+    width: 156px;
     aspect-ratio: 16 / 9;
-    border-radius: 10px;
+    border-radius: 12px;
+    box-shadow: var(--rim);
   }
 
   .text {
@@ -91,29 +110,46 @@ const day = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'n
 
   .title {
     color: var(--color-ink-strong);
-    font-size: 1rem;
-    font-weight: 700;
-    line-height: 1.4;
+    font-size: 1.02rem;
+    font-weight: 800;
+    line-height: 1.35;
+  }
+
+  .desc {
+    display: -webkit-box;
+    overflow: hidden;
+    color: var(--color-ink-soft);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
   }
 
   .meta {
-    color: var(--color-ink-quiet);
+    color: var(--color-ink-faint);
     font-size: 0.8125rem;
+    font-weight: 600;
   }
 
-  @media (max-width: 479px) {
+  @media (max-width: 559px) {
     .row {
       gap: 14px;
       margin: 0 -10px;
       padding: 10px;
+      align-items: flex-start;
     }
 
     .row :global(.art) {
-      width: 104px;
+      width: 112px;
     }
 
     .title {
       font-size: 0.9375rem;
+    }
+
+    .desc {
+      -webkit-line-clamp: 2;
+      font-size: 0.8125rem;
     }
   }
 </style>

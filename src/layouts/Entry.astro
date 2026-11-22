@@ -8,8 +8,10 @@ import { render } from 'astro:content';
 import Base from './Base.astro';
 import ChannelMenu from '../components/ChannelMenu.astro';
 import Thumb from '../components/ui/Thumb.astro';
+import BackButton from '../components/ui/BackButton.astro';
+import { NEW_TAB, extAttrs } from '../lib/external';
 import { AUTHOR } from '../site';
-import { SECTION_PATH, absUrl, formatDate, getAllEntries, getPage, isoDate, pagePath, readingMinutes, urlOf, type Entry } from '../lib/content';
+import { SECTION_PATH, absUrl, formatDate, getPage, getReadMore, isoDate, pagePath, readingMinutes, type Entry } from '../lib/content';
 import { inline } from '../lib/inline';
 import { OG_HEIGHT, OG_WIDTH, ogPathForEntry } from '../lib/og';
 import { breadcrumbs, entryNode, faqPage } from '../lib/schema';
@@ -38,14 +40,7 @@ const schemaImage = data.cover
 
 const canonicalHost = data.canonical ? new URL(data.canonical).hostname.replace(/^www\./, '') : undefined;
 
-let relatedEntries: Entry[] = [];
-if (data.related.length > 0) {
-  const all = await getAllEntries();
-  const byUrl = new Map(all.map((e) => [urlOf(e).replace(/\/$/, ''), e]));
-  relatedEntries = data.related
-    .map((path) => byUrl.get(path.replace(/\/$/, '')))
-    .filter((e): e is Entry => Boolean(e));
-}
+const readMoreEntries = await getReadMore(entry, 4);
 
 const schemaNodes = [
   entryNode(entry, schemaImage),
@@ -70,7 +65,7 @@ const schemaNodes = [
   schema={schemaNodes}
 >
   <article>
-    <a href={sectionPath} class="back" data-back data-sfx="back"><span class="b" aria-hidden="true">B</span>{sectionTitle}</a>
+    <BackButton href={sectionPath} label={sectionTitle} tile={sectionPath} />
     <h1>{data.title}</h1>
     <p class="byline">
       <img src="/mii/me.webp" alt="" width="64" height="64" />
@@ -87,7 +82,11 @@ const schemaNodes = [
       {
         data.canonical && canonicalHost && (
           <span>
-            First on <a href={data.canonical}>{canonicalHost}</a>
+            First on{' '}
+            <a href={data.canonical} class="ext" {...extAttrs(data.canonical)}>
+              {canonicalHost}
+              <span class="sr-only">{NEW_TAB}</span>
+            </a>
           </span>
         )
       }
@@ -135,13 +134,24 @@ const schemaNodes = [
     }
 
     {
-      relatedEntries.length > 0 && (
+      readMoreEntries.length > 0 && (
         <section class="related">
-          <h2>Related</h2>
-          <ChannelMenu items={relatedEntries} eager={relatedInView ? 2 : 0} />
+          <h2>Read more</h2>
+          <ChannelMenu items={readMoreEntries} eager={relatedInView ? 2 : 0} showKind />
         </section>
       )
     }
+
+    <aside class="mii-note signoff" aria-label="Say hello">
+      <img src="/mii/me-happy.webp" alt="" width="112" height="112" loading="lazy" decoding="async" />
+      <div class="bubble">
+        <p>
+          <strong>Thanks for reading!</strong> Got thoughts, questions, or a weird bug to trade? Drop by the{' '}
+          <a href="/apps/chat/">live Miiverse chat</a>, subscribe via <a href="/blogs/index.xml">RSS</a>, or{' '}
+          <a href="/contact/">send a note</a>.
+        </p>
+      </div>
+    </aside>
   </article>
 </Base>
 
@@ -150,40 +160,6 @@ const schemaNodes = [
   article {
     max-width: 44rem;
     margin-inline: auto;
-  }
-
-  /* Back to the section: B on a keyboard presses it. */
-  .back {
-    display: inline-flex;
-    align-items: center;
-    gap: 9px;
-    margin-left: -6px;
-    padding: 4px 13px 4px 4px;
-    border-radius: 99px;
-    color: var(--color-ink-quiet);
-    font-size: 0.875rem;
-    font-weight: 700;
-    text-decoration: none;
-    transition:
-      box-shadow 0.18s ease,
-      color 0.18s ease;
-  }
-
-  .back:hover {
-    color: var(--color-ink-strong);
-    box-shadow: var(--glow);
-  }
-
-  .b {
-    display: grid;
-    place-items: center;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: var(--color-tag);
-    color: #fff;
-    font-size: 0.75rem;
-    font-weight: 800;
   }
 
   h1 {
@@ -257,6 +233,11 @@ const schemaNodes = [
     margin-top: 3.5rem;
   }
 
+  /* Keep the 4-item Read more shelf a clean 2x2 grid inside the 44rem article column. */
+  .related :global(.channels) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .faq h2,
   .related h2 {
     margin-bottom: 1.1rem;
@@ -279,7 +260,17 @@ const schemaNodes = [
     line-height: 1.7;
   }
 
-  .faq dd :global(a) {
+  .faq dd :global(a),
+  .signoff a {
+    color: var(--color-ink-strong);
+    font-weight: 600;
     text-decoration: underline;
+    text-decoration-color: rgb(47 178 230 / 0.55);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 2px;
+  }
+
+  .signoff {
+    margin-top: 3.5rem;
   }
 </style>

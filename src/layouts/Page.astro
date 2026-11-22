@@ -5,9 +5,11 @@
 // their list below; `bare` pages lay out everything under the title themselves.
 import { render } from 'astro:content';
 import Base from './Base.astro';
+import Tile from '../components/ui/Tile.astro';
 import { formatDate, getPage, isoDate, pagePath } from '../lib/content';
 import { ogPathForPage } from '../lib/og';
 import { PERSON_ID, breadcrumbs, webPage } from '../lib/schema';
+import { tileFor } from '../lib/tiles';
 
 interface Props {
   id: string;
@@ -26,6 +28,7 @@ const path = pagePath(Astro.url);
 const aboutYou = ['ProfilePage', 'AboutPage', 'ContactPage'].includes(pageType) ? { mainEntity: { '@id': PERSON_ID } } : {};
 const crumbs = path === '/' ? [] : [breadcrumbs([{ name: title, path }])];
 const hasText = Boolean(page.body?.trim());
+const hasTile = Boolean(tileFor(path));
 ---
 
 <Base
@@ -38,14 +41,19 @@ const hasText = Boolean(page.body?.trim());
   schema={[webPage(pageType, path, title, description, aboutYou), ...crumbs, ...schema]}
 >
   <header class="head">
-    <h1>{title}</h1>
-    {
-      layout === 'menu' && hasText && (
-        <div class="intro">
-          <Content />
-        </div>
-      )
-    }
+    <div class="head-bar">
+      {hasTile && <Tile {path} size={58} class="head-tile" />}
+      <div class="head-copy">
+        <h1>{title}</h1>
+        {
+          layout === 'menu' && hasText && (
+            <div class="intro">
+              <Content />
+            </div>
+          )
+        }
+      </div>
+    </div>
   </header>
   {
     layout === 'panel' && hasText && (

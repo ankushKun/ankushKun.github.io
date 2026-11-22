@@ -1,23 +1,41 @@
 ---
-// Loads a Mii from a QR code image or a Mii code and shows it in 3D. Starts on your Mii.
+// Loads a Mii from a QR code image, a Mii code, or shuffles through the Plaza's crowd of Miis.
+import { Copy01Icon, QrCode01Icon, ShuffleIcon } from '@hugeicons/core-free-icons';
+import HugeIcon from '../ui/HugeIcon.astro';
 import { ME } from '../../data/plaza';
-import { resolveMii } from '../../lib/miis';
+import { folderMiis, resolveMii } from '../../lib/miis';
 
 const initial = await resolveMii(ME, 'ME');
+const crowd = [...(await folderMiis())].map(([file, code]) => ({
+  name: file.replace(/\.[^.]+$/, ''),
+  code,
+}));
 ---
 
 <div class="mii" data-mii data-initial={initial}>
+  <script type="application/json" data-crowd set:html={JSON.stringify(crowd)} />
   <div class="mii-stage" data-stage>
     <canvas role="img" aria-label="Mii preview"></canvas>
     <p class="mii-name" data-name></p>
+    <p class="mii-hint">Drag to spin · Drop or paste a QR code</p>
   </div>
-  <div class="mii-bar">
-    <label class="mii-button">
-      QR code
+  <div class="mii-actions">
+    <label class="mii-pill primary" data-sfx>
+      <HugeIcon icon={QrCode01Icon} size={18} strokeWidth={2.1} />
+      Load QR code
       <input type="file" accept="image/*" class="sr-only" data-file />
     </label>
-    <input data-code aria-label="Mii code" spellcheck="false" autocomplete="off" />
-    <button type="button" class="mii-button" data-copy>Copy</button>
+    <button type="button" class="mii-pill" data-shuffle data-sfx>
+      <HugeIcon icon={ShuffleIcon} size={18} strokeWidth={2.1} />
+      Random Plaza Mii
+    </button>
+    <button type="button" class="mii-pill" data-copy data-sfx>
+      <HugeIcon icon={Copy01Icon} size={18} strokeWidth={2.1} />
+      Copy code
+    </button>
+  </div>
+  <div class="mii-code-row">
+    <input data-code aria-label="Mii code" spellcheck="false" autocomplete="off" placeholder="Paste a base64 Mii code..." />
   </div>
   <p class="mii-status" data-status role="status"></p>
   <noscript>This page needs JavaScript.</noscript>
@@ -40,28 +58,29 @@ const initial = await resolveMii(ME, 'ME');
 
 <style is:global>
   .mii {
-    --mii-line: light-dark(rgb(29 40 38 / 0.12), rgb(255 255 255 / 0.14));
-    --mii-ink: light-dark(#1d2826, #e3ece9);
     display: grid;
-    gap: 12px;
+    gap: 14px;
   }
 
   .mii-stage {
     position: relative;
     overflow: hidden;
-    border-radius: 20px;
+    border-radius: 24px;
     background: radial-gradient(
-      120% 90% at 50% 20%,
-      light-dark(#ffffff, #33403d) 0%,
-      light-dark(#e6f2ef, #253230) 55%,
-      light-dark(#cfe1dc, #1a2422) 100%
+      110% 85% at 50% 22%,
+      light-dark(#ffffff, #313b40) 0%,
+      light-dark(#eaf5f8, #222b30) 58%,
+      light-dark(#d5e7ee, #171e22) 100%
     );
-    aspect-ratio: 4 / 3;
+    box-shadow:
+      var(--rim),
+      inset 0 1px 0 light-dark(#fff, rgb(255 255 255 / 0.08));
+    aspect-ratio: 16 / 10;
     transition: box-shadow 0.15s ease;
   }
 
   .mii-stage[data-drop] {
-    box-shadow: inset 0 0 0 3px #3caade;
+    box-shadow: inset 0 0 0 3px var(--color-sky);
   }
 
   .mii-stage canvas {
@@ -79,62 +98,114 @@ const initial = await resolveMii(ME, 'ME');
   .mii-name {
     position: absolute;
     left: 16px;
-    top: 12px;
+    top: 14px;
     margin: 0;
-    padding: 4px 12px;
+    padding: 4px 14px;
     border-radius: 999px;
-    background: #4a4f55;
+    background: light-dark(rgb(52 60 66 / 0.9), rgb(70 82 88 / 0.94));
     color: #fff;
-    font-weight: 700;
-    font-size: 14px;
+    font-weight: 800;
+    font-size: 0.875rem;
+    box-shadow: 0 3px 8px rgb(0 0 0 / 0.2);
   }
 
   .mii-name:empty {
     display: none;
   }
 
-  .mii-bar {
+  .mii-hint {
+    position: absolute;
+    right: 14px;
+    bottom: 12px;
+    margin: 0;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: light-dark(rgb(255 255 255 / 0.72), rgb(20 26 30 / 0.65));
+    color: var(--color-ink-soft);
+    font-size: 0.75rem;
+    font-weight: 600;
+    pointer-events: none;
+  }
+
+  .mii-actions {
     display: flex;
     flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .mii-pill {
+    display: inline-flex;
+    align-items: center;
     gap: 8px;
+    height: 44px;
+    padding: 0 18px;
+    border: 1px solid light-dark(rgb(55 70 78 / 0.18), rgb(255 255 255 / 0.12));
+    border-radius: 14px;
+    background: linear-gradient(to bottom, var(--color-gloss-top), var(--color-gloss-bottom));
+    box-shadow:
+      inset 0 1px 0 light-dark(rgb(255 255 255 / 0.9), rgb(255 255 255 / 0.08)),
+      inset 0 -2px 0 rgb(0 0 0 / 0.05),
+      0 2px 5px -2px light-dark(rgb(30 50 60 / 0.14), rgb(0 0 0 / 0.35));
+    color: var(--color-ink-strong);
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 700;
+    transition:
+      border-color 0.16s ease,
+      box-shadow 0.16s ease,
+      translate 0.25s var(--ease-spring),
+      scale 0.25s var(--ease-spring);
   }
 
-  .mii-button {
-    flex: none;
-    padding: 6px 14px;
-    border: 1px solid var(--mii-line);
-    border-radius: 999px;
-    font-weight: 600;
-    cursor: pointer;
+  .mii-pill.primary {
+    border-color: rgb(47 178 230 / 0.65);
+    background: linear-gradient(to bottom, #6fd2ff, #1f96d6);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.42),
+      inset 0 -2px 0 rgb(0 0 0 / 0.18),
+      0 3px 10px -2px rgb(31 150 214 / 0.48);
+    color: #fff;
   }
 
-  .mii-bar input[data-code] {
-    flex: 1 1 200px;
-    min-width: 0;
-    padding: 6px 12px;
-    border: 1px solid var(--mii-line);
-    border-radius: 999px;
-    font-family: ui-monospace, monospace;
-    font-size: 13px;
+  .mii-pill:hover,
+  .mii-pill:focus-within {
+    border-color: rgb(70 195 240 / 0.75);
+    box-shadow: var(--glow);
+    translate: 0 -1px;
   }
 
-  .mii-bar input[aria-invalid='true'] {
-    border-color: #d8262e;
+  .mii-pill:active {
+    scale: 0.96;
+  }
+
+  .mii-code-row input[data-code] {
+    width: 100%;
+    height: 44px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 14px;
+    background: var(--color-raise);
+    box-shadow:
+      var(--rim),
+      inset 0 2px 4px light-dark(rgb(0 30 40 / 0.06), rgb(0 0 0 / 0.3));
+    color: var(--color-ink-strong);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+  }
+
+  .mii-code-row input[aria-invalid='true'] {
+    box-shadow: 0 0 0 2px #ee4a4f;
   }
 
   .mii-status {
     min-height: 1.5em;
     margin: 0;
-    font-size: 14px;
+    color: var(--color-ink-soft);
+    font-size: 0.875rem;
+    font-weight: 600;
   }
 
   .mii-status[data-error] {
-    color: #d8262e;
-  }
-
-  .mii :focus-visible,
-  .mii-button:focus-within {
-    outline: 3px solid #3caade;
-    outline-offset: 2px;
+    color: #ee4a4f;
   }
 </style>
