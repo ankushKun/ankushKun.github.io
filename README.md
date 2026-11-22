@@ -15,7 +15,7 @@ Pushing to `main` deploys the site to GitHub Pages from `ankushKun/ankushKun.git
 
 ## Link previews
 
-Every page has its picture's alt text (`og:image:alt`, `twitter:image:alt`), and entries give Slack two short facts under the link (`facts` on `Base.astro`: when and how long for a post, year and stack for a project). The home page also has:
+Every page has its picture's alt text (`og:image:alt`, `twitter:image:alt`), and entries give Slack two short facts under the link (`facts` on `Base.astro`: when and how long for a post, year and stack for a project; on the home page, what I'm building and how many projects I've shipped). The home page also has:
 
 - **A clip** (`og:video`, `public/media/plaza-preview.mp4`): eight seconds of the live plaza that loop without a cut, which iMessage plays in the bubble, Discord over the picture and Telegram large.
 - **A player on X**: `/player/` is the plaza alone for X to frame in a post (Base.astro `embed`: settled from the start, links open the site in a new tab). Only X's crawler is told about it, by a Cloudflare Worker on `ankush.one/` (`workers/twitter-player/`, deploy with `pnpm dlx wrangler deploy` from that folder), since iMessage and Telegram show a player card as a small picture.
