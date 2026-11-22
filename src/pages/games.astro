@@ -1,0 +1,11 @@
+---
+import Page from '../layouts/Page.astro';
+import ChannelGrid from '../components/ChannelGrid.astro';
+import { getGames } from '../lib/games';
+
+const channels = (await getGames()).map((g) => ({ id: g.id, label: g.label, description: g.description, href: g.href, art: g.art }));
+---
+
+<Page id="games" pageType="CollectionPage" layout="menu">
+  <ChannelGrid {channels} hint={{ title: 'Pick a game!', text: 'Point at any channel to see what it is.' }} />
+</Page>

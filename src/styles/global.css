@@ -851,6 +851,60 @@ html:has(.col-app) .tv-menu {
   }
 }
 
+/* A game playing (pages/games/[game].astro, src/scripts/play.ts): the casing morphs into a CRT's
+   around it while the TV's buttons stay where they always are, the page still behind it, and they
+   stay in view on a phone even if the page was read down. */
+html[data-playing] {
+  overflow: hidden;
+  scrollbar-gutter: auto;
+}
+
+html[data-playing] .tv-btn,
+html[data-playing] .theme-toggle {
+  opacity: 1;
+  translate: 0 0;
+  pointer-events: auto;
+}
+
+/* Power, to stop playing, takes the plaza button's place while a game runs: the plaza button fades
+   out as it fades in. In the top layer (a popover), so it sits on the casing rather than under it
+   with the page. */
+html[data-playing] .tv-btn.tv-home {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tv-btn.tv-stop {
+  inset: calc(var(--bezel-top) + 22px) auto auto calc(var(--bezel) + 26px);
+  margin: 0;
+  overflow: visible;
+}
+
+.tv-btn.tv-stop:popover-open {
+  transition:
+    opacity 0.25s ease,
+    box-shadow 0.18s ease,
+    color 0.18s ease,
+    scale 0.3s var(--ease-spring);
+}
+
+@starting-style {
+  .tv-btn.tv-stop:popover-open {
+    opacity: 0;
+  }
+}
+
+/* Closed, it stays hidden: the TV buttons' own display would otherwise show it. */
+.tv-btn.tv-stop:not(:popover-open) {
+  display: none;
+}
+
+@media (max-width: 879px) {
+  .tv-btn.tv-stop {
+    inset: calc(var(--bezel-top) + 14px) auto auto calc(var(--bezel) + 12px);
+  }
+}
+
 /* Reading text. Outside the layers, so it wins over the typography plugin's own rules. */
 .prose {
   --tw-prose-body: var(--color-ink);

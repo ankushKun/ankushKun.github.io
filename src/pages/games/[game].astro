@@ -1,0 +1,144 @@
+---
+// A game's page: its title screen (AppCover), a page on the TV like any other, and once Play is
+// pressed the game itself in a CRT the TV's casing morphs into around it (src/scripts/play.ts). The game runs in a frame of its own, so its keys, pointer lock and sound stay inside
+// it and leave the site's (B to go back, M to mute) alone. A game with no `play` can't run in a
+// browser: its page offers its links.
+import type { GetStaticPaths } from 'astro';
+import { PowerIcon } from '@hugeicons/core-free-icons';
+import AppCover from '../../components/AppCover.astro';
+import HugeIcon from '../../components/ui/HugeIcon.astro';
+import { getGames, type ResolvedGame } from '../../lib/games';
+
+export const getStaticPaths = (async () => (await getGames()).map((game) => ({ params: { game: game.id }, props: { game } }))) satisfies GetStaticPaths;
+
+const { game } = Astro.props as { game: ResolvedGame };
+const external = game.play && !game.play.startsWith('/');
+---
+
+<AppCover
+  title={game.label}
+  description={game.description}
+  art={game.hero}
+  by={game.by}
+  parent={{ name: 'Games', path: '/games/' }}
+  links={game.links}
+  note={game.play ? undefined : "This one doesn't run in a browser. Here is where to get it."}
+>
+  {
+    game.play && game.newTab && (
+      <a slot="action" class="play" href={game.play} target="_blank" rel="noopener" data-sfx>
+        Play on itch.io
+      </a>
+    )
+  }
+  {
+    game.play && !game.newTab && (
+      <button slot="action" type="button" class="play" data-play data-sfx>
+        Play
+      </button>
+    )
+  }
+  {
+    game.play && !game.newTab && (
+      <div class="screen" data-player data-src={game.play} data-title={game.label} data-aspect={game.aspect ?? 4 / 3} data-external={external ? '' : undefined} hidden>
+        <div class="tube">
+          <div class="glass" />
+        </div>
+      </div>
+    )
+  }
+  {
+    game.play && !game.newTab && (
+      <button type="button" class="tv-btn tv-stop" aria-label="Stop playing" data-stop data-sfx="back" popover="manual">
+        <HugeIcon icon={PowerIcon} strokeWidth={1.9} />
+      </button>
+    )
+  }
+</AppCover>
+
+<script>
+  import { wirePlay } from '../../scripts/play';
+  document.addEventListener('astro:page-load', wirePlay);
+</script>
+
+<style>
+  /* Play: the one bright button, green like the console's Start. */
+  .play {
+    display: grid;
+    place-items: center;
+    height: 56px;
+    border: 0;
+    border-radius: 99px;
+    background: linear-gradient(to bottom, #7de042, #389614);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.45),
+      0 0 0 1px rgb(30 90 10 / 0.5),
+      0 6px 14px -6px rgb(40 120 10 / 0.7);
+    color: #fff;
+    font: inherit;
+    font-size: 1.25rem;
+    text-decoration: none;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-shadow: 0 1px 2px rgb(0 0 0 / 0.35);
+    cursor: pointer;
+    transition: scale 0.35s var(--ease-spring);
+  }
+
+  .play:hover,
+  .play:focus-visible {
+    scale: 1.02;
+    box-shadow:
+      var(--glow),
+      0 6px 14px -6px rgb(40 120 10 / 0.7);
+  }
+
+  .play:active {
+    scale: 0.98;
+    transition-duration: 0.08s;
+  }
+
+  /* The game's screen, placed by src/scripts/play.ts: a dark lip, the tube's surround, round a
+     picture tube, both cut to the CRT's outline (--crt-mask). It sits under the casing, whose hole
+     is the lip's outline. */
+  .screen {
+    position: fixed;
+    z-index: 30;
+    background: linear-gradient(to bottom, #40474c, #15191b 22%, #0b0d0e 70%, #1d2225);
+    mask: var(--crt-mask) 0 0 / 100% 100% no-repeat;
+  }
+
+  .screen[hidden] {
+    display: none;
+  }
+
+  .tube {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+    mask: var(--crt-mask) 0 0 / 100% 100% no-repeat;
+  }
+
+  .tube :global(iframe) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  /* The glass's curve: a soft light off its upper left and edges that fall away into shadow, over
+     the picture without catching the pointer. */
+  .glass {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(90% 70% at 28% 14%, rgb(255 255 255 / 0.09), transparent 55%),
+      radial-gradient(closest-side, transparent 78%, rgb(0 0 0 / 0.32) 125%);
+    box-shadow:
+      inset 0 0 28px 6px rgb(0 0 0 / 0.45),
+      inset 0 2px 1px rgb(255 255 255 / 0.08);
+    pointer-events: none;
+  }
+</style>
