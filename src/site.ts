@@ -44,7 +44,7 @@ export const SOCIALS = [
   { platform: 'Discord', handle: '@ankushkun', url: 'https://discord.com/users/666578281142812673' },
   { platform: 'Instagram', handle: '@ankushKun_', url: 'https://instagram.com/ankushKun_' },
   { platform: 'Reddit', handle: 'u/TECHIE6023', url: 'https://reddit.com/user/TECHIE6023' },
-  { platform: 'Medium', handle: 'ankushkun.medium.com', url: 'https://ankushkun.medium.com' },
+  { platform: 'Medium', handle: '@ankushkun', url: 'https://ankushkun.medium.com' },
 ];
 
 export const NAV = [

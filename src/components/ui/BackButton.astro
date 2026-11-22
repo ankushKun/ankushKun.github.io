@@ -1,11 +1,34 @@
 ---
-// The dark button that closes a page, as the plaza's panels close. B on a keyboard presses it.
+// Back to where a page sits: to an entry's section (its tile beside the name), or from the 404 to the
+// plaza (a house). It is made like the link buttons. B on a keyboard presses it (data-back).
+import { ArrowLeft01Icon, Home01Icon } from '@hugeicons/core-free-icons';
+import HugeIcon from './HugeIcon.astro';
+import Tile from './Tile.astro';
+import { tileFor } from '../../lib/tiles';
+
 interface Props {
   href: string;
   label: string;
+  /** The page whose section tile shows beside the name; without it, a house. */
+  tile?: string;
 }
 
-const { href, label } = Astro.props;
+const { href, label, tile } = Astro.props;
+const art = tile ? tileFor(tile) : undefined;
+// The plaza is a real page load, not a swap on the TV (Base.astro).
+const plaza = href === '/' || href.startsWith('/#');
 ---
 
-<a {href} class="b-btn" data-back data-sfx="back" data-astro-reload={href === '/' ? '' : undefined}><span class="b" aria-hidden="true">B</span>{label}</a>
+<a {href} class="back-btn" data-back data-sfx="back" data-astro-reload={plaza ? '' : undefined}>
+  <HugeIcon icon={ArrowLeft01Icon} size={14} strokeWidth={2.6} class="chev" />
+  {
+    art ? (
+      <Tile path={tile!} size={28} />
+    ) : (
+      <span class="back-home" aria-hidden="true">
+        <HugeIcon icon={Home01Icon} size={16} strokeWidth={2} />
+      </span>
+    )
+  }
+  <span>{label}</span>
+</a>

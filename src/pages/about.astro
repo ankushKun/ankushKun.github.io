@@ -6,6 +6,7 @@ import MenuButton from '../components/ui/MenuButton.astro';
 import Friends from '../components/Friends.astro';
 import MiiStage from '../components/mii/Stage.astro';
 import { AUTHOR } from '../site';
+import { NEW_TAB, extAttrs } from '../lib/external';
 import { resume } from '../data/resume';
 import { formatMonth, getPage } from '../lib/content';
 
@@ -27,18 +28,28 @@ const longest = Math.max(...roles.map((r) => r.months));
   <div class="about">
     <Panel class="profile">
       <div class="me">
-        <MiiStage />
+        <div class="stage-wrap">
+          <MiiStage />
+          <p class="stage-quip" data-stage-quip aria-live="polite">Tap me to wave!</p>
+        </div>
         <div class="card">
           <h2>{AUTHOR.name}</h2>
-          <p class="role">{AUTHOR.jobTitle}, <a href={AUTHOR.worksFor.url}>{AUTHOR.worksFor.name}</a></p>
+          <p class="role">
+            {AUTHOR.jobTitle},{' '}
+            <a href={AUTHOR.worksFor.url} class="ext" {...extAttrs(AUTHOR.worksFor.url)}>
+              {AUTHOR.worksFor.name}
+              <span class="sr-only">{NEW_TAB}</span>
+            </a>
+          </p>
           <ul class="facts">
             <li class="chip">{AUTHOR.location}</li>
             {AUTHOR.alternateName.slice(1).map((n) => <li class="chip">{n}</li>)}
           </ul>
           <div class="menu">
-            <MenuButton href="/projects/" label="Projects" icon="grid" />
-            <MenuButton href="/blogs/" label="Posts" icon="post" />
-            <MenuButton href="/contact/" label="Say hello" icon="mail" go />
+            <MenuButton href="/projects/" label="Projects" />
+            <MenuButton href="/blogs/" label="Blog posts" />
+            <MenuButton href="/apps/chat/" label="Hang out in Chat" />
+            <MenuButton href="/contact/" label="Say hello" />
           </div>
         </div>
       </div>
@@ -73,7 +84,7 @@ const longest = Math.max(...roles.map((r) => r.months));
         }
       </ol>
       <div class="more">
-        <MenuButton href="/resume/" label="Resume" icon="doc" />
+        <MenuButton href="/resume/" label="Resume" />
       </div>
     </Panel>
 
@@ -83,12 +94,51 @@ const longest = Math.max(...roles.map((r) => r.months));
   </div>
 </Page>
 
+<script>
+  const QUIPS = [
+    'Hey! Thanks for stopping by!',
+    'Currently building AI employees @ Construct.',
+    'Still carrying my New 3DS everywhere.',
+    'Try the Konami code back on the Plaza!',
+    'Come doodle something in #general Chat.',
+    'Yes, my real Mii does look like this.',
+  ];
+  function wireStageQuip() {
+    const wrap = document.querySelector<HTMLElement>('.stage-wrap');
+    const quip = wrap?.querySelector<HTMLElement>('[data-stage-quip]');
+    if (!wrap || !quip || wrap.dataset.wired) return;
+    wrap.dataset.wired = '1';
+    let idx = 0;
+    wrap.addEventListener('click', () => {
+      quip.textContent = QUIPS[idx++ % QUIPS.length];
+    });
+  }
+  document.addEventListener('astro:page-load', wireStageQuip);
+</script>
+
 <style>
   .me {
     display: grid;
     grid-template-columns: 200px minmax(0, 1fr);
     align-items: center;
     gap: 28px;
+  }
+
+  .stage-wrap {
+    display: grid;
+    gap: 8px;
+  }
+
+  .stage-quip {
+    margin: 0;
+    padding: 6px 12px;
+    border-radius: 99px;
+    background: light-dark(#eef6fa, #263137);
+    box-shadow: var(--rim);
+    color: var(--color-ink-soft);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-align: center;
   }
 
   .card h2 {
@@ -217,7 +267,8 @@ const longest = Math.max(...roles.map((r) => r.months));
   }
 
   .more {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 320px);
     margin-top: 26px;
   }
 

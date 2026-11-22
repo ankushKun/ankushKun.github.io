@@ -11,9 +11,11 @@
     "preview": "astro preview",
     "astro": "astro",
     "check": "astro check",
-    "transitions": "node scripts/transitions.mjs"
+    "transitions": "node scripts/transitions.mjs",
+    "favicons": "node scripts/favicons.mjs"
   },
   "dependencies": {
+    "@astrojs/markdown-satteri": "0.4.7",
     "@astrojs/rss": "^4.0.19",
     "@fontsource/inter": "^5.3.0",
     "@fontsource/jetbrains-mono": "^5.3.0",
@@ -26,6 +28,7 @@
     "jsqr": "1.4.0",
     "satori": "^0.63.2",
     "sharp": "^0.35.5",
+    "simple-icons": "16.37.0",
     "tailwindcss": "^4.3.5",
     "three": "0.187.0"
   },

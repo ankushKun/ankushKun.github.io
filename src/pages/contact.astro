@@ -6,20 +6,32 @@ import { AUTHOR, BOOKING_URL } from '../site';
 ---
 
 <Page id="contact" pageType="ContactPage">
+  <aside class="mii-note greet">
+    <img src="/mii/me-happy.webp" alt="" width="112" height="112" decoding="async" />
+    <div class="bubble">
+      <strong>My inbox is always open!</strong> Whether it's about Construct Computer, weird 3DS homebrew bugs, or an open-source collab, I read every note myself.
+    </div>
+  </aside>
+
   <div class="mail">
-    <MenuButton href={`mailto:${AUTHOR.email}`} label="Write a letter" sub={AUTHOR.email} icon="mail" go />
-    <MenuButton href={BOOKING_URL} label="Book a call" sub="cal.com" icon="phone" />
+    <MenuButton href={`mailto:${AUTHOR.email}`} label="Write a letter" />
+    <MenuButton href={BOOKING_URL} label="Book a call" />
+    <MenuButton href="/apps/chat/" label="Say hi in #general" />
   </div>
+
   <h2 class="panel-head">Friends</h2>
   <Friends />
 </Page>
 
 <style>
-  .mail {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 12px;
-    margin: 2rem 0 2.5rem;
+  .greet {
+    margin-top: 1.75rem;
   }
 
+  .mail {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin: 1.5rem 0 2.5rem;
+  }
 </style>

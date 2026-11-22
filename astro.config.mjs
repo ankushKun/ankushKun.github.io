@@ -1,9 +1,13 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
+import { satteri } from '@astrojs/markdown-satteri';
+import { externalLinks } from './src/lib/external-links.ts';
 
 export default defineConfig({
   site: 'https://ankush.one',
+  // Links out of the site open in a new tab (src/lib/external.ts).
+  markdown: { processor: satteri({ hastPlugins: [externalLinks] }) },
   // Pages load ahead on hover, so moving between them starts the moment you click.
   prefetch: { prefetchAll: true, defaultStrategy: 'hover' },
   redirects: {

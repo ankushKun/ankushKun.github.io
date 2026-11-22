@@ -1,25 +1,46 @@
 ---
-// One of the plaza's menu buttons: a white bar with a green icon at its start.
-import Icon from './Icon.astro';
+// A link button: the destination's badge, its name, and what pressing it does at the end (an arrow
+// opens a new tab, a chevron stays on the site, a down arrow downloads). links.ts works all of it out
+// from `href`; `tile` (a page's path) or `icon` pick the badge instead. Without `href` it is a button.
+import { ArrowRight01Icon, ArrowUpRight01Icon, Download04Icon } from '@hugeicons/core-free-icons';
+import HugeIcon from './HugeIcon.astro';
+import LinkBadge from './LinkBadge.astro';
+import { NEW_TAB } from '../../lib/external';
+import { resolveLink, type Glyph } from '../../lib/links';
 
 interface Props {
-  href: string;
+  href?: string;
   label: string;
-  sub?: string;
-  icon?: 'link' | 'code' | 'play' | 'mail' | 'phone' | 'doc' | 'post' | 'person' | 'download' | 'star' | 'rss' | 'grid';
-  /** The blue icon, for the one thing a page is mostly for. */
-  go?: boolean;
+  icon?: Glyph;
+  /** A page's path whose section tile is the badge, e.g. `/resume/`. */
+  tile?: string;
+  /** Extra `rel` tokens, e.g. `me`. */
+  rel?: string;
   download?: string;
+  id?: string;
+  class?: string;
 }
 
-const { href, label, sub, icon = 'link', go = false, download } = Astro.props;
-const external = /^https?:/.test(href);
+const { href, label, icon, tile, rel, download, id, class: className } = Astro.props;
+const link = resolveLink(href, label, { download, glyph: icon, tile });
+const external = link.kind === 'external';
+const rels = [...(rel?.split(/\s+/).filter(Boolean) ?? []), ...(external ? ['noopener'] : [])];
+const END = { external: ArrowUpRight01Icon, internal: ArrowRight01Icon, download: Download04Icon, action: undefined }[link.kind];
+const Tag = href ? 'a' : 'button';
 ---
 
-<a {href} class:list={['menu-btn', { go }]} rel={external ? 'noopener' : undefined} {download} data-sfx>
-  <span class="ico"><Icon name={icon} /></span>
-  <span>
-    {label}
-    {sub && <span class="sub">{sub}</span>}
-  </span>
-</a>
+<Tag
+  {id}
+  href={href}
+  type={href ? undefined : 'button'}
+  class:list={['menu-btn', className]}
+  target={external ? '_blank' : undefined}
+  rel={rels.length ? [...new Set(rels)].join(' ') : undefined}
+  {download}
+  data-sfx
+>
+  <LinkBadge badge={link.badge} />
+  <span class="label">{link.label}</span>
+  {external && <span class="sr-only">{NEW_TAB}</span>}
+  {END && <HugeIcon icon={END} size={16} strokeWidth={2.2} class={`end is-${link.kind}`} />}
+</Tag>

@@ -1,0 +1,49 @@
+---
+// The badge at the start of a link button (links.ts decides which): a platform's mark in white on
+// its color, a site's own icon (filling the badge, or on a white tile when it has see-through
+// corners), a section's tile in its glass frame, or a glyph.
+import { Download04Icon, File02Icon, Globe02Icon, Mail01Icon, PrinterIcon, RssIcon } from '@hugeicons/core-free-icons';
+import HugeIcon from './HugeIcon.astro';
+import type { Badge, Glyph } from '../../lib/links';
+
+interface Props {
+  badge: Badge;
+}
+
+const GLYPHS = {
+  mail: Mail01Icon,
+  rss: RssIcon,
+  globe: Globe02Icon,
+  download: Download04Icon,
+  file: File02Icon,
+  print: PrinterIcon,
+} satisfies Record<Glyph, unknown>;
+
+const { badge } = Astro.props;
+---
+
+{
+  badge.type === 'tile' ? (
+    <span class="link-badge is-tile" aria-hidden="true">
+      <img src={badge.src} alt="" width="72" height="72" decoding="async" />
+    </span>
+  ) : badge.type === 'favicon' ? (
+    <span class:list={['link-badge', badge.fill ? 'is-fill' : 'is-inset']} aria-hidden="true">
+      <img src={badge.src} alt="" width="64" height="64" decoding="async" />
+    </span>
+  ) : badge.type === 'brand' ? (
+    <span
+      class:list={['link-badge', { 'is-bleed': badge.bleed }]}
+      style={`--badge-bg:${badge.bg}${badge.ink ? `;color:${badge.ink}` : ''}`}
+      aria-hidden="true"
+    >
+      <svg viewBox="0 0 24 24" width="18" height="18">
+        <path fill="currentColor" d={badge.path} />
+      </svg>
+    </span>
+  ) : (
+    <span class="link-badge" style={`--badge-bg:${badge.bg}`} aria-hidden="true">
+      <HugeIcon icon={GLYPHS[badge.glyph]} size={18} strokeWidth={2} />
+    </span>
+  )
+}

@@ -1,5 +1,6 @@
 ---
 import Page from '../layouts/Page.astro';
+import MenuButton from '../components/ui/MenuButton.astro';
 import { NEWSLETTER } from '../site';
 ---
 
@@ -16,9 +17,19 @@ import { NEWSLETTER } from '../site';
         </button>
       </form>
     ) : (
-      <p class="note">
-        Signup is not live yet. In the meantime, you can follow new posts via the <a href="/blogs/index.xml">RSS feed</a> or reach out on <a href="/contact/">Contact</a>.
-      </p>
+      <div class="pending">
+        <aside class="mii-note">
+          <img src="/mii/me-surprised.webp" alt="" width="112" height="112" decoding="async" />
+          <div class="bubble">
+            <strong>Email dispatches are still being wired up!</strong> Until SpotPass email lands, grab the RSS feed so you never miss a post, or drop into Chat.
+          </div>
+        </aside>
+        <div class="actions">
+          <MenuButton href="/blogs/index.xml" label="Subscribe via RSS" />
+          <MenuButton href="/apps/chat/" label="Join #general Chat" />
+          <MenuButton href="/contact/" label="Send a note" />
+        </div>
+      </div>
     )
   }
 </Page>
@@ -50,17 +61,15 @@ import { NEWSLETTER } from '../site';
     box-shadow: var(--glow);
   }
 
-  .note {
-    margin-top: 1.5rem;
-    color: var(--color-ink-soft);
-    line-height: 1.7;
+  .pending {
+    display: grid;
+    gap: 18px;
+    margin-top: 1.75rem;
   }
 
-  .note a {
-    color: var(--color-ink-strong);
-    text-decoration: underline;
-    text-decoration-color: rgb(47 178 230 / 0.5);
-    text-decoration-thickness: 2px;
-    text-underline-offset: 3px;
+  .actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 12px;
   }
 </style>

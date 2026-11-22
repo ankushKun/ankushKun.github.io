@@ -4,12 +4,16 @@ import MenuButton from '../components/ui/MenuButton.astro';
 import { resume } from '../data/resume';
 import { formatMonth } from '../lib/content';
 import { inline } from '../lib/inline';
+import { NEW_TAB, extAttrs, isExternal } from '../lib/external';
 ---
 
 <Page id="resume">
   <div class="top">
     <p class="summary" set:html={inline(resume.summary)} />
-    <MenuButton href={resume.pdf} download={resume.pdfDownloadName} label="Download PDF" icon="download" go />
+    <div class="resume-actions">
+      <MenuButton href={resume.pdf} download={resume.pdfDownloadName} label="Download PDF" tile="/resume/" />
+      <MenuButton id="resume-print" label="Print page" icon="print" />
+    </div>
   </div>
 
   <section>
@@ -22,7 +26,11 @@ import { inline } from '../lib/inline';
           </p>
           <div>
             <h3>
-              {e.role}, <a href={e.url}>{e.org}</a>
+              {e.role},{' '}
+              <a href={e.url} class:list={[{ ext: isExternal(e.url) }]} {...extAttrs(e.url)}>
+                {e.org}
+                {isExternal(e.url) && <span class="sr-only">{NEW_TAB}</span>}
+              </a>
             </h3>
             {e.location && <p class="where">{e.location}</p>}
             <ul>
@@ -45,7 +53,10 @@ import { inline } from '../lib/inline';
             <p class="when">{formatMonth(p.start)}</p>
             <div>
               <h3>
-                <a href={p.more ?? p.url}>{p.name}</a>
+                <a href={p.more ?? p.url} class:list={[{ ext: isExternal(p.more ?? p.url) }]} {...extAttrs(p.more ?? p.url)}>
+                  {p.name}
+                  {isExternal(p.more ?? p.url) && <span class="sr-only">{NEW_TAB}</span>}
+                </a>
               </h3>
               <p class="where">{p.tech.join(', ')}</p>
               <ul>
@@ -94,11 +105,28 @@ import { inline } from '../lib/inline';
   </section>
 </Page>
 
+<script>
+  document.addEventListener('astro:page-load', () => {
+    const btn = document.getElementById('resume-print');
+    if (!btn || btn.dataset.wired) return;
+    btn.dataset.wired = '1';
+    btn.addEventListener('click', () => window.print());
+  });
+</script>
+
 <style>
   .top {
     display: grid;
     gap: 18px;
     justify-items: start;
+  }
+
+  .resume-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 12px;
+    width: 100%;
+    max-width: 560px;
   }
 
   .summary {

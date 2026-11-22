@@ -268,73 +268,245 @@
     white-space: nowrap;
   }
 
-  /* The plaza's menu buttons: a white bar with a green icon at its start. */
-  .menu-btn {
+  /* Link buttons (MenuButton.astro) and the back button (BackButton.astro): the console's plain
+     glossy surface, and the blue glow on whatever is pointed at. Color only lives in a link's badge. */
+  .menu-btn,
+  .back-btn {
     display: flex;
     align-items: center;
-    gap: 14px;
-    min-height: 54px;
-    padding: 7px 22px 7px 8px;
     border: 0;
-    border-radius: 15px;
+    border-radius: 14px;
     background: linear-gradient(to bottom, var(--color-gloss-top), var(--color-gloss-bottom));
     box-shadow:
       var(--rim),
-      inset 0 -2px 0 rgb(0 0 0 / 0.045),
-      0 2px 5px -1px light-dark(rgb(30 50 60 / 0.16), rgb(0 0 0 / 0.4));
+      inset 0 1px 0 light-dark(transparent, rgb(255 255 255 / 0.07)),
+      inset 0 -2px 0 light-dark(rgb(0 0 0 / 0.035), rgb(0 0 0 / 0.2)),
+      0 2px 4px -2px light-dark(rgb(30 50 60 / 0.12), rgb(0 0 0 / 0.5));
     color: var(--color-ink-strong);
     font: inherit;
-    font-size: 0.9375rem;
     font-weight: 700;
+    line-height: 1.25;
     text-align: left;
     text-decoration: none;
     transition:
       box-shadow 0.18s ease,
-      translate 0.35s var(--ease-spring),
-      scale 0.35s var(--ease-spring);
+      translate 0.3s var(--ease-spring),
+      scale 0.3s var(--ease-spring);
   }
 
-  .menu-btn:hover {
+  .menu-btn:hover,
+  .menu-btn:focus-visible,
+  .back-btn:hover,
+  .back-btn:focus-visible {
     box-shadow:
       var(--glow),
-      0 2px 5px -1px light-dark(rgb(30 50 60 / 0.16), rgb(0 0 0 / 0.4));
+      inset 0 1px 0 light-dark(transparent, rgb(255 255 255 / 0.07));
     translate: 0 -1px;
   }
 
-  .menu-btn:active {
+  .menu-btn:active,
+  .back-btn:active {
     scale: 0.97;
     transition-duration: 0.08s;
   }
 
-  .menu-btn .ico {
+  /* A link: its badge, its name, and what pressing it does at the end (an arrow opens a new tab, a
+     chevron stays on the site, a down arrow downloads). */
+  .menu-btn {
+    position: relative;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+    height: 52px;
+    padding: 0 14px 0 8px;
+    font-size: 0.9375rem;
+  }
+
+  .menu-btn .label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .menu-btn .end {
+    flex: none;
+    color: var(--color-ink-faint);
+    transition:
+      color 0.18s ease,
+      translate 0.22s var(--ease-spring);
+  }
+
+  .menu-btn:hover .end,
+  .menu-btn:focus-visible .end {
+    color: var(--color-sky);
+  }
+
+  .menu-btn:hover .is-external,
+  .menu-btn:focus-visible .is-external {
+    translate: 1px -1px;
+  }
+
+  .menu-btn:hover .is-internal,
+  .menu-btn:focus-visible .is-internal {
+    translate: 2px 0;
+  }
+
+  .menu-btn:hover .is-download,
+  .menu-btn:focus-visible .is-download {
+    translate: 0 1px;
+  }
+
+  /* A link's badge (LinkBadge.astro): a mark in white on its brand's color with the console's gloss
+     over its top half, a site's own icon, or a section's tile in its glass frame. */
+  .link-badge {
+    position: relative;
     display: grid;
     flex: none;
     place-items: center;
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
+    overflow: hidden;
     border-radius: 11px;
-    background: linear-gradient(to bottom, #86d84c, var(--color-leaf-deep));
+    background: var(--badge-bg, #56636b);
     box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.45),
-      inset 0 -2px 0 rgb(0 0 0 / 0.12),
-      0 1px 2px rgb(0 0 0 / 0.18);
+      inset 0 0 0 1px rgb(255 255 255 / 0.14),
+      0 1px 2px rgb(0 0 0 / 0.25);
     color: #fff;
   }
 
-  .menu-btn .ico svg {
-    width: 20px;
-    height: 20px;
+  .link-badge::after {
+    content: '';
+    position: absolute;
+    inset: 0 0 50%;
+    border-radius: 11px 11px 40% 40% / 11px 11px 20% 20%;
+    background: linear-gradient(to bottom, rgb(255 255 255 / 0.3), rgb(255 255 255 / 0.04));
+    pointer-events: none;
   }
 
-  .menu-btn .sub {
+  .link-badge svg {
+    position: relative;
+    z-index: 1;
+  }
+
+  .link-badge.is-bleed svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .link-badge.is-fill img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* An icon with see-through corners sits on white in both lights, as browsers show it in a tab. */
+  .link-badge.is-inset {
+    background: #fff;
+    box-shadow:
+      inset 0 0 0 1px rgb(55 70 78 / 0.16),
+      0 1px 2px rgb(0 0 0 / 0.18);
+  }
+
+  .link-badge.is-inset img {
+    position: relative;
+    z-index: 1;
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+  }
+
+  .link-badge.is-tile {
+    padding: 3px;
+    background: var(--aero-bg);
+    box-shadow:
+      inset 0 0 0 1.5px light-dark(rgb(255 255 255 / 0.95), rgb(255 255 255 / 0.2)),
+      0 0 0 1px light-dark(rgb(95 125 142 / 0.38), rgb(0 0 0 / 0.6)),
+      0 2px 4px -2px light-dark(rgb(25 60 85 / 0.38), rgb(0 0 0 / 0.5));
+  }
+
+  .link-badge.is-tile::after {
+    display: none;
+  }
+
+  .link-badge.is-tile img {
     display: block;
-    color: var(--color-ink-soft);
-    font-size: 0.8125rem;
-    font-weight: 500;
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    object-fit: cover;
   }
 
-  .menu-btn.go .ico {
-    background: linear-gradient(to bottom, #6fd2ff, #1f96d6);
+  /* Back to a section (or the plaza): a chevron that leans the way it goes, the tile, the name. */
+  .back-btn {
+    display: inline-flex;
+    gap: 8px;
+    height: 44px;
+    padding: 0 16px 0 10px;
+    font-size: 0.875rem;
+  }
+
+  .back-btn .chev {
+    flex: none;
+    color: var(--color-ink-faint);
+    transition:
+      color 0.18s ease,
+      translate 0.22s var(--ease-spring);
+  }
+
+  .back-btn:hover .chev,
+  .back-btn:focus-visible .chev {
+    color: var(--color-sky);
+    translate: -2px 0;
+  }
+
+  .back-btn .tile {
+    border-radius: 9px;
+  }
+
+  .back-btn .tile::after {
+    border-radius: 9px 9px 40% 40% / 9px 9px 18% 18%;
+  }
+
+  .back-btn .tile img {
+    border-radius: 7px;
+  }
+
+  .back-home {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 9px;
+    background: var(--aero-bg);
+    box-shadow:
+      inset 0 0 0 1.5px light-dark(rgb(255 255 255 / 0.95), rgb(255 255 255 / 0.2)),
+      0 0 0 1px light-dark(rgb(95 125 142 / 0.38), rgb(0 0 0 / 0.6));
+    color: var(--color-sky);
+  }
+
+  /* A link in text that opens a new tab ends in a small arrow (src/lib/external.ts). */
+  a.ext::after {
+    content: '';
+    display: inline-block;
+    width: 0.6em;
+    height: 0.6em;
+    margin-left: 0.15em;
+    vertical-align: 0.12em;
+    background: var(--color-ink-faint);
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 17 17 7M8 7h9v9'/%3E%3C/svg%3E")
+      center / contain no-repeat;
+    transition: background-color 0.2s ease;
+  }
+
+  a.ext:hover::after {
+    background: var(--color-sky);
   }
 
   /* The dark button that closes a panel. B on a keyboard presses it. */
@@ -443,6 +615,129 @@
 
   .head + * {
     margin-top: 28px;
+  }
+
+  /* Glossy Wii U filter pill bar shared by Projects, Blog, and Timeline. */
+  .filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .filter-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 34px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 99px;
+    background: linear-gradient(to bottom, var(--color-gloss-top), var(--color-gloss-bottom));
+    box-shadow:
+      var(--rim),
+      inset 0 -2px 0 rgb(0 0 0 / 0.04);
+    color: var(--color-ink);
+    font: inherit;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    transition:
+      box-shadow 0.16s ease,
+      color 0.16s ease,
+      background 0.16s ease,
+      scale 0.25s var(--ease-spring);
+  }
+
+  .filter-pill:hover {
+    color: var(--color-ink-strong);
+    box-shadow: var(--glow);
+  }
+
+  .filter-pill:active {
+    scale: 0.95;
+  }
+
+  .filter-pill[aria-pressed='true'] {
+    background: linear-gradient(to bottom, #4ec6f7, #1c94d4);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.4),
+      0 2px 6px -2px rgb(28 148 212 / 0.55);
+    color: #fff;
+  }
+
+  .filter-pill .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--dot, var(--color-sky));
+    box-shadow: 0 0 0 1.5px rgb(255 255 255 / 0.85);
+  }
+
+  .filter-pill[aria-pressed='true'] .dot {
+    background: #fff;
+  }
+
+  .filter-pill .count {
+    opacity: 0.7;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  /* A friendly Mii speech bubble note (used on Contact, Newsletter, Apps, and Entry sign-offs). */
+  .mii-note {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 18px;
+    border-radius: 20px;
+    background: light-dark(#f6fafc, #262e33);
+    box-shadow:
+      var(--rim),
+      inset 0 1px 0 light-dark(#fff, rgb(255 255 255 / 0.06));
+  }
+
+  .mii-note img {
+    flex: none;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: light-dark(#e3f1f6, #1b2429);
+    box-shadow:
+      0 0 0 2px light-dark(#fff, #354147),
+      0 3px 8px -2px rgb(30 50 60 / 0.25);
+  }
+
+  .mii-note .bubble {
+    min-width: 0;
+    flex: 1;
+    color: var(--color-ink);
+    font-size: 0.9375rem;
+    line-height: 1.55;
+  }
+
+  .mii-note .bubble strong {
+    color: var(--color-ink-strong);
+  }
+
+  @media (max-width: 559px) {
+    .head-bar {
+      gap: 14px;
+    }
+
+    .head-tile {
+      --s: 48px !important;
+    }
+
+    .mii-note {
+      align-items: flex-start;
+      padding: 12px 14px;
+    }
+
+    .mii-note img {
+      width: 46px;
+      height: 46px;
+    }
   }
 
   /* The site's other pages, at the very end of every page. */
