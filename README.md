@@ -1,6 +1,6 @@
 # ankush.one
 
-Personal site built with Astro and Tailwind. Static output. The only client JavaScript is the 3D plaza on the home page and the Mii viewer at `/mii/`.
+Personal site built with Astro and Tailwind. Static output. Client JavaScript is the page router (Astro's `ClientRouter`), the 3D plaza (the home page only), your Mii on the About page, the Mii viewer at `/mii/`, the apps and the UI sounds. Every page works without it.
 
 ```sh
 pnpm dev      # http://localhost:4321
@@ -26,6 +26,39 @@ Copy an existing entry to start a new one. All entries share `title`, `descripti
 
 Standalone pages (About, Now, Privacy...) and the intro of every section index are Markdown files in `src/content/pages/`, named after the page. Resume data lives in `src/data/resume.ts` and also feeds the About page. Name, socials, nav, booking link and newsletter form target live in `src/site.ts`.
 
+## Every other page
+
+Every page but the plaza is shown on a TV (`src/components/ui/Frame.astro`): a white casing round a pale screen with a CRT's rounded corners, and one white column down the middle of the screen, as wide as two thirds of it, to read. The page scrolls under the casing's edge as under glass. Nothing else is on the screen:
+
+- **Top left**, a round button back to the plaza. **Top right**, a round button that opens the menu of sections (`NAV` in `src/site.ts`): their glass tiles drop out of it one under another (`src/scripts/menu.ts`), each with its name on a dark tag to its left (the section you are in has a blue one), and fold back up into it when it closes. It stays open, without dimming the page, until the button or Escape closes it, and on a big screen it stays open as you go from page to page. Icons are frosted glass like the Wii U home menu's (`--aero-*` in `global.css`).
+- **The footer** at the end of every page links the rest of the site (`FOOTER_NAV`).
+- **On a phone** the casing is thinner, the column fills the screen under the two buttons, the buttons step aside while you read down a page and come back when you scroll up.
+- **Lists**: the blog is rows of posts under their year (`Feed.astro`); projects, talks and consoles are glossy channel tiles, more across as the column widens (`ChannelMenu.astro`); the timeline is memos dated by little calendar pages colored by kind (`Timeline.astro`); apps are the Wii's channel menu (`apps.astro`): wide channels in glossy frames, art edge to edge with the name across the top (a wide crop of painted art, `/art/channel/<slug>.webp`, or a drawn banner, `/art/channel/<slug>.svg`), always whole pages of twelve with grey empty channels in the free slots, two, three or four across by the room the menu has.
+- **Entries** (`layouts/Entry.astro`) read top to bottom: the B button back to the section, the title, a byline signed by your Mii, the picture, then the text. Standalone pages (`layouts/Page.astro`) are a title and their text; sections of a longer page are `Panel.astro`, a heading with what is under it.
+- **Light and dark** follow the device until you pick one with the icon out in the casing's bottom left corner, or at the top beside the plaza button on a phone (`ThemeToggle.astro`, `src/scripts/theme.ts`); picking what the device already shows goes back to following it. The dark TV has a black casing and a charcoal column. Colors that change are `light-dark()` pairs on the tokens in `global.css`. On the TV the new lights spread in a circle from the icon; on the plaza it turns to night, the floor, haze and fog dimming over about half a second (`setNight` in `plaza/floor.ts`). The theme is set before the page draws, so it never flashes.
+- **Icons** on the TV's buttons and the light switch are [Hugeicons](https://hugeicons.com) (`@hugeicons/core-free-icons`), drawn at build time as inline SVG by `HugeIcon.astro`.
+- **Sounds** are made on the spot (`src/scripts/sfx.ts`): a tick when you point at something, a chime when you press it. `M` mutes them. `B` goes back.
+- **Mii portraits** (`public/mii/`) are rendered from `ME`: neutral, happy, surprised, and a full-body one for the 404. Re-render them if `ME` changes.
+- Entries without a `cover` get drawn art from `/art/<section>/<slug>.svg`, picked from their tags (`src/lib/tiles.ts`). Sections without a plaza block take their tile's glyph and colors from `TILES` in `src/data/sections.ts`.
+
+Moving between pages (`src/scripts/motion.ts`, the end of `global.css`): on the TV the casing, buttons and menu are one element throughout and stay in front, and only the column moves, in under a third of a second. Between sections it slides in the menu's order; into an entry it rises, and back out it settles. An entry's picture flies between a list and its page. Going to or from the plaza is a real page load, so the plaza only runs while you are on it: the TV switches on (a bright line opening into the picture) or off (folding into a line and a point). Reduced motion turns the moves into short fades. Without JavaScript every link is a normal page load.
+
+## Apps
+
+Apps live at `/apps/<name>/` and take the whole screen instead of the reading column (`app` on `Base.astro`, `.col-app` in `global.css`): the TV's casing slides off past the edges as you go in and back as you leave, and the plaza button stays in the top left. An app with a rail of its own (the chat) lists the sections there instead of the TV's menu: Menu in the rail unfolds them under it and folds them away, the rail scrolls when the screen is short, the TV's menu button stays hidden (`data-app-nav`), the menu folds away if it was open as you came in, and the light switch moves into the app's bar. On a phone the rail goes and both buttons stay in the bar. The list on `/apps/` is `src/data/apps.ts`; an app with an `href` opens, one without shakes its head.
+
+### Chat (`/apps/chat/`)
+
+A live chat room drawn as Miiverse was on the Wii U (`src/components/chat/`): a white rail down the left with your Mii, the people here, Menu (the site's sections, folding out under it) and Back (B), a green title bar with the faces of who is here, posts with each person's Mii beside a white card, and the Post button in the screen's bottom right corner. On a phone the rail goes and the bar holds the plaza and menu buttons.
+
+- **No server of our own.** It talks to the GUN relay at `gun.ankush.one`, on the same nodes the old site's IRC chat used, so the room and its history carried over and old clients still interoperate. `net.ts` lists every node and checks everything read from them before the page sees it; text is only ever drawn as DOM text (`format.ts`).
+- **Everyone is their Mii.** Joining gives you a random Mii from the Mii Maker's own generator; the Me sheet rolls another or loads one from a Mii QR code. Your Mii is stored once per person (`apps/irc/profiles/<uuid>`), so changing it updates everything you have said. Anyone without one (everyone from the old site) gets a stand-in made from their id or name (`seededMii` in `mii/rig.ts`), the same on every screen. A Mii code is either the 96 bytes of a QR code Mii or, for Miis made on the spot, an FFL CharInfo (`miiBytes` in `mii/data.ts`). `portraits.ts` photographs a Mii once in Miiverse's six feelings on one small offscreen canvas, newest asked for first so the posts on screen get theirs first, and caches the pictures; without WebGL a silhouette stands in.
+- **Posts**: pick a feeling for your next post from the Me sheet (your Mii's face changes with it), write with a little Markdown, links and @mentions (an @ lists people to pick from, those here first, and a name that belongs to someone shows in their colour as you type: `mentions.ts`, a coloured mirror behind the text box), or draw: the pen button opens a sheet over the input bar with Miiverse's 320 by 120 black and white paper, a pen, a marker, an eraser, undo (also Cmd or Ctrl + Z) and clear, and its own Post. A drawing stays on the paper if you close the sheet, until you post or clear it. The GIF and drawing sheets open in the same place (`sheets.ts`). Everyone's name shows in a colour of their own, a hue hashed from their id rather than their name, so it stays when they rename (`hueOf` in `main.ts`). Cards are as wide as what they say, the time sits by the name, and each day starts under a divider. Yeah! and Delete sit in a slot beside each card, so pointing at a post never moves the feed. Delete is yours to use on your own posts; names in `CHAT_MODS` (`src/site.ts`) can delete anyone's. The relay has no accounts, so that is moderation by courtesy: anyone could take a mod's name or write to the relay directly. Slash commands from the old chat still work (`/help`).
+- **GIFs**: the GIF button opens a sheet over the composer: trending GIFs, a search as you type, more as you scroll, and a tap posts one (`gifpicker.ts`). Searches go to Klipy through the old site's Cloudflare Worker (`GIF_PROXY` in `src/site.ts`), which keeps the Klipy key and only answers `https://ankush.one`; in dev, Vite forwards `/__gif` to it as ankush.one (`astro.config.mjs`). A GIF post carries its size, so its space is kept before it loads, and only Klipy's media host is ever shown. Empty `GIF_PROXY` turns the button off.
+- **Scrolling**: the history is laid out unseen behind the Wii U wait and shown at once, already at its latest post. The feed stays pinned there as posts arrive and as pictures load, until you scroll up; new posts rise into place and the feed glides to them.
+- The room keeps the last 110 posts; whoever is in it deletes older ones. Presence is rewritten every 5 seconds and shows who is typing.
+- To try changes without touching the real room, run a GUN relay locally and build with `PUBLIC_CHAT_RELAY=http://localhost:8765/gun`.
+
 ## Home page plaza
 
 The home page is a Wii U style plaza rendered with three.js, timed off the console's own start up. It opens on your Mii floating in the haze with a tap prompt over it. The click (browsers only allow sound after one) starts the music and the opening: you fall under real gravity, the camera riding down with you, to your friends waiting below, land with a knee bend and wave hello while they clap, the camera pulls back as ten glass blocks tumble in one after another, then a crowd runs in with their hands up and gathers under the blocks. Now and then someone in the crowd says something real from the site in a speech bubble.
@@ -44,7 +77,7 @@ The home page is a Wii U style plaza rendered with three.js, timed off the conso
 - Miis can be played with once the opening is over. Tap one and it turns to you and does something (a wave, a dance, a faint...); keep tapping and it loses its temper. Press and drag to pick it up by the shirt: it dangles from the pointer, swinging as you move. Let go to set it down, or flick to throw it. Wherever it lands it freezes for a second, looks round in shock and runs off (your friends run back to their places). A held finger also lifts a Mii on touch screens. On a desktop, resting the pointer on a named Mii shows its name and QR code. Crowd Miis only get their full set of faces (`MiiSet.liven`) once someone plays with them, which keeps memory down.
 - The sound is one recording, `public/media/warawara-plaza.mp3`, cut so the chime lands on your drop, the footsteps on the crowd's run in, and the theme loops from then on. `SCORE` in `audio.ts` holds those moments, and while the recording runs through them it is the scene's clock, so the two cannot drift.
 - Sound plays from the click that starts the opening; Enter or Space works too. `M` mutes.
-- The opening plays on every load. The first time in a browser session it can't be skipped; after that, Escape or another click skips it. Reduced motion skips the wait and the opening and stills the crowd.
+- The opening plays on every load. The first time in a browser session it can't be skipped; after that, Escape or another click skips it. The TV's plaza button opens `/#0`, which skips it altogether: the plaza starts settled, everyone already there, and takes the `#0` off the address so a refresh plays the opening as usual. Reduced motion skips the wait and the opening and stills the crowd.
 - Without WebGL or JavaScript, or with Save-Data on, the blocks render as a plain grid of links.
 - If frames run slow, the plaza lowers its resolution a step at a time, and raises it again when there is room. Its heaviest files start downloading with the page.
 - In `pnpm dev`, `__plaza.seek(4.2)` in the browser console jumps to a moment of the opening and holds it, `__plaza.zoom(2.5)` sets the zoom (0 to 3), `__plaza.point(x, y)` places the pointer, `__plaza.mii(i)` says where Mii `i` is on screen and `__plaza.play()` resumes.
@@ -74,10 +107,16 @@ src/
     Base.astro          html shell, meta tags, Open Graph, JSON-LD
     Page.astro          page driven by src/content/pages/<id>.md
     Entry.astro         detail page for any entry
-  components/           EntryList (thumbnail list), YearGroups, plaza/ (home page 3D scene), mii/ (Wii U Miis)
+  components/           ChannelMenu, Feed, Timeline, Friends, ui/ (the TV frame, panel, buttons, tiles), plaza/ (the 3D plaza), mii/ (Wii U Miis), chat/ (the chat app)
+  data/sections.ts      tiles for sections without a plaza block, colors for drawn art
+  data/apps.ts          the apps on /apps/
+  scripts/motion.ts     page transitions, the menu, B to go back
+  scripts/sfx.ts        UI sounds
   lib/
     content.ts          queries, URLs, dates
     plaza.ts            plaza blocks and bubbles from the nav and entries
+    tiles.ts            section tiles and drawn art for entries without a cover
+    nav.ts              which section a path is in, and its place in the menu
     miis.ts             Mii QR images to Mii codes, at build time
     schema.ts           schema.org builders
   pages/                routes, plus sitemap.xml, robots.txt, llms.txt, blogs/index.xml
