@@ -7,6 +7,7 @@
 // checks are out of reach here by design.
 import { APPS } from '../data/apps';
 import { resume } from '../data/resume';
+import { HEADLINE } from '../data/profile';
 import { getGames } from './games';
 import { SECTION_PATH, absUrl, getAllEntries, getEntries, getPage, isoDate, urlOf, type Entry, type Section } from './content';
 import { AUTHOR, BOOKING_URL, SITE, SOCIALS } from '../site';
@@ -122,7 +123,17 @@ async function gamesTwin() {
 export async function twins(): Promise<Map<string, () => Promise<string>>> {
   const map = new Map<string, () => Promise<string>>([
     ['/', homeTwin],
-    ['/about/', () => pageTwin('about', experience(), socials())],
+    [
+      '/about/',
+      () =>
+        pageTwin(
+          'about',
+          HEADLINE,
+          experience(),
+          `## Skills\n\n${list(resume.skills.map((g) => `${g.label}: ${g.items.join(', ')}`))}`,
+          socials(),
+        ),
+    ],
     ['/contact/', () => pageTwin('contact', `Book a call: ${BOOKING_URL}`, socials())],
     ['/resume/', resumeTwin],
     ['/privacy/', () => pageTwin('privacy')],

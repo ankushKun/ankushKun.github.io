@@ -8,6 +8,8 @@ export interface ExperienceItem {
   location?: string;
   start: string;
   end?: string;
+  /** One line for the About page: what it is and the result that matters. */
+  summary?: string;
   highlights: string[];
 }
 
@@ -50,6 +52,7 @@ export const resume: {
       org: 'Construct Computer',
       url: 'https://construct.computer/?utm_source=ankush.one&utm_medium=referral&utm_campaign=resume',
       start: '2026-02',
+      summary: 'AI employees that each get their own cloud computer. Launched as #1 Product of the Day on Product Hunt.',
       highlights: [
         '**Built the agent platform**: a runtime on Cloudflare Workers and Durable Objects, a React desktop to watch agents work live, MCP apps, long-term memory, and sandboxed tools.',
         'Migrated from a container-per-user VPS to Workers, Durable Objects, Containers, R2, and D1 in **~10 days**.',
@@ -63,6 +66,7 @@ export const resume: {
       url: 'https://fwd.arweave.net/',
       start: '2024-11',
       end: '2025-10',
+      summary: 'Developer tools for the Arweave and AO ecosystem, used by 1,000+ builders. Made the AO Package Manager load in every aos process.',
       highlights: [
         'Rewrote BetterIDEa for HyperBEAM and made the AO Package Manager **load by default in every aos process**.',
         'Built WAuth, a social-login SDK with invisible wallets (**~5,300 npm downloads**), later **adopted by ArLink Labs**.',
@@ -74,6 +78,7 @@ export const resume: {
       url: 'https://arweaveindia.com',
       start: '2024-06',
       end: '2025-04',
+      summary: 'Mentored 100+ developers, judged 40+ builds and co-organised Arweave Day India 2025.',
       highlights: [
         'Organised Arweave Day India 2025 and hackerhouses; **mentored 100+ developers** and judged 40+ builds.',
       ],
@@ -84,6 +89,7 @@ export const resume: {
       url: 'https://betteridea.arweave.net',
       start: '2023-12',
       end: '2024-10',
+      summary: 'A web IDE and package manager for AO, acquired by Forward Research.',
       highlights: [
         'Built a web IDE and package manager for AO, launched with its testnet and **acquired by Forward Research**.',
       ],
@@ -94,6 +100,7 @@ export const resume: {
       url: 'https://www.pw.live',
       start: '2022-11',
       end: '2023-05',
+      summary: 'A live-class tool reading 10K+ YouTube chat messages for 50K+ concurrent viewers.',
       highlights: [
         'Built a live-class tool parsing real-time YouTube chat (10K+ messages) for **50K+ concurrent viewers**.',
       ],
