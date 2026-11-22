@@ -1,0 +1,2103 @@
+/* The chat room (Chat.astro), drawn as Miiverse was on the Wii U: a pale grey screen of faint
+   rounded tiles, a green title bar, a white rail down the left with grey icons that turn green, posts
+   with each person's Mii in a white frame beside a white card, dark name tags, and the Post button
+   filling the screen's bottom right corner. It fills the TV's screen (.col-app in global.css). */
+
+.chat {
+  --mv-green: #5bc21f;
+  --mv-green-deep: #3f9d0e;
+  --mv-ink: light-dark(#333638, #e7ecee);
+  --mv-soft: light-dark(#9a9fa2, #85939a);
+  --mv-icon: light-dark(#727779, #9eabb1);
+  --mv-panel: light-dark(#fff, #2b3338);
+  --mv-panel-2: light-dark(#f2f3f4, #353e44);
+  --mv-line: light-dark(rgb(0 0 0 / 0.12), rgb(255 255 255 / 0.09));
+  --mv-shadow: light-dark(rgb(0 0 0 / 0.2), rgb(0 0 0 / 0.65));
+  --mv-pick: light-dark(#effae7, rgb(91 194 31 / 0.14));
+  --rail: 112px;
+  --bar: 84px;
+  --face: 56px;
+  --gutter: clamp(18px, 2.6vw, 44px);
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: var(--rail) minmax(0, 1fr);
+  grid-template-rows: var(--bar) minmax(0, 1fr) auto;
+  grid-template-areas:
+    'bar bar'
+    'rail feed'
+    'rail compose';
+  overflow: hidden;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='132' height='132'%3E%3Crect x='9' y='9' width='114' height='114' rx='30' fill='%23fff' fill-opacity='.5'/%3E%3C/svg%3E")
+      0 0 / 132px 132px,
+    #e4e5e6;
+  color: var(--mv-ink);
+}
+
+:root[data-theme='dark'] .chat {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='132' height='132'%3E%3Crect x='9' y='9' width='114' height='114' rx='30' fill='%23fff' fill-opacity='.035'/%3E%3C/svg%3E")
+      0 0 / 132px 132px,
+    #13171a;
+}
+
+.chat :where(button) {
+  font: inherit;
+}
+
+/* The title bar ------------------------------------------------------------------------------- */
+
+.chat-bar {
+  grid-area: bar;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  /* Room on the right for the light switch, which sits in the bar on an app's screen. */
+  padding: 0 84px 0 calc(var(--rail) + var(--gutter));
+  background: linear-gradient(to bottom, #82dc3f, #5bc21f 55%, #51b517);
+  box-shadow:
+    inset 0 -1px 0 rgb(0 0 0 / 0.12),
+    inset 0 1px 0 rgb(255 255 255 / 0.35);
+  color: #fff;
+}
+
+.chat-bar h1 {
+  overflow: hidden;
+  color: #fff;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 1px rgb(30 80 0 / 0.35);
+  white-space: nowrap;
+}
+
+.bar-end {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.chat-status {
+  padding: 0 14px;
+  border-radius: 99px;
+  background: rgb(0 0 0 / 0.22);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 30px;
+  white-space: nowrap;
+}
+
+.chat-status[hidden] {
+  display: none;
+}
+
+.bar-people {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  height: 46px;
+  padding: 0 16px 0 7px;
+  border: 0;
+  border-radius: 99px;
+  background: rgb(255 255 255 / 0.22);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.25);
+  color: #fff;
+  font-size: 0.9375rem;
+  font-weight: 800;
+  transition: background 0.15s ease;
+}
+
+.bar-people:hover,
+.bar-people:has(+ :popover-open),
+.chat:has(.chat-people:popover-open) .bar-people {
+  background: rgb(255 255 255 / 0.34);
+}
+
+/* On a big screen the rail's People already shows how many, so the bar shows just their faces. */
+@media (min-width: 880px) {
+  .bar-people {
+    height: auto;
+    padding: 4px;
+    background: none;
+    box-shadow: none;
+  }
+
+  .bar-people [data-count] {
+    display: none;
+  }
+
+  .bar-people:hover,
+  .chat:has(.chat-people:popover-open) .bar-people {
+    background: none;
+  }
+
+  .bar-people .stack {
+    transition: scale 0.3s var(--ease-spring);
+  }
+
+  .bar-people:hover .stack {
+    scale: 1.06;
+  }
+
+  .chat .bar-people .stack .face {
+    --s: 40px;
+  }
+}
+
+.stack {
+  display: flex;
+}
+
+.stack:empty {
+  display: none;
+}
+
+.stack:not(:empty) + svg {
+  display: none;
+}
+
+.bar-people svg {
+  margin-left: 9px;
+}
+
+.chat .stack .face {
+  --s: 34px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2.5px #5bc21f;
+}
+
+.stack .face + .face {
+  margin-left: -10px;
+}
+
+/* The rail ------------------------------------------------------------------------------------ */
+
+/* White, down the whole left edge and over the bar's end. Its top is where the TV's plaza button
+   sits, so that button reads as the rail's first item. */
+.chat-rail {
+  z-index: 2;
+  grid-row: 1 / -1;
+  grid-column: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: var(--bar) 10px 26px;
+  border-radius: 0 34px 60px 0;
+  background: var(--mv-panel);
+  box-shadow:
+    1px 0 0 var(--mv-line),
+    6px 0 18px -8px light-dark(rgb(0 0 0 / 0.28), rgb(0 0 0 / 0.6));
+}
+
+.rail-item {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 16px 0 14px;
+  border: 0;
+  border-top: 1px solid var(--mv-line);
+  border-radius: 0;
+  background: none;
+  color: var(--mv-ink);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.rail-item:focus-visible {
+  border-radius: 14px;
+}
+
+.rail-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rail-ico {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 52px;
+  color: var(--mv-icon);
+  transition:
+    color 0.15s ease,
+    scale 0.3s var(--ease-spring);
+}
+
+.rail-item:hover .rail-ico,
+.rail-item:hover .rail-face {
+  scale: 1.07;
+}
+
+.rail-item:hover,
+.rail-item[aria-expanded='true'] {
+  color: var(--mv-green-deep);
+}
+
+.rail-item:hover .rail-ico,
+.rail-item[aria-expanded='true'] .rail-ico {
+  color: var(--mv-green);
+}
+
+.rail-badge {
+  position: absolute;
+  top: 2px;
+  right: -14px;
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 99px;
+  background: var(--mv-green);
+  box-shadow: 0 0 0 2.5px var(--mv-panel);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+/* Everything but Back scrolls when the screen is short, fading out at its edges; Back stays put at
+   the bottom. */
+.rail-scroll {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  margin: 0 -10px;
+  padding: 0 10px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to bottom, transparent, #000 14px, #000 calc(100% - 22px), transparent);
+}
+
+.rail-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.rail-back {
+  flex: none;
+}
+
+/* Menu: its grid turns into a cross while the sections are open, as the TV's menu button does. */
+.rail-menu .rail-ico svg {
+  grid-area: 1 / 1;
+  transition:
+    opacity 0.16s ease,
+    rotate 0.32s var(--ease-spring),
+    scale 0.32s var(--ease-spring);
+}
+
+.rail-menu .close,
+.chat[data-sections-open] .rail-menu .grid {
+  opacity: 0;
+  rotate: -90deg;
+  scale: 0.6;
+}
+
+.chat[data-sections-open] .rail-menu .close {
+  opacity: 1;
+  rotate: 0deg;
+  scale: 1;
+}
+
+.chat[data-sections-open] .rail-menu {
+  color: var(--mv-green-deep);
+}
+
+.chat[data-sections-open] .rail-menu .rail-ico {
+  color: var(--mv-green);
+}
+
+/* The site's sections fold out under Menu: the space opens smoothly and the tiles come in one
+   after another, each its glass tile with its name under it, the one you're in in green. */
+.rail-fold {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.4s var(--ease-glide);
+}
+
+.chat[data-sections-open] .rail-fold {
+  grid-template-rows: 1fr;
+}
+
+.rail-nav {
+  display: grid;
+  gap: 2px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  list-style: none;
+}
+
+.rail-nav li {
+  opacity: 0;
+  translate: 0 -10px;
+  scale: 0.9;
+  transition:
+    opacity 0.2s ease,
+    translate 0.3s var(--ease-glide),
+    scale 0.3s var(--ease-glide);
+}
+
+/* Room inside the fold for a tile's glow, which it would otherwise clip. */
+.rail-nav li:first-child {
+  padding-top: 12px;
+}
+
+.rail-nav li:last-child {
+  padding-bottom: 12px;
+}
+
+.chat[data-sections-open] .rail-nav li {
+  opacity: 1;
+  translate: 0 0;
+  scale: 1;
+  transition:
+    opacity 0.25s ease calc(var(--i) * 35ms),
+    translate 0.4s var(--ease-spring) calc(var(--i) * 35ms),
+    scale 0.4s var(--ease-spring) calc(var(--i) * 35ms);
+}
+
+.rail-nav .rail-item {
+  gap: 5px;
+  padding: 9px 0 8px;
+  border-top: 0;
+  border-radius: 14px;
+}
+
+/* The tile's art inside its glass rim: a decorative background, as the name under it is the label. */
+.rail-tile {
+  display: block;
+  width: 48px;
+  height: 48px;
+  border: 3px solid transparent;
+  border-radius: 28%;
+  background:
+    var(--art, none) center / cover no-repeat padding-box,
+    var(--aero-bg) border-box;
+  box-shadow: var(--aero-shadow);
+  transition:
+    box-shadow 0.18s ease,
+    scale 0.3s var(--ease-spring);
+}
+
+/* A tighter glow than elsewhere, as the rail is narrow. */
+.rail-section:hover .rail-tile,
+.rail-section:focus-visible .rail-tile {
+  scale: 1.06;
+  box-shadow:
+    0 0 0 3px #46c3f0,
+    0 0 10px 2px rgb(70 195 240 / 0.45),
+    var(--aero-shadow);
+}
+
+.rail-section:focus-visible {
+  box-shadow: none;
+}
+
+.rail-section .rail-label {
+  font-size: 0.75rem;
+}
+
+.rail-section[aria-current='page'] {
+  color: var(--mv-green-deep);
+}
+
+.rail-back .b {
+  position: absolute;
+  right: -12px;
+  bottom: 0;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--mv-panel);
+  box-shadow:
+    inset 0 0 0 1.5px currentColor,
+    0 1px 3px rgb(0 0 0 / 0.2);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+/* Mii faces ----------------------------------------------------------------------------------- */
+
+/* A Mii's portrait in a white frame, or a grey silhouette while there is none. */
+.chat .face {
+  --s: var(--face);
+  position: relative;
+  display: block;
+  flex: none;
+  width: var(--s);
+  height: var(--s);
+  overflow: hidden;
+  border-radius: calc(var(--s) * 0.2);
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg fill='%23a9b1b5'%3E%3Ccircle cx='32' cy='25' r='14'/%3E%3Cpath d='M9 64c1-14 10-21 23-21s22 7 23 21z'/%3E%3C/g%3E%3C/svg%3E")
+      center / cover,
+    linear-gradient(to bottom, light-dark(#fff, #48535a), light-dark(#eef1f3, #343d43));
+  box-shadow:
+    0 0 0 1px var(--mv-line),
+    0 3px 6px -2px var(--mv-shadow);
+}
+
+.chat .face img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: linear-gradient(to bottom, light-dark(#fff, #48535a), light-dark(#eef1f3, #343d43));
+}
+
+.chat .face img:not([src]) {
+  visibility: hidden;
+}
+
+/* A Mii's picture fades in over its silhouette instead of popping. */
+.chat .face img {
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.chat .face img.is-in {
+  opacity: 1;
+}
+
+.chat .face.small {
+  --s: 40px;
+}
+
+.rail-face {
+  --s: 52px !important;
+  transition: scale 0.3s var(--ease-spring);
+}
+
+/* The feed ------------------------------------------------------------------------------------ */
+
+.chat-feed {
+  position: relative;
+  grid-area: feed;
+  min-width: 0;
+  min-height: 0;
+}
+
+.feed-scroll {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  /* Posts fade away into the composer and under the bar rather than being cut off. */
+  mask-image: linear-gradient(to bottom, transparent, #000 18px, #000 calc(100% - 36px), transparent);
+}
+
+.feed,
+.typing {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin: 0;
+  padding: 26px var(--gutter) 0;
+  list-style: none;
+}
+
+.typing {
+  padding-top: 18px;
+  /* Clears the feed's bottom fade, so the newest post is never faded at rest. */
+  padding-bottom: 40px;
+}
+
+/* While the history loads it is laid out unseen, then shown at once, at its latest post. */
+.feed,
+.typing {
+  transition: opacity 0.4s ease;
+}
+
+.chat[data-loading] :is(.feed, .typing) {
+  opacity: 0;
+}
+
+/* A post arriving while you watch rises into place. */
+.feed > .is-new,
+.typing > li {
+  animation: chat-in 0.45s var(--ease-spring) both;
+}
+
+@keyframes chat-in {
+  from {
+    opacity: 0;
+    translate: 0 16px;
+    scale: 0.97;
+  }
+}
+
+.feed.is-empty::before {
+  content: 'Nobody has said anything yet.';
+  align-self: center;
+  margin-top: 18vh;
+  color: var(--mv-soft);
+  font-weight: 700;
+}
+
+.day {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 10px 0 -2px;
+  color: var(--mv-soft);
+  font-size: 0.8125rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.day::before,
+.day::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: light-dark(rgb(0 0 0 / 0.12), rgb(255 255 255 / 0.09));
+}
+
+.post {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  min-width: 0;
+}
+
+/* The portrait sits level with the card, under the name tag's row. */
+.post > .face {
+  margin-top: 34px;
+}
+
+.post-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.post-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 28px;
+  margin-bottom: 6px;
+}
+
+/* Names and faces on a post are buttons: pressing one mentions its owner at the caret. */
+.post-head .pill {
+  border: 0;
+  transition: box-shadow 0.15s ease;
+  overflow: hidden;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 28px;
+  text-overflow: ellipsis;
+}
+
+.post-head .pill:hover {
+  box-shadow: 0 0 0 2px oklch(0.86 0.12 var(--hue, 230));
+}
+
+.post-head time {
+  flex: none;
+  color: var(--mv-soft);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.card {
+  position: relative;
+  width: fit-content;
+  min-width: min(100%, 240px);
+  max-width: min(100% - 118px, 46rem);
+  border-radius: 14px;
+  background: var(--mv-panel);
+  box-shadow:
+    0 0 0 1px var(--mv-line),
+    0 3px 8px -3px var(--mv-shadow);
+}
+
+/* The little tail that points the card at its Mii: an outline triangle, and over it a fill
+   triangle that reaches into the card and covers its edge where they meet, so the two read as
+   one shape. --tail is how far down the card it sits. */
+.card {
+  --tail: 18px;
+}
+
+.card::before,
+.card::after {
+  content: '';
+  position: absolute;
+  top: var(--tail);
+  clip-path: polygon(100% 0, 0 50%, 100% 100%);
+  pointer-events: none;
+}
+
+.card::before {
+  left: -9px;
+  width: 9px;
+  height: 18px;
+  background: light-dark(rgb(0 0 0 / 0.16), rgb(255 255 255 / 0.12));
+}
+
+.card::after {
+  top: calc(var(--tail) + 1.5px);
+  left: -7.5px;
+  width: 9.5px;
+  height: 15px;
+  background: var(--mv-panel);
+}
+
+.card-body {
+  padding: 14px 18px;
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.card-body a {
+  color: #1f9fdb;
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 2px;
+}
+
+.card-body code {
+  padding: 0.1em 0.4em;
+  border-radius: 6px;
+  background: var(--mv-panel-2);
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+}
+
+.card-body pre {
+  margin: 4px 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  border-radius: 10px;
+  background: light-dark(#24292e, #14181b);
+  color: #e6edf3;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  white-space: pre;
+}
+
+/* Names in each person's own colour (--hue from main.ts, from their id): the same lightness for
+   everyone, darker in the light and lighter in the dark, and light on the dark name tags. */
+.chat {
+  --nick-l: 0.52;
+  --nick-c: 0.16;
+}
+
+:root[data-theme='dark'] .chat {
+  --nick-l: 0.8;
+  --nick-c: 0.13;
+}
+
+.chat .nick {
+  color: oklch(var(--nick-l) var(--nick-c) var(--hue, 230));
+}
+
+.chat .pill.nick {
+  color: oklch(0.86 0.12 var(--hue, 230));
+}
+
+.mention {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #1f9fdb;
+  font-weight: 700;
+}
+
+/* Someone said your name. */
+.post.is-mention .card {
+  box-shadow:
+    0 0 0 2px #46c3f0,
+    0 0 16px rgb(70 195 240 / 0.35);
+}
+
+/* One person's posts in a row run on under one name and one face. */
+.post.is-run {
+  margin-top: -10px;
+}
+
+.post.is-run > .face {
+  height: 0;
+  margin-top: 0;
+  visibility: hidden;
+}
+
+.post.is-run .post-head,
+.post.is-run .card::before,
+.post.is-run .card::after {
+  display: none;
+}
+
+/* A drawing, on its white paper, and GIFs from the old site, covered until asked for. */
+/* A drawing is black strokes with no paper of its own: on the card in the light, and in the dark
+   turned white, the black left behind blended away. Older drawings, saved on white, look the same:
+   multiply drops their white, and inverted, screen drops the black. */
+.drawing {
+  display: block;
+  width: min(100%, 480px);
+  height: auto;
+  border-radius: 10px;
+  image-rendering: pixelated;
+  mix-blend-mode: multiply;
+}
+
+:root[data-theme='dark'] .drawing {
+  filter: invert(1);
+  mix-blend-mode: screen;
+}
+
+/* A fixed cap, not a percentage, so the card around it shrinks to the picture's own width. */
+.gif {
+  display: block;
+  cursor: pointer;
+  max-width: 320px;
+  height: auto;
+  border-radius: 10px;
+  background: var(--mv-panel-2);
+}
+
+.card.is-media .card-body {
+  padding: 8px;
+}
+
+/* The card and, beside it, a slot for Yeah! and Delete, kept free whether or not they show, so
+   nothing moves when they do. They sit level with the card's last line, quiet like the time by
+   the name: a post's count stays, and pointing at the post opens the Yeah! label out of it. */
+.post-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.card-acts {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  min-width: 112px;
+  margin-bottom: 7px;
+}
+
+.act {
+  --yeah-ink: var(--mv-panel);
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 9px 0 7px;
+  border: 0;
+  border-radius: 99px;
+  background: none;
+  color: var(--mv-soft);
+  font-size: 0.8125rem;
+  font-weight: 800;
+  white-space: nowrap;
+  transition:
+    opacity 0.2s ease,
+    translate 0.32s var(--ease-spring),
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.act svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--mv-green);
+}
+
+/* Your own posts can't be given a Yeah!, so with none yet there's nothing to show. */
+.post.is-me:not(.has-yeahs) .yeah {
+  display: none;
+}
+
+/* Hidden until wanted: Yeah! on posts with none yet, and Delete always. */
+.post:not(.has-yeahs) .yeah,
+.delete {
+  opacity: 0;
+  translate: -6px 0;
+  pointer-events: none;
+}
+
+.post:is(:hover, :focus-within, .is-picked) .act {
+  opacity: 1;
+  translate: 0 0;
+  pointer-events: auto;
+}
+
+/* The label opens out of the count, rather than appearing all at once. */
+.yeah-label,
+.yeah-n:not(:empty) {
+  display: inline-block;
+  overflow: hidden;
+}
+
+.yeah-label {
+  max-width: 0;
+  opacity: 0;
+  transition:
+    max-width 0.3s var(--ease-glide),
+    opacity 0.2s ease,
+    margin 0.3s var(--ease-glide);
+}
+
+.yeah-n:not(:empty) {
+  margin-left: 5px;
+}
+
+.post:is(:hover, :focus-within, .is-picked) button.yeah .yeah-label {
+  max-width: 4em;
+  margin-left: 6px;
+  opacity: 1;
+}
+
+button.yeah:hover {
+  background: var(--mv-pick);
+  color: var(--mv-green-deep);
+}
+
+button.yeah:active {
+  scale: 0.94;
+}
+
+/* Yours: filled green, as Miiverse marked a post you'd given a Yeah!. */
+.yeah[aria-pressed='true'] {
+  --yeah-ink: var(--mv-green-deep);
+  color: var(--mv-green-deep);
+}
+
+.yeah[aria-pressed='true'] svg {
+  color: var(--mv-green-deep);
+}
+
+.delete {
+  display: none;
+  padding: 0;
+  width: 32px;
+  justify-content: center;
+}
+
+.post.is-me .delete,
+.chat[data-mod] .delete {
+  display: inline-flex;
+}
+
+.delete svg {
+  color: currentColor;
+}
+
+.delete:hover {
+  background: light-dark(rgb(217 71 59 / 0.1), rgb(217 71 59 / 0.18));
+  color: #d9473b;
+}
+
+/* /me and friends: something someone does, said in passing. */
+.post.is-action {
+  align-items: center;
+  gap: 10px;
+  padding-left: calc(var(--face) - 40px);
+  color: var(--mv-soft);
+  font-style: italic;
+}
+
+.post.is-action > .face {
+  margin-top: 0;
+}
+
+.post.is-action p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.post.is-action .who {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.post.is-action .who:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+button.face {
+  padding: 0;
+  border: 0;
+  transition:
+    scale 0.3s var(--ease-spring),
+    box-shadow 0.18s ease;
+}
+
+button.face:hover {
+  scale: 1.05;
+}
+
+.post.is-gone .gone {
+  margin-left: calc(var(--face) + 18px);
+  padding: 10px 16px;
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1.5px var(--mv-line);
+  color: var(--mv-soft);
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+/* Lines only you see: joins, leaves, help. */
+.note {
+  align-self: center;
+  max-width: 100%;
+  padding: 3px 14px;
+  border-radius: 99px;
+  background: light-dark(rgb(0 0 0 / 0.06), rgb(255 255 255 / 0.06));
+  color: var(--mv-soft);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.note strong {
+  color: var(--mv-ink);
+}
+
+.note.is-help {
+  align-self: stretch;
+  margin-left: calc(var(--face) + 18px);
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: var(--mv-panel);
+  box-shadow: 0 0 0 1px var(--mv-line);
+  color: var(--mv-ink);
+  font-size: 0.9375rem;
+  line-height: 1.9;
+  text-align: left;
+  white-space: pre-line;
+}
+
+/* Someone writing: their Mii and a card of bouncing dots at the end of the feed. */
+.post.is-typing > .face {
+  --s: 48px;
+  margin-top: 0;
+  margin-left: calc(var(--face) - 48px);
+}
+
+.post.is-typing .card {
+  padding: 16px 18px;
+}
+
+.post.is-typing .card {
+  --tail: 15px;
+}
+
+.dots {
+  display: inline-flex;
+  gap: 5px;
+}
+
+.dots i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--mv-soft);
+  animation: chat-dot 1.2s ease-in-out infinite;
+}
+
+.dots i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.dots i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes chat-dot {
+  0%,
+  60%,
+  100% {
+    translate: 0 0;
+    opacity: 0.5;
+  }
+  30% {
+    translate: 0 -5px;
+    opacity: 1;
+  }
+}
+
+/* The Wii U's wait: a ring of dots chasing round. */
+.feed-wait {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  width: 52px;
+  height: 52px;
+  translate: -50% -50%;
+}
+
+.feed-wait[hidden] {
+  display: none;
+}
+
+.feed-wait span {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  border-radius: 50%;
+  background: var(--mv-green);
+  transform-origin: 5px 26px;
+  animation: chat-wait 0.8s linear infinite;
+}
+
+.feed-wait span:nth-child(2) { rotate: 45deg; animation-delay: 0.1s; }
+.feed-wait span:nth-child(3) { rotate: 90deg; animation-delay: 0.2s; }
+.feed-wait span:nth-child(4) { rotate: 135deg; animation-delay: 0.3s; }
+.feed-wait span:nth-child(5) { rotate: 180deg; animation-delay: 0.4s; }
+.feed-wait span:nth-child(6) { rotate: 225deg; animation-delay: 0.5s; }
+.feed-wait span:nth-child(7) { rotate: 270deg; animation-delay: 0.6s; }
+.feed-wait span:nth-child(8) { rotate: 315deg; animation-delay: 0.7s; }
+
+@keyframes chat-wait {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.15;
+  }
+}
+
+.new-posts {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  height: 38px;
+  padding: 0 20px;
+  translate: -50% 0;
+  border: 0;
+  border-radius: 99px;
+  background: #1f9fdb;
+  box-shadow: 0 6px 14px -6px rgb(0 0 0 / 0.45);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 800;
+}
+
+.new-posts[hidden] {
+  display: none;
+}
+
+/* People here: opened from the bar's faces or the rail. -------------------------------------- */
+
+.chat-people {
+  position: fixed;
+  inset: auto;
+  width: min(300px, calc(100vw - 32px));
+  max-height: min(60vh, 520px);
+  margin: 0;
+  padding: 6px 0 8px;
+  overflow-y: auto;
+  border: 0;
+  border-radius: 20px;
+  background: var(--mv-panel);
+  box-shadow:
+    0 0 0 1px var(--mv-line),
+    0 22px 48px -16px rgb(0 0 0 / 0.5);
+  color: var(--mv-ink);
+}
+
+.chat-people:popover-open {
+  animation: chat-pop 0.28s var(--ease-spring);
+}
+
+.chat-people::backdrop {
+  background: none;
+}
+
+.chat-people h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 20px 8px;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.chat-people h2 span {
+  padding: 0 9px;
+  border-radius: 99px;
+  background: var(--mv-green);
+  color: #fff;
+  font-size: 0.75rem;
+  line-height: 22px;
+}
+
+.chat-people ul {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0 8px;
+  list-style: none;
+}
+
+.person {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--mv-ink);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+.person:hover {
+  background: var(--mv-panel-2);
+}
+
+.person-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.person .dots i {
+  width: 6px;
+  height: 6px;
+}
+
+/* The composer ---------------------------------------------------------------------------------- */
+
+.composer {
+  position: relative;
+  grid-area: compose;
+  display: flex;
+  align-items: flex-end;
+  min-width: 0;
+  padding: 14px 0 14px var(--gutter);
+  background: linear-gradient(to bottom, light-dark(rgb(228 229 230 / 0), rgb(23 27 30 / 0)), light-dark(rgb(210 212 214 / 0.7), rgb(0 0 0 / 0.35)));
+}
+
+.composer-mii {
+  position: relative;
+  flex: none;
+  margin-right: 14px;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  background: none;
+  transition: scale 0.3s var(--ease-spring);
+}
+
+.composer-mii:hover {
+  scale: 1.05;
+}
+
+.composer-mii .face {
+  --s: 64px;
+}
+
+.composer-mii .dice {
+  position: absolute;
+  right: -7px;
+  bottom: -7px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--mv-green);
+  box-shadow: 0 0 0 2.5px var(--mv-panel);
+  color: #fff;
+}
+
+.chat[data-state='in'] .composer-mii .dice {
+  display: none;
+}
+
+.composer-field {
+  display: flex;
+  flex: 1;
+  align-items: flex-end;
+  gap: 6px;
+  min-width: 0;
+  min-height: 64px;
+  margin-right: 18px;
+  padding: 8px 8px 8px 18px;
+  border-radius: 16px;
+  background: var(--mv-panel);
+  box-shadow:
+    0 0 0 1px var(--mv-line),
+    0 3px 8px -3px light-dark(rgb(0 0 0 / 0.2), rgb(0 0 0 / 0.5));
+  transition: box-shadow 0.18s ease;
+}
+
+.composer-field:focus-within {
+  box-shadow: var(--glow);
+}
+
+.join-field,
+.say-field {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-self: stretch;
+}
+
+.composer-field input,
+.composer-field textarea {
+  flex: 1;
+  min-width: 0;
+  max-height: 160px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--mv-ink);
+  font: inherit;
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  resize: none;
+  outline: none;
+  box-shadow: none;
+}
+
+/* The text box and, behind it, its mirror (mentions.ts): the same text, wrapped the same way, with
+   each @name in its owner's colour. The box's own text is transparent over it, so what shows is the
+   mirror, while the caret, selection and the rest stay the box's. Only colours differ between the
+   two, never anything that changes a glyph's width. */
+.say-wrap {
+  position: relative;
+  display: block;
+  flex: 1;
+  min-width: 0;
+  align-self: center;
+}
+
+.say-wrap textarea,
+.say-mirror {
+  display: block;
+  width: 100%;
+  padding: 2px 0;
+  font: inherit;
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  letter-spacing: normal;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: normal;
+  tab-size: 4;
+}
+
+.say-mirror {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  color: var(--mv-ink);
+  pointer-events: none;
+}
+
+/* Bold without the wider letters of a bold font, so the mirror stays in step with the caret. */
+.say-mirror .nick {
+  -webkit-text-stroke: 0.6px currentColor;
+}
+
+.say-wrap textarea {
+  position: relative;
+  color: transparent;
+  caret-color: var(--mv-ink);
+  scrollbar-width: none;
+}
+
+.say-wrap textarea::-webkit-scrollbar {
+  display: none;
+}
+
+.say-wrap textarea::selection {
+  background: rgb(70 195 240 / 0.3);
+  color: transparent;
+}
+
+/* The @ list: who you might mean, opening above the @ you are typing and growing out of it. */
+.mention-list {
+  position: fixed;
+  inset: auto;
+  width: 260px;
+  margin: 0;
+  padding: 6px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--mv-panel);
+  box-shadow:
+    0 0 0 1px var(--mv-line),
+    0 16px 36px -12px rgb(0 0 0 / 0.45);
+  color: var(--mv-ink);
+}
+
+.mention-list:popover-open {
+  display: grid;
+  gap: 2px;
+  animation: chat-pop 0.22s var(--ease-spring);
+}
+
+.mention-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px 6px 6px;
+  border-radius: 11px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  cursor:
+    url('/ui/hand.svg') 11 1,
+    pointer;
+}
+
+.mention-option .face {
+  --s: 32px;
+}
+
+.mention-option[aria-selected='true'] {
+  background: var(--mv-pick);
+}
+
+.mention-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* In the room now. */
+.mention-here {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--mv-green);
+  box-shadow: 0 0 0 2px var(--mv-panel);
+}
+
+.composer-field input {
+  font-weight: 700;
+}
+
+.composer-field ::placeholder {
+  color: var(--mv-soft);
+  opacity: 1;
+}
+
+.composer-field :focus-visible {
+  box-shadow: none;
+}
+
+.chat[data-state='out'] :is(.say-field, .composer-draw, .composer-gif),
+.chat:not([data-gifs-on]) .composer-gif,
+.chat[data-state='in'] .join-field {
+  display: none;
+}
+
+/* GIF: the word in a little rounded frame, as GIF buttons are drawn. */
+.composer-gif {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--mv-icon);
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.composer-gif::before {
+  content: '';
+  position: absolute;
+  inset: 13px 9px;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 2px currentColor;
+}
+
+.composer-gif:hover,
+.chat:has(.gif-sheet:popover-open) .composer-gif {
+  background: var(--mv-panel-2);
+  color: var(--mv-green-deep);
+}
+
+.composer-draw {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--mv-icon);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.composer-draw:hover {
+  background: var(--mv-panel-2);
+  color: var(--mv-green-deep);
+}
+
+.chat:has(.draw-sheet:popover-open) .composer-draw {
+  background: var(--mv-green);
+  color: #fff;
+}
+
+/* The Post button: the screen's bottom right corner, as Miiverse's Comment and Post were. */
+.post-btn {
+  flex: none;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: clamp(156px, 13vw, 210px);
+  margin: -14px 0;
+  padding: 0 10px 0 18px;
+  border: 0;
+  border-radius: 52px 0 0 0;
+  background: linear-gradient(to bottom, var(--color-gloss-top), var(--color-gloss-bottom));
+  box-shadow:
+    -1px -1px 0 var(--mv-line),
+    -4px -4px 16px -6px light-dark(rgb(0 0 0 / 0.25), rgb(0 0 0 / 0.6)),
+    inset 1px 1px 0 light-dark(#fff, rgb(255 255 255 / 0.08));
+  color: var(--mv-ink);
+  font-size: 1.375rem;
+  font-weight: 800;
+  transition: box-shadow 0.18s ease;
+}
+
+.post-btn svg {
+  width: 34px;
+  height: 34px;
+  color: var(--mv-green);
+  transition: scale 0.3s var(--ease-spring);
+}
+
+.post-btn:hover svg {
+  scale: 1.12;
+}
+
+.post-btn:active svg {
+  scale: 0.94;
+}
+
+/* The drawing sheet, over the input bar: Miiverse's paper, 320 by 120 and drawn at twice that
+   or more, with the pens, undo and clear under it and Post at the end. */
+.draw-sheet {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  padding: 12px;
+  border: 0;
+  border-radius: 22px;
+  background: light-dark(#eceef0, var(--mv-panel));
+  box-shadow:
+    0 0 0 3px var(--mv-green),
+    0 20px 44px -14px rgb(0 0 0 / 0.5);
+  color: var(--mv-ink);
+}
+
+.draw-sheet:popover-open {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: chat-pop 0.28s var(--ease-spring);
+}
+
+.draw-sheet::backdrop {
+  background: none;
+}
+
+.draw-paper {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 320 / 120;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.08),
+    0 2px 6px -2px rgb(0 0 0 / 0.18);
+  cursor: crosshair;
+  image-rendering: pixelated;
+  touch-action: none;
+}
+
+/* In the dark the paper is dark and the strokes white: the canvas is shown inverted, on a paper
+   colour that inverts to the sheet's. */
+:root[data-theme='dark'] .draw-paper {
+  background: #d4ccc8;
+  filter: invert(1);
+}
+
+.draw-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.draw-tools {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.draw-gap {
+  width: 1px;
+  height: 22px;
+  margin: 0 6px;
+  background: var(--mv-line);
+}
+
+.draw-post {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 18px 0 14px;
+  border: 0;
+  border-radius: 99px;
+  background: linear-gradient(to bottom, #7fd93f, var(--mv-green-deep));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.4),
+    0 3px 8px -3px rgb(40 100 10 / 0.5);
+  color: #fff;
+  font-size: 0.9375rem;
+  font-weight: 800;
+  transition:
+    opacity 0.2s ease,
+    filter 0.2s ease,
+    scale 0.3s var(--ease-spring);
+}
+
+.draw-post:hover:not(:disabled) {
+  scale: 1.04;
+}
+
+.draw-post:active:not(:disabled) {
+  scale: 0.96;
+}
+
+.draw-post:disabled {
+  opacity: 0.45;
+  filter: grayscale(0.6);
+  cursor: default;
+}
+
+.pad-tool {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--mv-icon);
+}
+
+.pad-tool:hover {
+  background: var(--mv-panel-2);
+}
+
+.pad-tool[aria-pressed='true'] {
+  background: var(--mv-pick);
+  box-shadow: inset 0 0 0 1.5px var(--mv-green);
+  color: var(--mv-ink);
+}
+
+.nib {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.nib.thin {
+  width: 5px;
+  height: 5px;
+}
+
+/* The GIF sheet, over the composer: a search, and a wall of GIFs in columns that loads more as
+   you scroll. Tapping one posts it. */
+.gif-sheet {
+  position: fixed;
+  inset: auto;
+  height: min(62vh, 540px);
+  margin: 0;
+  padding: 12px;
+  border: 0;
+  border-radius: 22px;
+  background: var(--mv-panel);
+  box-shadow:
+    0 0 0 3px var(--mv-green),
+    0 20px 44px -14px rgb(0 0 0 / 0.5);
+  color: var(--mv-ink);
+}
+
+.gif-sheet:popover-open {
+  display: flex;
+  flex-direction: column;
+  animation: chat-pop 0.28s var(--ease-spring);
+}
+
+.gif-sheet::backdrop {
+  background: none;
+}
+
+.gif-search {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  height: 46px;
+  padding: 0 14px;
+  border-radius: 14px;
+  background: var(--mv-panel-2);
+  color: var(--mv-soft);
+}
+
+.gif-search input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--mv-ink);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  outline: none;
+  box-shadow: none;
+}
+
+.gif-search input::placeholder {
+  color: var(--mv-soft);
+  opacity: 1;
+}
+
+.gif-scroll {
+  flex: 1;
+  min-height: 0;
+  margin: 10px -4px 0;
+  padding: 0 4px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.gif-results {
+  columns: 150px;
+  column-gap: 8px;
+}
+
+.gif-tile {
+  display: block;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 12px;
+  background: var(--mv-panel-2);
+  break-inside: avoid;
+  transition:
+    box-shadow 0.18s ease,
+    scale 0.3s var(--ease-spring);
+}
+
+.gif-tile:hover,
+.gif-tile:focus-visible {
+  box-shadow: var(--glow);
+  scale: 1.02;
+}
+
+.gif-tile:active {
+  scale: 0.97;
+}
+
+.gif-tile img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.gif-tile img.is-in {
+  opacity: 1;
+}
+
+.gif-state {
+  padding: 32px 12px;
+  color: var(--mv-soft);
+  font-weight: 700;
+  text-align: center;
+}
+
+.gif-state[hidden] {
+  display: none;
+}
+
+/* While a page of GIFs loads, a small ring turns at the end. */
+.gif-end {
+  display: grid;
+  place-items: center;
+  height: 44px;
+}
+
+.gif-sheet[data-busy] .gif-end::before {
+  content: '';
+  width: 22px;
+  height: 22px;
+  border: 3px solid var(--mv-panel-2);
+  border-top-color: var(--mv-green);
+  border-radius: 50%;
+  animation: chat-spin 0.7s linear infinite;
+}
+
+@keyframes chat-spin {
+  to {
+    rotate: 1turn;
+  }
+}
+
+/* You: your feeling for the next post, your name, your Mii, and leaving. */
+.me-sheet {
+  position: fixed;
+  inset: auto;
+  width: min(360px, calc(100vw - 32px));
+  margin: 0;
+  padding: 14px;
+  border: 0;
+  border-radius: 22px;
+  background: var(--mv-panel);
+  box-shadow:
+    0 0 0 3px var(--mv-green),
+    0 20px 44px -14px rgb(0 0 0 / 0.5);
+  color: var(--mv-ink);
+}
+
+.me-sheet:popover-open {
+  animation: chat-pop 0.28s var(--ease-spring);
+}
+
+@keyframes chat-pop {
+  from {
+    opacity: 0;
+    scale: 0.94;
+  }
+}
+
+.me-sheet::backdrop {
+  background: none;
+}
+
+.feelings {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+.feeling {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  padding: 8px 4px 6px;
+  border: 0;
+  border-radius: 14px;
+  background: none;
+  color: var(--mv-soft);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.feeling .face {
+  --s: 64px;
+  transition: scale 0.3s var(--ease-spring);
+}
+
+.feeling:hover .face {
+  scale: 1.06;
+}
+
+.feeling[aria-checked='true'] {
+  background: var(--mv-pick);
+  color: var(--mv-green-deep);
+}
+
+.feeling[aria-checked='true'] .face {
+  box-shadow:
+    0 0 0 2.5px var(--mv-green),
+    0 3px 6px -2px rgb(0 0 0 / 0.22);
+}
+
+.me-name input {
+  width: 100%;
+  height: 44px;
+  margin-top: 10px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--mv-panel-2);
+  color: var(--mv-ink);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.me-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.me-act {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 10px 4px 9px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--mv-panel-2);
+  color: var(--mv-ink);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.me-act svg {
+  color: var(--mv-icon);
+}
+
+.me-act:hover svg {
+  color: var(--mv-green);
+}
+
+.me-act[data-leave]:hover svg {
+  color: #d9473b;
+}
+
+/* A phone: no rail; the bar holds the TV's two buttons, the title and who is here. */
+@media (max-width: 879px) {
+  .chat {
+    --bar: 76px;
+    --face: 44px;
+    --gutter: 12px;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'bar'
+      'feed'
+      'compose';
+  }
+
+  .chat-rail {
+    display: none;
+  }
+
+  /* Clear of the plaza button and the light switch beside it on the left, the menu on the right. */
+  .chat-bar {
+    gap: 8px;
+    padding: 0 70px 0 112px;
+  }
+
+  html:has(.chat) .theme-toggle {
+    color: rgb(255 255 255 / 0.85);
+  }
+
+  .chat-bar .tile {
+    display: none;
+  }
+
+  .chat-bar h1 {
+    font-size: 1.25rem;
+  }
+
+  .bar-people {
+    height: 40px;
+    padding: 0 12px 0 5px;
+    font-size: 0.875rem;
+  }
+
+  .chat .stack .face {
+    --s: 30px;
+  }
+
+  .stack .face:nth-child(n + 4) {
+    display: none;
+  }
+
+  .post {
+    gap: 10px;
+  }
+
+  .post > .face {
+    margin-top: 34px;
+  }
+
+  .post.is-action {
+    padding-left: 0;
+  }
+
+  .post.is-gone .gone,
+  .note.is-help {
+    margin-left: calc(var(--face) + 10px);
+  }
+
+  .card-body {
+    padding: 11px 14px;
+    font-size: 1rem;
+  }
+
+  /* On a phone the slot holds the count and the icon; the label stays folded. */
+  .card {
+    max-width: calc(100% - 50px);
+  }
+
+  .gif {
+    max-width: 220px;
+  }
+
+  .card-acts {
+    min-width: 44px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .post:is(:hover, :focus-within, .is-picked) button.yeah .yeah-label {
+    max-width: 0;
+    margin-left: 0;
+    opacity: 0;
+  }
+
+  .card {
+    --tail: 14px;
+  }
+
+  .post-head time {
+    font-size: 0.75rem;
+  }
+
+  .composer {
+    padding: 10px 0 12px 14px;
+  }
+
+  .composer-mii {
+    margin-right: 8px;
+  }
+
+  .composer-mii .face {
+    --s: 48px;
+  }
+
+  .composer-field {
+    min-height: 50px;
+    margin-right: 10px;
+    padding: 4px 4px 4px 12px;
+    border-radius: 14px;
+  }
+
+  .composer-field input,
+  .composer-field textarea,
+  .say-mirror {
+    font-size: 1rem;
+  }
+
+  .composer-draw,
+  .composer-gif {
+    width: 36px;
+    height: 36px;
+  }
+
+  .composer-gif::before {
+    inset: 9px 4px;
+  }
+
+  .composer-field {
+    gap: 2px;
+  }
+
+  .gif-results {
+    columns: 2;
+  }
+
+  .post-btn {
+    flex-direction: column;
+    gap: 0;
+    width: 84px;
+    margin: -10px 0 -12px;
+    padding: 6px 0 0 8px;
+    border-radius: 34px 0 0 0;
+    font-size: 0.875rem;
+  }
+
+  .post-btn svg {
+    width: 26px;
+    height: 26px;
+  }
+
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail-fold,
+  .rail-nav li,
+  .rail-menu .rail-ico svg {
+    transition: none !important;
+  }
+
+  .dots i,
+  .feed-wait span {
+    animation: none;
+  }
+
+  .me-sheet:popover-open,
+  .chat-people:popover-open,
+  .mention-list:popover-open,
+  .gif-sheet:popover-open,
+  .draw-sheet:popover-open,
+  .feed > .is-new,
+  .typing > li {
+    animation: none;
+  }
+}

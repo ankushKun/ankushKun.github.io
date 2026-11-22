@@ -1,0 +1,217 @@
+---
+// The chat room, laid out as Miiverse on the Wii U was: a white rail down the left (your Mii, the
+// people here, the site's sections, Back), a green title bar, posts with each person's Mii beside them, and the Post
+// button in the screen's bottom right corner. It fills the TV's whole screen. main.ts runs it.
+import {
+  ArrowTurnBackwardIcon,
+  BubbleChatAddIcon,
+  Cancel01Icon,
+  DashboardSquare01Icon,
+  Delete02Icon,
+  ShuffleIcon,
+  EraserIcon,
+  Logout01Icon,
+  PaintBoardIcon,
+  QrCode01Icon,
+  Search01Icon,
+  UndoIcon,
+  UserGroupIcon,
+} from '@hugeicons/core-free-icons';
+import HugeIcon from '../ui/HugeIcon.astro';
+import Tile from '../ui/Tile.astro';
+import { FEELINGS } from './portraits';
+import { NAV } from '../../site';
+import { sectionOf } from '../../lib/nav';
+import { tileFor } from '../../lib/tiles';
+import './chat.css';
+
+// The site's sections, down the rail under People, so the TV's menu isn't needed here.
+const here = sectionOf(Astro.url.pathname);
+const sections = NAV.map((l) => ({ ...l, tile: tileFor(l.href)?.src, current: sectionOf(l.href) === here }));
+---
+
+<div class="chat" data-chat data-state="out" data-loading>
+  <header class="chat-bar">
+    <Tile path="/apps/#irc-chat" size={40} />
+    <h1><span class="sr-only">Chat, </span>#general</h1>
+    <div class="bar-end">
+      <span class="chat-status" data-status hidden>Reconnecting…</span>
+      <button type="button" class="bar-people" popovertarget="chat-people" data-people-open data-sfx>
+        <span class="stack" data-stack></span>
+        <HugeIcon icon={UserGroupIcon} size={20} strokeWidth={2} />
+        <span data-count>0</span>
+        <span class="sr-only">here now</span>
+      </button>
+    </div>
+  </header>
+
+  <nav class="chat-rail" aria-label="Chat">
+    <div class="rail-scroll">
+      <button type="button" class="rail-item" data-me-open aria-haspopup="dialog" data-sfx>
+        <span class="face rail-face" data-face="me"><img alt="" /></span>
+        <span class="rail-label" data-my-name>Me</span>
+      </button>
+      <button type="button" class="rail-item" popovertarget="chat-people" data-people-open data-sfx>
+        <span class="rail-ico">
+          <HugeIcon icon={UserGroupIcon} size={34} strokeWidth={1.9} />
+          <span class="rail-badge" data-count>0</span>
+        </span>
+        <span class="rail-label">People</span>
+      </button>
+      <button type="button" class="rail-item rail-menu" aria-expanded="false" aria-controls="chat-sections" data-sections-toggle data-sfx>
+        <span class="rail-ico">
+          <HugeIcon icon={DashboardSquare01Icon} size={32} strokeWidth={1.9} class="grid" />
+          <HugeIcon icon={Cancel01Icon} size={30} strokeWidth={2.1} class="close" />
+        </span>
+        <span class="rail-label">Menu</span>
+      </button>
+      <div class="rail-fold" id="chat-sections" inert data-sections>
+      <ul class="rail-nav" aria-label="Sections" data-app-nav>
+        {
+          sections.map((s, i) => (
+            <li style={`--i:${i}`}>
+              <a href={s.href} class="rail-item rail-section" aria-current={s.current ? 'page' : undefined} data-sfx>
+                {s.tile && <span class="rail-tile" style={`--art: url(${s.tile})`} aria-hidden="true" />}
+                <span class="rail-label">{s.label}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      </div>
+    </div>
+    <a href="/apps/" class="rail-item rail-back" data-back data-sfx="back">
+      <span class="rail-ico">
+        <HugeIcon icon={ArrowTurnBackwardIcon} size={36} strokeWidth={2.2} />
+        <span class="b" aria-hidden="true">B</span>
+      </span>
+      <span class="rail-label">Back</span>
+    </a>
+  </nav>
+
+  <section class="chat-feed" aria-label="Posts">
+    <div class="feed-scroll" data-scroll>
+      <ol class="feed" role="log" aria-live="polite" aria-busy="true" data-feed></ol>
+      <div class="feed-wait" data-wait aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+      <ol class="typing" data-typing aria-hidden="true"></ol>
+      <noscript><p class="note">The chat needs JavaScript.</p></noscript>
+    </div>
+    <button type="button" class="new-posts" data-new hidden>New posts</button>
+  </section>
+
+
+  <form class="composer" data-composer autocomplete="off">
+    <button type="button" class="composer-mii" data-mii-button aria-label="New Mii" data-sfx>
+      <span class="face" data-face="me"><img alt="" /></span>
+      <span class="dice" aria-hidden="true"><HugeIcon icon={ShuffleIcon} size={16} strokeWidth={2} /></span>
+    </button>
+    <div class="composer-field">
+      <label class="join-field">
+        <span class="sr-only">Nickname</span>
+        <input data-nick-input maxlength="16" placeholder="Nickname" enterkeyhint="go" spellcheck="false" autocapitalize="off" />
+      </label>
+      <label class="say-field">
+        <span class="sr-only">Message</span>
+        <span class="say-wrap">
+          <span class="say-mirror" data-mirror aria-hidden="true"></span>
+          <textarea
+            data-input
+            rows="1"
+            maxlength="500"
+            placeholder="Say something"
+            enterkeyhint="send"
+            aria-autocomplete="list"
+            aria-controls="chat-mentions"></textarea>
+        </span>
+      </label>
+      <button type="button" class="composer-gif" popovertarget="chat-gifs" aria-label="GIF" data-sfx>GIF</button>
+      <button type="button" class="composer-draw" popovertarget="chat-draw" aria-label="Draw" data-sfx>
+        <HugeIcon icon={PaintBoardIcon} size={22} strokeWidth={2} />
+      </button>
+    </div>
+    <button type="submit" class="post-btn" data-sfx>
+      <HugeIcon icon={BubbleChatAddIcon} size={30} strokeWidth={2} />
+      <span data-post-label>Join</span>
+    </button>
+  </form>
+
+  <div class="draw-sheet" id="chat-draw" popover role="dialog" aria-label="Drawing" data-draw-sheet>
+    <canvas class="draw-paper" data-pad-canvas aria-label="Drawing paper"></canvas>
+    <div class="draw-bar">
+      <div class="draw-tools" role="toolbar" aria-label="Pen">
+        <button type="button" class="pad-tool" data-tool="pen" aria-pressed="true" aria-label="Pen" title="Pen"><span class="nib thin"></span></button>
+        <button type="button" class="pad-tool" data-tool="thick" aria-pressed="false" aria-label="Marker" title="Marker"><span class="nib"></span></button>
+        <button type="button" class="pad-tool" data-tool="eraser" aria-pressed="false" aria-label="Eraser" title="Eraser"><HugeIcon icon={EraserIcon} size={20} strokeWidth={2} /></button>
+        <span class="draw-gap" aria-hidden="true"></span>
+        <button type="button" class="pad-tool" data-pad-undo aria-label="Undo" title="Undo"><HugeIcon icon={UndoIcon} size={20} strokeWidth={2} /></button>
+        <button type="button" class="pad-tool" data-pad-clear aria-label="Clear" title="Clear"><HugeIcon icon={Delete02Icon} size={20} strokeWidth={2} /></button>
+      </div>
+      <button type="button" class="draw-post" data-draw-post disabled data-sfx>
+        <HugeIcon icon={BubbleChatAddIcon} size={20} strokeWidth={2} />
+        Post
+      </button>
+    </div>
+  </div>
+
+  <div class="gif-sheet" id="chat-gifs" popover role="dialog" aria-label="GIFs" data-gifs>
+    <label class="gif-search">
+      <HugeIcon icon={Search01Icon} size={20} strokeWidth={2} />
+      <span class="sr-only">Search GIFs</span>
+      <input type="search" placeholder="Search GIFs" enterkeyhint="search" autocomplete="off" spellcheck="false" data-gif-q />
+    </label>
+    <div class="gif-scroll" data-gif-scroll>
+      <div class="gif-results" data-gif-results></div>
+      <p class="gif-state" data-gif-state hidden></p>
+      <div class="gif-end" data-gif-end></div>
+    </div>
+  </div>
+
+  <div class="mention-list" id="chat-mentions" popover="manual" role="listbox" aria-label="People" data-mentions></div>
+
+  <div class="chat-people" id="chat-people" popover aria-label="Here now" data-people>
+    <h2>Here now <span data-count>0</span></h2>
+    <ul data-people-list></ul>
+  </div>
+
+  <div class="me-sheet" id="chat-me" popover role="dialog" aria-label="You" data-me>
+    <div class="feelings" role="radiogroup" aria-label="Feeling">
+      {
+        FEELINGS.map((f, i) => (
+          <button type="button" role="radio" class="feeling" data-feel={i} aria-checked={i === 0 ? 'true' : 'false'} title={f.name} data-sfx>
+            <span class="face" data-face="me" data-feel={i}>
+              <img alt="" />
+            </span>
+            <span class="feeling-name">{f.name}</span>
+          </button>
+        ))
+      }
+    </div>
+    <label class="me-name">
+      <span class="sr-only">Nickname</span>
+      <input data-rename maxlength="16" spellcheck="false" autocapitalize="off" enterkeyhint="done" />
+    </label>
+    <div class="me-actions">
+      <button type="button" class="me-act" data-new-mii data-sfx><HugeIcon icon={ShuffleIcon} size={20} strokeWidth={2} />New Mii</button>
+      <label class="me-act" data-sfx>
+        <HugeIcon icon={QrCode01Icon} size={20} strokeWidth={2} />Mii QR code
+        <input type="file" accept="image/*" class="sr-only" data-qr />
+      </label>
+      <button type="button" class="me-act" data-leave data-sfx><HugeIcon icon={Logout01Icon} size={20} strokeWidth={2} />Leave</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Pages change in place, so the chat starts on each visit and stops (saying goodbye) when you go.
+  let stopping: Promise<() => void> | null = null;
+  document.addEventListener('astro:page-load', () => {
+    const root = document.querySelector<HTMLElement>('[data-chat]');
+    if (!root || root.dataset.live !== undefined) return;
+    root.dataset.live = '';
+    stopping = import('./main').then(({ mount }) => mount(root));
+  });
+  document.addEventListener('astro:before-swap', () => {
+    stopping?.then((stop) => stop());
+    stopping = null;
+  });
+</script>

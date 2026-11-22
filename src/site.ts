@@ -67,6 +67,18 @@ export const FOOTER_NAV = [
   { label: 'RSS', href: '/blogs/index.xml' },
 ];
 
+/**
+ * Chat names that can delete anyone's post on /apps/chat/. The relay has no accounts, so this only
+ * decides who is shown Delete; it is moderation by courtesy, not a lock.
+ */
+export const CHAT_MODS = ['ankush'];
+
+/**
+ * The site worker (ankushKun.github.io/workers/site-worker) that searches Klipy for the chat's GIFs
+ * with the key kept on its side. It answers only https://ankush.one. Empty turns GIFs off.
+ */
+export const GIF_PROXY = 'https://ankush-site-worker.ankushkun.workers.dev';
+
 export const BOOKING_URL = 'https://cal.com/ankushkun/call';
 
 /** Newsletter form target. Set `action` to your provider URL (Buttondown, ConvertKit, Resend...) to enable the form. */
