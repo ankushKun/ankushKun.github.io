@@ -1,0 +1,232 @@
+/* The way into a live app (Gate.astro): a short column in the middle of the app's own screen, as
+   the Wii U's first-run screens were. Your Mii in its frame with the green shuffle badge, the name
+   on a white field, the agreement beside a round-cornered check box, and a gloss button. The app
+   hides what is behind it and draws the Mii's frame (.face). */
+
+.gate {
+  --gate-green: var(--mv-green, #5bc21f);
+  --gate-ink: var(--mv-ink, light-dark(#333638, #e7ecee));
+  --gate-soft: var(--mv-soft, light-dark(#9a9fa2, #85939a));
+  --gate-panel: var(--mv-panel, light-dark(#fff, #2b3338));
+  --gate-line: var(--mv-line, light-dark(rgb(0 0 0 / 0.12), rgb(255 255 255 / 0.09)));
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 24px var(--gutter, 18px);
+  color: var(--gate-ink);
+}
+
+.gate[hidden] {
+  display: none;
+}
+
+.gate-form {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  width: min(100%, 420px);
+  animation: gate-in 0.45s var(--ease-spring) both;
+}
+
+@keyframes gate-in {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
+}
+
+.gate-mii {
+  position: relative;
+  margin-bottom: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 26px;
+  background: none;
+  transition: scale 0.3s var(--ease-spring);
+}
+
+.gate-mii:hover {
+  scale: 1.04;
+}
+
+.gate-mii:active {
+  scale: 0.97;
+}
+
+/* Over the app's own .face size. */
+.gate .gate-mii .face {
+  --s: 128px;
+}
+
+.gate-dice {
+  position: absolute;
+  right: -9px;
+  bottom: -9px;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--gate-green);
+  box-shadow: 0 0 0 3px var(--gate-panel);
+  color: #fff;
+}
+
+.gate-name {
+  display: block;
+  width: 100%;
+}
+
+.gate-name input {
+  display: block;
+  width: 100%;
+  height: 58px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--gate-panel);
+  box-shadow:
+    0 0 0 1px var(--gate-line),
+    0 3px 8px -3px light-dark(rgb(0 0 0 / 0.2), rgb(0 0 0 / 0.5));
+  color: var(--gate-ink);
+  font: inherit;
+  font-size: 1.25rem;
+  font-weight: 800;
+  text-align: center;
+  outline: none;
+  transition: box-shadow 0.18s ease;
+}
+
+.gate-name input::placeholder {
+  color: var(--gate-soft);
+  font-weight: 700;
+  opacity: 1;
+}
+
+.gate-name input:focus-visible {
+  box-shadow: var(--glow);
+}
+
+.gate-name input[aria-invalid='true'] {
+  box-shadow: 0 0 0 2px #d9473b;
+}
+
+.gate-error {
+  margin-top: -8px;
+  color: #d9473b;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.gate-error[hidden] {
+  display: none;
+}
+
+.gate-agree {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: light-dark(rgb(255 255 255 / 0.55), rgb(255 255 255 / 0.04));
+  box-shadow: 0 0 0 1px var(--gate-line);
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+.gate-box {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  background: var(--gate-panel);
+  box-shadow: inset 0 0 0 2px light-dark(#c3c8cb, #56636a);
+  color: transparent;
+  transition:
+    background 0.15s ease,
+    box-shadow 0.15s ease,
+    color 0.15s ease;
+}
+
+.gate-box svg {
+  scale: 0.4;
+  transition: scale 0.3s var(--ease-spring);
+}
+
+.gate-agree:hover .gate-box {
+  box-shadow: inset 0 0 0 2px var(--gate-green);
+}
+
+.gate-agree input:checked + .gate-box {
+  background: var(--gate-green);
+  box-shadow: none;
+  color: #fff;
+}
+
+.gate-agree input:checked + .gate-box svg {
+  scale: 1;
+}
+
+.gate-agree input:focus-visible + .gate-box {
+  box-shadow: var(--glow);
+}
+
+.gate-go {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  height: 62px;
+  margin-top: 4px;
+  border: 0;
+  border-radius: 99px;
+  background: linear-gradient(to bottom, var(--color-gloss-top), var(--color-gloss-bottom));
+  box-shadow:
+    0 0 0 1px var(--gate-line),
+    0 6px 16px -8px light-dark(rgb(0 0 0 / 0.35), rgb(0 0 0 / 0.7)),
+    inset 0 1px 0 light-dark(#fff, rgb(255 255 255 / 0.08));
+  color: var(--gate-ink);
+  font: inherit;
+  font-size: 1.375rem;
+  font-weight: 800;
+  transition:
+    opacity 0.2s ease,
+    box-shadow 0.18s ease;
+}
+
+.gate-go svg {
+  color: var(--gate-green);
+  transition: scale 0.3s var(--ease-spring);
+}
+
+.gate-go:not(:disabled):hover svg {
+  scale: 1.12;
+}
+
+.gate-go:not(:disabled):active svg {
+  scale: 0.94;
+}
+
+.gate-go:focus-visible {
+  box-shadow: var(--glow);
+}
+
+.gate-go:disabled {
+  opacity: 0.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gate-form {
+    animation: none;
+  }
+}

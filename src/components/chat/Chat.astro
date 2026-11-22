@@ -1,7 +1,8 @@
 ---
 // The chat room, laid out as Miiverse on the Wii U was: a white rail down the left (your Mii, the
 // people here, the site's sections, Back), a green title bar, posts with each person's Mii beside them, and the Post
-// button in the screen's bottom right corner. It fills the TV's whole screen. main.ts runs it.
+// button in the screen's bottom right corner. It fills the TV's whole screen. main.ts runs it. Until
+// you have a name and have agreed to what the live apps show, the gate stands where the posts go.
 import {
   ArrowTurnBackwardIcon,
   BubbleChatAddIcon,
@@ -19,6 +20,7 @@ import {
 } from '@hugeicons/core-free-icons';
 import HugeIcon from '../ui/HugeIcon.astro';
 import Tile from '../ui/Tile.astro';
+import Gate from '../live/Gate.astro';
 import { FEELINGS } from './portraits';
 import { NAV } from '../../site';
 import { sectionOf } from '../../lib/nav';
@@ -100,16 +102,14 @@ const sections = NAV.map((l) => ({ ...l, tile: tileFor(l.href)?.src, current: se
   </section>
 
 
+  <Gate action="Join" />
+
   <form class="composer" data-composer autocomplete="off">
     <button type="button" class="composer-mii" data-mii-button aria-label="New Mii" data-sfx>
       <span class="face" data-face="me"><img alt="" /></span>
       <span class="dice" aria-hidden="true"><HugeIcon icon={ShuffleIcon} size={16} strokeWidth={2} /></span>
     </button>
     <div class="composer-field">
-      <label class="join-field">
-        <span class="sr-only">Nickname</span>
-        <input data-nick-input maxlength="16" placeholder="Nickname" enterkeyhint="go" spellcheck="false" autocapitalize="off" />
-      </label>
       <label class="say-field">
         <span class="sr-only">Message</span>
         <span class="say-wrap">
@@ -131,7 +131,7 @@ const sections = NAV.map((l) => ({ ...l, tile: tileFor(l.href)?.src, current: se
     </div>
     <button type="submit" class="post-btn" data-sfx>
       <HugeIcon icon={BubbleChatAddIcon} size={30} strokeWidth={2} />
-      <span data-post-label>Join</span>
+      Post
     </button>
   </form>
 

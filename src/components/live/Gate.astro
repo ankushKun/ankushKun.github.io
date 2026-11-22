@@ -1,0 +1,41 @@
+---
+// The way into a live app, over everything visitors have posted in it: your Mii (press it for a new
+// one), the name you go by and the agreement. Name, Mii and agreement are shared by every live app
+// (store.ts), so someone who has agreed once and kept a name walks straight in next time. The app
+// places it over its content, runs it with gate.ts and draws your Mii on its `data-face="me"`.
+import { Login03Icon, ShuffleIcon, Tick02Icon } from '@hugeicons/core-free-icons';
+import HugeIcon from '../ui/HugeIcon.astro';
+import { MAX_NICK } from './store';
+import './gate.css';
+
+interface Props {
+  /** The button's word: what going in does, as "Join" for the chat. */
+  action: string;
+  class?: string;
+}
+
+const { action, class: className } = Astro.props;
+---
+
+<div class:list={['gate', className]} data-gate hidden>
+  <form class="gate-form" autocomplete="off">
+    <button type="button" class="gate-mii" data-gate-mii aria-label="New Mii" data-sfx>
+      <span class="face" data-face="me"><img alt="" /></span>
+      <span class="gate-dice" aria-hidden="true"><HugeIcon icon={ShuffleIcon} size={20} strokeWidth={2.2} /></span>
+    </button>
+    <label class="gate-name">
+      <span class="sr-only">Nickname</span>
+      <input data-gate-name maxlength={MAX_NICK} placeholder="Nickname" enterkeyhint="go" spellcheck="false" autocapitalize="off" aria-describedby="gate-error" />
+    </label>
+    <p class="gate-error" id="gate-error" data-gate-error role="alert" hidden></p>
+    <label class="gate-agree">
+      <input type="checkbox" class="sr-only" data-gate-agree />
+      <span class="gate-box" aria-hidden="true"><HugeIcon icon={Tick02Icon} size={18} strokeWidth={3} /></span>
+      <span>I understand that what visitors post here isn't checked first and may include swearing or NSFW material, and that my name and posts are public.</span>
+    </label>
+    <button type="submit" class="gate-go" data-gate-go data-sfx disabled>
+      <HugeIcon icon={Login03Icon} size={26} strokeWidth={2} />
+      {action}
+    </button>
+  </form>
+</div>

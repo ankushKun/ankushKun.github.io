@@ -10,6 +10,7 @@
 //                              messages so a new Mii shows on everything they have said
 //   live/irc/<room>/presence   <uuid> = Presence, rewritten every few seconds while they are here
 import Gun from 'gun/gun';
+import { MAX_NICK } from '../live/store';
 
 /** PUBLIC_CHAT_RELAY points a build at another relay, a local one for trying changes out. */
 const RELAY: string = import.meta.env.PUBLIC_CHAT_RELAY || 'https://gun.ankush.one/gun';
@@ -17,7 +18,6 @@ const ROOT = 'ankush-one';
 
 export const ROOM = 'general';
 export const MAX_TEXT = 500;
-export const MAX_NICK = 16;
 /** How far ahead of ours a peer's clock may run. */
 const SKEW = 5000;
 /** A drawing is a small PNG as a data URL, Miiverse's 320 by 120. */

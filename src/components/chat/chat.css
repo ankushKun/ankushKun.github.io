@@ -1264,7 +1264,6 @@ button.face:hover {
   box-shadow: var(--glow);
 }
 
-.join-field,
 .say-field {
   display: flex;
   flex: 1;
@@ -1272,7 +1271,6 @@ button.face:hover {
   align-self: stretch;
 }
 
-.composer-field input,
 .composer-field textarea {
   flex: 1;
   min-width: 0;
@@ -1405,10 +1403,6 @@ button.face:hover {
   box-shadow: 0 0 0 2px var(--mv-panel);
 }
 
-.composer-field input {
-  font-weight: 700;
-}
-
 .composer-field ::placeholder {
   color: var(--mv-soft);
   opacity: 1;
@@ -1418,10 +1412,18 @@ button.face:hover {
   box-shadow: none;
 }
 
-.chat[data-state='out'] :is(.say-field, .composer-draw, .composer-gif),
-.chat:not([data-gifs-on]) .composer-gif,
-.chat[data-state='in'] .join-field {
+.chat:not([data-gifs-on]) .composer-gif {
   display: none;
+}
+
+/* The way in (live/Gate.astro) stands where the posts and the composer go, and hides them. */
+.chat > .gate {
+  grid-row: feed-start / compose-end;
+  grid-column: feed-start / feed-end;
+}
+
+.chat:has(> .gate:not([hidden])) :is(.chat-feed, .composer) {
+  visibility: hidden;
 }
 
 /* GIF: the word in a little rounded frame, as GIF buttons are drawn. */
@@ -2039,7 +2041,6 @@ button.face:hover {
     border-radius: 14px;
   }
 
-  .composer-field input,
   .composer-field textarea,
   .say-mirror {
     font-size: 1rem;

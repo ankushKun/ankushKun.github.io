@@ -13,7 +13,6 @@ import { growFrom, placeAbove } from './sheets';
 import { gifsOn } from './gifs';
 import { dayLabel, inline, mentionsIn, stamp } from './format';
 import {
-  MAX_NICK,
   keyTime,
   messageKey,
   paths,
@@ -26,6 +25,8 @@ import {
   type Presence,
 } from './net';
 import { FEELINGS, portraits, randomMiiCode, releasePortraits, standIn } from './portraits';
+import { STORE, agreed, cleanNick, saw, store } from '../live/store';
+import { mountGate } from '../live/gate';
 
 /** Messages the room keeps; older ones are deleted by whoever is here. */
 const KEEP = 110;
@@ -36,27 +37,6 @@ const TYPING = 4000;
 /** Posts closer together than this from one person run on under one name. */
 const RUN = 5 * 60 * 1000;
 const FLOOD = { window: 10000, max: 8 };
-/** The old site's keys, so a name chosen there still works. */
-const STORE = { nick: 'irc_nick', uuid: 'irc_uuid', mii: 'chat_mii' };
-
-const store = {
-  get(key: string) {
-    try {
-      return localStorage.getItem(key);
-    } catch {
-      return null;
-    }
-  },
-  set(key: string, value: string | null) {
-    try {
-      if (value === null) localStorage.removeItem(key);
-      else localStorage.setItem(key, value);
-    } catch {
-      // Private windows may refuse; it lasts for this visit.
-    }
-  },
-};
-
 /**
  * Each person's colour: a hue from their id, so it stays when they change their name (people from
  * the old site without one are hashed by name). Lightness and chroma come from chat.css, per theme.
@@ -73,7 +53,6 @@ const paintName = (el: HTMLElement, id: string) => {
 };
 
 const isJoinLeave = (m: Message) => m.kind === 'system' && (m.text === 'entered the room' || m.text === 'left the room');
-const cleanNick = (s: string) => s.trim().replace(/\s+/g, '_').slice(0, MAX_NICK);
 
 interface Row {
   key: string;
@@ -94,9 +73,7 @@ export function mount(root: HTMLElement): () => void {
   const newPosts = $<HTMLButtonElement>('[data-new]');
   const peopleList = $<HTMLUListElement>('[data-people-list]');
   const form = $<HTMLFormElement>('[data-composer]');
-  const nickInput = $<HTMLInputElement>('[data-nick-input]');
   const input = $<HTMLTextAreaElement>('[data-input]');
-  const postLabel = $('[data-post-label]');
   const drawSheet = $('[data-draw-sheet]');
   const drawPost = $<HTMLButtonElement>('[data-draw-post]');
   const sheet = $('[data-me]');
@@ -533,6 +510,7 @@ export function mount(root: HTMLElement): () => void {
     if (live && flooding(heard, m.uuid ?? m.nick, m.time)) return;
     const row: Row = { key, time: m.time, li: build(m), msg: m };
     rows.set(key, row);
+    saw(m.time);
     paintYeahs(row);
     const wasPinned = stick;
     place(row);
@@ -716,27 +694,35 @@ export function mount(root: HTMLElement): () => void {
   /** Whether you can delete anyone's post: you are in under a name in CHAT_MODS. */
   const isMod = () => me.joined && CHAT_MODS.some((n) => n.toLowerCase() === me.nick.toLowerCase());
 
+  // The way in: your Mii, a name and the live apps' agreement, over the posts until you have joined.
+  const gate = mountGate($('[data-gate]'), {
+    enter: join,
+    shuffle: () => void newMii(),
+    behind: [$('.chat-feed'), form],
+  });
+  const nickInput = gate.input;
+
   function setState() {
     root.dataset.state = me.joined ? 'in' : 'out';
     root.toggleAttribute('data-mod', isMod());
-    postLabel.textContent = me.joined ? 'Post' : 'Join';
+    if (me.joined) gate.close();
+    else gate.open();
     $('[data-my-name]').textContent = me.joined ? me.nick : 'Me';
     $('[data-mii-button]').setAttribute('aria-label', me.joined ? 'Feeling' : 'New Mii');
     renameInput.value = me.nick;
     if (me.joined) feed.setAttribute('aria-label', `#general, as ${me.nick}`);
   }
 
-  function join(raw: string) {
+  /** Joins as `nick`, or says why not (for the gate to show). */
+  function join(raw: string): string | null {
     const nick = cleanNick(raw);
     if (!nick) {
       play('nope');
-      nickInput.focus();
-      return;
+      return 'Pick a name first.';
     }
     if (taken(nick)) {
       play('nope');
-      note(`Someone here is already called **${nick}**.`);
-      return;
+      return `Someone here is already called ${nick}.`;
     }
     me.nick = nick;
     me.joined = true;
@@ -750,6 +736,7 @@ export function mount(root: HTMLElement): () => void {
     stick = true;
     settle();
     input.focus();
+    return null;
   }
 
   function leave() {
@@ -758,10 +745,9 @@ export function mount(root: HTMLElement): () => void {
     store.set(STORE.nick, null);
     sheet.hidePopover();
     drawSheet.hidePopover();
+    nickInput.value = '';
     setState();
     drawPeople();
-    nickInput.value = '';
-    nickInput.focus();
   }
 
   function saveProfile() {
@@ -813,7 +799,7 @@ export function mount(root: HTMLElement): () => void {
   }
 
   function submit() {
-    if (!me.joined) return join(nickInput.value);
+    if (!me.joined) return;
     const line = input.value.trim();
     if (!line) return;
     const cmd = parse(line);
@@ -1157,11 +1143,16 @@ export function mount(root: HTMLElement): () => void {
   else void newMii();
 
   setFeel(0);
+  // Back with a name and the agreement: straight in, after the first burst of presence so a name
+  // someone else has taken isn't taken twice. Anyone else stops at the gate.
   const saved = store.get(STORE.nick);
-  if (saved) {
-    nickInput.value = saved;
-    // After the first burst of presence, so a name someone else has taken isn't taken twice.
-    timers.push(window.setTimeout(() => join(saved), 900));
+  if (saved && agreed()) {
+    timers.push(
+      window.setTimeout(() => {
+        const why = join(saved);
+        if (why) gate.open(why);
+      }, 900),
+    );
   } else setState();
 
   return () => {
