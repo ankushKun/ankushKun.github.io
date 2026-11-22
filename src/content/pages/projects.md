@@ -3,4 +3,4 @@ title: Projects
 description: Software, AI agents, developer tools, Nintendo 3DS homebrew, hardware builds, and hackathon projects by Ankush Singh.
 ---
 
-A non-exhaustive archive of things I've built — from AI agent platforms and developer tools to Nintendo 3DS homebrew, games, and early hardware experiments.
+A shelf of things I've shipped, broken, and occasionally rescued at 3 AM, from AI employees and developer tools to New 3DS homebrew, game jams, and cardboard-and-Arduino prototypes.

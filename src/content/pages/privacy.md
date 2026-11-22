@@ -1,10 +1,14 @@
 ---
 title: Privacy
 description: What ankush.one collects when you visit — static pages, zero cookies, no client-side tracking, and third-party embeds.
-updated: 2026-11-20
+updated: 2026-11-22
 ---
 
-This is a static personal website built with Astro. There are no user accounts, no ads, no cookies, and no client-side tracking scripts or analytics on these pages.
+This is a static personal website built with Astro. There are no user accounts, no ads, no cookies, and no client-side tracking scripts or analytics on these pages. Your theme preference (`light` or `dark`) and mute setting stay strictly in your own browser's `localStorage`.
+
+## Live Chat (`/apps/chat/`)
+
+The Miiverse-style chat room connects directly to a GUN relay (`gun.ankush.one`) so messages, drawings, and Mii avatars sync in real time without user accounts. When you open the GIF picker, search queries are proxied through a Cloudflare Worker to Klipy so no API key is exposed in the browser. Everything posted in `#general` is public.
 
 ## Server & hosting logs
 
@@ -21,7 +25,7 @@ A small number of individual project and blog pages embed external content:
 
 ## Standalone project pages
 
-Standalone web apps and project microsites hosted separately under `ankush.one` (such as `/3dsDL/`, `/3dsFM/`, `/sh23ds/`, and `/animedoro-timer/`) are built and maintained in their own repositories and may have their own storage or analytics settings.
+Standalone web apps and project microsites hosted separately under `ankush.one` (such as `/3dsDL/`, `/3dsFM/`, `/sh23ds/`, `/mixtunes/`, and `/animedoro-timer/`) are built and maintained in their own repositories and may have their own storage or analytics settings.
 
 ## Contact
 
