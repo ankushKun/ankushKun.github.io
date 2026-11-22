@@ -1,6 +1,6 @@
 ---
 title: Apps
-description: Small apps and toys on Ankush Singh's site, being rebuilt for the new version.
+description: Interactive Wii-style channels and small web toys built into ankush.one.
 ---
 
-The apps from the old version of this site are being rebuilt here.
+Small interactive channels built straight into the TV. Jump into the live Miiverse chat, inspect Miis in 3D or play my games right now. The greyed-out channels are still warming up in the workshop.

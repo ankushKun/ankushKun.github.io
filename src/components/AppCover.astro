@@ -1,0 +1,143 @@
+---
+// The title screen of an app or game: back to the menu it came from, as entries have, its art
+// large, its name, who made it, what it is, an optional note from your Mii, and the way on: the
+// `action` slot (Play), then its links. An app's (`app`) fills the screen, so its channel on /apps/ grows into it; a game's is
+// a page on the TV like any other. The default slot follows it, for a game's player.
+import Base from '../layouts/Base.astro';
+import BackButton from './ui/BackButton.astro';
+import MenuButton from './ui/MenuButton.astro';
+import { pagePath } from '../lib/content';
+import { breadcrumbs, webPage } from '../lib/schema';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Wide channel art, 16:9. */
+  art: string;
+  /** The menu it belongs to, e.g. { name: 'Apps', path: '/apps/' }. */
+  parent: { name: string; path: string };
+  links?: { label: string; url: string }[];
+  /** Who made it, when it isn't you. */
+  by?: string;
+  /** What your Mii says under it, e.g. that it is still being built. */
+  note?: string;
+  /** Fill the TV's screen as an app (Base.astro `app`) rather than sit in its column. */
+  app?: boolean;
+}
+
+const { title, description, art, parent, links = [], by, note, app = false } = Astro.props;
+const path = pagePath(Astro.url);
+---
+
+<Base
+  {title}
+  {description}
+  {app}
+  schema={[webPage('WebPage', path, title, description), breadcrumbs([parent, { name: title, path }])]}
+>
+  <div class:list={['cover', app && 'is-app']} data-cover>
+    <div class="stage">
+      <BackButton href={parent.path} label={parent.name} tile={parent.path} />
+      <div class="glass"><img src={art} alt="" width="560" height="315" /></div>
+      <h1>{title}</h1>
+      {by && <p class="by">by {by}</p>}
+      <p class="what">{description}</p>
+      {
+        note && (
+          <aside class="mii-note">
+            <img src="/mii/me-surprised.webp" alt="" width="112" height="112" />
+            <p class="bubble">{note}</p>
+          </aside>
+        )
+      }
+      <div class="go">
+        <slot name="action" />
+        {links.map((l) => <MenuButton href={l.url} label={l.label} />)}
+      </div>
+    </div>
+  </div>
+  <slot />
+</Base>
+
+<style>
+  .cover {
+    padding: 8px 0 24px;
+  }
+
+  /* An app's fills the screen and scrolls inside it, clear of the TV's buttons. */
+  .cover.is-app {
+    height: 100%;
+    overflow-y: auto;
+    padding: 96px 20px 48px;
+  }
+
+  .stage {
+    display: grid;
+    gap: 14px;
+    max-width: 560px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .stage > :global(.back-btn) {
+    justify-self: start;
+  }
+
+  /* The channel, large: art in the same glossy frame as on the menu. */
+  .glass {
+    padding: 6px;
+    border-radius: 26px;
+    background: linear-gradient(to bottom, var(--color-gloss-top), var(--color-gloss-bottom));
+    box-shadow:
+      inset 0 0 0 1px light-dark(rgb(255 255 255 / 0.95), rgb(255 255 255 / 0.08)),
+      var(--rim),
+      0 10px 24px -12px light-dark(rgb(30 50 60 / 0.4), rgb(0 0 0 / 0.7));
+  }
+
+  .glass img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    border-radius: 20px;
+    object-fit: cover;
+  }
+
+  h1 {
+    margin: 10px 0 0;
+    color: var(--color-ink-strong);
+    font-size: clamp(1.75rem, 5vw, 2.25rem);
+    font-weight: 800;
+    line-height: 1.15;
+  }
+
+  .by {
+    margin: -8px 0 0;
+    color: var(--color-ink-soft);
+    font-size: 0.875rem;
+    font-weight: 700;
+  }
+
+  .what {
+    margin: 0;
+    color: var(--color-ink-soft);
+    font-size: 1rem;
+    line-height: 1.55;
+  }
+
+  .mii-note {
+    margin-top: 6px;
+    text-align: left;
+  }
+
+  .mii-note .bubble {
+    margin: 0;
+  }
+
+  .go {
+    display: grid;
+    gap: 10px;
+    margin-top: 6px;
+    text-align: left;
+  }
+</style>

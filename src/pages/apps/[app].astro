@@ -1,0 +1,25 @@
+---
+// Placeholders for the apps on /apps/ that are not built yet (`soon` in src/data/apps.ts).
+import type { GetStaticPaths } from 'astro';
+import AppCover from '../../components/AppCover.astro';
+import { APPS, appPath, type App } from '../../data/apps';
+import { channelFor } from '../../lib/tiles';
+
+export const getStaticPaths = (() =>
+  APPS.filter((a) => a.soon && a.href?.startsWith('/apps/')).map((app) => ({
+    params: { app: app.href!.split('/')[2] },
+    props: { app },
+  }))) satisfies GetStaticPaths;
+
+const { app } = Astro.props as { app: App };
+const art = channelFor(appPath(app))?.src ?? '';
+---
+
+<AppCover
+  title={app.label}
+  description={app.description}
+  {art}
+  parent={{ name: 'Apps', path: '/apps/' }}
+  note="Still building this one. Check back soon!"
+  app
+/>
