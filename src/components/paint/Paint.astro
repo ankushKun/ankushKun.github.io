@@ -1,0 +1,116 @@
+---
+// Paint: one shared canvas a day that everyone draws on at once. The tools down the left (on a
+// phone, along the bottom), the day and its prompt in the bar, the canvas as a sheet of paper on a
+// dotted board that zooms and pans, with everyone else's pens moving over it, and the days drawn
+// before under it. main.ts
+// runs it. Until you have a name and have agreed to what the live apps show, the gate stands where
+// the canvas goes.
+import { Add01Icon, ArrowLeft01Icon, ArrowRight01Icon, Delete02Icon, Download04Icon, EraserIcon, HandIcon, MinusSignIcon, PencilEdit02Icon, PlayIcon, RedoIcon, StopIcon, UndoIcon } from '@hugeicons/core-free-icons';
+import HugeIcon from '../ui/HugeIcon.astro';
+import AppBar from '../ui/AppBar.astro';
+import Gate from '../live/Gate.astro';
+import { PALETTE, SIZES } from './board';
+import './paint.css';
+---
+
+<div class="pt live-app" data-paint>
+  <AppBar path="/apps/paint/" title="Paint">
+    <span slot="title" class="pt-status" data-status hidden>Reconnecting</span>
+    <button slot="end" type="button" class="pt-people" data-people aria-label="Nobody else is drawing" hidden>
+      <span class="live-stack" data-stack></span>
+      <span class="live-count" data-count>0</span>
+    </button>
+  </AppBar>
+
+  <div class="pt-lcd" data-lcd>
+    <button type="button" class="pt-lcd-btn" data-day-prev aria-label="Day before" data-sfx><HugeIcon icon={ArrowLeft01Icon} size={20} strokeWidth={2.2} /></button>
+    <div class="pt-lcd-text" aria-live="polite">
+      <b data-day-label>Today</b>
+      <span data-prompt></span>
+    </div>
+    <button type="button" class="pt-lcd-btn" data-day-next aria-label="Day after" data-sfx><HugeIcon icon={ArrowRight01Icon} size={20} strokeWidth={2.2} /></button>
+  </div>
+
+  <aside class="pt-tray" aria-label="Tools" data-tray>
+    <div class="pt-tools" role="toolbar" aria-label="Pen">
+      <button type="button" class="pt-tool" data-tool="pen" aria-pressed="true" aria-label="Pen" title="Pen (P)"><HugeIcon icon={PencilEdit02Icon} size={26} strokeWidth={1.9} /></button>
+      <button type="button" class="pt-tool" data-tool="eraser" aria-pressed="false" aria-label="Eraser" title="Eraser (E)"><HugeIcon icon={EraserIcon} size={26} strokeWidth={1.9} /></button>
+      <button type="button" class="pt-tool" data-tool="hand" aria-pressed="false" aria-label="Hand" title="Hand (H, or hold Space)"><HugeIcon icon={HandIcon} size={26} strokeWidth={1.9} /></button>
+    </div>
+    <hr />
+    <div class="pt-sizes" role="radiogroup" aria-label="Size">
+      {
+        SIZES.map((w, i) => (
+          <button type="button" role="radio" class="pt-size" data-size={w} aria-checked={i === 1 ? 'true' : 'false'} aria-label={['Fine', 'Medium', 'Thick', 'Huge'][i]}>
+            <span style={`--dot:${Math.max(4, Math.round(w * 1.05))}px`} />
+          </button>
+        ))
+      }
+    </div>
+    <hr />
+    <div class="pt-colors" role="radiogroup" aria-label="Colour">
+      {PALETTE.map((p, i) => <button type="button" role="radio" class="pt-color" style={`--ink:${p.color}`} data-color={p.color} aria-checked={i === 0 ? 'true' : 'false'} aria-label={p.name} />)}
+    </div>
+    <span class="pt-tray-gap"></span>
+    <div class="pt-history">
+      <button type="button" class="pt-undo" data-undo aria-label="Undo" title="Undo (Ctrl or Cmd Z)">
+        <HugeIcon icon={UndoIcon} size={24} strokeWidth={1.9} />
+      </button>
+      <button type="button" class="pt-undo" data-redo aria-label="Redo" title="Redo (Shift Ctrl or Cmd Z)">
+        <HugeIcon icon={RedoIcon} size={24} strokeWidth={1.9} />
+      </button>
+    </div>
+    <button type="button" class="pt-undo pt-wipe" data-wipe hidden aria-label="Wipe this day">
+      <HugeIcon icon={Delete02Icon} size={24} strokeWidth={1.9} />
+      <span>Wipe</span>
+    </button>
+  </aside>
+
+  <main class="pt-stage" data-stage>
+    <div class="pt-view" data-view>
+      <div class="pt-sheet" data-sheet></div>
+      <canvas class="pt-art" data-art role="img" aria-label="Today's shared drawing"></canvas>
+      <canvas class="pt-live" data-live aria-hidden="true"></canvas>
+      <div class="pt-cursors" data-cursors aria-hidden="true"></div>
+      <span class="pt-brush" data-brush aria-hidden="true" hidden></span>
+      <p class="pt-note" data-note hidden></p>
+      <noscript><p class="pt-note">Paint needs JavaScript.</p></noscript>
+      <div class="pt-zoom" role="group" aria-label="Zoom">
+        <button type="button" data-zoom-out aria-label="Zoom out" title="Zoom out (Ctrl or Cmd -)"><HugeIcon icon={MinusSignIcon} size={16} strokeWidth={2.4} /></button>
+        <button type="button" class="pt-zoom-level" data-zoom-fit title="Fit (Ctrl or Cmd 0), actual size (Ctrl or Cmd 1)" aria-label="Fit to the window">100%</button>
+        <button type="button" data-zoom-in aria-label="Zoom in" title="Zoom in (Ctrl or Cmd +)"><HugeIcon icon={Add01Icon} size={16} strokeWidth={2.4} /></button>
+      </div>
+    </div>
+    <div class="pt-under">
+      <nav class="pt-days" aria-label="Days" data-days></nav>
+      <div class="pt-acts">
+        <button type="button" class="pt-act" data-replay data-sfx>
+          <HugeIcon icon={PlayIcon} size={18} strokeWidth={2.2} class="i-play" />
+          <HugeIcon icon={StopIcon} size={18} strokeWidth={2.2} class="i-stop" />
+          <span>Replay</span>
+        </button>
+        <button type="button" class="pt-act" data-save data-sfx>
+          <HugeIcon icon={Download04Icon} size={20} strokeWidth={2} />
+          <span>Save</span>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <Gate action="Draw" />
+</div>
+
+<script>
+  // Pages change in place, so Paint starts on each visit and stops when you go.
+  let stopping: Promise<() => void> | null = null;
+  document.addEventListener('astro:page-load', () => {
+    const root = document.querySelector<HTMLElement>('[data-paint]');
+    if (!root || root.dataset.live !== undefined) return;
+    root.dataset.live = '';
+    stopping = import('./main').then(({ mount }) => mount(root));
+  });
+  document.addEventListener('astro:before-swap', () => {
+    stopping?.then((stop) => stop());
+    stopping = null;
+  });
+</script>

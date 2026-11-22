@@ -1,0 +1,27 @@
+---
+// Paint: an app, so it fills the TV's screen (Base.astro `app`) instead of the column.
+import Base from '../../layouts/Base.astro';
+import Paint from '../../components/paint/Paint.astro';
+import { getPage, pagePath } from '../../lib/content';
+import { ogPathForPage } from '../../lib/og';
+import { breadcrumbs, webPage } from '../../lib/schema';
+
+const { title, description } = (await getPage('paint')).data;
+const path = pagePath(Astro.url);
+---
+
+<Base
+  {title}
+  {description}
+  imageUrl={ogPathForPage('paint')}
+  app
+  schema={[
+    webPage('WebPage', path, title, description),
+    breadcrumbs([
+      { name: 'Apps', path: '/apps/' },
+      { name: title, path },
+    ]),
+  ]}
+>
+  <Paint />
+</Base>

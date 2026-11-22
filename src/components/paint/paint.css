@@ -1,0 +1,755 @@
+/* Paint (Paint.astro): the app's bar with the day in an LCD at its middle, a white tray of tools down
+   the left, and the canvas as a sheet of paper on a dotted board, with the days drawn before in a
+   row under it. On a phone the LCD drops under the bar and the tools sit along the bottom. The paper
+   is paper by night too; the board and the tray darken around it. */
+
+.pt {
+  --board: light-dark(#eceff1, #15191c);
+  --dots: light-dark(rgb(55 70 78 / 0.09), rgb(255 255 255 / 0.05));
+  --tray: var(--mv-panel);
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr);
+  grid-template-rows: var(--app-bar) minmax(0, 1fr);
+  grid-template-areas:
+    'bar bar'
+    'tray stage';
+  overflow: hidden;
+  background: radial-gradient(var(--dots) 1.2px, transparent 1.3px) 0 0 / 22px 22px, var(--board);
+  color: var(--mv-ink);
+}
+
+.pt > .app-bar {
+  grid-area: bar;
+}
+
+.pt-status {
+  padding: 0 12px;
+  border-radius: 99px;
+  background: light-dark(#eef1f3, #2b3338);
+  color: var(--color-ink-soft);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 28px;
+  white-space: nowrap;
+}
+
+.pt-status[hidden] {
+  display: none;
+}
+
+.pt-people {
+  display: flex;
+  align-items: center;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.pt-people[hidden] {
+  display: none;
+}
+
+/* The day, in the bar's middle ---------------------------------------------------------------- */
+
+.pt-lcd {
+  z-index: 4;
+  grid-area: bar;
+  align-self: center;
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  width: min(440px, 34vw);
+  height: 60px;
+  padding: 0 8px;
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+  background: light-dark(linear-gradient(#f6f8f1, #e8ecdf), linear-gradient(#171b1d, #111416));
+  box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.08);
+}
+
+.pt-lcd-btn {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: var(--color-ink-mid);
+}
+
+.pt-lcd-btn:hover:not(:disabled) {
+  background: light-dark(rgb(0 0 0 / 0.05), rgb(255 255 255 / 0.06));
+}
+
+.pt-lcd-btn:disabled {
+  color: light-dark(#c3c9cc, #3a4247);
+}
+
+.pt-lcd-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.pt-lcd-text b,
+.pt-lcd-text span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pt-lcd-text b {
+  color: var(--color-ink-strong);
+  font-size: 0.9375rem;
+}
+
+.pt-lcd-text span {
+  color: var(--color-ink-quiet);
+  font-size: 0.8125rem;
+}
+
+/* The tray ------------------------------------------------------------------------------------ */
+
+.pt-tray {
+  z-index: 2;
+  grid-area: tray;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  min-height: 0;
+  padding: 20px 0 18px;
+  overflow-y: auto;
+  background: var(--tray);
+  box-shadow:
+    1px 0 0 var(--mv-line),
+    2px 0 10px rgb(40 60 70 / 0.05);
+  transition: opacity 0.25s ease;
+}
+
+.pt-tray hr {
+  flex: none;
+  width: 64px;
+  height: 1px;
+  border: 0;
+  background: var(--mv-line);
+}
+
+.pt-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pt-tool {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  padding: 0;
+  border: 0;
+  border-radius: 18px;
+  background: none;
+  color: var(--mv-soft);
+}
+
+.pt-tool:hover {
+  background: light-dark(#f2f4f5, #353e44);
+}
+
+.pt-tool[aria-pressed='true'] {
+  background: light-dark(#fff3e8, rgb(245 154 74 / 0.16));
+  box-shadow: 0 0 0 3px #f59a4a;
+  color: light-dark(#d8671f, #f7b27a);
+}
+
+.pt-sizes,
+.pt-colors {
+  display: grid;
+  flex: none;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.pt-colors {
+  gap: 8px;
+}
+
+.pt-size {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+}
+
+.pt-size span {
+  width: var(--dot);
+  height: var(--dot);
+  border-radius: 50%;
+  background: var(--mv-ink);
+}
+
+.pt-size[aria-checked='true'] {
+  background: light-dark(#edf0f2, #3a444a);
+}
+
+.pt-color {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 2px solid light-dark(#fff, #2b3338);
+  border-radius: 50%;
+  background: var(--ink);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.18);
+  transition: scale 0.2s var(--ease-spring);
+}
+
+.pt-color:hover {
+  scale: 1.1;
+}
+
+.pt-color[aria-checked='true'] {
+  box-shadow: var(--glow);
+}
+
+.pt-tray :is(.pt-tool, .pt-size, .pt-color, .pt-undo):focus-visible {
+  outline: none;
+  box-shadow: var(--glow);
+}
+
+.pt-tray-gap {
+  flex: 1;
+}
+
+.pt-history {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pt-undo {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 56px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  background: none;
+  color: var(--mv-soft);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.pt-undo:hover {
+  background: light-dark(#f2f4f5, #353e44);
+}
+
+.pt-wipe {
+  color: #d9473b;
+}
+
+.pt-undo[hidden] {
+  display: none;
+}
+
+/* Looking back at a day, or watching a replay: the tools rest. */
+.pt[data-locked] .pt-tray {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.pt[data-locked] .pt-wipe {
+  pointer-events: auto;
+}
+
+/* The stage ----------------------------------------------------------------------------------- */
+
+.pt-stage {
+  grid-area: stage;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 0;
+  padding: 0 0 14px;
+}
+
+.pt-under {
+  padding: 0 32px;
+}
+
+/* The window onto the canvas: the paper sits in it at the zoom and place view.ts says, and the
+   layers over it are the window's size, drawn at the view. */
+.pt-view {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+  cursor: crosshair;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.pt-sheet {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow:
+    0 0 0 1px rgb(55 70 78 / 0.08),
+    0 10px 30px rgb(40 60 70 / 0.14),
+    0 2px 6px rgb(40 60 70 / 0.08);
+  pointer-events: none;
+}
+
+.pt-art,
+.pt-live {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.pt[data-locked] .pt-view {
+  cursor: default;
+}
+
+.pt[data-tool='hand'] .pt-view,
+.pt[data-space] .pt-view {
+  cursor: grab;
+}
+
+.pt[data-panning] .pt-view {
+  cursor: grabbing;
+}
+
+/* The pen's size, under the pointer. */
+.pt-brush {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.55),
+    inset 0 0 0 1px rgb(255 255 255 / 0.8);
+  pointer-events: none;
+}
+
+.pt-brush[hidden] {
+  display: none;
+}
+
+/* Zoom, in the window's corner. */
+.pt-zoom {
+  position: absolute;
+  z-index: 2;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  padding: 3px;
+  border-radius: 99px;
+  background: light-dark(rgb(255 255 255 / 0.92), rgb(43 51 56 / 0.92));
+  box-shadow:
+    0 0 0 1px var(--mv-line),
+    0 3px 10px rgb(40 60 70 / 0.14);
+  backdrop-filter: blur(8px);
+  cursor: default;
+}
+
+.pt-zoom button {
+  display: grid;
+  place-items: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 99px;
+  background: none;
+  color: var(--color-ink-mid);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.pt-zoom button:hover {
+  background: light-dark(#f0f2f3, #353e44);
+}
+
+.pt-zoom button:focus-visible {
+  outline: none;
+  box-shadow: var(--glow);
+}
+
+.pt-zoom-level {
+  min-width: 56px !important;
+}
+
+.pt-note {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  max-width: calc(100% - 28px);
+  padding: 8px 16px;
+  border-radius: 99px;
+  background: rgb(42 47 49 / 0.82);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-align: center;
+  translate: -50% 0;
+}
+
+.pt-note[hidden] {
+  display: none;
+}
+
+/* Everyone else's pens. */
+.pt-cursors {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.pt-cursor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  transition: transform 0.1s linear;
+}
+
+.pt-cursor[hidden] {
+  display: none;
+}
+
+.pt-cursor.is-right {
+  flex-direction: row-reverse;
+  translate: -100% 0;
+}
+
+.pt[data-panning] .pt-cursor,
+.pt-view:active .pt-cursor {
+  transition: none;
+}
+
+.pt-cursor-dot {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+}
+
+.pt-cursor.is-right .pt-cursor-dot {
+  margin: -6px -6px 0 0;
+}
+
+.pt-cursor-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 3px;
+  border-radius: 99px;
+  background: hsl(var(--hue) 58% 42%);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.18);
+  color: #fff;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pt-cursor-tag[hidden] {
+  display: none;
+}
+
+.pt-cursor-tag .face {
+  --s: 24px;
+  border-radius: 50%;
+  box-shadow: none;
+}
+
+/* Under the canvas: the days, then Replay and Save. */
+.pt-under {
+  display: flex;
+  flex: none;
+  align-items: flex-end;
+  gap: 12px;
+  width: 100%;
+  max-width: 1120px;
+}
+
+.pt-days {
+  display: flex;
+  flex: 1;
+  gap: 10px;
+  min-width: 0;
+  padding: 5px 5px 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.pt-day {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  color: var(--color-ink-soft);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.pt-day canvas {
+  display: block;
+  width: 92px;
+  height: 58px;
+  border-radius: 5px;
+  background: #fff;
+  box-shadow:
+    0 0 0 1px rgb(55 70 78 / 0.1),
+    0 2px 5px rgb(40 60 70 / 0.1);
+  transition: scale 0.25s var(--ease-spring);
+}
+
+.pt-day:hover canvas {
+  scale: 1.05;
+}
+
+.pt-day[aria-current] {
+  color: var(--color-ink-strong);
+  font-weight: 700;
+}
+
+.pt-day[aria-current] canvas,
+.pt-day:focus-visible canvas {
+  box-shadow: var(--glow);
+}
+
+.pt-day:focus-visible {
+  outline: none;
+}
+
+.pt-acts {
+  display: flex;
+  flex: none;
+  gap: 10px;
+  padding-bottom: 22px;
+}
+
+.pt-act {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 18px 0 14px;
+  border: 0;
+  border-radius: 23px;
+  background: linear-gradient(var(--color-gloss-top), var(--color-gloss-bottom));
+  box-shadow:
+    0 0 0 1px light-dark(rgb(55 70 78 / 0.16), rgb(255 255 255 / 0.08)),
+    0 2px 5px rgb(40 60 70 / 0.1);
+  color: var(--color-ink);
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.pt-act:focus-visible {
+  outline: none;
+  box-shadow: var(--glow);
+}
+
+.pt-act .i-stop,
+.pt[data-replaying] .pt-act .i-play {
+  display: none;
+}
+
+.pt[data-replaying] .pt-act .i-stop {
+  display: block;
+}
+
+/* The gate stands where the tools and the canvas go, and hides them. */
+.pt > .gate {
+  grid-row: 2 / -1;
+  grid-column: 1 / -1;
+}
+
+.pt:has(> .gate:not([hidden])) :is(.pt-tray, .pt-stage, .pt-lcd) {
+  visibility: hidden;
+}
+
+/* A phone ------------------------------------------------------------------------------------- */
+
+@media (max-width: 879px) {
+  .pt {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: var(--app-bar) auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'bar'
+      'lcd'
+      'stage'
+      'tray';
+  }
+
+  .pt-lcd {
+    grid-area: lcd;
+    justify-self: stretch;
+    width: auto;
+    height: 54px;
+    margin: 14px 16px 0;
+    padding: 0 4px;
+  }
+
+  .pt-stage {
+    padding: 4px 0 8px;
+  }
+
+  .pt-under {
+    padding: 0 16px;
+  }
+
+  .pt-zoom {
+    right: 8px;
+    bottom: 8px;
+  }
+
+  .pt-acts {
+    padding-bottom: 20px;
+  }
+
+  .pt-act {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    justify-content: center;
+    border-radius: 50%;
+  }
+
+  .pt-act span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .pt-day canvas {
+    width: 64px;
+    height: 40px;
+  }
+
+  .pt-tray {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'colors colors colors'
+      'tools sizes undo';
+    align-items: center;
+    gap: 12px 6px;
+    padding: 12px 12px calc(14px + env(safe-area-inset-bottom));
+    overflow: visible;
+    border-radius: 22px 22px 0 0;
+    box-shadow:
+      0 -1px 0 var(--mv-line),
+      0 -4px 14px rgb(40 60 70 / 0.07);
+  }
+
+  .pt-tray hr,
+  .pt-tray-gap {
+    display: none;
+  }
+
+  .pt-tools {
+    grid-area: tools;
+    flex-direction: row;
+    gap: 6px;
+  }
+
+  .pt-tool {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+  }
+
+  .pt-sizes {
+    grid-area: sizes;
+    display: flex;
+    justify-content: center;
+    gap: 2px;
+  }
+
+  .pt-size {
+    width: 30px;
+    height: 44px;
+  }
+
+  .pt-colors {
+    grid-area: colors;
+    display: flex;
+    gap: 8px;
+    padding: 4px 2px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .pt-color {
+    flex: none;
+    width: 34px;
+    height: 34px;
+  }
+
+  .pt-history {
+    grid-area: undo;
+    flex-direction: row;
+  }
+
+  .pt-undo {
+    width: 44px;
+  }
+
+  .pt-wipe {
+    display: none;
+  }
+
+  .pt > .gate {
+    grid-row: 2 / -1;
+  }
+
+  .pt-people .live-stack {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pt-cursor {
+    transition: none;
+  }
+}
