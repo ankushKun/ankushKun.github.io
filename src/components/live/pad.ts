@@ -1,26 +1,32 @@
-// The drawing pad: Miiverse's 320 by 120 canvas, drawn on in black with a pen of two widths or
-// rubbed out with an eraser, and posted as a small PNG with no paper: just the strokes on
-// transparency, so the chat can show them black in the light and white in the dark. Pointer, touch
-// and stylus all draw; pressure is ignored, as the GamePad's stylus had none.
-export const DRAW_W = 320;
-export const DRAW_H = 120;
+// The drawing pad the live apps share: the chat's Miiverse paper (320 by 120, black only) and the
+// Guestbook's Swapnote note (320 by 240, three inks). Drawn with a pen of two widths or rubbed out
+// with an eraser, hard edged one pixel at a time as the GamePad and the 3DS drew, and saved as a
+// small PNG with no paper: just the strokes on transparency, so the page puts its own paper under
+// them (the chat shows them black in the light and white in the dark). Pointer, touch and stylus all
+// draw; pressure is ignored, as neither stylus had any.
+export type Tool = 'pen' | 'thick' | 'eraser';
 
 export interface Pad {
   /** True once something has been drawn since the last clear. */
   readonly dirty: boolean;
-  setTool(tool: 'pen' | 'thick' | 'eraser'): void;
+  setTool(tool: Tool): void;
+  /** The pen's colour, as CSS. */
+  setInk(ink: string): void;
   clear(): void;
   undo(): void;
   /** The drawing as a PNG data URL. */
   png(): string;
+  /** Starts again from a drawing saved earlier (a PNG data URL), as something to keep drawing on. */
+  load(src: string): Promise<void>;
   destroy(): void;
 }
 
-export function mountPad(canvas: HTMLCanvasElement, onChange: () => void): Pad {
-  canvas.width = DRAW_W;
-  canvas.height = DRAW_H;
+export function mountPad(canvas: HTMLCanvasElement, onChange: () => void, size: { width: number; height: number } = { width: 320, height: 120 }): Pad {
+  const DRAW_W = (canvas.width = size.width);
+  const DRAW_H = (canvas.height = size.height);
   const g = canvas.getContext('2d', { willReadFrequently: true })!;
-  let tool: 'pen' | 'thick' | 'eraser' = 'pen';
+  let tool: Tool = 'pen';
+  let ink = '#000';
   let dirty = false;
   let last: { x: number; y: number } | null = null;
   const history: ImageData[] = [];
@@ -38,7 +44,7 @@ export function mountPad(canvas: HTMLCanvasElement, onChange: () => void): Pad {
     const size = tool === 'pen' ? 2 : tool === 'thick' ? 5 : 12;
     const box = [Math.round(x - size / 2), Math.round(y - size / 2), size, size] as const;
     if (tool === 'eraser') return g.clearRect(...box);
-    g.fillStyle = '#000';
+    g.fillStyle = ink;
     g.fillRect(...box);
   };
   const line = (a: { x: number; y: number }, b: { x: number; y: number }) => {
@@ -80,6 +86,9 @@ export function mountPad(canvas: HTMLCanvasElement, onChange: () => void): Pad {
     setTool(t) {
       tool = t;
     },
+    setInk(c) {
+      ink = c;
+    },
     clear() {
       history.push(g.getImageData(0, 0, DRAW_W, DRAW_H));
       blank();
@@ -94,6 +103,16 @@ export function mountPad(canvas: HTMLCanvasElement, onChange: () => void): Pad {
     },
     png() {
       return canvas.toDataURL('image/png');
+    },
+    async load(src) {
+      const img = new Image();
+      img.src = src;
+      await img.decode();
+      history.length = 0;
+      blank();
+      g.drawImage(img, 0, 0, DRAW_W, DRAW_H);
+      dirty = true;
+      onChange();
     },
     destroy() {
       canvas.removeEventListener('pointerdown', down);

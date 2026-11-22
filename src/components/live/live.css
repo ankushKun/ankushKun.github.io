@@ -1,0 +1,226 @@
+/* What the live apps built after the chat share (Paint, the Guestbook, and the Terminal's bar): the
+   title bar (ui/AppBar.astro), the TV's buttons placed over it, and the frames people's Miis sit in.
+   The tokens are the chat's names, so the gate (gate.css) dresses itself to match. */
+
+.live-app {
+  --mv-green: #5bc21f;
+  --mv-ink: light-dark(#333638, #e7ecee);
+  --mv-soft: light-dark(#8a9094, #85939a);
+  --mv-panel: light-dark(#fff, #2b3338);
+  --mv-line: light-dark(rgb(0 0 0 / 0.12), rgb(255 255 255 / 0.09));
+  --mv-shadow: light-dark(rgb(0 0 0 / 0.2), rgb(0 0 0 / 0.65));
+  --app-bar: 84px;
+  --face: 56px;
+  --gutter: clamp(18px, 2.6vw, 44px);
+}
+
+.live-app :where(button, input, textarea) {
+  font: inherit;
+  color: inherit;
+}
+
+/* The bar ------------------------------------------------------------------------------------- */
+
+.app-bar {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  height: var(--app-bar, 84px);
+  /* Clear of the plaza button on the left; the menu, the light switch and the music widget on the
+     right. */
+  padding: 0 186px 0 100px;
+  background: linear-gradient(var(--color-gloss-top), var(--color-gloss-bottom));
+  box-shadow:
+    inset 0 -1px 0 var(--color-line),
+    0 1px 0 light-dark(rgb(255 255 255 / 0.8), rgb(255 255 255 / 0.04));
+  color: var(--color-ink);
+}
+
+.app-bar.is-dark {
+  background: linear-gradient(#262c30, #1b2023);
+  box-shadow: inset 0 -1px 0 rgb(255 255 255 / 0.06);
+  color: #d3dadd;
+}
+
+.app-bar-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.app-bar h1 {
+  overflow: hidden;
+  color: var(--color-ink-strong);
+  font-size: 1.6875rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-bar.is-dark h1 {
+  color: #f0f4f6;
+}
+
+.app-bar-mid {
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+
+.app-bar-end {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-bar-end:empty,
+.app-bar-mid:empty {
+  display: none;
+}
+
+/* The TV's buttons over the bar: the light switch left of the menu, level with it, and the music
+   widget left of the light switch, in the bar's own grey. */
+@media (min-width: 880px) {
+  html:has(.col-app .app-bar) .theme-toggle {
+    top: 26px;
+    right: calc(var(--bezel) + 26px + 56px + 12px);
+    bottom: auto;
+    left: auto;
+    color: var(--color-ink-faint);
+  }
+
+  html:has(.col-app .app-bar) .theme-toggle:hover {
+    color: var(--color-ink-soft);
+  }
+
+  html:has(.col-app .app-bar) .music {
+    right: calc(var(--bezel) + 26px + 56px + 12px + 40px);
+  }
+
+  html:has(.col-app .app-bar) .music-btn {
+    color: var(--color-ink-faint);
+  }
+
+  html:has(.col-app .app-bar) .music[data-audible] .music-btn {
+    color: var(--color-ink-soft);
+  }
+
+  html:has(.col-app .app-bar.is-dark) :is(.theme-toggle, .music-btn) {
+    color: rgb(220 230 235 / 0.6);
+  }
+}
+
+/* A phone: the plaza button, the light switch and the music widget are at the bar's left, the menu
+   at its right. */
+@media (max-width: 879px) {
+  .live-app {
+    --app-bar: 76px;
+    --face: 44px;
+    --gutter: 14px;
+  }
+
+  .app-bar {
+    gap: 8px;
+    padding: 0 76px 0 156px;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .app-bar .tile,
+  .app-bar-mid {
+    display: none;
+  }
+
+  .app-bar h1 {
+    font-size: 1.25rem;
+  }
+
+  html:has(.col-app .app-bar) .theme-toggle,
+  html:has(.col-app .app-bar) .music-btn {
+    color: var(--color-ink-faint);
+  }
+
+  html:has(.col-app .app-bar.is-dark) :is(.theme-toggle, .music-btn) {
+    color: rgb(220 230 235 / 0.6);
+  }
+}
+
+/* Faces --------------------------------------------------------------------------------------- */
+
+.live-app .face {
+  --s: var(--face);
+  position: relative;
+  display: block;
+  flex: none;
+  width: var(--s);
+  height: var(--s);
+  overflow: hidden;
+  border-radius: calc(var(--s) * 0.22);
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg fill='%23a9b1b5'%3E%3Ccircle cx='32' cy='25' r='14'/%3E%3Cpath d='M9 64c1-14 10-21 23-21s22 7 23 21z'/%3E%3C/g%3E%3C/svg%3E")
+      center / cover,
+    linear-gradient(to bottom, light-dark(#fff, #48535a), light-dark(#eef1f3, #343d43));
+  box-shadow:
+    0 0 0 1px var(--mv-line),
+    0 3px 6px -2px var(--mv-shadow);
+}
+
+.live-app .face img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: linear-gradient(to bottom, light-dark(#fff, #48535a), light-dark(#eef1f3, #343d43));
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.live-app .face img:not([src]) {
+  visibility: hidden;
+}
+
+.live-app .face img.is-in {
+  opacity: 1;
+}
+
+/* People here, as a row of faces that overlap. */
+.live-stack {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.live-stack:empty {
+  display: none;
+}
+
+.live-stack .face {
+  --s: 36px;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 2px light-dark(#fff, #2b3338),
+    0 1px 3px rgb(0 0 0 / 0.25);
+}
+
+.live-stack .face + .face {
+  margin-left: -11px;
+}
+
+.live-count {
+  min-width: 24px;
+  margin-left: 6px;
+  padding: 0 7px;
+  border-radius: 99px;
+  background: var(--color-leaf);
+  color: #fff;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  line-height: 22px;
+  text-align: center;
+}

@@ -6,7 +6,7 @@ import { play } from '../../scripts/sfx';
 import { encodeMii, miiBytes } from '../mii/data';
 import { miiFromQrImage } from '../mii/qr';
 import { HELP, parse } from './commands';
-import { mountPad, type Pad } from './doodle';
+import { mountPad, type Pad } from '../live/pad';
 import { mountGifPicker } from './gifpicker';
 import { mountMentions, type Person } from './mentions';
 import { growFrom, placeAbove } from './sheets';

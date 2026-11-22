@@ -1,0 +1,26 @@
+---
+// The title bar the live apps built after the chat share (Paint, the Guestbook, the Terminal): the
+// app's tile and name, whatever the app puts in the middle and at the end, on the gloss strip the
+// Music app has. The TV's plaza and menu buttons, the light switch and the music widget sit over its
+// ends (global.css), so it leaves room for them. `dark` is the Terminal's bar, dark by day too.
+import Tile from './Tile.astro';
+import '../live/live.css';
+
+interface Props {
+  path: string;
+  title: string;
+  dark?: boolean;
+}
+
+const { path, title, dark = false } = Astro.props;
+---
+
+<header class:list={['app-bar', { 'is-dark': dark }]}>
+  <div class="app-bar-title">
+    <Tile path={path} size={40} />
+    <h1>{title}</h1>
+    <slot name="title" />
+  </div>
+  <div class="app-bar-mid"><slot /></div>
+  <div class="app-bar-end"><slot name="end" /></div>
+</header>

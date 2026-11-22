@@ -215,6 +215,13 @@ addEventListener('keydown', (e) => {
   if (e.key !== 'b' && e.key !== 'B') return;
   if (e.metaKey || e.ctrlKey || e.altKey || document.documentElement.hasAttribute('data-home')) return;
   if (e.target instanceof HTMLElement && e.target.closest('input, textarea, select, [contenteditable]')) return;
+  // A sheet open over the page (a modal dialog) is what B closes first.
+  const sheet = document.querySelector<HTMLDialogElement>('dialog[open]');
+  if (sheet) {
+    play('back');
+    sheet.close();
+    return;
+  }
   const back = document.querySelector<HTMLAnchorElement>('[data-back]');
   if (back) back.click();
   else {
