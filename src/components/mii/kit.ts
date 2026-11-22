@@ -116,11 +116,19 @@ function part(mesh: THREE.SkinnedMesh, names: string[]) {
   for (let i = 0; i < skin.count; i++) {
     for (let k = 0; k < 4; k++) joints[i * 4 + k] = map[skin.getComponent(i, k)];
   }
+  // How much each vertex belongs to a forearm or a hand, for Miis drawn in short sleeves.
+  const weights = src.getAttribute('skinWeight');
+  const forearm = new Set(['arm_l2', 'arm_r2', 'wrist_l', 'wrist_r'].map((n) => names.indexOf(n)));
+  const bare = new Float32Array(skin.count);
+  for (let i = 0; i < skin.count; i++) {
+    for (let k = 0; k < 4; k++) if (forearm.has(joints[i * 4 + k])) bare[i] += weights.getComponent(i, k);
+  }
   const geo = new THREE.BufferGeometry();
   geo.setIndex(src.getIndex());
   geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
   geo.setAttribute('normal', src.getAttribute('normal'));
   geo.setAttribute('aJoint', new THREE.BufferAttribute(joints, 4));
   geo.setAttribute('aWeight', src.getAttribute('skinWeight'));
+  geo.setAttribute('aBare', new THREE.BufferAttribute(bare, 1));
   return geo;
 }

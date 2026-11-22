@@ -54,7 +54,11 @@ const SKIN_VERT = /* glsl */ `
   attribute vec4 aJoint;
   attribute vec4 aWeight;
   attribute vec3 aTint;
+  attribute float aBare;
+  attribute vec4 aSkin;
   varying vec3 vTint;
+  varying float vBare;
+  varying vec4 vSkin;
   varying float vWorldY;
   mat4 miiBone(float j) {
     int x = int(j) * 4;
@@ -70,7 +74,8 @@ const SKIN_VERT = /* glsl */ `
 
 /**
  * Body material for one batch: every instance reads its bone matrices (already in world space)
- * from row gl_InstanceID of `bones`, and its color from `aTint`.
+ * from row gl_InstanceID of `bones`, its color from `aTint`, and from `aSkin` (alpha 1) the skin
+ * color of bare forearms and hands, for a Mii in short sleeves.
  * modulateType 9 is the Wii U shirt material, 10 the pants.
  */
 export function bodyMaterial(bones: THREE.DataTexture, modulateType: 9 | 10) {
@@ -86,12 +91,15 @@ export function bodyMaterial(bones: THREE.DataTexture, modulateType: 9 | 10) {
           + miiBone(aJoint.z) * aWeight.z + miiBone(aJoint.w) * aWeight.w;
         vec3 transformed = (skinMat * vec4(position, 1.0)).xyz;
         vWorldY = transformed.y;
-        vTint = aTint;`,
+        vTint = aTint;
+        vBare = aBare;
+        vSkin = aSkin;`,
       )
       .replace('vec3 objectNormal = normal;', 'vec3 objectNormal = normalize(mat3(skinMat) * normal);');
     shader.fragmentShader = shader.fragmentShader
-      .replace('void main()', 'varying vec3 vTint;\nvoid main()')
-      .replace('color = u_const1;', 'color = vec4(vTint, 1.0);');
+      .replace('void main()', 'varying vec3 vTint;\nvarying float vBare;\nvarying vec4 vSkin;\nvoid main()')
+      // In short sleeves, the forearms and hands are the skin's color, with a clean edge at the elbow.
+      .replace('color = u_const1;', 'color = vec4(mix(vTint, vSkin.rgb, vSkin.a * step(0.5, vBare)), 1.0);');
     addFog(shader);
   };
   m.customProgramCacheKey = () => `mii-body-${modulateType}`;

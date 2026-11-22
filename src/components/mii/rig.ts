@@ -11,6 +11,7 @@ import {
   FFLGender,
   FFLRace,
   FFLModelFlag,
+  FFLModulateType,
   FFLResourceType,
   FFLiCharInfo,
   createCharModel,
@@ -94,6 +95,11 @@ const HEAD_LIFT = 0.1;
 const HEAD_HEIGHT = 72;
 /** Wii U body arms hang a little away from the torso. */
 const ARM_REST = 0.17;
+/**
+ * A piece of hair counts as a bun (or a puff) when all of it is above `above` and behind `behind`,
+ * in FFL head units: the face is about 52 across, the top of the hair about 70 up, facing +z.
+ */
+const BUN = { above: 30, behind: -15 };
 const BONES = 25;
 
 const EXPRESSIONS = [
@@ -116,6 +122,10 @@ export interface MiiSetOptions {
   shadows?: boolean;
   /** Pants color: one for the whole set, or one per Mii by its index. Gray unless given. */
   pants?: number | ((i: number) => number);
+  /** Which Miis, by index, wear short sleeves: bare forearms and hands in their own skin color. */
+  sleeves?: (i: number) => boolean;
+  /** Which Miis, by index, have any bun or puff on the back of the head left off their hair (`leaveOffBun`). */
+  noBun?: (i: number) => boolean;
   /** Head size on the body. Mii Maker's by default; the plaza draws heads a little smaller. */
   headScale?: number;
   /** An extra render layer for every body and head, e.g. one a floor reflection draws. */
@@ -141,12 +151,18 @@ interface Slot {
   card: boolean;
   /** A bone whose world placement is kept each pose, for something held (`track`). */
   track: { bone: number; matrix: THREE.Matrix4 } | null;
+  /** In short sleeves (`MiiSetOptions.sleeves`). */
+  sleeves: boolean;
+  /** Without the bun on the back of the head (`MiiSetOptions.noBun`). */
+  noBun: boolean;
 }
 
 interface Batch {
   body: Body;
   bones: THREE.DataTexture;
   meshes: THREE.Mesh[];
+  /** The shirts' skin color per Mii, filled in once each head (which knows it) is made. */
+  skin: THREE.InstancedBufferAttribute;
 }
 
 /** Turns any supported Mii bytes into body traits. */
@@ -222,6 +238,127 @@ export function withParts(kit: MiiKit, data: Uint8Array, parts: Record<string, R
   }
 }
 
+/**
+ * Leaves off the pieces of a head's hair that sit wholly up on the back of it, a bun or a puff,
+ * and keeps the rest of the style exactly as it is. A piece is whatever its triangles join up
+ * into by shared vertices. A bun often covers an opening in the hair under it, so any opening the
+ * removal leaves near it is closed with a cap domed to the head's curve.
+ */
+function leaveOffBun(head: THREE.Object3D) {
+  head.traverse((o) => {
+    const g = (o as THREE.Mesh).geometry;
+    if (!(o as THREE.Mesh).isMesh || g.userData.modulateType !== FFLModulateType.SHAPE_HAIR || !g.index) return;
+    const pos = g.getAttribute('position');
+    const index = g.index;
+    const parent = Int32Array.from({ length: pos.count }, (_, i) => i);
+    const find = (i: number) => {
+      while (parent[i] !== i) i = parent[i] = parent[parent[i]];
+      return i;
+    };
+    for (let t = 0; t < index.count; t += 3) {
+      const a = find(index.getX(t));
+      parent[find(index.getX(t + 1))] = a;
+      parent[find(index.getX(t + 2))] = a;
+    }
+    // Each piece's lowest point and its point furthest forward.
+    const low = new Map<number, number>();
+    const front = new Map<number, number>();
+    for (let v = 0; v < pos.count; v++) {
+      const p = find(v);
+      low.set(p, Math.min(low.get(p) ?? Infinity, pos.getY(v)));
+      front.set(p, Math.max(front.get(p) ?? -Infinity, pos.getZ(v)));
+    }
+    const keep: number[] = [];
+    const gone = new THREE.Box3();
+    for (let t = 0; t < index.count; t += 3) {
+      const p = find(index.getX(t));
+      if (low.get(p)! > BUN.above && front.get(p)! < BUN.behind) {
+        for (let k = 0; k < 3; k++) gone.expandByPoint(_v.fromBufferAttribute(pos, index.getX(t + k)));
+        continue;
+      }
+      keep.push(index.getX(t), index.getX(t + 1), index.getX(t + 2));
+    }
+    if (keep.length === index.count) return;
+    capOpenings(g, keep, gone.expandByScalar(4));
+  });
+}
+
+/**
+ * Closes the openings in `keep` (a triangle list of `g`) that lie within `near`: every loop of
+ * edges with a triangle on one side only is filled with a fan to a point raised off its middle,
+ * so the cap bulges out like the rest of the head. Then sets the geometry's triangles.
+ */
+function capOpenings(g: THREE.BufferGeometry, keep: number[], near: THREE.Box3) {
+  const pos = g.getAttribute('position');
+  // Vertices are split along seams, so edges are matched by where their ends are.
+  const at = (v: number) => `${pos.getX(v).toFixed(2)},${pos.getY(v).toFixed(2)},${pos.getZ(v).toFixed(2)}`;
+  const uses = new Map<string, number>();
+  const edges: [number, number][] = [];
+  for (let t = 0; t < keep.length; t += 3) {
+    for (let k = 0; k < 3; k++) {
+      const a = keep[t + k];
+      const b = keep[t + ((k + 1) % 3)];
+      const [ka, kb] = [at(a), at(b)];
+      const key = ka < kb ? `${ka}|${kb}` : `${kb}|${ka}`;
+      uses.set(key, (uses.get(key) ?? 0) + 1);
+      edges.push([a, b]);
+    }
+  }
+  // The open edges near where the bun was, each as it runs round its one triangle.
+  const next = new Map<string, [number, number]>();
+  for (const [a, b] of edges) {
+    const [ka, kb] = [at(a), at(b)];
+    if (uses.get(ka < kb ? `${ka}|${kb}` : `${kb}|${ka}`) !== 1) continue;
+    if (!near.containsPoint(_v.fromBufferAttribute(pos, a)) || !near.containsPoint(_v.fromBufferAttribute(pos, b))) continue;
+    next.set(ka, [a, b]);
+  }
+  const box = new THREE.Box3().setFromBufferAttribute(pos as THREE.BufferAttribute);
+  const middle = box.getCenter(new THREE.Vector3());
+  const caps: { rim: [number, number][]; tip: THREE.Vector3; out: THREE.Vector3 }[] = [];
+  const seen = new Set<string>();
+  for (const start of next.keys()) {
+    if (seen.has(start)) continue;
+    const rim: [number, number][] = [];
+    let key = start;
+    while (!seen.has(key) && next.has(key) && rim.length <= next.size) {
+      seen.add(key);
+      const e = next.get(key)!;
+      rim.push(e);
+      key = at(e[1]);
+    }
+    if (rim.length < 3 || key !== start) continue;
+    const c = new THREE.Vector3();
+    for (const [a] of rim) c.add(_v.fromBufferAttribute(pos, a));
+    c.divideScalar(rim.length);
+    let r = 0;
+    for (const [a] of rim) r += _v.fromBufferAttribute(pos, a).distanceTo(c);
+    const out = c.clone().sub(middle).normalize();
+    caps.push({ rim, tip: c.addScaledVector(out, (r / rim.length) * 0.3), out });
+  }
+  if (caps.length) {
+    // One new vertex per cap, at its tip, otherwise copied from a vertex on its rim.
+    const base = pos.count;
+    // Attributes may be packed or interleaved, so each is read out value by value into plain floats.
+    for (const [name, attr] of Object.entries(g.attributes)) {
+      const a = attr as THREE.BufferAttribute;
+      const n = a.itemSize;
+      const out = new Float32Array((base + caps.length) * n);
+      for (let v = 0; v < base; v++) for (let k = 0; k < n; k++) out[v * n + k] = a.getComponent(v, k);
+      caps.forEach((cap, i) => {
+        for (let k = 0; k < n; k++) out[(base + i) * n + k] = a.getComponent(cap.rim[0][0], k);
+        if (name === 'position') cap.tip.toArray(out, (base + i) * n);
+        if (name === 'normal') cap.out.toArray(out, (base + i) * n);
+      });
+      g.setAttribute(name, new THREE.BufferAttribute(out, n));
+    }
+    // Wound against the rim's own triangles, so the cap faces out.
+    caps.forEach((cap, i) => {
+      for (const [a, b] of cap.rim) keep.push(b, a, base + i);
+    });
+  }
+  g.setIndex(keep);
+}
+
 /** A small seeded random number generator (mulberry32 over a string hash). */
 export function seeded(seed: string) {
   let h = 1779033703 ^ seed.length;
@@ -280,6 +417,7 @@ const _e = new THREE.Euler();
 const _p = new THREE.Vector3();
 const _s = new THREE.Vector3();
 const _hq = new THREE.Quaternion();
+const _v = new THREE.Vector3();
 const UP = new THREE.Vector3(0, 1, 0);
 const AX = new THREE.Vector3(1, 0, 0);
 const AZ = new THREE.Vector3(0, 0, 1);
@@ -335,6 +473,8 @@ export class MiiSet {
         hidden: true,
         card: false,
         track: null,
+        sleeves: !!opts.sleeves?.(i),
+        noBun: !!opts.noBun?.(i),
       };
     });
 
@@ -354,6 +494,7 @@ export class MiiSet {
           if (s.gender === g) c.setHex(color(s), THREE.LinearSRGBColorSpace).toArray(tints, s.row * 3);
         }
         g2.setAttribute('aTint', new THREE.InstancedBufferAttribute(tints, 3));
+        g2.setAttribute('aSkin', new THREE.InstancedBufferAttribute(new Float32Array(n * 4), 4));
         g2.instanceCount = n;
         return g2;
       };
@@ -370,7 +511,7 @@ export class MiiSet {
         this.disposables.push(m.geometry, m.material as THREE.Material);
       }
       this.disposables.push(bones);
-      return { body, bones, meshes: [shirt, pants] };
+      return { body, bones, meshes: [shirt, pants], skin: shirt.geometry.getAttribute('aSkin') as THREE.InstancedBufferAttribute };
     });
 
     if (opts.shadows) {
@@ -440,6 +581,7 @@ export class MiiSet {
   private mount(s: Slot, model: CharModel) {
     const head = model.meshes!;
     head.matrixAutoUpdate = false;
+    if (s.noBun) leaveOffBun(head);
     head.traverse((o) => {
       const mesh = o as THREE.Mesh;
       if (mesh.isMesh) patchHead(mesh.material as THREE.Material);
@@ -448,6 +590,12 @@ export class MiiSet {
     s.expr = FFLExpression.NORMAL;
     s.model = model;
     s.head = head;
+    if (s.sleeves) {
+      const skin = this.batches[s.gender]!.skin;
+      const c = model.facelineColor;
+      skin.setXYZW(s.row, c.r, c.g, c.b, 1);
+      skin.needsUpdate = true;
+    }
     s.top = (10.9 * s.sy + HEAD_LIFT + model.boundingBox.max.y * this.headScale) * UNIT;
     head.visible = !s.hidden && !s.card;
     const layer = this.opts.layer;

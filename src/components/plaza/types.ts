@@ -65,6 +65,8 @@ export interface MiiLook {
   parts?: Record<string, Record<string, number>>;
   headset?: string;
   ponytail?: string;
+  /** Leaves off any bun or puff on the back of the head, keeping the rest of the hairstyle. */
+  noBun?: boolean;
 }
 
 /** A Mii with a name: yours, or one from a QR image in src/data/miis/ (named after the file). */

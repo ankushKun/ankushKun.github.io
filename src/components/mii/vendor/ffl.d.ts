@@ -47,6 +47,7 @@ type MaterialClass = new (...args: never[]) => THREE.Material;
 
 export const FFLExpression: Record<string, number>;
 export const FFLModelFlag: { NORMAL: number; HAT: number; FACE_ONLY: number };
+export const FFLModulateType: { SHAPE_HAIR: number };
 export const FFLResourceType: { MIDDLE: number; HIGH: number };
 export const FFLGender: { MALE: number; FEMALE: number; ALL: number };
 export const FFLAge: { CHILD: number; ADULT: number; ELDER: number; ALL: number };
