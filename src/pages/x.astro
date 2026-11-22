@@ -1,0 +1,25 @@
+---
+// /x/: the link to share on X. X plays the live plaza (/player/) right in the post, with the home
+// page's card as the still until it's pressed; anyone who opens the link goes straight on to the
+// home page. A page of its own rather than tags on the home page, because iMessage and Telegram read
+// the same tags and would draw a player card as a small picture.
+import Base from '../layouts/Base.astro';
+import { absUrl, getPage } from '../lib/content';
+import { ogAlt, ogPathForPage } from '../lib/og';
+import { SITE } from '../site';
+
+const { title, description } = (await getPage('home')).data;
+---
+
+<Base
+  {title}
+  {description}
+  imageUrl={ogPathForPage('home')}
+  imageAlt={ogAlt(SITE.title)}
+  canonical={absUrl('/')}
+  noindex
+  redirect="/"
+  player={{ url: '/player/', width: 1200, height: 630 }}
+>
+  <p><a href="/">Go to {SITE.title}</a></p>
+</Base>

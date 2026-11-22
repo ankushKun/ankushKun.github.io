@@ -40,6 +40,10 @@ interface Props {
   /** Up to two short facts Slack shows under a link's description, as [label, value]. */
   facts?: [string, string][];
   canonical?: string;
+  /** X plays this page inside the post (twitter:card player), its picture the still until pressed. */
+  player?: { url: string; width: number; height: number };
+  /** Sends whoever opens the page on to this address at once (the /x/ share link). */
+  redirect?: string;
   type?: 'website' | 'article' | 'profile';
   published?: Date;
   modified?: Date;
@@ -65,6 +69,8 @@ const {
   video,
   facts = [],
   canonical: canonicalOverride,
+  player,
+  redirect,
   type = 'website',
   published,
   modified,
@@ -118,6 +124,7 @@ const year = new Date().getFullYear();
     <link rel="canonical" href={canonical} />
     {twin && <link rel="alternate" type="text/markdown" href={twin} title="Markdown" />}
     {noindex && <meta name="robots" content="noindex" />}
+    {redirect && <meta http-equiv="refresh" content={`0; url=${redirect}`} />}
     <meta name="generator" content={Astro.generator} />
     {embed && <base target="_blank" />}
 
@@ -154,7 +161,16 @@ const year = new Date().getFullYear();
     {modified && <meta property="article:modified_time" content={modified.toISOString()} />}
     {type === 'article' && <meta property="article:author" content={absUrl('/about/')} />}
 
-    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:card" content={player ? 'player' : 'summary_large_image'} />
+    {
+      player && (
+        <>
+          <meta name="twitter:player" content={absUrl(player.url)} />
+          <meta name="twitter:player:width" content={String(player.width)} />
+          <meta name="twitter:player:height" content={String(player.height)} />
+        </>
+      )
+    }
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogUrl} />

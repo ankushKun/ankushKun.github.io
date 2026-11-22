@@ -1,7 +1,7 @@
 ---
-// The plaza, live, for X to play inside a post (twitter:player). Only X's crawler is told about it,
-// by the Cloudflare Worker in workers/twitter-player/, since iMessage and Telegram show a player
-// card as a small picture. Links open the site in a new tab; the home page is the one to index.
+// The plaza, live, for X to play inside a post (twitter:player). The share link /x/ names it, so a
+// post linking ankush.one/x/ plays it. Links open the site in a new tab; the home page is the one to
+// index.
 import Base from '../layouts/Base.astro';
 import { absUrl, getPage } from '../lib/content';
 
