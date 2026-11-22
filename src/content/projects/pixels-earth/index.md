@@ -2,11 +2,13 @@
 title: "pixels.earth"
 description: "A decentralized pixel canvas layered over a real-world map where every pixel is an on-chain Solana transaction powered by MagicBlock."
 date: 2025-12-15
+cover: ./cover.webp
+coverAlt: "pixels.earth decentralized world pixel canvas"
 tags: ["solana", "web3"]
-status: active
+status: archived
 stack: ["Solana", "Rust", "Anchor", "MagicBlock", "TypeScript", "PWA"]
 links:
-  - label: "Website"
+  - label: "pixels.earth"
     url: "https://pixels.earth"
   - label: "GitHub"
     url: "https://github.com/ankushKun/pixels.earth"

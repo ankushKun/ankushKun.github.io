@@ -2,11 +2,13 @@
 title: "APM — AO Package Manager"
 description: "The package manager and registry for the AO compute network, now loaded by default in every aos process."
 date: 2024-07-01
+cover: ./cover.webp
+coverAlt: "APM CLI ASCII banner and interactive package manager prompt"
 tags: ["arweave", "developer-tools"]
 status: archived
 stack: ["Lua", "TypeScript", "Arweave", "AO"]
 links:
-  - label: "Website"
+  - label: "APM"
     url: "https://apm_betteridea.arweave.net"
   - label: "GitHub: ao-package-manager"
     url: "https://github.com/betteridea-dev/ao-package-manager"

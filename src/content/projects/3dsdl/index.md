@@ -7,7 +7,7 @@ featured: true
 status: active
 stack: ["C", "C++", "libctru", "Citro2D", "libcurl", "mbedTLS"]
 links:
-  - label: "Website"
+  - label: "3dsDL"
     url: "https://ankush.one/3dsDL/"
   - label: "GitHub"
     url: "https://github.com/ankushKun/3dsDL"

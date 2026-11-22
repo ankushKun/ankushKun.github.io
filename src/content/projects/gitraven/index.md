@@ -6,7 +6,7 @@ tags: ["web3", "hackathon"]
 status: archived
 stack: ["Solidity", "Next.js", "TypeScript", "Tableland", "GitHub API"]
 links:
-  - label: "Website"
+  - label: "GitRaven"
     url: "https://gitraven.vercel.app/"
   - label: "GitHub"
     url: "https://github.com/ankushKun/gitraven"

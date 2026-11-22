@@ -6,7 +6,7 @@ tags: ["arweave", "web3"]
 status: archived
 stack: ["TypeScript", "React", "Arweave", "GitHub API"]
 links:
-  - label: "Website"
+  - label: "GitAR"
     url: "https://gitar_ankushkun.arweave.net"
   - label: "GitHub"
     url: "https://github.com/ankushKun/gitar"

@@ -2,6 +2,8 @@
 title: "DumDumDeploy"
 description: "A Vercel-like permaweb deployment platform that won Weavers Raid III and evolved into ArLink, Arweave's flagship deployment tool."
 date: 2024-08-01
+cover: ./cover.webp
+coverAlt: "ArLink one-click Arweave deployments"
 tags: ["arweave", "developer-tools", "hackathon"]
 status: archived
 stack: ["TypeScript", "Next.js", "Arweave", "AO"]

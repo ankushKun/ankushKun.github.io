@@ -2,6 +2,8 @@
 title: "Automating Mandelbrot Fractal Generation with SYCL and Intel oneAPI"
 description: "Generating high-resolution Mandelbrot fractals with Intel oneAPI and SYCL, plus a bash automation script from our 1st-place hackathon build at IIT Roorkee."
 date: 2023-03-30
+cover: ./01-mandelbrot-fractal.webp
+coverAlt: "Mandelbrot fractal generated with SYCL and Intel oneAPI"
 tags: ["graphics", "hackathon", "tutorial"]
 related: ["/timeline/cogni"]
 ---

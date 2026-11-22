@@ -1,7 +1,9 @@
 ---
 title: "Lucky Knight"
-description: "GMTK Game Jam 2023 entry ('Roles Reversed'): play as Luck itself and rig dice rolls to help — or troll — a clumsy knight."
+description: "GMTK Game Jam 2023 entry ('Roles Reversed'): play as Luck itself and rig dice rolls to help, or troll, a clumsy knight."
 date: 2023-07-01
+cover: ./cover.webp
+coverAlt: "Lucky Knight GMTK 2023 game artwork"
 tags: ["game-dev", "hackathon"]
 status: archived
 stack: ["Unity", "C#"]

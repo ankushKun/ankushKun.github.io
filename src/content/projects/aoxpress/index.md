@@ -2,6 +2,8 @@
 title: "aoxpress"
 description: "An Express.js-inspired routing framework for AO processes, complete with middleware and HTTP-style inter-process requests."
 date: 2025-05-01
+cover: ./cover.webp
+coverAlt: "aoxpress AO backend framework demo"
 tags: ["arweave", "developer-tools"]
 status: archived
 stack: ["Lua", "JavaScript", "Node.js", "AO"]

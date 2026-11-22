@@ -3,6 +3,8 @@ title: "How Doom Rendering Works: A 2.5D Renderer in JavaScript"
 description: "How Doom's 2.5D rendering works, rebuilt in plain JavaScript on an HTML canvas: grid map, wall projection, clipping, movement, and collision."
 date: 2025-12-24
 updated: 2026-10-13
+cover: ./cover.webp
+coverAlt: "Screenshot of the 2.5D Doom-style renderer running in JavaScript"
 tags: ["graphics", "game-dev", "web", "tutorial", "javascript", "doom", "2.5d"]
 links:
   - label: "Full Source Code"

@@ -2,6 +2,8 @@
 title: "Visual AO"
 description: "A node-based visual programming editor for building, debugging, and exporting AO compute processes without writing Lua by hand."
 date: 2025-03-18
+cover: ./cover.webp
+coverAlt: "Visual AO node-based visual IDE logo"
 tags: ["arweave", "developer-tools"]
 status: archived
 stack: ["TypeScript", "React", "Lua", "AO"]

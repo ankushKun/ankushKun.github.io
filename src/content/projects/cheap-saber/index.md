@@ -2,6 +2,8 @@
 title: "Cheap Saber"
 description: "A zero-hardware VR Beat Saber clone for Android using Google Cardboard and Vuforia paper AR markers for 6DOF hand tracking."
 date: 2020-06-14
+cover: ./cover.webp
+coverAlt: "Cheap Saber VR rhythm game demo"
 tags: ["game-dev", "mobile"]
 status: archived
 stack: ["Unity", "C#", "Google Cardboard SDK", "Vuforia AR", "Android"]

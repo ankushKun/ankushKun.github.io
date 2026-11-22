@@ -2,6 +2,8 @@
 title: "LuaX"
 description: "An AO Package Manager library that brings JSX-like component syntax for generating HTML directly inside AO Lua processes."
 date: 2025-05-06
+cover: ./cover.webp
+coverAlt: "LuaX AO framework demo"
 tags: ["arweave", "developer-tools"]
 status: archived
 stack: ["Lua", "AO", "HTML"]

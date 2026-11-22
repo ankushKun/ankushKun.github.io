@@ -2,6 +2,8 @@
 title: "CardRepeater"
 description: "ESP-IDF firmware turning an M5Stack Cardputer into a pocket WiFi repeater with a retro CRT terminal UI and phone setup page."
 date: 2025-10-24
+cover: ./cover.webp
+coverAlt: "M5Stack Cardputer running Card WiFi Repeater"
 tags: ["hardware"]
 status: active
 stack: ["C++", "ESP-IDF", "PlatformIO", "ESP32-S3"]
@@ -10,7 +12,7 @@ links:
     url: "https://github.com/ankushKun/cardputer-wifi-repeater/releases/tag/0.1.0"
   - label: "GitHub"
     url: "https://github.com/ankushKun/cardputer-wifi-repeater"
-related: ["/timeline/fwd-layoff"]
+related: ["/timeline/left-forward-research"]
 ---
 
 **CardRepeater** turns an M5Stack Cardputer into a WiFi repeater that fits in your pocket.

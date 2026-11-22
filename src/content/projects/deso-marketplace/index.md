@@ -2,6 +2,8 @@
 title: "Unity DeSo NFT Item Marketplace"
 description: "A Unity prototype demonstrating cross-game item inventories and in-game marketplaces backed by DeSo NFTs."
 date: 2022-04-09
+cover: ./cover.webp
+coverAlt: "Unity DeSo NFT Item Marketplace demo"
 tags: ["web3", "game-dev"]
 status: archived
 stack: ["Unity", "C#", "DeSo", "Desonity"]

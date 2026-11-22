@@ -2,6 +2,8 @@
 title: "MacPuppet"
 description: "A macOS VTuber puppeteering app using webcam face tracking to drive VRM avatars, built with Unity and C#."
 date: 2023-09-15
+cover: ./cover.webp
+coverAlt: "MacPuppet remote macOS control demo"
 tags: ["graphics"]
 status: archived
 stack: ["Unity", "C#", "VSeeFace SDK", "macOS"]

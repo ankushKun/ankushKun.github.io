@@ -7,7 +7,7 @@ cover: ./cover.jpg
 coverAlt: "Silent Hill 2 running natively on the Nintendo 3DS top and bottom screens"
 links:
   - label: "Install sh23ds"
-    url: "https://ankush.one/sh23ds/install.html"
+    url: "https://ankush.one/sh23ds/"
   - label: "GitHub"
     url: "https://github.com/ankushKun/sh23ds"
 related: ["/projects/sh23ds", "/blogs/nintendo-3ds-homebrew", "/projects/3dsfm"]
@@ -175,4 +175,4 @@ With three workers in Chrome the whole game packs in about 407 seconds, against 
 
 The whole game plays in the emulator, on both console models, and the New 3DS has run it and produced the fixes above. Some of those fixes are still waiting for a retest on hardware, and nothing has run on an original 3DS yet. The port lacks some of the PC renderer: water, specular highlights, blur and rain. A list of PC behaviours that are approximated rather than ported sits in the repo's status page, ordered by how much they matter.
 
-If you have a hacked 3DS and the PC Director's Cut, the [install guide](https://ankush.one/sh23ds/install.html) takes under an hour, most of it waiting for the packer. The [project page](/projects/sh23ds/) has the steps and the controls, and the code is on [GitHub](https://github.com/ankushKun/sh23ds). If you are thinking about porting a game of your own: pin one exact build of the executable and check its hash before you trust any address, put that address in a comment next to every function you port, and get the build onto the console early, because it knows things the emulator doesn't.
+If you have a hacked 3DS and the PC Director's Cut, the [install guide](https://ankush.one/sh23ds/) takes under an hour, most of it waiting for the packer. The [project page](/projects/sh23ds/) has the steps and the controls, and the code is on [GitHub](https://github.com/ankushKun/sh23ds). If you are thinking about porting a game of your own: pin one exact build of the executable and check its hash before you trust any address, put that address in a comment next to every function you port, and get the build onto the console early, because it knows things the emulator doesn't.

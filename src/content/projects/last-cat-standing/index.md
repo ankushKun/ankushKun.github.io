@@ -2,6 +2,8 @@
 title: "Last Cat Standing"
 description: "A Unity WebGL game built at the Arweave India Stealth House where you play the last cat alive, eating apples and racing up a cliff."
 date: 2025-09-26
+cover: ./cover.webp
+coverAlt: "Last Cat Standing game artwork"
 tags: ["game-dev"]
 status: active
 stack: ["Unity", "C#", "WebGL"]

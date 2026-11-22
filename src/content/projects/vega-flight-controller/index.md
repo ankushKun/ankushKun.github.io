@@ -2,6 +2,8 @@
 title: "Quadcopter Flight Controller"
 description: "Indigenous quadcopter flight controller firmware written in C++ for C-DAC's RISC-V VEGA Aries V2 board with IMU calibration and PID control."
 date: 2023-06-10
+cover: ./cover.webp
+coverAlt: "RISC-V VEGA quadcopter flight controller demo"
 tags: ["hardware", "hackathon"]
 status: archived
 stack: ["C++", "RISC-V", "VEGA Aries V2", "IMU", "PID Control"]

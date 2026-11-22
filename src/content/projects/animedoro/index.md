@@ -3,13 +3,12 @@ title: "Animedoro Timer"
 description: "A free Animedoro timer (40 minutes of work, one anime episode as the break) built in vanilla HTML, CSS, and JS — still my most visited page."
 date: 2021-01-30
 tags: ["web", "animedoro", "productivity"]
-featured: true
 status: active
 stack: ["HTML", "CSS", "JavaScript"]
 cover: ./cover.jpg
 coverAlt: "Animedoro timer graphic: study for 40 minutes, then watch one episode"
 links:
-  - label: "Website"
+  - label: "Animedoro Timer"
     url: "https://ankush.one/animedoro-timer/"
   - label: "GitHub"
     url: "https://github.com/ankushKun/animedoro-timer"

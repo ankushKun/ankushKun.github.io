@@ -2,6 +2,8 @@
 title: "Polar"
 description: "Vercel-style Git deployments for Walrus Sites on Sui — connect a GitHub repo and publish without touching a wallet or buying WAL."
 date: 2026-05-10
+cover: ./cover.webp
+coverAlt: "Polar glacial canyon backdrop and logo for Walrus Sites deployments on Sui"
 tags: ["web3", "developer-tools", "cloudflare"]
 status: archived
 stack: ["React", "Hono", "Cloudflare Workers", "Cloudflare Containers", "D1", "Sui", "Walrus"]

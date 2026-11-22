@@ -9,9 +9,9 @@ stack: ["TypeScript", "Next.js", "Lua", "Arweave", "AO", "HyperBEAM"]
 cover: ./cover.jpg
 coverAlt: "Ankush presenting BetterIDEa during the AO global launch"
 links:
-  - label: "Website"
+  - label: "BetterIDEa"
     url: "https://betteridea.arweave.net"
-  - label: "IDE"
+  - label: "Open the IDE"
     url: "https://hyper_betteridea.arweave.net"
   - label: "GitHub: ide"
     url: "https://github.com/betteridea-dev/ide"

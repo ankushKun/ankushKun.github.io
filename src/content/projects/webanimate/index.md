@@ -2,6 +2,8 @@
 title: "WebAnimate"
 description: "A Chrome extension for inspecting web page elements, keyframing animations on a timeline editor, and exporting videos with FFmpeg."
 date: 2026-01-06
+cover: ./cover.webp
+coverAlt: "WebAnimate browser animation studio logo"
 tags: ["web", "developer-tools"]
 status: active
 stack: ["React", "PixiJS", "FFmpeg", "Chrome Extension"]

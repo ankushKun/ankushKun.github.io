@@ -2,6 +2,8 @@
 title: "npm Trusted Publishing with GitHub Actions (No NPM_TOKEN)"
 description: "Publish npm packages from GitHub Actions with OIDC trusted publishing and no NPM_TOKEN. Setup steps, undocumented gotchas, and npm's token revocation timeline."
 date: 2025-12-20
+cover: ./04-successful-workflow.webp
+coverAlt: "GitHub Actions workflow publishing to npm via OIDC Trusted Publishing"
 updated: 2026-10-13
 tags: ["developer-tools", "tutorial", "npm", "github-actions", "oidc"]
 faq:

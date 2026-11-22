@@ -7,16 +7,10 @@ featured: true
 status: active
 stack: ["C", "libctru", "Citro3D", "Python", "WebAssembly", "Ghidra"]
 links:
-  - label: "Website"
+  - label: "SH2 3DS + Install Guide"
     url: "https://ankush.one/sh23ds/"
   - label: "GitHub"
     url: "https://github.com/ankushKun/sh23ds"
-  - label: "Install guide"
-    url: "https://ankush.one/sh23ds/install.html"
-  - label: "Browser packer"
-    url: "https://ankush.one/sh23ds/packer.html"
-  - label: "Download"
-    url: "https://github.com/ankushKun/sh23ds/releases/latest"
 cover: ./cover.jpg
 coverAlt: "sh23ds banner showing Silent Hill 2 running natively on the Nintendo 3DS"
 related: ["/blogs/silent-hill-2-3ds-port", "/blogs/nintendo-3ds-homebrew", "/projects/3dsfm", "/projects/3dsdl"]
@@ -69,7 +63,7 @@ The whole install takes under an hour with the browser packer, and most of that 
 
 ### 1. Build the game data
 
-Open the [packer page](https://ankush.one/sh23ds/packer.html) in a desktop browser, choose your `Silent Hill 2` folder (the one with `sh2pc.exe` in it) and press Start. When it finishes, save the zip. It runs entirely in the page and reads the game folder only, so nothing is uploaded or installed. Plan for anything from 10 minutes to 2 hours: three workers in Chrome on an 11-core Mac packed the whole game in about seven minutes, and the "Same as Docker" texture quality adds an hour or more.
+Open the [packer page](https://ankush.one/sh23ds/) in a desktop browser, choose your `Silent Hill 2` folder (the one with `sh2pc.exe` in it) and press Start. When it finishes, save the zip. It runs entirely in the page and reads the game folder only, so nothing is uploaded or installed. Plan for anything from 10 minutes to 2 hours: three workers in Chrome on an 11-core Mac packed the whole game in about seven minutes, and the "Same as Docker" texture quality adds an hour or more.
 
 If you'd rather use Docker, check your copy first, then run the packer image where you want the output. The first run downloads the image, about 900 MB.
 
@@ -84,7 +78,7 @@ docker run --rm \
   ghcr.io/ankushkun/sh23ds-packer
 ```
 
-On Windows the same command works in PowerShell with backticks for line breaks and `"${PWD}\sd:/out"`, and on Linux add `--user "$(id -u):$(id -g)"` so the files are yours. If it stops partway, run the same command again and finished steps are skipped. The [install guide](https://ankush.one/sh23ds/install.html) builds the exact command for your system and folder.
+On Windows the same command works in PowerShell with backticks for line breaks and `"${PWD}\sd:/out"`, and on Linux add `--user "$(id -u):$(id -g)"` so the files are yours. If it stops partway, run the same command again and finished steps are skipped. The [install guide](https://ankush.one/sh23ds/) builds the exact command for your system and folder.
 
 ### 2. Copy it to the SD card
 
@@ -102,7 +96,7 @@ If there's no `3ds/dspfirm.cdc` on your card yet, run [DSP1](https://github.com/
 
 ### 3. Install the app
 
-Open FBI on the 3DS, choose Remote Install, then Scan QR Code, and point the camera at the code in the [install guide](https://ankush.one/sh23ds/install.html#install). It downloads and installs `sh23ds.cia` from the latest release. Without Wi-Fi, download [`sh23ds.cia`](https://github.com/ankushKun/sh23ds/releases/latest/download/sh23ds.cia), put it on the SD card and install it from FBI's SD browser.
+Open FBI on the 3DS, choose Remote Install, then Scan QR Code, and point the camera at the code in the [install guide](https://ankush.one/sh23ds/). It downloads and installs `sh23ds.cia` from the latest release. Without Wi-Fi, download [`sh23ds.cia`](https://github.com/ankushKun/sh23ds/releases/latest/download/sh23ds.cia), put it on the SD card and install it from FBI's SD browser.
 
 The CIA is the better choice on a New 3DS, because it asks for the 804 MHz clock, the L2 cache and the 124 MB memory mode. The `.3dsx` also works: copy [`sh23ds.3dsx`](https://github.com/ankushKun/sh23ds/releases/latest/download/sh23ds.3dsx) to `sdmc:/3ds/` and start it from the Homebrew Launcher, which only gets the extra memory if the launcher was started with it.
 

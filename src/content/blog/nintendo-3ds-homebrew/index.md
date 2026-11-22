@@ -2,6 +2,8 @@
 title: "What I learned writing two Nintendo 3DS apps in 2026"
 description: "Building Nintendo 3DS homebrew in 2026: devkitPro, 3DSX vs CIA, Azahar, and the hardware-only bugs from writing 3dsFM and 3dsDL."
 date: 2026-10-13
+cover: ./cover.webp
+coverAlt: "3dsDL and 3dsFM icons alongside a white New Nintendo 3DS"
 tags: ["hardware", "game-dev"]
 links:
   - label: "3dsFM"

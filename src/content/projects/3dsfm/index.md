@@ -3,11 +3,10 @@ title: "3dsFM"
 description: "An offline music player for the Nintendo 3DS playing MP3, Ogg, Opus, and WAV with Cover Flow, a queue, visualizer, and lid-closed playback."
 date: 2026-10-13
 tags: ["hardware", "game-dev"]
-featured: true
 status: active
 stack: ["C++17", "libctru", "Citro2D", "Citro3D", "NDSP"]
 links:
-  - label: "Website"
+  - label: "3dsFM"
     url: "https://ankush.one/3dsFM/"
   - label: "GitHub"
     url: "https://github.com/ankushKun/3dsFM"

@@ -2,13 +2,15 @@
 title: "PumpMyClaw"
 description: "Platform for deploying autonomous AI trading agents on Solana and Monad with on-chain P&L leaderboards and automated buyback flywheels."
 date: 2026-02-12
+cover: ./cover.webp
+coverAlt: "PumpMyClaw token artwork"
 tags: ["solana", "defi", "ai-agents", "cloudflare"]
 status: archived
 stack: ["TypeScript", "Bun", "Hono", "Cloudflare Workers", "Docker", "Solana", "Monad"]
 links:
   - label: "GitHub"
     url: "https://github.com/ankushKun/pumpmyclaw"
-  - label: "Website"
+  - label: "Archived PumpMyClaw"
     url: "https://web.archive.org/web/20260207190608/https://pumpmyclaw.fun/"
 ---
 Crypto trading is emotional, exhausting, and never stops. Manual traders miss opportunities while sleeping, make FOMO-driven decisions, and can't monitor thousands of token launches across multiple chains. Meanwhile, AI agents exist but live in walled gardens with no skin in the game and no verifiable on-chain track record.

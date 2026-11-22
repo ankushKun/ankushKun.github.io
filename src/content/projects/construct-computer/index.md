@@ -2,15 +2,15 @@
 title: "Construct Computer"
 description: "AI employees that each get their own cloud computer — browser, terminal, files, email, and memory — on a desktop you can watch and take over."
 date: 2026-02-20
+cover: ./cover.webp
+coverAlt: "Construct Computer workspace and AI employees"
 tags: ["ai-agents", "construct", "cloudflare", "product-hunt"]
 featured: true
 status: active
 stack: ["TypeScript", "Cloudflare Workers", "Durable Objects", "React", "Hono", "MCP"]
 links:
-  - label: "Website"
+  - label: "Construct Computer"
     url: "https://construct.computer"
-  - label: "Open Construct"
-    url: "https://os.construct.computer/?utm_source=ankush.one&utm_medium=referral&utm_campaign=project"
   - label: "Product Hunt"
     url: "https://www.producthunt.com/products/construct-computer"
   - label: "Status"

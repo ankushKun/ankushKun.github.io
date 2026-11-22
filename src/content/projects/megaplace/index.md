@@ -2,6 +2,8 @@
 title: "MegaPlace"
 description: "A global on-chain pixel canvas on MegaETH testnet where every pixel placement is a real-time transaction with session keys."
 date: 2025-12-03
+cover: ./cover.webp
+coverAlt: "MegaPlace collaborative world pixel map over Apple Park"
 tags: ["web3"]
 status: archived
 stack: ["Solidity", "Hardhat", "MegaETH", "Bun", "Express", "React", "Leaflet"]

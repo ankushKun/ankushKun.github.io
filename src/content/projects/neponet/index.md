@@ -2,12 +2,14 @@
 title: "NepoNet"
 description: "Finds the warmest intro chain from you to anyone on X, scores every hop, drafts the ask, and exposes a remote MCP server for coding agents."
 date: 2026-09-18
+cover: ./cover.webp
+coverAlt: "NepoNet warm intro graph on X"
 tags: ["ai-agents", "construct", "cloudflare", "web", "product-hunt"]
 featured: true
 status: active
 stack: ["TypeScript", "Hono", "Cloudflare Workers", "React", "SQLite", "MCP"]
 links:
-  - label: "Website"
+  - label: "NepoNet"
     url: "https://nepotism.network"
   - label: "Product Hunt"
     url: "https://www.producthunt.com/products/nepo-network"

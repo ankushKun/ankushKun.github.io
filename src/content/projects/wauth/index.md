@@ -2,11 +2,13 @@
 title: "WAuth"
 description: "Social-login SDK with invisible non-custodial wallets for Arweave web apps (~5,300 npm downloads, later adopted by ArLink Labs)."
 date: 2025-06-29
+cover: ./cover.webp
+coverAlt: "WAuth social-login invisible wallet logo"
 tags: ["arweave", "developer-tools"]
-status: active
+status: archived
 stack: ["TypeScript", "React", "Next.js", "Arweave", "OIT"]
 links:
-  - label: "Website"
+  - label: "WAuth"
     url: "https://wauth_subspace.arweave.net/"
   - label: "GitHub"
     url: "https://github.com/subspace-dev/wauth"

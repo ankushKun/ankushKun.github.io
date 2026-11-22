@@ -2,6 +2,8 @@
 title: "Untitled Dice Game (GMTK 2022)"
 description: "A 48-hour GMTK Game Jam 2022 shooter built around the theme 'Roll of the Dice' where your ammo and mechanics come from rolling dice."
 date: 2022-05-20
+cover: ./cover.webp
+coverAlt: "Untitled Dice Game GMTK 2022 artwork"
 tags: ["game-dev", "hackathon"]
 status: archived
 stack: ["Unity", "C#"]

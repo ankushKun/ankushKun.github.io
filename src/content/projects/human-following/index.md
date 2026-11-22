@@ -2,6 +2,8 @@
 title: "Human Following Robot"
 description: "An autonomous Arduino rover steered in real time over Bluetooth by a phone running Python, OpenCV, and YOLO person detection."
 date: 2020-04-01
+cover: ./cover.webp
+coverAlt: "Arduino ultrasonic human-following robot demo"
 tags: ["hardware", "machine-learning"]
 status: archived
 stack: ["Python", "OpenCV", "YOLO", "Arduino", "Bluetooth Serial"]

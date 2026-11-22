@@ -2,6 +2,8 @@
 title: "CommentKit"
 description: "A lightweight two-line drop-in comment system for static sites with nested threads, reactions, and magic-link auth on Cloudflare D1."
 date: 2026-01-01
+cover: ./cover.webp
+coverAlt: "CommentKit embeddable comments demo"
 tags: ["cloudflare", "developer-tools", "web"]
 status: archived
 stack: ["Cloudflare Workers", "Hono", "D1", "React", "Tailwind CSS", "Resend"]

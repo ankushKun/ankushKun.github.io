@@ -2,11 +2,13 @@
 title: "MyPokemonScanner"
 description: "A privacy-first, offline-capable Pokemon card scanner running 100% client-side in the browser with YOLO11n and MobileCLIP-S2."
 date: 2026-01-19
+cover: ./cover.webp
+coverAlt: "MyPokemonScanner browser card scanner demo"
 tags: ["machine-learning", "web"]
 status: archived
 stack: ["YOLO11", "MobileCLIP", "ONNX Runtime Web", "WebGPU", "React", "Vite"]
 links:
-  - label: "Website"
+  - label: "Archived MyPokemonScanner"
     url: "https://web.archive.org/web/20260227180613/https://mypokemonscanner.com/"
 related: ["/blogs/pokemon-scanner"]
 ---

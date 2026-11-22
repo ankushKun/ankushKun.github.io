@@ -2,6 +2,8 @@
 title: "Power Editor"
 description: "A free, on-device iOS photo editor with curves, HSL adjustments, and selective color grading, built in SwiftUI over one weekend."
 date: 2024-12-23
+cover: ./cover.webp
+coverAlt: "Power Editor layer-based iOS image editor banner"
 tags: ["mobile", "graphics"]
 status: archived
 stack: ["Swift", "SwiftUI", "CoreImage", "iOS"]

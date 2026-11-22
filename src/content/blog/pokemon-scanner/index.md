@@ -2,6 +2,8 @@
 title: "Pokemon Card Scanner in the Browser: YOLO11 + CLIP Embeddings"
 description: "An offline Pokemon card scanner that runs entirely in the browser: YOLO11 detects the card and MobileCLIP matches it against 20K cards on ONNX and WebGPU."
 date: 2026-01-18
+cover: ./cover.webp
+coverAlt: "Browser-based Pokemon card scanner detecting a holographic card in real time"
 updated: 2026-10-13
 tags: ["machine-learning", "web", "pokemon", "tcg", "clip", "yolo", "onnx"]
 related: ["/projects/pokemon-scanner"]

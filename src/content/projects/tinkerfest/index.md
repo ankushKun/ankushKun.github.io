@@ -2,6 +2,8 @@
 title: "TrashBot (Tinkerfest)"
 description: "An autonomous trash-segregating robot car built with LEGO, Arduino, and Android for the 2019 Tinkerfest robotics competition."
 date: 2019-11-24
+cover: ./cover.webp
+coverAlt: "TrashBot Tinkerfest smart trashcan demo"
 tags: ["hardware", "hackathon"]
 status: archived
 stack: ["Arduino", "Android", "LEGO", "Robotics"]

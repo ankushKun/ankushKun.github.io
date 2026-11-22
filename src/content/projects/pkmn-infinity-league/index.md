@@ -1,7 +1,9 @@
 ---
 title: "PKMN: Infinity League"
-description: "My GMTK Game Jam 2025 entry in Godot — trapped in an endless loop of Pokemon battles after beating Red atop Mt. Silver."
+description: "My GMTK Game Jam 2025 entry in Godot: trapped in an endless loop of Pokemon battles after beating Red atop Mt. Silver."
 date: 2025-08-01
+cover: ./cover.webp
+coverAlt: "PKMN Infinity League game artwork"
 tags: ["game-dev", "hackathon"]
 status: active
 stack: ["Godot", "GDScript"]

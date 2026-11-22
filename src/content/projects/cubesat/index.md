@@ -2,6 +2,8 @@
 title: "Arduino CubeSat"
 description: "A scratch-built 1U 3D-printed miniature satellite prototype with working 433 MHz continuous-wave Morse telemetry."
 date: 2018-12-20
+cover: ./cover.webp
+coverAlt: "3D-printed Arduino CubeSat prototype demo"
 tags: ["hardware"]
 status: archived
 stack: ["Arduino", "C++", "433 MHz RF", "3D Printing"]

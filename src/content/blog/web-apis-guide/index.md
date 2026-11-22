@@ -2,6 +2,8 @@
 title: "What Is a Web API? A Beginner's Guide with a Node.js Example"
 description: "What a web API is, how REST, HTTP methods, and status codes fit together, and how to build your first GET and POST endpoints with Node.js and Express."
 date: 2025-02-19
+cover: ./03-frontend-demo.webp
+coverAlt: "Minimal frontend calling a local Node.js Web API"
 updated: 2026-10-13
 tags: ["web", "tutorial", "api", "nodejs", "express"]
 ---

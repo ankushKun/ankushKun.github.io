@@ -2,11 +2,13 @@
 title: "TradeX (formerly PokePerps)"
 description: "A non-custodial perpetual futures exchange for Pokemon card prices on Solana (started as PokePerps, renamed TradeX, independently audited)."
 date: 2026-02-16
+cover: ./cover.webp
+coverAlt: "TradeX Pokemon card perpetual markets"
 tags: ["solana", "defi", "ai-agents"]
 status: archived
 stack: ["Rust", "Pinocchio", "Solana", "TypeScript", "Elysia", "React", "MCP"]
 links:
-  - label: "Website"
+  - label: "TradeX"
     url: "https://tradex.cards"
   - label: "API Docs"
     url: "https://tradex.cards/docs"

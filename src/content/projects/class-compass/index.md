@@ -2,6 +2,8 @@
 title: "Class Compass"
 description: "A React Native mobile app helping university students locate empty classrooms in real time. Reached 1,000+ Play Store downloads."
 date: 2023-10-01
+cover: ./cover.webp
+coverAlt: "Class Compass compass rose logo"
 tags: ["mobile"]
 status: archived
 stack: ["React Native", "Expo", "Firebase"]

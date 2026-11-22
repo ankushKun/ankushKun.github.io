@@ -2,12 +2,13 @@
 title: "Mixtunes"
 description: "A free browser extension that gives YouTube Music a classic iTunes interface with Cover Flow, a sidebar library, and sortable tracks."
 date: 2026-08-24
+cover: ./cover.webp
+coverAlt: "Mixtunes Cover Flow theme for streaming music"
 tags: ["web", "graphics"]
-featured: true
 status: active
 stack: ["TypeScript", "Chrome Extension", "Firefox Add-on", "CSS"]
 links:
-  - label: "Website"
+  - label: "Mixtunes"
     url: "https://ankush.one/mixtunes/"
   - label: "GitHub"
     url: "https://github.com/ankushKun/mixtunes"

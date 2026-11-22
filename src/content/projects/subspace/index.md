@@ -8,7 +8,7 @@ stack: ["TypeScript", "React", "Arweave", "AO", "HyperBEAM"]
 cover: ./cover.jpg
 coverAlt: "Subspace logo and tagline: Group chat with your friends"
 links:
-  - label: "Website"
+  - label: "Subspace"
     url: "https://subspace.arweave.net"
   - label: "GitHub"
     url: "https://github.com/subspace-dev/app"
