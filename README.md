@@ -9,6 +9,10 @@ pnpm build    # static site in dist/
 pnpm favicons # save the icons of linked sites (after adding links)
 ```
 
+## Deploying
+
+Pushing to `main` deploys the site to GitHub Pages from `ankushKun/ankushKun.github.io` (`.github/workflows/deploy.yml`): it installs with pnpm, runs `pnpm check` and `pnpm build`, and publishes `dist/`. Pull requests run the same check and build without deploying, and the workflow can be run by hand from the Actions tab. The custom domain is set in the repo's Pages settings rather than by a `CNAME` file, since the site deploys from a workflow.
+
 ## Adding content
 
 Every entry is a folder with an `index.md` and its images. The folder name is the URL.
