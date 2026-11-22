@@ -2,6 +2,9 @@
 dist/
 .astro/
 
+# Recordings from pnpm transitions
+.transitions/
+
 # Dependencies
 node_modules/
 

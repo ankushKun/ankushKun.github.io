@@ -10,7 +10,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "check": "astro check"
+    "check": "astro check",
+    "transitions": "node scripts/transitions.mjs"
   },
   "dependencies": {
     "@astrojs/rss": "^4.0.19",
