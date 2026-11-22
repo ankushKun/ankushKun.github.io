@@ -6,7 +6,8 @@
 // --extra only brings those up to date, keeping the playlist's tracks as they are in music.json
 // (hand-added tracks are marked `byHand` there, so one taken out of the file goes too). Metadata and thumbnail stills
 // only: no audio is ever downloaded, and the run fails if any turns up. Every track plays through
-// YouTube's own player (src/scripts/music/).
+// YouTube's own player (src/scripts/music/). Each track's beat (`bpm`, `beats`) is measured by
+// `pnpm bpm` and kept here from run to run.
 //
 // Needs yt-dlp on PATH. A private playlist can be read with YTDLP_COOKIES_FROM_BROWSER=chrome (or
 // safari, firefox). Titles and artists already in music.json win over the playlist's, so names fixed
@@ -85,6 +86,9 @@ async function cover(id) {
   return `/music/covers/${id}.jpg`;
 }
 
+/** A track's measured beat, carried over as it was (`pnpm bpm`). */
+const beatOf = (before) => (before && 'bpm' in before ? { bpm: before.bpm, beats: before.beats } : {});
+
 mkdirSync(COVERS, { recursive: true });
 const tracks = [];
 // With --extra, the playlist's tracks stay exactly as they are.
@@ -105,6 +109,7 @@ for (const entry of playlist.entries ?? []) {
     artist: before?.artist ?? artist,
     durationSec: Math.max(0, Math.round(Number(entry.duration) || before?.durationSec || 0)),
     thumb: await cover(id),
+    ...beatOf(before),
   });
   console.error(`  ${tracks.at(-1).title} by ${tracks.at(-1).artist}`);
 }
@@ -123,6 +128,7 @@ for (const extra of extras) {
     durationSec: duration,
     thumb: await cover(id),
     byHand: true,
+    ...beatOf(before),
   });
   console.error(`  ${tracks.at(-1).title} by ${tracks.at(-1).artist} (added by hand)`);
 }
@@ -138,7 +144,8 @@ const json = {
   manifestHash: createHash('sha256').update(tracks.map((t) => t.id).join(',')).digest('hex').slice(0, 16),
   tracks,
 };
-const text = `${JSON.stringify(json, null, 2)}\n`;
+// Each stretch of a beat map stays on one line, as `pnpm bpm` writes them.
+const text = `${JSON.stringify(json, null, 2).replace(/\[\s+(-?[\d.]+),\s+(-?[\d.]+)\s+\]/g, '[$1, $2]')}\n`;
 
 // Nothing but metadata and stills: no media files, no links to media.
 if (readdirSync(COVERS).some((f) => !f.endsWith('.jpg'))) throw new Error('Something other than a cover is in public/music/covers');
@@ -146,3 +153,5 @@ if (/googlevideo|\.(mp3|m4a|webm|opus|mp4)\b|youtube\.com\/watch|youtu\.be\//i.t
 
 writeFileSync(OUT, text);
 console.error(`Wrote ${tracks.length} tracks to src/data/music.json`);
+const unmeasured = tracks.filter((t) => !('bpm' in t)).length;
+if (unmeasured) console.error(`${unmeasured} without a measured beat yet: run pnpm bpm`);

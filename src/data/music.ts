@@ -14,9 +14,20 @@ export interface Track {
   thumb: string;
   /** Added by hand in music-extra.json rather than from the playlist. */
   byHand?: boolean;
+  /**
+   * Its tempo in beats a minute, measured by `pnpm bpm` (the longest steady stretch's), or null
+   * where it has no steady beat. Missing until measured.
+   */
+  bpm?: number | null;
+  /**
+   * Its beat through the track, as steady stretches: [seconds into it where a bar starts, beats a
+   * minute from there]. One stretch for a track that keeps time throughout (`pnpm bpm`).
+   */
+  beats?: [number, number][] | null;
 }
 
-export const MUSIC: { title: string; updated: string; tracks: Track[] } = catalog;
+// JSON reads each stretch as a plain array; they are pairs as `pnpm bpm` writes them.
+export const MUSIC = catalog as unknown as { title: string; updated: string; tracks: Track[] };
 
 /** 3:05, or 1:02:09 past an hour. */
 export function clock(seconds: number) {

@@ -5,7 +5,7 @@
 //
 // - The plaza starts it: its opening plays the plaza's own theme, which fades into a random track
 //   once the crowd is in, or as soon as the opening is skipped (`takeOver`). The two never play at once.
-// - Every load starts quiet, at 25%. Nothing about playback is kept across loads except that the
+// - Every load starts quiet, at 33%. Nothing about playback is kept across loads except that the
 //   visitor stopped it, which holds for the rest of the session.
 // - A game or a video on the page holds it (`hold`): it fades out and waits, then comes back.
 // - One tab plays at a time. M mutes it, along with the UI sounds (sfx.ts).
@@ -35,7 +35,7 @@ export interface MusicState {
   error: string | null;
 }
 
-const VOLUME = 25;
+const VOLUME = 33;
 const STOPPED = 'music-stopped';
 const tracks = MUSIC.tracks;
 
@@ -93,6 +93,27 @@ export function subscribe(fn: Listener) {
 }
 
 export const snapshot = (): Readonly<MusicState> => state;
+
+/** The player's last reported position, and when it changed (performance.now()). */
+const reported = { at: 0, seconds: -1 };
+
+/**
+ * Where the track is right now, in seconds. The player reports its time in steps, a few times a
+ * second, so between them the time runs on from the last step while it plays. For keeping time
+ * to the music (the plaza's dancers), read every frame.
+ */
+export function playhead(): number {
+  if (!player || state.index < 0) return state.position;
+  const seconds = player.getCurrentTime() || 0;
+  const now = performance.now();
+  if (seconds !== reported.seconds) {
+    reported.seconds = seconds;
+    reported.at = now;
+  }
+  if (yt !== STATE.PLAYING) return seconds;
+  // Never runs on further than a report could be late, should the player stall without saying.
+  return seconds + Math.min(1, (now - reported.at) / 1000);
+}
 
 // The player -----------------------------------------------------------------------------------
 
