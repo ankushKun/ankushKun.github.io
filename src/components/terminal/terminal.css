@@ -1,0 +1,453 @@
+/* The Terminal (Terminal.astro): a screen under the app's bar, phosphor on dark glass by night and
+   ink on paper by day, in JetBrains Mono. Prompts in green, folders in sky, the rest in the site's
+   ink. A page read with cat sets in the site's own type beside a rule. No scanlines: it's a console
+   on the TV, not a CRT effect. */
+
+.tm {
+  --t-bg: light-dark(#fbfcfc, #101416);
+  --t-ink: light-dark(#3d4245, #c9d2d6);
+  --t-strong: light-dark(#2a2f31, #f0f4f6);
+  --t-soft: light-dark(#5c6468, #a9b3b8);
+  --t-dim: light-dark(#6f787c, #7b878d);
+  --t-user: light-dark(#2f7d12, #6fd93a);
+  --t-dir: light-dark(#1f7fb0, #4fb8e6);
+  --t-err: light-dark(#c4392d, #ff7b6b);
+  --t-hit: light-dark(#fff0a0, #4d4210);
+  --t-rule: light-dark(#e1e6e9, #2b3236);
+  --t-code: light-dark(#f0f3f4, #182024);
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: var(--app-bar) minmax(0, 1fr) auto;
+  overflow: hidden;
+  background: var(--t-bg);
+  color: var(--t-ink);
+}
+
+:root[data-theme='dark'] .tm {
+  background: radial-gradient(ellipse at 50% 40%, #151b1e 0%, #101416 60%, #0b0e10 100%);
+}
+
+.tm-power {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px 0 12px;
+  border: 0;
+  border-radius: 20px;
+  background: #d9473b;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 800;
+}
+
+.tm-power[hidden] {
+  display: none;
+}
+
+.tm-screen {
+  position: relative;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  line-height: 1.65;
+}
+
+.tm-shell {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 26px 44px 40px;
+}
+
+.tm-shell[hidden],
+.tm-linux[hidden] {
+  display: none;
+}
+
+.tm-out {
+  min-height: 1.65em;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.tm-out + .tm-out:has(> .t-user:first-child) {
+  margin-top: 10px;
+}
+
+.tm a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.tm a:hover,
+.tm [data-cmd]:hover {
+  text-decoration: underline;
+}
+
+.tm [data-cmd] {
+  cursor: pointer;
+}
+
+.tm :is(a, [data-cmd]):focus-visible {
+  border-radius: 3px;
+  outline: 2px solid var(--t-dir);
+  outline-offset: 2px;
+}
+
+.t-user {
+  color: var(--t-user);
+  font-weight: 700;
+}
+
+.t-dir {
+  color: var(--t-dir);
+  font-weight: 700;
+}
+
+.t-run {
+  color: var(--t-user);
+}
+
+.t-cmd {
+  color: var(--t-dir);
+  font-weight: 700;
+}
+
+.t-dim {
+  color: var(--t-dim);
+}
+
+.t-soft {
+  color: var(--t-soft);
+}
+
+.t-strong {
+  color: var(--t-strong);
+  font-weight: 700;
+}
+
+.t-err {
+  color: var(--t-err);
+}
+
+.t-hit {
+  border-radius: 3px;
+  background: var(--t-hit);
+  color: var(--t-strong);
+}
+
+.t-pre {
+  display: block;
+  white-space: pre-wrap;
+}
+
+.t-row {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 28px;
+  white-space: normal;
+}
+
+.t-list {
+  display: grid;
+  grid-template-columns: minmax(110px, max-content) minmax(0, 1fr);
+  column-gap: 16px;
+  white-space: normal;
+}
+
+.t-grid {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr);
+  column-gap: 8px;
+  margin: 4px 0;
+  white-space: normal;
+}
+
+.t-tree {
+  white-space: pre;
+}
+
+/* A page read with cat. */
+.t-page {
+  max-width: 860px;
+  margin: 8px 0 4px;
+  padding-left: 18px;
+  border-left: 2px solid var(--t-rule);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.6;
+  white-space: normal;
+}
+
+.t-title {
+  color: var(--t-strong);
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.t-page > .t-dim {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.875rem;
+}
+
+.md > * + * {
+  margin-top: 0.6em;
+}
+
+.md h2,
+.md h3 {
+  margin-top: 1em;
+  color: var(--t-strong);
+  font-weight: 800;
+}
+
+.md h2 {
+  font-size: 1.125rem;
+}
+
+.md h3 {
+  font-size: 1rem;
+}
+
+.md b {
+  color: var(--t-strong);
+}
+
+.md a {
+  color: var(--t-dir);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--t-dir) 40%, transparent);
+}
+
+.md code,
+.md pre {
+  border-radius: 6px;
+  background: var(--t-code);
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+}
+
+.md code {
+  padding: 1px 5px;
+}
+
+.md pre {
+  padding: 10px 14px;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.md ul,
+.md ol {
+  padding-left: 1.3em;
+}
+
+.md ul {
+  list-style: disc;
+}
+
+.md ol {
+  list-style: decimal;
+}
+
+.md blockquote {
+  padding-left: 12px;
+  border-left: 3px solid var(--t-rule);
+  color: var(--t-soft);
+}
+
+.md-pic {
+  color: var(--t-dim);
+  font-style: italic;
+}
+
+.t-page > p:last-child {
+  margin-top: 10px;
+  font-size: 0.875rem;
+}
+
+/* fetch: my Mii beside what's here. */
+.t-fetch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 26px;
+  margin: 8px 0 4px;
+  white-space: normal;
+}
+
+.t-fetch img {
+  width: 150px;
+  height: 150px;
+  border-radius: 18px;
+  background: light-dark(#eef1f3, #1c2226);
+  box-shadow: 0 0 0 1px var(--t-rule);
+  object-fit: cover;
+}
+
+.t-swatches {
+  display: flex;
+  margin-top: 6px;
+}
+
+.t-swatches i {
+  width: 26px;
+  height: 14px;
+}
+
+.t-swatches i:nth-child(1) {
+  background: #e0483a;
+}
+.t-swatches i:nth-child(2) {
+  background: #f5902f;
+}
+.t-swatches i:nth-child(3) {
+  background: #f7c62f;
+}
+.t-swatches i:nth-child(4) {
+  background: #5cbf2a;
+}
+.t-swatches i:nth-child(5) {
+  background: #2fb2e6;
+}
+.t-swatches i:nth-child(6) {
+  background: #8a5cd8;
+}
+.t-swatches i:nth-child(7) {
+  background: #f06fa8;
+}
+
+/* The line you type on. */
+.tm-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 1ch;
+  margin-top: 10px;
+}
+
+.tm-line[hidden] {
+  display: none;
+}
+
+.tm-prompt {
+  white-space: nowrap;
+}
+
+.tm-field {
+  position: relative;
+  flex: 1;
+  min-width: 12ch;
+}
+
+.tm-field input {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: none;
+  box-shadow: none;
+  caret-color: var(--t-user);
+  color: var(--t-ink);
+  font: inherit;
+}
+
+.tm-ghost {
+  position: absolute;
+  top: 0;
+  left: var(--at, 0);
+  color: var(--t-dim);
+  opacity: 0.6;
+  pointer-events: none;
+  white-space: pre;
+}
+
+/* Linux. */
+/* Linux. The padding is on the outside, so xterm fits its rows to exactly the space it has. */
+.tm-linux {
+  position: absolute;
+  inset: 0;
+  padding: 14px 18px;
+  background: var(--t-bg);
+}
+
+.tm-xterm {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.tm-xterm .xterm {
+  height: 100%;
+}
+
+.tm-xterm .xterm-viewport {
+  background: transparent !important;
+}
+
+/* The keys a phone keyboard lacks, only where there's no keyboard. */
+.tm-keys {
+  display: none;
+}
+
+@media (max-width: 879px) {
+  .tm-shell {
+    padding: 16px 16px 24px;
+  }
+
+  .tm-screen {
+    font-size: 0.8125rem;
+  }
+
+  .t-fetch img {
+    width: 96px;
+    height: 96px;
+  }
+
+  .t-list {
+    grid-template-columns: minmax(80px, max-content) minmax(0, 1fr);
+  }
+
+  .tm-power {
+    width: 40px;
+    padding: 0;
+    justify-content: center;
+    font-size: 0;
+  }
+
+  .tm-keys {
+    display: flex;
+    gap: 6px;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+    overflow-x: auto;
+    border-top: 1px solid var(--color-line);
+    background: light-dark(#eef1f3, #1b2023);
+    scrollbar-width: none;
+  }
+
+  .tm-keys[hidden] {
+    display: none;
+  }
+
+  .tm-keys button {
+    display: grid;
+    flex: none;
+    place-items: center;
+    min-width: 44px;
+    height: 40px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 10px;
+    background: light-dark(#fff, #2c3236);
+    box-shadow: 0 1px 0 rgb(0 0 0 / 0.18);
+    color: var(--t-ink);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    font-weight: 700;
+  }
+}

@@ -1,0 +1,27 @@
+---
+// The Terminal: an app, so it fills the TV's screen (Base.astro `app`) instead of the column.
+import Base from '../../layouts/Base.astro';
+import Terminal from '../../components/terminal/Terminal.astro';
+import { getPage, pagePath } from '../../lib/content';
+import { ogPathForPage } from '../../lib/og';
+import { breadcrumbs, webPage } from '../../lib/schema';
+
+const { title, description } = (await getPage('terminal')).data;
+const path = pagePath(Astro.url);
+---
+
+<Base
+  {title}
+  {description}
+  imageUrl={ogPathForPage('terminal')}
+  app
+  schema={[
+    webPage('WebPage', path, title, description),
+    breadcrumbs([
+      { name: 'Apps', path: '/apps/' },
+      { name: title, path },
+    ]),
+  ]}
+>
+  <Terminal />
+</Base>

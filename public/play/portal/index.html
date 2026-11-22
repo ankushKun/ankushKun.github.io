@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Still Alive</title>
-<!-- The "Still Alive" floppy demo booted on v86 (copy.sh/v86, BSD-2-Clause), all files self-hosted. -->
+<!-- The "Still Alive" floppy demo booted on v86 (copy.sh/v86, BSD-2-Clause), all files self-hosted. The emulator itself is in /v86/, shared with the Terminal's Linux. -->
 <style>
   html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
   #screen { display: grid; place-items: center; width: 100%; height: 100%; }
@@ -14,15 +14,15 @@
 </head>
 <body>
 <div id="screen"><div></div><canvas></canvas></div>
-<script src="libv86.js"></script>
+<script src="/v86/libv86.js"></script>
 <script>
   new V86({
-    wasm_path: 'v86.wasm',
+    wasm_path: '/v86/v86.wasm',
     memory_size: 32 * 1024 * 1024,
     vga_memory_size: 8 * 1024 * 1024,
     screen_container: document.getElementById('screen'),
-    bios: { url: 'seabios.bin' },
-    vga_bios: { url: 'vgabios.bin' },
+    bios: { url: '/v86/seabios.bin' },
+    vga_bios: { url: '/v86/vgabios.bin' },
     fda: { url: 'stillalive.img' },
     autostart: true,
   });

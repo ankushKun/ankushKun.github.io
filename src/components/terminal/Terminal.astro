@@ -1,0 +1,82 @@
+---
+// The Terminal: a real Linux (linux.ts) booting as it opens, on a screen of its own under the app's
+// bar, dark by night and paper by day. Where Linux can't run, a lighter shell over the site
+// (shell.ts). Without JavaScript it shows the site's folders as links. On a phone, a row of
+// keys a phone keyboard lacks sits over the keyboard.
+import { ArrowDown01Icon, ArrowUp01Icon, PowerIcon } from '@hugeicons/core-free-icons';
+import HugeIcon from '../ui/HugeIcon.astro';
+import AppBar from '../ui/AppBar.astro';
+import './terminal.css';
+
+const FOLDERS = [
+  ['blog/', '/blogs/'],
+  ['projects/', '/projects/'],
+  ['timeline/', '/timeline/'],
+  ['apps/', '/apps/'],
+  ['games/', '/games/'],
+];
+const FILES = [
+  ['about.md', '/about/'],
+  ['contact.md', '/contact/'],
+  ['resume.pdf', '/resume.pdf'],
+];
+---
+
+<div class="tm live-app" data-terminal>
+  <AppBar path="/apps/terminal/" title="Terminal">
+    <button slot="end" type="button" class="tm-power" data-power hidden aria-label="Power off" data-sfx="back">
+      <HugeIcon icon={PowerIcon} size={18} strokeWidth={2.2} />
+      Power off
+    </button>
+  </AppBar>
+
+  <div class="tm-screen" data-screen>
+    <div class="tm-shell" data-shell>
+      <div class="tm-log" role="log" aria-live="polite" data-log>
+        <div class="tm-out"><span class="t-user">guest@ankush.one</span> <span class="t-dir">~</span> <span class="t-dim">$</span> ls</div>
+        <div class="tm-out">
+          <div class="t-row">
+            {FOLDERS.map(([name, href]) => <a class="t-dir" href={href}>{name}</a>)}
+            {FILES.map(([name, href]) => <a href={href}>{name}</a>)}
+          </div>
+        </div>
+        <noscript><div class="tm-out t-dim">The rest of the terminal needs JavaScript.</div></noscript>
+      </div>
+      <form class="tm-line" data-line autocomplete="off" hidden>
+        <label class="tm-prompt" for="tm-input"><span class="t-user" data-user>guest@ankush.one</span> <span class="t-dir" data-cwd>~</span> <span class="t-dim">$</span></label>
+        <span class="tm-field">
+          <input id="tm-input" data-input spellcheck="false" autocapitalize="off" autocorrect="off" enterkeyhint="send" aria-describedby="tm-ghost" />
+          <span class="tm-ghost" id="tm-ghost" data-ghost aria-hidden="true"></span>
+        </span>
+      </form>
+    </div>
+    <div class="tm-linux" data-linux hidden>
+      <div class="tm-xterm" data-xterm></div>
+    </div>
+  </div>
+
+  <div class="tm-keys" role="toolbar" aria-label="Keys" data-keys>
+    <button type="button" data-key="Tab">Tab</button>
+    <button type="button" data-key="ArrowUp" aria-label="Earlier command"><HugeIcon icon={ArrowUp01Icon} size={16} strokeWidth={2.4} /></button>
+    <button type="button" data-key="ArrowDown" aria-label="Later command"><HugeIcon icon={ArrowDown01Icon} size={16} strokeWidth={2.4} /></button>
+    <button type="button" data-type="ls">ls</button>
+    <button type="button" data-type="cd ..">cd ..</button>
+    <button type="button" data-type="help">help</button>
+    <button type="button" data-key="c" data-ctrl>Ctrl C</button>
+  </div>
+</div>
+
+<script>
+  // Pages change in place, so the Terminal starts on each visit and stops when you go.
+  let stopping: Promise<() => void> | null = null;
+  document.addEventListener('astro:page-load', () => {
+    const root = document.querySelector<HTMLElement>('[data-terminal]');
+    if (!root || root.dataset.live !== undefined) return;
+    root.dataset.live = '';
+    stopping = import('./main').then(({ mount }) => mount(root));
+  });
+  document.addEventListener('astro:before-swap', () => {
+    stopping?.then((stop) => stop());
+    stopping = null;
+  });
+</script>
