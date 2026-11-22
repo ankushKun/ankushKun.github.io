@@ -4,7 +4,7 @@ description: "Launched BetterIDEa publicly alongside the global reveal of the AO
 date: 2024-02-27
 kind: "launch"
 tags: ["arweave", "developer-tools"]
-related: ["/projects/betteridea", "/talks/ao-global-launch"]
+related: ["/projects/betteridea"]
 ---
 Launched [BetterIDEa](/projects/betteridea/) publicly during the official AO testnet global launch stream.
 

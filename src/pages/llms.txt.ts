@@ -8,7 +8,6 @@ export async function GET() {
   const pages = await Promise.all(
     [
       ['about', '/about/'],
-      ['now', '/now/'],
       ['resume', '/resume/'],
       ['contact', '/contact/'],
       ['newsletter', '/newsletter/'],

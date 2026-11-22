@@ -3,9 +3,6 @@
 import type { CubeStyle } from '../components/plaza/types';
 
 export const TILES: Record<string, CubeStyle> = {
-  '/talks/': { icon: 'mic', colors: ['#ff8a7a', '#d93a5e'] },
-  '/now/': { icon: 'clock', colors: ['#7fd8ff', '#2f8fe0'] },
-  '/console-collection/': { icon: 'gamepad', colors: ['#ff6464', '#cf2238'] },
   '/contact/': { icon: 'envelope', colors: ['#62c4ff', '#2380dc'] },
   '/newsletter/': { icon: 'envelope', colors: ['#ffb35c', '#ea6a2a'] },
   '/privacy/': { icon: 'doc', colors: ['#9fb0c8', '#526984'] },

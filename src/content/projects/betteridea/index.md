@@ -17,7 +17,7 @@ links:
     url: "https://github.com/betteridea-dev/ide"
   - label: "GitHub: ao-package-manager"
     url: "https://github.com/betteridea-dev/ao-package-manager"
-related: ["/projects/apm", "/talks/ao-global-launch", "/timeline/hackerhouse"]
+related: ["/projects/apm", "/timeline/hackerhouse"]
 ---
 
 **BetterIDEa** is a web IDE and developer tooling suite for the Arweave and AO ecosystem. It started as a sleepless hackathon MVP in Bangalore and grew into core ecosystem infrastructure before being acquired by **Forward Research**.
@@ -31,6 +31,6 @@ related: ["/projects/apm", "/talks/ao-global-launch", "/timeline/hackerhouse"]
 ## How it grew
 
 - **Hackathon origins:** Built during Arweave India's first hackerhouse in December 2023, taking 1st place with a simple browser-based IDE for SmartWeave contracts.
-- **AO global launch:** Rebuilt around AO processes and featured publicly during the official [AO testnet global launch](/talks/ao-global-launch/) in February 2024.
+- **AO global launch:** Rebuilt around AO processes and featured publicly during the official [AO testnet global launch](https://www.youtube.com/watch?v=9snJSH9CdUs) in February 2024.
 - **Full dev suite:** Expanded with notebook cells, CLI tooling, npm integrations, and the [AO Package Manager](/projects/apm/), reaching 1,000+ ecosystem builders.
 - **Acquisition:** Acquired by Forward Research, the core team behind Arweave and AO, where I joined as Entrepreneur in Residence and later rewrote the IDE for HyperBEAM.

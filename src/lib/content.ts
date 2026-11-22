@@ -2,7 +2,7 @@
 import { getCollection, getEntry, type CollectionEntry } from 'astro:content';
 import { SITE } from '../site';
 
-export type Section = 'blog' | 'projects' | 'timeline' | 'talks' | 'consoles';
+export type Section = 'blog' | 'projects' | 'timeline';
 export type Entry = CollectionEntry<Section>;
 
 /** Public URL of each section. Change a route here and in src/pages together. */
@@ -10,8 +10,6 @@ export const SECTION_PATH: Record<Section, string> = {
   blog: '/blogs/',
   projects: '/projects/',
   timeline: '/timeline/',
-  talks: '/talks/',
-  consoles: '/console-collection/',
 };
 
 /** Entries of a section, newest first. Drafts show in dev and are left out of builds. */

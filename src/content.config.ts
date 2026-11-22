@@ -58,28 +58,6 @@ const timeline = defineCollection({
     }),
 });
 
-const talks = defineCollection({
-  loader: bundle('talks'),
-  schema: (ctx) =>
-    entry(ctx).extend({
-      event: z.string(),
-      location: z.string().optional(),
-      video: z.url().optional(),
-      slides: z.url().optional(),
-    }),
-});
-
-const consoles = defineCollection({
-  loader: bundle('consoles'),
-  schema: (ctx) =>
-    entry(ctx).extend({
-      maker: z.string(),
-      /** Year the console came out. `date` is when you got it. */
-      released: z.number().int(),
-      mods: z.array(z.string()).default([]),
-    }),
-});
-
 /** Standalone pages and the intro text of each section index. One file per page, named by its route. */
 const pages = defineCollection({
   loader: glob({ base: './src/content/pages', pattern: '*.md' }),
@@ -92,4 +70,4 @@ const pages = defineCollection({
     }),
 });
 
-export const collections = { blog, projects, timeline, talks, consoles, pages };
+export const collections = { blog, projects, timeline, pages };

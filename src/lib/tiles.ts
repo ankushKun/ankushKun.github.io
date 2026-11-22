@@ -73,8 +73,7 @@ function hash(s: string) {
 function glyphFor(entry: Entry): IconName {
   const tags = new Set(entry.data.tags);
   const has = (...t: string[]) => t.some((x) => tags.has(x));
-  if (entry.collection === 'talks') return 'mic';
-  if (entry.collection === 'consoles' || has('game-dev', 'handheld', 'pokemon', 'doom', 'tcg')) return 'gamepad';
+  if (has('game-dev', 'handheld', 'pokemon', 'doom', 'tcg')) return 'gamepad';
   if (has('hardware')) return 'chip';
   if (has('ai-agents', 'machine-learning')) return 'chat';
   if (has('travel')) return 'plane';

@@ -2,7 +2,7 @@
 
 export const SITE = {
   url: 'https://ankush.one',
-  title: 'Ankush Singh',
+  title: 'Ankush Kun',
   description:
     'Co-founder of Construct Computer. Building AI agents, developer tools, and Nintendo 3DS homebrew.',
   locale: 'en_US',
@@ -51,17 +51,18 @@ export const NAV = [
   { label: 'Blog', href: '/blogs/' },
   { label: 'Projects', href: '/projects/' },
   { label: 'Timeline', href: '/timeline/' },
-  { label: 'Talks', href: '/talks/' },
   { label: 'About', href: '/about/' },
   { label: 'Apps', href: '/apps/' },
 ];
 
+/** The footer at the end of every page. Home is the plaza, settled (see the TV's plaza button). */
 export const FOOTER_NAV = [
-  { label: 'Now', href: '/now/' },
-  { label: 'Resume', href: '/resume/' },
-  { label: 'Consoles', href: '/console-collection/' },
-  { label: 'Newsletter', href: '/newsletter/' },
-  { label: 'Contact', href: '/contact/' },
+  { label: 'Home', href: '/#0' },
+  { label: 'About', href: '/about/' },
+  { label: 'Blog', href: '/blogs/' },
+  { label: 'Projects', href: '/projects/' },
+  { label: 'Timeline', href: '/timeline/' },
+  { label: 'Apps', href: '/apps/' },
   { label: 'Privacy', href: '/privacy/' },
   { label: 'Credits', href: '/credits/' },
   { label: 'RSS', href: '/blogs/index.xml' },

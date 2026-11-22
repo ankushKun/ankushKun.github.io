@@ -7,6 +7,6 @@ tags: ["job", "arweave"]
 links:
   - label: "Arweave India"
     url: "https://arweaveindia.com"
-related: ["/talks/arweave-day-india-2025", "/talks/adi-tour-2025"]
+related: []
 ---
-Joined [Arweave India](https://arweaveindia.com) as a Developer Relations Engineer — mentoring 100+ builders shipping on-chain apps, running technical workshops, and co-organizing 4+ hackerhouses and [Arweave Day India](/talks/arweave-day-india-2025/).
+Joined [Arweave India](https://arweaveindia.com) as a Developer Relations Engineer — mentoring 100+ builders shipping on-chain apps, running technical workshops, and co-organizing 4+ hackerhouses and [Arweave Day India](https://x.com/arweaveindia/status/1916037195166552556).

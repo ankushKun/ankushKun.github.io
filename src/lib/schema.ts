@@ -97,29 +97,5 @@ export function entryNode(entry: Entry, image?: string): Node {
       };
     case 'timeline':
       return { '@type': 'Article', headline: data.title, articleSection: entry.data.kind, ...base, ...dated };
-    case 'talks':
-      return {
-        '@type': 'Event',
-        ...base,
-        startDate: isoDate(data.date),
-        eventStatus: 'https://schema.org/EventScheduled',
-        performer: { '@id': PERSON_ID },
-        organizer: { '@type': 'Organization', name: entry.data.event },
-        ...(entry.data.location && {
-          location: { '@type': 'Place', name: entry.data.location, address: entry.data.location },
-        }),
-        ...(entry.data.video && { recordedIn: { '@type': 'VideoObject', name: data.title, contentUrl: entry.data.video } }),
-      };
-    case 'consoles':
-      return {
-        '@type': 'WebPage',
-        ...base,
-        about: {
-          '@type': 'Product',
-          name: data.title,
-          brand: { '@type': 'Brand', name: entry.data.maker },
-          releaseDate: String(entry.data.released),
-        },
-      };
   }
 }

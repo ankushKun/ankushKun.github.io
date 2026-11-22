@@ -271,18 +271,6 @@ export function specForEntry(entry: Entry): OgSpec {
       eyebrow = `TIMELINE · ${entry.data.kind.toUpperCase()}`;
       meta = dateLabel;
       break;
-    case 'talks':
-      eyebrow = 'TALK';
-      meta = entry.data.location ? `${year} · ${entry.data.location.toUpperCase()}` : dateLabel;
-      footerItems = [entry.data.event, ...entry.data.tags.slice(0, 2).map((t) => `#${t}`)];
-      break;
-    case 'consoles':
-      eyebrow = 'CONSOLE';
-      meta = `${entry.data.maker.toUpperCase()} · ${entry.data.released}`;
-      if (entry.data.mods.length > 0) {
-        footerItems = entry.data.mods.slice(0, 3);
-      }
-      break;
   }
 
   return {
