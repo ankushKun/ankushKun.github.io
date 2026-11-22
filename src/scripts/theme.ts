@@ -75,3 +75,6 @@ document.addEventListener('astro:before-swap', (event) => {
 });
 
 paint(stored() ?? (device.matches ? 'dark' : 'light'));
+
+// A prerendered page is put in the theme of the moment it is shown (Base.astro does its root).
+document.addEventListener('prerenderingchange', () => paint(stored() ?? (device.matches ? 'dark' : 'light')), { once: true });

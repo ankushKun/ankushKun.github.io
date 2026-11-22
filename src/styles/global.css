@@ -34,8 +34,10 @@
 }
 
 @layer base {
+  /* Behind every page, the plaza too: the one color any page fades out to and in from, so moving
+     between pages never cuts from one color to another. */
   html {
-    background: var(--color-haze);
+    background: var(--color-screen);
     color: var(--color-ink);
     font-family: var(--font-sans);
     font-weight: 400;
@@ -71,7 +73,20 @@
     --bezel: 14px;
     --bezel-top: max(var(--bezel), env(safe-area-inset-top));
     --bezel-bottom: max(var(--bezel), env(safe-area-inset-bottom));
-    --crt: clamp(36px, 5vw, 72px) / clamp(48px, 10vh, 96px);
+    /* The screen's rounded corners, across and down; the light switch sits in the corner they leave. */
+    --crt-x: clamp(36px, 5vw, 72px);
+    --crt-y: clamp(48px, 10vh, 96px);
+    --crt: var(--crt-x) / var(--crt-y);
+    /* How long things take to move between pages (the end of this file, src/scripts/motion.ts):
+       what leaves, what arrives, and the big moves that change the whole screen. */
+    --vt-out: 0.24s;
+    --vt-in: 0.45s;
+    --vt-big: 0.62s;
+    --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+    /* A fade that starts and ends softly. */
+    --ease-fade: cubic-bezier(0.4, 0, 0.2, 1);
+    /* Arriving: quick to start and long to settle, but not all at once, so a move reads as one. */
+    --ease-page: cubic-bezier(0.3, 0.75, 0.2, 1);
     scrollbar-color: light-dark(rgb(55 70 78 / 0.28), rgb(255 255 255 / 0.2)) transparent;
     scrollbar-gutter: stable;
   }
@@ -79,12 +94,10 @@
   @media (max-width: 879px) {
     :root {
       --bezel: 8px;
-      --crt: 34px / 44px;
+      --crt-x: 34px;
+      --crt-y: 44px;
+      --crt: var(--crt-x) / var(--crt-y);
     }
-  }
-
-  html:not([data-home]) {
-    background: var(--color-screen);
   }
 
   body {
@@ -627,14 +640,38 @@ html:has(.col-app) .tv-menu {
 }
 
 /* Page transitions ------------------------------------------------------------------------------
-   On the TV only the column changes; the casing and its buttons are the same element throughout.
-   The router sets html[data-nav] to the kind of move (src/scripts/motion.ts): deeper and shallower
-   (into an entry and back out), left and right (between sections, in the menu's order). --vt-dy
-   puts the old column back where it was scrolled to. An entry's picture flies between a list and
-   its page on its own. All of it is quick: the new page is there in under a third of a second. */
+   On the TV a page change is a fade: the column fades out and the new one in, while the casing, its
+   buttons and the menu stay put in front (src/scripts/motion.ts). An app is the screen going full
+   size: the casing slides off past the edges as the app grows in (motion.ts animates the casing
+   itself), and back as you leave; a channel on /apps/ grows into its app, which shrinks back into
+   it (html[data-door]). Meanwhile the page under the app is named col-page, so neither is ever
+   stretched to the other's box. From the plaza, its camera zooms into the block you pressed as the
+   plaza fades into its haze, and the page fades in; back to it, the page fades out and the camera
+   pulls back out of the block you came from (plaza/main.ts; Base.astro sets html[data-plaza-move]).
+   Lengths: --vt-out for what leaves, --vt-in for what arrives, --vt-big for the big moves. */
 
 @view-transition {
   navigation: auto;
+}
+
+/* In front to behind: the TV's buttons, the casing, the column (or app), the page under an app. */
+::view-transition-group(col-page) {
+  z-index: 1;
+}
+
+::view-transition-group(col) {
+  z-index: 2;
+}
+
+::view-transition-group(tv-glass) {
+  z-index: 4;
+}
+
+::view-transition-group(tv-home),
+::view-transition-group(tv-open),
+::view-transition-group(tv-menu),
+::view-transition-group(theme-toggle) {
+  z-index: 5;
 }
 
 ::view-transition-old(root) {
@@ -645,115 +682,186 @@ html:has(.col-app) .tv-menu {
   animation: none;
 }
 
-::view-transition-group(col) {
+/* The column's box goes straight to the new page's; only the pictures in it fade. */
+html:not([data-door])::view-transition-group(col),
+::view-transition-group(col-page) {
   animation: none;
 }
 
-/* The casing and its buttons are lifted out with the column, above it, and simply stay put: the
-   CRT's edge is always in front of whatever the screen shows. */
+/* The casing and its buttons stay put in front. The casing's slide, into and out of an app, is played
+   on the element itself (motion.ts), which shows through its live picture. */
 ::view-transition-group(tv-glass),
-::view-transition-group(tv-home),
-::view-transition-group(tv-open),
-::view-transition-group(theme-toggle),
 ::view-transition-group(tv-menu),
 ::view-transition-new(tv-menu),
-::view-transition-old(tv-glass),
 ::view-transition-new(tv-glass),
-::view-transition-old(tv-home),
-::view-transition-new(tv-home),
-::view-transition-old(tv-open),
-::view-transition-new(tv-open),
-::view-transition-old(theme-toggle),
-::view-transition-new(theme-toggle) {
+html:not([data-nav^='app'])::view-transition-group(tv-home),
+html:not([data-nav^='app'])::view-transition-group(tv-open),
+html:not([data-nav^='app'])::view-transition-group(theme-toggle),
+html:not([data-nav^='app'])::view-transition-new(tv-home),
+html:not([data-nav^='app'])::view-transition-new(tv-open),
+html:not([data-nav^='app'])::view-transition-new(theme-toggle) {
   animation: none;
 }
 
 ::view-transition-old(tv-glass),
-::view-transition-old(tv-home),
-::view-transition-old(tv-open),
-::view-transition-old(theme-toggle),
-::view-transition-old(tv-menu) {
+::view-transition-old(tv-menu),
+html:not([data-nav^='app'])::view-transition-old(tv-home),
+html:not([data-nav^='app'])::view-transition-old(tv-open),
+html:not([data-nav^='app'])::view-transition-old(theme-toggle) {
   display: none;
 }
 
+/* Into and out of an app the buttons glide to where they stand there, and one that only one side has
+   (the menu button, where an app lists the sections itself) fades. */
+html[data-nav^='app']::view-transition-group(tv-home),
+html[data-nav^='app']::view-transition-group(tv-open),
+html[data-nav^='app']::view-transition-group(theme-toggle) {
+  animation-duration: var(--vt-big);
+  animation-timing-function: var(--ease-page);
+}
+
 ::view-transition-old(col),
-::view-transition-new(col) {
+::view-transition-new(col),
+::view-transition-old(col-page),
+::view-transition-new(col-page) {
   mix-blend-mode: normal;
-  animation-fill-mode: both;
 }
 
 ::view-transition-old(col) {
+  /* Where the old column was scrolled to. */
   translate: 0 var(--vt-dy, 0px);
-  animation: vt-out 0.16s ease-in both;
+  animation: fade-out var(--vt-out) var(--ease-fade) both;
 }
 
 ::view-transition-new(col) {
-  animation: vt-in 0.3s var(--ease-glide) 0.04s both;
+  animation: fade-in var(--vt-in) var(--ease-fade) calc(var(--vt-out) * 0.5) both;
 }
 
-html[data-nav='right']::view-transition-old(col) {
-  --vt-x: -36px;
-}
-
-html[data-nav='right']::view-transition-new(col) {
-  --vt-x: 48px;
-}
-
-html[data-nav='left']::view-transition-old(col) {
-  --vt-x: 36px;
-}
-
-html[data-nav='left']::view-transition-new(col) {
-  --vt-x: -48px;
-}
-
-html[data-nav='deeper']::view-transition-old(col) {
+/* Into an app: the page steps back and fades as the app grows in to fill the screen. Out of one: the
+   app shrinks away and the page comes up behind it. */
+::view-transition-old(col-page) {
   --vt-s: 0.985;
+  animation: vt-out var(--vt-out) var(--ease-exit) both;
 }
 
-html[data-nav='deeper']::view-transition-new(col) {
-  --vt-y: 22px;
-}
-
-html[data-nav='shallower']::view-transition-old(col) {
-  --vt-y: 18px;
-}
-
-html[data-nav='shallower']::view-transition-new(col) {
+::view-transition-new(col-page) {
   --vt-s: 0.985;
+  animation: vt-in var(--vt-big) var(--ease-page) calc(var(--vt-out) * 0.5) both;
 }
 
-::view-transition-group(hero) {
+html[data-nav='app-in']::view-transition-new(col) {
+  --vt-s: 0.94;
+  animation: vt-in var(--vt-big) var(--ease-page) both;
+}
+
+html[data-nav='app-out']::view-transition-old(col) {
+  --vt-s: 0.95;
+  translate: none;
+  animation: vt-out var(--vt-in) var(--ease-exit) both;
+}
+
+/* Through a channel, the channel and the app are one box that grows or shrinks between them: the
+   picture it is becoming fades up over the one it is leaving, which then fades away too, so nothing
+   of it is left in the channel's rounded corners. */
+html[data-door]::view-transition-group(col) {
+  --box-from: var(--door-from);
+  --box-to: var(--door-to);
   overflow: clip;
-  border-radius: 14px;
-  animation-duration: 0.34s;
-  animation-timing-function: var(--ease-glide);
+  transform-origin: 0 0;
+  animation: box-move var(--vt-big) var(--ease-page) both;
 }
 
-::view-transition-old(hero),
-::view-transition-new(hero) {
+html[data-door]::view-transition-old(col),
+html[data-door]::view-transition-new(col) {
+  width: 100%;
   height: 100%;
-  object-fit: cover;
-  animation-duration: 0.34s;
+  object-fit: fill;
+  translate: none;
+}
+
+/* The casing slides between where it was and where it is now, and its rounded rim gives way to the
+   app's bare edge (or comes back) as it goes. */
+html[data-nav^='app']::view-transition-group(tv-glass) {
+  --box-from: var(--glass-from);
+  --box-to: var(--glass-to);
+  transform-origin: 0 0;
+  animation: box-move var(--vt-big) var(--ease-page) both;
+}
+
+html[data-nav^='app']::view-transition-old(tv-glass) {
+  display: block;
+  animation: fade-out var(--vt-big) var(--ease-fade) both;
+}
+
+html[data-nav^='app']::view-transition-new(tv-glass) {
+  animation: fade-in var(--vt-big) var(--ease-fade) both;
+}
+
+/* Into and out of an app, a box (the casing, or a channel becoming the app) moves by transform alone,
+   between transforms motion.ts works out, so the compositor plays it however busy the page is. */
+@keyframes box-move {
+  from {
+    transform: var(--box-from);
+  }
+  to {
+    transform: var(--box-to);
+  }
+}
+
+/* Shrinking into the channel, the box rounds its corners to the channel's as it goes, so the app's
+   square ones never show round the channel's. */
+html[data-nav='app-out'][data-door]::view-transition-group(col) {
+  animation:
+    box-move var(--vt-big) var(--ease-page) both,
+    door-round var(--vt-big) var(--ease-page) both;
+}
+
+@keyframes door-round {
+  from {
+    border-radius: 0;
+  }
+  to {
+    border-radius: var(--door-radius, 0);
+  }
+}
+
+html[data-door]::view-transition-old(col) {
+  animation: fade-out calc(var(--vt-big) * 0.5) var(--ease-fade) calc(var(--vt-big) * 0.4) both;
+}
+
+html[data-door]::view-transition-new(col) {
+  animation: fade-in calc(var(--vt-big) * 0.45) ease both;
 }
 
 @keyframes vt-out {
   to {
     opacity: 0;
-    transform: translate(var(--vt-x, 0px), var(--vt-y, 0px)) scale(var(--vt-s, 1));
+    transform: scale(var(--vt-s, 1));
   }
 }
 
 @keyframes vt-in {
   from {
     opacity: 0;
-    transform: translate(var(--vt-x, 0px), var(--vt-y, 0px)) scale(var(--vt-s, 1));
+    transform: scale(var(--vt-s, 1));
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
   }
 }
 
 /* Switching between light and dark (src/scripts/theme.ts): the whole screen changes as one, the
    new lights spreading in a circle from the button. */
-html[data-theming] :is(.col, .tv-glass, .tv-btn, .tv-menu, .theme-toggle, [data-hero-main]) {
+html[data-theming] :is(.col, .tv-glass, .tv-btn, .tv-menu, .theme-toggle) {
   view-transition-name: none !important;
 }
 
@@ -767,7 +875,7 @@ html[data-theming='reveal']::view-transition-new(root) {
 }
 
 html[data-theming='fade']::view-transition-new(root) {
-  animation: vt-in 0.2s ease both;
+  animation: fade-in 0.2s ease both;
 }
 
 @keyframes theme-reveal {
@@ -779,67 +887,44 @@ html[data-theming='fade']::view-transition-new(root) {
   }
 }
 
-/* To and from the plaza, a real page load: the TV switches on, a bright line opening out into the
-   picture, and switches off, the picture folding into a line and then a point. Base.astro sets
-   html[data-crt] for the length of it. */
-html[data-crt] :is(.col, .tv-glass, .tv-btn, .tv-menu, .theme-toggle) {
+/* To and from the plaza, a real page load. Leaving it, the plaza has already faded into its haze as
+   the camera zoomed into the block you pressed (Plaza.astro), and the page fades itself in
+   (html[data-arrive] below). Coming back, Base.astro sets html[data-plaza-move]: the page has faded
+   out (or, going back in history, fades out now), and the plaza fades in, pulling back out of the
+   block. */
+html[data-plaza-move] :is(.col, .tv-glass, .tv-btn, .tv-menu, .theme-toggle) {
   view-transition-name: none !important;
 }
 
-html[data-crt='on']::view-transition-old(root) {
-  display: block;
-  animation: vt-out 0.22s ease both;
-}
-
-html[data-crt='on']::view-transition-new(root) {
-  animation: crt-on 0.46s cubic-bezier(0.2, 0.7, 0.2, 1) both;
-}
-
-html[data-crt='off']::view-transition-old(root) {
-  display: block;
-  animation: crt-off 0.34s cubic-bezier(0.6, 0, 0.8, 0.4) both;
-}
-
-html[data-crt='off']::view-transition-new(root) {
-  animation: vt-in 0.4s ease 0.26s both;
-}
-
-html[data-crt]::view-transition-image-pair(root) {
+html[data-plaza-move]::view-transition-image-pair(root) {
   isolation: auto;
 }
 
-@keyframes crt-on {
-  0% {
-    opacity: 0.9;
-    transform: scale(0.18, 0.004);
-    filter: brightness(3);
-  }
-  35% {
-    opacity: 1;
-    transform: scale(1, 0.006);
-    filter: brightness(2.4);
-  }
-  100% {
-    transform: none;
-    filter: none;
-  }
+html[data-plaza-move]::view-transition-old(root),
+html[data-plaza-move]::view-transition-new(root) {
+  display: block;
+  mix-blend-mode: normal;
 }
 
-@keyframes crt-off {
-  0% {
-    transform: none;
-    filter: none;
-  }
-  55% {
-    opacity: 1;
-    transform: scale(1, 0.006);
-    filter: brightness(2.4);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(0, 0.004);
-    filter: brightness(4);
-  }
+/* Going home, the page has already faded out before leaving (motion.ts), so the plaza simply fades
+   in over the empty screen. */
+html[data-going-home] body {
+  opacity: 0;
+  transition: opacity var(--vt-in) var(--ease-fade);
+}
+
+/* A page opened directly, with no page change to come from, fades in (Base.astro). */
+html[data-arrive] body {
+  /* Backwards only: once in, it lets go, so a fade out (leaving the plaza) is never held up. */
+  animation: fade-in var(--vt-big) var(--ease-fade) backwards;
+}
+
+html[data-plaza-move='return']::view-transition-old(root) {
+  animation: fade-out var(--vt-in) var(--ease-fade) both;
+}
+
+html[data-plaza-move='return']::view-transition-new(root) {
+  animation: fade-in var(--vt-big) var(--ease-fade) both;
 }
 
 @keyframes shake {
@@ -863,19 +948,9 @@ html[data-crt]::view-transition-image-pair(root) {
   ::view-transition-new(*) {
     animation-duration: 0.15s !important;
     animation-delay: 0s !important;
-    --vt-x: 0px !important;
-    --vt-y: 0px !important;
     --vt-s: 1 !important;
   }
 
-  html[data-crt]::view-transition-old(root),
-  html[data-crt]::view-transition-new(root) {
-    animation-name: vt-out !important;
-  }
-
-  html[data-crt]::view-transition-new(root) {
-    animation-name: vt-in !important;
-  }
 }
 
 @media print {

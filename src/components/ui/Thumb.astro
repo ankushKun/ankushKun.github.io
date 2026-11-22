@@ -1,9 +1,8 @@
 ---
-// An entry's picture: its cover, or drawn art when it has none. Marked so the router can fly it
-// between a list and the entry's own page (see src/scripts/motion.ts). `main` is the entry page's
-// own copy, which always carries the name.
+// An entry's picture: its cover, or drawn art when it has none. `main` is the entry page's own copy,
+// which carries the alt text.
 import { Image } from 'astro:assets';
-import { urlOf, type Entry } from '../../lib/content';
+import type { Entry } from '../../lib/content';
 import { artPath } from '../../lib/tiles';
 
 interface Props {
@@ -19,7 +18,7 @@ const { cover, coverAlt, title } = entry.data;
 const alt = main ? coverAlt || title : '';
 ---
 
-<div class:list={['thumb', className]} data-hero={urlOf(entry)} data-hero-main={main ? '' : undefined}>
+<div class:list={['thumb', className]}>
   {
     cover ? (
       <Image
@@ -35,9 +34,3 @@ const alt = main ? coverAlt || title : '';
     )
   }
 </div>
-
-<style>
-  [data-hero-main] {
-    view-transition-name: hero;
-  }
-</style>

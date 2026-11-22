@@ -6,14 +6,12 @@ import { urlOf, type Entry } from '../lib/content';
 
 interface Props {
   items: Entry[];
-  /** A play mark on the art, for talks with a recording. */
-  play?: (entry: Entry) => boolean;
   /** How many pictures are on screen as the page opens: those load at once, the rest when near. */
   eager?: number;
 }
 
 // About the first two rows of a section's list.
-const { items, play = () => false, eager = 6 } = Astro.props;
+const { items, eager = 6 } = Astro.props;
 ---
 
 <ul class="channels">
@@ -23,13 +21,6 @@ const { items, play = () => false, eager = 6 } = Astro.props;
         <a href={urlOf(entry)} class="channel" data-sfx>
           <span class="glass">
             <Thumb {entry} width={480} class="art" eager={i < eager} />
-            {play(entry) && (
-              <span class="play" aria-hidden="true">
-                <svg viewBox="0 0 24 24">
-                  <path d="M8 5.5v13l10.5-6.5z" />
-                </svg>
-              </span>
-            )}
           </span>
           <span class="name">{entry.data.title}</span>
         </a>
@@ -115,27 +106,6 @@ const { items, play = () => false, eager = 6 } = Astro.props;
     text-align: center;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-
-  .play {
-    position: absolute;
-    z-index: 1;
-    right: 8px;
-    bottom: 8px;
-    display: grid;
-    place-items: center;
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background: rgb(255 255 255 / 0.94);
-    box-shadow: 0 3px 10px -2px rgb(0 0 0 / 0.4);
-  }
-
-  .play svg {
-    width: 16px;
-    height: 16px;
-    margin-left: 2px;
-    fill: var(--color-ink-strong);
   }
 
   @media (max-width: 479px) {

@@ -1,40 +1,31 @@
-// How the TV moves between pages. Astro's router swaps pages in place inside a view transition and
-// this choreographs it; the casing, its buttons and the menu are one element throughout, so only
-// the column moves (the CSS is at the end of global.css):
-// - Every move gets a kind (see `classify`), set on <html> as data-nav: deeper and shallower into
-//   an entry and back out, left and right between sections in the menu's order.
-// - The old column is put back where it was scrolled to (--vt-dy).
-// - An entry's picture flies between a list and its page (`hero`).
+// How the TV moves between pages. Astro's router swaps pages in place inside a view transition (the
+// CSS is at the end of global.css):
+// - On the TV a page change is a fade: the casing, its buttons and the menu are one element
+//   throughout and stay put, and only the column fades out and the new one in. The old column stays
+//   where it was scrolled to (--vt-dy).
+// - An app is the screen going full size (html[data-nav] app-in and app-out): the casing slides off
+//   past the screen's edges as the app grows in, and back as you leave. The page's column is named
+//   col-page meanwhile, so it fades on its own. A link marked data-grow (a channel on /apps/) grows
+//   into the app, and the app shrinks back into it on the way out (html[data-door]).
+// - Those moves only ever animate transforms (`boxMove`), which the compositor plays at full speed
+//   while the app is busy starting up underneath; sizes and insets would wait on the page.
 // - The menu stays open across page changes on a big screen, its marker moving to the new
 //   section; on a phone, where it covers the page, it folds away first. Escape closes it. B goes
 //   back.
 // - On a phone the two buttons step aside while you read down a page, and come back when you
 //   scroll up.
-// Going to and from the plaza is a real page load instead (see Base.astro).
+// Going to and from the plaza is a real page load instead (see Base.astro); going there, the page
+// fades out first (data-going-home).
 import type { TransitionBeforePreparationEvent, TransitionBeforeSwapEvent } from 'astro:transitions/client';
-import { depthOf, dockIndex, sectionOf } from '../lib/nav';
+import { sectionOf } from '../lib/nav';
 import { closeMenu, isMenuOpen, resetMenu, showMenuStill } from './menu';
 import { play } from './sfx';
 
-type Nav = 'deeper' | 'shallower' | 'left' | 'right';
+type Nav = 'page' | 'app-in' | 'app-out';
 
-function classify(from: URL, to: URL, back: boolean): Nav {
-  const a = from.pathname;
-  const b = to.pathname;
-  if (sectionOf(a) === sectionOf(b)) {
-    const da = depthOf(a);
-    const db = depthOf(b);
-    if (db !== da) return db > da ? 'deeper' : 'shallower';
-    return back ? 'shallower' : 'deeper';
-  }
-  const ia = dockIndex(a);
-  const ib = dockIndex(b);
-  if (ia >= 0 && ib >= 0) return ib > ia ? 'right' : 'left';
-  if (depthOf(b) > depthOf(a)) return 'deeper';
-  return back ? 'shallower' : 'deeper';
-}
-
-let nav: Nav = 'deeper';
+let nav: Nav = 'page';
+/** The channel the move goes through, if it opens into an app or closes back into one. */
+let door: HTMLElement | null = null;
 /** Whether the menu was open when the page began to change, to open it again on the new one. */
 let menuWasOpen = false;
 let from = location.pathname;
@@ -52,28 +43,71 @@ function clearNames() {
 }
 
 const narrow = matchMedia('(max-width: 879px)');
+const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const isApp = (doc: Document) => !!doc.querySelector('.col-app');
+
+/** The lengths of the moves, as global.css sets them, in milliseconds. */
+function length(token: '--vt-out' | '--vt-in' | '--vt-big') {
+  const v = getComputedStyle(document.documentElement).getPropertyValue(token).trim();
+  return v.endsWith('ms') ? parseFloat(v) : parseFloat(v) * 1000 || 300;
+}
+
+type Rect = Pick<DOMRect, 'left' | 'top' | 'width' | 'height'>;
+const rectOf = (el: Element): Rect => {
+  const { left, top, width, height } = el.getBoundingClientRect();
+  return { left, top, width, height };
+};
+
+/**
+ * The transform that takes a box at `to` (where a picture ends up) back to `from` (where it starts),
+ * with its origin at the top left, and the one that leaves it at `to`. A move between them is a
+ * transform only, so it never waits on layout.
+ */
+function boxMove(from: Rect, to: Rect) {
+  const sx = to.width ? from.width / to.width : 1;
+  const sy = to.height ? from.height / to.height : 1;
+  return { from: `translate(${from.left}px, ${from.top}px) scale(${sx}, ${sy})`, to: `translate(${to.left}px, ${to.top}px)` };
+}
+
+/** Where the casing's screen and the channel were before the page changed, while an app comes or goes. */
+let casing: Rect | null = null;
+let doorFrom: Rect | null = null;
 
 document.addEventListener('astro:before-preparation', (event) => {
   const e = event as TransitionBeforePreparationEvent;
-  nav = classify(e.from, e.to, e.direction === 'back');
+  nav = 'page';
   from = e.from.pathname;
   clearNames();
+  door = null;
+  casing = null;
+  const source = e.sourceElement instanceof Element ? e.sourceElement.closest('a') : null;
   // On a phone the menu covers the page: it folds away first, while the next page loads, so the
   // page change starts on a clear screen. It costs no time when the page takes longer to load.
   menuWasOpen = isMenuOpen();
+  let folded: Promise<void> = Promise.resolve();
   if (menuWasOpen && narrow.matches) {
     menuWasOpen = false;
-    const folded = closeMenu();
-    const load = e.loader;
-    e.loader = () => Promise.all([load(), folded]).then(() => undefined);
+    folded = closeMenu();
   }
-  // The picture of the entry you opened flies to its page. Any other named picture steps aside.
-  const source = e.sourceElement instanceof Element ? e.sourceElement.closest('a') : null;
-  const hero = source?.querySelector<HTMLElement>('[data-hero]');
-  if (hero && hero.dataset.hero === e.to.pathname) {
-    for (const el of document.querySelectorAll<HTMLElement>('[data-hero-main]')) name(el, 'none');
-    name(hero, 'hero');
-  }
+  // Whether an app comes or goes is only known once the next page is in hand, and the old page's
+  // names have to be set before the move starts, so it is settled here, as the page loads.
+  const load = e.loader;
+  e.loader = async () => {
+    await Promise.all([load(), folded]);
+    const toApp = isApp(e.newDocument);
+    if (toApp === isApp(document)) return;
+    nav = toApp ? 'app-in' : 'app-out';
+    const glass = document.querySelector('.tv-glass');
+    if (glass) casing = rectOf(glass);
+    if (!toApp) return;
+    const main = document.getElementById('main');
+    if (main) name(main, 'col-page');
+    if (source?.hasAttribute('data-grow') && new URL(source.href).pathname === e.to.pathname && !calm()) {
+      door = source;
+      doorFrom = rectOf(source);
+      name(source, 'col');
+    }
+  };
 });
 
 document.addEventListener('astro:before-swap', (event) => {
@@ -82,10 +116,18 @@ document.addEventListener('astro:before-swap', (event) => {
   // Moving the menu to the new page closes it; it opens again after the swap if it was open.
   menuWasOpen ||= isMenuOpen() && !narrow.matches;
 
-  // Going back to a list, the entry's picture flies back into its place there.
-  if (!e.newDocument.querySelector('[data-hero-main]')) {
-    const back = e.newDocument.querySelector<HTMLElement>(`[data-hero="${CSS.escape(from)}"]`);
-    if (back) name(back, 'hero');
+  // Out of an app, the page comes up behind it on its own, and the app shrinks back into the channel
+  // it was opened from if the page has it.
+  if (nav === 'app-out') {
+    const main = e.newDocument.getElementById('main');
+    if (main) name(main, 'col-page');
+    const channel = e.newDocument.querySelector<HTMLElement>(`[data-grow][href="${CSS.escape(from)}"]`);
+    if (channel && !calm()) {
+      door = channel;
+      const app = document.getElementById('main');
+      if (app) doorFrom = rectOf(app);
+      name(channel, 'col');
+    }
   }
 
   e.viewTransition.finished.finally(clearNames);
@@ -94,8 +136,26 @@ document.addEventListener('astro:before-swap', (event) => {
 document.addEventListener('astro:after-swap', () => {
   const html = document.documentElement;
   html.dataset.nav = nav;
+  html.toggleAttribute('data-door', !!door);
   const main = document.getElementById('main');
-  if (main) html.style.setProperty('--vt-dy', `${oldTop - main.getBoundingClientRect().top}px`);
+  const app = nav !== 'page';
+  if (main) html.style.setProperty('--vt-dy', app ? '0px' : `${oldTop - main.getBoundingClientRect().top}px`);
+  // The casing and the channel move between where they were and where they are now (global.css).
+  const glass = document.querySelector('.tv-glass');
+  if (app && glass && casing) {
+    const m = boxMove(casing, rectOf(glass));
+    html.style.setProperty('--glass-from', m.from);
+    html.style.setProperty('--glass-to', m.to);
+  }
+  const into = nav === 'app-in' ? main : door;
+  if (door && doorFrom && into) {
+    const m = boxMove(doorFrom, rectOf(into));
+    html.style.setProperty('--door-from', m.from);
+    html.style.setProperty('--door-to', m.to);
+    // Shrinking into a channel, the app takes on the channel's rounded corners as it goes.
+    html.style.setProperty('--door-radius', nav === 'app-out' ? getComputedStyle(door).borderTopLeftRadius : '0px');
+  }
+  casing = doorFrom = null;
   delete html.dataset.reading;
   lastY = scrollY;
 
@@ -119,6 +179,27 @@ document.addEventListener('astro:after-swap', () => {
       else a.removeAttribute('aria-current');
     });
 });
+
+// Going home to the plaza: the page fades out completely first, and only then does the plaza load
+// and pull back out of its block (plaza/main.ts). Back from the back/forward cache, the page shows
+// again.
+document.addEventListener(
+  'click',
+  (e) => {
+    const link = e.target instanceof Element ? e.target.closest<HTMLAnchorElement>('a[href]') : null;
+    if (!link || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const to = new URL(link.href);
+    if (to.origin !== location.origin || to.pathname !== '/' || link.target) return;
+    e.preventDefault();
+    const html = document.documentElement;
+    if (html.hasAttribute('data-going-home')) return;
+    if (calm()) return location.assign(to.href);
+    html.setAttribute('data-going-home', '');
+    setTimeout(() => location.assign(to.href), length('--vt-in'));
+  },
+  true,
+);
+addEventListener('pageshow', () => document.documentElement.removeAttribute('data-going-home'));
 
 // On a phone a link in the menu closes it as you go, even to the page you are on.
 document.addEventListener('click', (e) => {

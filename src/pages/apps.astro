@@ -6,7 +6,8 @@ import { channelFor } from '../lib/tiles';
 // The Wii's channel menu: each app a wide channel in a glossy frame, its art edge to edge and its
 // name across the top; the menu is always whole pages of twelve, the slots no app has yet shown as
 // grey empty channels. The grid is two, three or four channels across, by the room it has. An app
-// without an address isn't ready: pressing it shakes its head.
+// without an address isn't ready: pressing it shakes its head. One that is grows from its channel
+// to fill the screen, and shrinks back into it on the way out (data-grow, src/scripts/motion.ts).
 const PAGE = 12;
 const channels = APPS.map((app) => {
   const art = channelFor(`/apps/#${app.id}`)?.src;
@@ -22,7 +23,7 @@ const empty = Math.ceil(Math.max(channels.length, 1) / PAGE) * PAGE - channels.l
         channels.map((app) => (
           <li id={app.id}>
             {app.href ? (
-              <a href={app.href} class:list={['channel', app.painted && 'is-painted']} data-sfx>
+              <a href={app.href} class:list={['channel', app.painted && 'is-painted']} data-grow data-sfx>
                 {app.art && <img class="art" src={app.art} alt="" width="560" height="315" decoding="async" />}
                 <span class="name">{app.label}</span>
               </a>

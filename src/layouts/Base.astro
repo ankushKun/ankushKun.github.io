@@ -3,7 +3,8 @@
 // is the plaza and nothing else. Every other page is shown on the TV (Frame.astro): one column to
 // read down the middle of the screen, the site's other pages in its footer. Pages on the TV change
 // in place through Astro's router (src/scripts/motion.ts); to and from the plaza is a real page
-// load, so the plaza only ever runs while you are on it.
+// load, so the plaza only ever runs while you are on it. On a big screen the next one is
+// prerendered as the pointer rests on its way there, so even that starts the moment you click.
 import type { ImageMetadata } from 'astro';
 import { getImage } from 'astro:assets';
 import { ClientRouter } from 'astro:transitions';
@@ -59,7 +60,7 @@ const {
 
 const path = pagePath(Astro.url);
 const isHome = path === '/';
-const fullTitle = isHome ? `${SITE.title} | ${AUTHOR.jobTitle}` : `${title} | ${SITE.title}`;
+const fullTitle = isHome ? SITE.title : `${title} | ${SITE.title}`;
 const pageUrl = absUrl(path);
 const canonical = canonicalOverride ?? pageUrl;
 
@@ -125,41 +126,83 @@ const year = new Date().getFullYear();
     <script is:inline>
       // The lights, set before anything is drawn so a dark page never flashes white: your choice
       // if you have made one, else the device's (src/scripts/theme.ts switches them).
+      // A prerendered page reads it again when it is shown, in case it changed meanwhile.
       (function () {
         var html = document.documentElement;
-        var theme;
-        try {
-          theme = localStorage.getItem('theme');
-        } catch (e) {}
-        if (theme !== 'light' && theme !== 'dark') theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        html.dataset.theme = theme;
-        var meta = document.querySelector('meta[name="theme-color"]');
-        if (meta && theme === 'dark') meta.content = meta.getAttribute('data-dark');
+        function apply() {
+          var theme;
+          try {
+            theme = localStorage.getItem('theme');
+          } catch (e) {}
+          if (theme !== 'light' && theme !== 'dark') theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          html.dataset.theme = theme;
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.content = meta.getAttribute('data-' + theme);
+        }
+        apply();
+        if (document.prerendering) document.addEventListener('prerenderingchange', apply, { once: true });
       })();
     </script>
     <script is:inline>
-      // Going between the plaza and the TV is a real page load, drawn as the TV switching on or
-      // off (the end of global.css). The column keeps no transition name of its own meanwhile, so
-      // it goes with the rest of the screen.
+      // Going between the plaza and the TV is a real page load (the end of global.css). Leaving, the
+      // plaza has already zoomed into the block you pressed and faded into its haze (plaza/main.ts),
+      // so the page simply fades itself in, as a page opened directly does. Coming back, the page
+      // fades away and the plaza pulls back out of the block; meanwhile the column keeps no
+      // transition name of its own, so it goes with the whole screen.
       (function () {
         var html = document.documentElement;
         var home = html.hasAttribute('data-home');
         addEventListener('pageswap', function (e) {
-          if (e.viewTransition) html.dataset.crt = home ? 'on' : 'off';
+          if (e.viewTransition && !home) html.dataset.plazaMove = 'return';
         });
+        // A page opened directly (by its address, a refresh, or from another site) fades in on its own.
+        function arrive() {
+          html.setAttribute('data-arrive', '');
+          setTimeout(function () {
+            html.removeAttribute('data-arrive');
+          }, 1500);
+        }
+        if (!('onpagereveal' in window)) arrive();
         addEventListener('pagereveal', function (e) {
-          if (!e.viewTransition) return;
-          var from = window.navigation && navigation.activation && navigation.activation.from;
-          var fromHome = from && from.url ? new URL(from.url).pathname === '/' : true;
-          if (!home && !fromHome) return e.viewTransition.skipTransition();
-          html.dataset.crt = home ? 'off' : 'on';
+          if (!e.viewTransition) return arrive();
+          if (!home) {
+            // Skipping a move rejects its promise of being ready; nothing waits on it.
+            e.viewTransition.ready.catch(function () {});
+            e.viewTransition.skipTransition();
+            return arrive();
+          }
+          html.dataset.plazaMove = 'return';
           e.viewTransition.finished.finally(function () {
-            delete html.dataset.crt;
+            delete html.dataset.plazaMove;
           });
         });
         addEventListener('pageshow', function () {
-          delete html.dataset.crt;
+          delete html.dataset.plazaMove;
         });
+      })();
+    </script>
+    <script is:inline>
+      // On a big screen, the way between the plaza and the TV is prerendered while the pointer rests
+      // on it: the TV's plaza button, or a block on the plaza. A click then shows a page that is
+      // already built, so the move starts at once. Phones and data savers skip it: building the
+      // plaza in the background costs a second or two of work.
+      (function () {
+        var nav = navigator;
+        if (!(HTMLScriptElement.supports && HTMLScriptElement.supports('speculationrules'))) return;
+        if ((nav.connection && nav.connection.saveData) || (nav.deviceMemory || 8) < 4) return;
+        if (!matchMedia('(pointer: fine) and (min-width: 1000px)').matches) return;
+        var where = document.documentElement.hasAttribute('data-home') ? '.plaza-links a' : '.tv-home';
+        function add() {
+          if (document.querySelector('script[data-prerender]')) return;
+          var rules = document.createElement('script');
+          rules.type = 'speculationrules';
+          rules.setAttribute('data-prerender', '');
+          rules.textContent = JSON.stringify({ prerender: [{ where: { selector_matches: where }, eagerness: 'moderate' }] });
+          document.head.append(rules);
+        }
+        add();
+        // The router keeps only the next page's own head; the rules go back in after every swap.
+        document.addEventListener('astro:after-swap', add);
       })();
     </script>
     {!fullscreen && <ClientRouter fallback="swap" />}
@@ -194,7 +237,9 @@ const year = new Date().getFullYear();
               <footer class="site-foot">
                 <nav aria-label="Pages">
                   {FOOTER_NAV.map((l) => (
-                    <a href={l.href}>{l.label}</a>
+                    <a href={l.href} data-astro-reload={l.href.startsWith('/#') ? '' : undefined}>
+                      {l.label}
+                    </a>
                   ))}
                 </nav>
                 <span>

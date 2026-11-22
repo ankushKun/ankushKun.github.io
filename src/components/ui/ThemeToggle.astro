@@ -1,6 +1,6 @@
 ---
 // Light or dark: a quiet icon on every screen, the plaza's included. On the TV it sits out in the
-// casing's bottom left corner, past the curve of the screen; on a phone, at the top next to the
+// casing's top right corner, past the curve of the screen; on a phone, at the top next to the
 // plaza button. The moon while it is light, the sun while it is dark (src/scripts/theme.ts does
 // the switching).
 import { Moon02Icon, Sun03Icon } from '@hugeicons/core-free-icons';
@@ -13,11 +13,14 @@ import HugeIcon from './HugeIcon.astro';
 </button>
 
 <style is:global>
+  /* Out in the casing's top right corner, centred in the space the screen's rounded corner leaves:
+     the largest circle that fits between the casing's two edges and the curve sits
+     (√2 (bezel + radius) − radius) / (1 + √2) in from each edge. */
   .theme-toggle {
     position: fixed;
     z-index: 60;
-    bottom: env(safe-area-inset-bottom);
-    left: env(safe-area-inset-left);
+    top: calc((1.4142 * (var(--bezel-top) + var(--crt-y)) - var(--crt-y)) / 2.4142 - 16px);
+    right: calc((1.4142 * (var(--bezel) + var(--crt-x)) - var(--crt-x)) / 2.4142 - 16px);
     display: grid;
     place-items: center;
     width: 32px;
@@ -65,10 +68,12 @@ import HugeIcon from './HugeIcon.astro';
     scale: 1;
   }
 
-  /* On the plaza, with no casing, it sits over the scene in the corner, a little lighter. */
+  /* On the plaza, with no casing, it sits over the scene in the top right corner, a little lighter. */
   :root[data-home] .theme-toggle {
-    bottom: max(12px, env(safe-area-inset-bottom));
-    left: max(12px, env(safe-area-inset-left));
+    top: max(12px, env(safe-area-inset-top));
+    right: max(12px, env(safe-area-inset-right));
+    bottom: auto;
+    left: auto;
     color: light-dark(rgb(63 68 70 / 0.45), rgb(220 230 235 / 0.5));
   }
 
@@ -80,6 +85,7 @@ import HugeIcon from './HugeIcon.astro';
   @media (max-width: 879px) {
     .theme-toggle {
       top: calc(var(--bezel-top) + 18px);
+      right: auto;
       bottom: auto;
       left: calc(var(--bezel) + 66px);
       width: 40px;
@@ -93,8 +99,9 @@ import HugeIcon from './HugeIcon.astro';
 
     :root[data-home] .theme-toggle {
       top: max(12px, env(safe-area-inset-top));
+      right: max(12px, env(safe-area-inset-right));
       bottom: auto;
-      left: max(12px, env(safe-area-inset-left));
+      left: auto;
     }
 
     html[data-reading] .theme-toggle:not(:focus-visible) {

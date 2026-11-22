@@ -2,7 +2,7 @@
 // Detail page for any dated entry, to read down the TV's column: the B button back to its section,
 // the title, a byline signed by your Mii, the entry's picture, then its text. Section specific
 // details (links, stack, where) go in the "meta" slot, extra content after the body in the default
-// slot; a talk can put its recording in the "screen" slot in place of the picture.
+// slot.
 import { getImage } from 'astro:assets';
 import { render } from 'astro:content';
 import Base from './Base.astro';
@@ -93,15 +93,7 @@ const schemaNodes = [
       }
     </p>
     {!post && <p class="lead">{data.description}</p>}
-    {
-      Astro.slots.has('screen') ? (
-        <div class="screen">
-          <slot name="screen" />
-        </div>
-      ) : (
-        hero && <Thumb {entry} main eager width={1280} class="cover" />
-      )
-    }
+    {hero && <Thumb {entry} main eager width={1280} class="cover" />}
     {
       Astro.slots.has('meta') && (
         <div class="meta">
@@ -238,17 +230,10 @@ const schemaNodes = [
     line-height: 1.7;
   }
 
-  article :global(.cover),
-  .screen {
+  article :global(.cover) {
     margin-top: 28px;
     aspect-ratio: 16 / 9;
     overflow: hidden;
-    border-radius: 14px;
-  }
-
-  .screen :global(.video) {
-    width: 100%;
-    height: 100%;
     border-radius: 14px;
   }
 
