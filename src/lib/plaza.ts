@@ -3,6 +3,9 @@ import type { PlazaCube, PlazaData, PlazaMii, PlazaPost } from '../components/pl
 import { getImage } from 'astro:assets';
 import { BACKUP, BOOMBOX, CROWD, CUBES, DJ, FEATURED, HERO, LOOKS, ME, WELCOME } from '../data/plaza';
 import { existsSync } from 'node:fs';
+import { GAMES } from '../data/games';
+import { gameArt } from './games';
+import { APPS } from '../data/apps';
 import { AUTHOR, FOOTER_NAV, NAV } from '../site';
 import { SECTION_PATH, getEntries, isoDate, urlOf, type Section } from './content';
 import { folderMiis, resolveMii } from './miis';
@@ -19,15 +22,27 @@ export async function getPlazaData(): Promise<PlazaData> {
     return [{ ...style, label, href, art }];
   });
 
-  // Posts and projects with cover art, square-cropped, for the feature slots.
+  // What the feature slots turn through: the site's real things, as the bubbles are. Entries with
+  // cover art, square-cropped; other people's games (yours are projects already); apps with block
+  // art that aren't blocks already. Pages that only explain the site are left out.
+  const square = async (src: ImageMetadata | string) => (await getImage({ src, width: 512, height: 512, fit: 'cover', format: 'webp', quality: 80 })).src;
   const featured: PlazaCube[] = [];
-  for (const section of ['blog', 'projects'] as const) {
+  for (const section of Object.keys(SECTION_PATH) as Section[]) {
     const style = CUBES[SECTION_PATH[section]] ?? CUBES['/blogs/'];
     for (const e of await getEntries(section)) {
       if (!e.data.cover) continue;
-      const img = await getImage({ src: e.data.cover, width: 512, height: 512, fit: 'cover', format: 'webp', quality: 80 });
-      featured.push({ label: e.data.title, href: urlOf(e), ...style, art: img.src, feature: true });
+      featured.push({ ...style, label: e.data.title, href: urlOf(e), art: await square(e.data.cover), feature: true });
     }
+  }
+  for (const game of GAMES) {
+    const art = !game.project && gameArt(game.id);
+    if (art) featured.push({ ...CUBES['/games/'], label: game.label ?? game.id, href: `/games/${game.id}/`, art: await square(art), feature: true });
+  }
+  for (const app of APPS) {
+    if (!app.href || sections.some((c) => c.href === app.href)) continue;
+    // Block art is named after the href (`/apps/paint/` is `apps-paint.webp`).
+    const file = `${app.href.replace(/^\/|\/$/g, '').replace(/[/#]+/g, '-')}.webp`;
+    if (existsSync(`public/plaza/icons/${file}`)) featured.push({ ...CUBES['/apps/'], label: app.label, href: app.href, art: `/plaza/icons/${file}`, feature: true });
   }
   // Without JavaScript the slots show the first few; the plaza swaps in a random pick on each visit.
   const cubes: PlazaCube[] = [...featured.slice(0, FEATURED), ...sections];

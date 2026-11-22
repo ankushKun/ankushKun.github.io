@@ -22,7 +22,7 @@ import { HeadCards } from './heads';
 import { drawIcons, thumb } from './icons';
 import { NowPlaying } from './nowplaying';
 import { CUBE, applyView, blankView, copyView, makeLayout, mixViews, type Layout } from './layout';
-import type { PlazaData } from './types';
+import type { PlazaCube, PlazaData } from './types';
 import { clamp, damp, easeInOut, rng, smoothstep } from './util';
 
 /** When the camera has pulled all the way back to the whole plaza, in seconds from the click. */
@@ -62,6 +62,8 @@ const TAG_MIN = 11;
 /** Seconds the camera takes to zoom into a block you pressed, and to pull back out of it when you come back. */
 const DIVE = 0.7;
 const STEP_BACK = 1.5;
+/** Seconds between the feature blocks turning to a new pick. */
+const FEATURE_EVERY = 6.9;
 /** Seconds the "Now playing" bubble stays up when a new track starts. */
 const NOW_PLAYING = 3;
 
@@ -98,20 +100,36 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
   const device = navigator as Navigator & { deviceMemory?: number };
   const weak = (device.deviceMemory ?? 8) < 4 || (navigator.hardwareConcurrency || 8) < 4;
 
-  // The feature slots get a random pick of posts and projects on every visit.
-  const picks = [...data.featured].sort(() => Math.random() - 0.5);
-  data.cubes.forEach((cube, i) => {
-    if (!cube.feature || !picks.length) return;
-    const pick = picks.shift()!;
+  // The feature slots: a random post, project, page or app each, turning to another every
+  // FEATURE_EVERY seconds (`turnFeatures`). Picks come off a shuffled deck, so everything comes
+  // round before anything comes round twice, and never one another slot is showing.
+  const featureSlots = data.cubes.flatMap((c, i) => (c.feature ? [i] : []));
+  const deck: PlazaCube[] = [];
+  function drawFeature(): PlazaCube | null {
+    if (!deck.length) {
+      deck.push(...data.featured);
+      for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+      }
+    }
+    const shown = new Set(featureSlots.map((i) => data.cubes[i].href));
+    const at = deck.findIndex((c) => !shown.has(c.href));
+    return at < 0 ? null : deck.splice(at, 1)[0];
+  }
+  function showFeature(i: number, pick: PlazaCube) {
     data.cubes[i] = pick;
     const link = links[i];
-    if (link) {
-      link.href = pick.href;
-      link.setAttribute('aria-label', pick.label);
-      const tag = link.querySelector('span');
-      if (tag) tag.textContent = pick.label;
-    }
-  });
+    if (!link) return;
+    link.href = pick.href;
+    link.setAttribute('aria-label', pick.label);
+    const tag = link.querySelector('span');
+    if (tag) tag.textContent = pick.label;
+  }
+  for (const i of featureSlots) {
+    const pick = drawFeature();
+    if (pick) showFeature(i, pick);
+  }
 
   // The sound loads alongside everything else. A slow one is not waited for: it joins in step.
   const music = soundtrack();
@@ -979,9 +997,41 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     placeDj();
     if (press && !press.holding && performance.now() - press.at > 350) liftMii();
     hover();
+    turnFeatures();
     const talk = bubbles.greeting ? INTRO.greet : INTRO.talk;
     bubbles.update(time, crowd, camera, w, h, !opening && !close && !stepping && !diving && (calm || since() > talk), blocks);
     if (waiting) pointAt();
+  }
+
+  /**
+   * Every FEATURE_EVERY seconds once the plaza has settled, each feature block turns once round to
+   * a new pick, unless it is pointed at or held. Its picture is drawn first and the block takes it
+   * on as it passes edge on; its link and name change with it.
+   */
+  let featureAt = Infinity;
+  function turnFeatures() {
+    if (!featureSlots.length || waiting || opening || diving || stepping || root.dataset.leaving) return;
+    if (featureAt === Infinity) featureAt = time + FEATURE_EVERY;
+    if (time < featureAt) return;
+    featureAt = time + FEATURE_EVERY;
+    for (const i of featureSlots) {
+      if (cubes.engaged(i) || cubes.flipping(i)) continue;
+      const pick = drawFeature();
+      if (!pick) continue;
+      void drawIcons([pick], 512).then(
+        ([icon]) => {
+          const tex = new THREE.CanvasTexture(icon);
+          tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+          renderer.initTexture(tex);
+          const turned = active && !root.dataset.leaving && cubes.flip(i, tex, time, (old) => {
+            showFeature(i, pick);
+            old.dispose();
+          });
+          if (!turned) tex.dispose();
+        },
+        () => undefined,
+      );
+    }
   }
 
   /**

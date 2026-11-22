@@ -32,7 +32,7 @@ export interface PlazaCube extends CubeStyle {
   href: string;
   /** Painted title art for the block, if public/plaza/icons/ has one for this section. */
   art?: string;
-  /** A slot that shows a random post or project from `PlazaData.featured` on each visit. */
+  /** A slot that turns through random picks from `PlazaData.featured`, a new one every few seconds. */
   feature?: boolean;
 }
 
@@ -92,6 +92,6 @@ export interface PlazaData {
   backup: PlazaMii[];
   boombox: 'model' | 'drawn';
   crowd: { desktop: number; mobile: number };
-  /** Posts and projects with cover art; each visit fills the feature slots with a random few. */
+  /** Entries with cover art, other people's games and apps that aren't blocks: what the feature slots turn through. */
   featured: PlazaCube[];
 }

@@ -24,6 +24,8 @@ const RING = { x: CUBE.size * 0.445, z: CUBE.size * 0.34 };
 const FLIGHT = 0.85;
 /** Seconds its slow idle sway takes to build up once it has landed, so it starts from rest. */
 const SWAY_IN = 1.2;
+/** Seconds a block takes to turn once round, changing its picture (`flip`). */
+const FLIP = 1.3;
 
 /** A point on the unit squircle at angle `a`, and the outward normal there. */
 function squircle(a: number) {
@@ -253,6 +255,8 @@ interface Item {
   turn: THREE.Vector2;
   /** Spun by hand: where the drag wants it (x turns it round, y tips it over), where it is, how fast it moves. */
   twirl: { want: THREE.Vector2; at: THREE.Vector2; speed: THREE.Vector2; held: boolean };
+  /** Turning once round to change its picture: when it began, which way, and the picture it shows once edge on (null after). */
+  flip: { at: number; dir: number; next: THREE.Texture | null; done: (old: THREE.Texture) => void } | null;
 }
 
 const _spin = new THREE.Quaternion();
@@ -329,6 +333,7 @@ export class Cubes {
         lean: new THREE.Vector2(),
         turn: new THREE.Vector2(),
         twirl: { want: new THREE.Vector2(), at: new THREE.Vector2(), speed: new THREE.Vector2(), held: false },
+        flip: null,
       });
     });
   }
@@ -392,6 +397,28 @@ export class Cubes {
   setMouse(at: THREE.Vector2 | null) {
     this.watching = at !== null;
     if (at) this.mouse.copy(at);
+  }
+
+  /**
+   * Turns block `i` once round on its upright axis, starting at `time`, its picture becoming `icon`
+   * as it passes edge on. `done` is handed the picture it had, once nothing shows it.
+   */
+  flip(i: number, icon: THREE.Texture, time: number, done: (old: THREE.Texture) => void) {
+    const item = this.items[i];
+    if (!item || item.flip) return false;
+    item.flip = { at: time, dir: item.phase % 2 < 1 ? 1 : -1, next: icon, done };
+    return true;
+  }
+
+  /** Whether block `i` is pointed at or held, so its picture must not change under the pointer. */
+  engaged(i: number) {
+    const item = this.items[i];
+    return !!item && (item.hovering || item.twirl.held);
+  }
+
+  /** Whether block `i` is turning to change its picture. */
+  flipping(i: number) {
+    return !!this.items[i]?.flip;
   }
 
   /** Starts spinning block `i` by hand. */
@@ -469,6 +496,22 @@ export class Cubes {
       item.turn.x = damp(item.turn.x, tx, 4, dt);
       item.turn.y = damp(item.turn.y, ty, 4, dt);
       mesh.quaternion.multiply(_spin.setFromEuler(_e.set(item.lean.y * 0.3 - item.turn.y * 0.32, item.lean.x * 0.42 + item.turn.x * 0.42, 0)));
+
+      // Turning once round to a new picture: eased in and out, the picture changing edge on, where
+      // nobody sees it go.
+      if (item.flip) {
+        const f = clamp01((time - item.flip.at) / (calm ? 0.01 : FLIP));
+        const turn = (f < 0.5 ? 4 * f * f * f : 1 - (-2 * f + 2) ** 3 / 2) * Math.PI * 2;
+        const u = mesh.material.uniforms.uIcon;
+        if (item.flip.next && (turn >= Math.PI / 2 || f >= 1)) {
+          const old = u.value as THREE.Texture;
+          u.value = item.flip.next;
+          item.flip.next = null;
+          item.flip.done(old);
+        }
+        if (f >= 1) item.flip = null;
+        else mesh.quaternion.multiply(_spin.setFromAxisAngle(_up.set(0, 1, 0), turn * (item.flip?.dir ?? 1)));
+      }
 
       // Spun by hand: a stiff spring while held, so it follows with a little give, and a soft,
       // springy one once let go, so it swings back past rest and settles. Small steps keep it stable.

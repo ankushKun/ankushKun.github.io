@@ -8,6 +8,9 @@ import { artPath } from './tiles';
 /** Art for games that aren't yours, named after the game: src/assets/games/<id>.webp. */
 const ART = import.meta.glob<{ default: ImageMetadata }>('../assets/games/*.webp', { eager: true });
 
+/** The art of a game that isn't yours, if it has some. */
+export const gameArt = (id: string) => ART[`../assets/games/${id}.webp`]?.default;
+
 export interface ResolvedGame extends Game {
   label: string;
   description: string;
