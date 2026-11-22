@@ -32,6 +32,8 @@
   --color-leaf: #5cbf2a;
   --color-leaf-deep: #3a9617;
   --ease-spring: cubic-bezier(0.3, 1.45, 0.5, 1);
+  /* The spring played backwards, for a way out that retraces its way in (a transition can't reverse its own curve). */
+  --ease-spring-back: cubic-bezier(0.5, 0, 0.7, -0.45);
   --ease-glide: cubic-bezier(0.16, 1, 0.3, 1);
 }
 

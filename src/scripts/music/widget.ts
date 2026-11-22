@@ -3,7 +3,8 @@
 import { clock } from '../../data/music';
 import * as music from './engine';
 
-const TELL_MS = 5000;
+/** How long the playing track's name shows beside the button when a new one starts, as long as the plaza's "Now playing" bubble. */
+const TELL_MS = 3000;
 
 /** Something on screen the player can open over, in viewport pixels: its middle and its top and bottom edges. */
 export interface Spot {
@@ -132,8 +133,8 @@ function wire(root: HTMLElement) {
     });
   });
 
-  // Over something, the player sits centred just above it, growing out of it, or just below if
-  // there is no room above; kept on screen either way.
+  // Over something, the player sits centred just above it, growing out of it and shrinking back
+  // into it, or just below if there is no room above; kept on screen either way.
   function placeOver(where: () => Spot | null) {
     const s = where();
     if (!s) {
@@ -156,7 +157,8 @@ function wire(root: HTMLElement) {
       right: 'auto',
       top: above ? 'auto' : `${edge}px`,
       bottom: above ? `${edge}px` : 'auto',
-      transformOrigin: `${Math.round(s.x - left)}px ${above ? 'bottom' : 'top'}`,
+      // Out of what it is over: just above its top, or just below its bottom.
+      transformOrigin: `${Math.round(s.x - left)}px ${above ? `calc(100% + ${gap}px)` : `-${gap}px`}`,
     });
   }
   follow = () => {

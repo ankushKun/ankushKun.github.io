@@ -8,6 +8,10 @@ import { clamp } from './util';
 const LIFE = 8.5;
 const EVERY = 3.4;
 const MARGIN = 12;
+/** How far above the speaker's head a bubble's bottom edge sits, in pixels, its tail between. */
+const ABOVE = 20;
+/** Milliseconds a closing bubble is kept for: its shrink back into its speaker (`is-out` in Plaza.astro, 0.34 s) and a frame or two to start. */
+const OUT = 420;
 const SVG_NS = 'http://www.w3.org/2000/svg';
 // Cubic Bezier control-point ratio for a superellipse (n = 4, matching CSS corner-shape: squircle).
 const SQUIRCLE_K = 0.091;
@@ -39,6 +43,8 @@ export class Bubbles {
   private viewH = 0;
   /** Said before anything else, once: the greeting, or something asked for with `sayNext`. */
   private first: PlazaPost | null;
+  /** How many seconds `first` stays up. */
+  private firstLife = LIFE;
   /** While it is up, nobody else speaks. */
   private alone: Active | null = null;
 
@@ -59,10 +65,11 @@ export class Bubbles {
     return this.first !== null;
   }
 
-  /** Says `post` next, alone, as soon as it can, clearing whatever is up. */
-  sayNext(post: PlazaPost) {
+  /** Says `post` next, alone, as soon as it can, clearing whatever is up, for `life` seconds. */
+  sayNext(post: PlazaPost, life = LIFE) {
     this.dismiss();
     this.first = post;
+    this.firstLife = life;
     this.last = -Infinity;
   }
 
@@ -136,14 +143,16 @@ export class Bubbles {
     }
     if (best) {
       const { speaker, at } = best;
-      const a: Active = { el, shadow, speaker, until: time + LIFE, box: at.box, shapeKey: '' };
+      const life = post === this.first ? this.firstLife : LIFE;
+      const a: Active = { el, shadow, speaker, until: time + life, box: at.box, shapeKey: '' };
       this.move(a, at);
       el.classList.add('is-in');
-      crowd.say(speaker, time, LIFE);
+      crowd.say(speaker, time, life);
       this.active.push(a);
       if (post === this.first) {
         // Alone until it ends; the others follow a beat after.
         this.first = null;
+        this.firstLife = LIFE;
         this.alone = a;
         this.last = a.until - EVERY + 0.8;
       } else this.queue.push(this.queue.shift()!);
@@ -157,13 +166,15 @@ export class Bubbles {
 
   private close(a: Active) {
     a.el.classList.replace('is-in', 'is-out');
-    setTimeout(() => a.el.remove(), 320);
+    setTimeout(() => a.el.remove(), OUT);
   }
 
   private move(a: Active, at: { box: Box; tail: number }) {
     a.box = at.box;
     const tx = Math.round(at.tail);
-    a.el.style.transform = `translate3d(${Math.round(at.box.x)}px, ${Math.round(at.box.y)}px, 0)`;
+    // Placed with `translate`, which the grow and shrink (`scale`) leave alone; inside `transform`
+    // the scale would shrink the placement too and fly the bubble in from the corner.
+    a.el.style.translate = `${Math.round(at.box.x)}px ${Math.round(at.box.y)}px`;
     const key = `${at.box.w}|${at.box.h}|${tx}|${this.unit.toFixed(2)}`;
     if (key !== a.shapeKey) {
       a.shapeKey = key;
@@ -182,7 +193,7 @@ export class Bubbles {
     const sy = (1 - _v.y) * 0.5 * h;
     const x = clamp(sx - bw * 0.42, MARGIN, Math.max(MARGIN, w - bw - MARGIN));
     // Room under the bubble for its tail, which ends just over the head.
-    const y = sy - bh - 20;
+    const y = sy - bh - ABOVE;
     const pad = Math.min(tailInset(bw, bh, this.unit), bw / 2);
     return {
       box: { x, y, w: bw, h: bh },
@@ -194,6 +205,8 @@ export class Bubbles {
   private build(post: PlazaPost) {
     const el = document.createElement('a');
     el.className = 'plaza-bubble';
+    // It grows out of the head, this far below it.
+    el.style.setProperty('--to-head', `${ABOVE}px`);
     el.href = post.href;
     el.tabIndex = -1;
     const svg = document.createElementNS(SVG_NS, 'svg');

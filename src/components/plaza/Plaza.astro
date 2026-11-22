@@ -46,6 +46,7 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
     </defs>
   </svg>
   <div class="plaza-who" aria-hidden="true"></div>
+  <output class="plaza-fps" aria-hidden="true" hidden></output>
   <button type="button" class="plaza-start" aria-label="Start">
     <svg class="plaza-start-hand" viewBox="0 0 64 64" aria-hidden="true">
       <path d="M24 30V9.5a5 5 0 0 1 10 0V27l2-.6a5 5 0 0 1 6.300 3.300l.2.700 1.900-.5a5 5 0 0 1 6.100 3.400l.3 1 1-.2a5 5 0 0 1 5.900 3.900l1.200 6.300a17 17 0 0 1-3.700 14.200L52 60H28.500L16.600 45.900a5.300 5.300 0 0 1 .7-7.600 5.300 5.300 0 0 1 6.700.2z"></path>
@@ -258,9 +259,10 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
     transition: color 0.5s ease;
     text-decoration: none;
     pointer-events: auto;
-    /* Grows out of its tail tip, which points at whoever is speaking (bubbles.ts sets --tail). */
-    transform-origin: var(--tail, 30%) calc(100% + var(--tail-h, 16px));
-    will-change: transform;
+    /* Grows out of the head of whoever is speaking, where its tail points (bubbles.ts sets --tail,
+       and --to-head, how far below the bubble the head is). */
+    transform-origin: var(--tail, 30%) calc(100% + var(--to-head, 20px));
+    will-change: translate, scale;
   }
 
   /* With wide support for squircles the radius can be larger and still read as the console's corner. */
@@ -310,14 +312,18 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
       opacity 0.5s ease;
   }
 
-  /* A bubble pops in and out: the whole grows or shrinks, and each part fades on its own, since
-     fading the whole would stop its glass from blurring the plaza while it did. */
+  /* A bubble grows out of the speaker's head and, when it goes, shrinks back into it, retracing
+     the way in exactly: the same length, with each curve run backwards (bubbles.ts waits for it,
+     OUT). The way out has keyframes of its own, as swapping to the same animation reversed would
+     not play again: it would jump straight to its end. Each part fades on its own, since fading
+     the whole would stop its glass from blurring the plaza while it did; on the way out the fade
+     comes last, as it came first. */
   .plaza-bubble.is-in {
-    animation: plaza-pop 0.3s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+    animation: plaza-speak 0.34s var(--ease-spring) both;
   }
 
   .plaza-bubble.is-out {
-    animation: plaza-pop 0.26s ease-in reverse both;
+    animation: plaza-unspeak 0.34s var(--ease-spring-back) both;
   }
 
   .plaza-bubble.is-in > *,
@@ -327,7 +333,31 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
 
   .plaza-bubble.is-out > *,
   .plaza-bubble.is-out::before {
-    animation: plaza-fade 0.26s ease-in reverse both;
+    animation: plaza-unfade 0.2s cubic-bezier(0.75, 0, 0.75, 0.9) 0.14s both;
+  }
+
+  @keyframes plaza-speak {
+    from {
+      scale: 0.04;
+    }
+    to {
+      scale: 1;
+    }
+  }
+
+  @keyframes plaza-unspeak {
+    from {
+      scale: 1;
+    }
+    to {
+      scale: 0.04;
+    }
+  }
+
+  @keyframes plaza-unfade {
+    to {
+      opacity: 0;
+    }
   }
 
   /* Pressed: as the camera dives into whoever is saying it, the bubble grows toward you from its
@@ -449,6 +479,22 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
     font-family: 'Monocraft';
     src: url('/fonts/monocraft-latin.otf') format('opentype');
     font-display: block;
+  }
+
+  /* Frames a second, in development only (main.ts). */
+  .plaza-fps {
+    position: absolute;
+    z-index: 9;
+    bottom: 6px;
+    left: 6px;
+    color: var(--ink);
+    font-family: 'Monocraft', ui-monospace, monospace;
+    font-size: 9px;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: none;
+    font-smooth: never;
+    pointer-events: none;
   }
 
   /* Who a Mii is: its name over its head on a square, see-through black tag, as name tags are in
@@ -603,15 +649,6 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
 
   .plaza[data-state='loading'] .plaza-veil span:nth-child(3) {
     animation-delay: 1.2s;
-  }
-
-  @keyframes plaza-pop {
-    from {
-      scale: 0.82;
-    }
-    to {
-      scale: 1;
-    }
   }
 
   @keyframes plaza-fade {

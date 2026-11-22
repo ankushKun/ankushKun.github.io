@@ -163,7 +163,7 @@ const items = NAV.map((l) => ({ ...l, tile: tileFor(l.href) }));
   }
 
   /* The menu of sections: its tiles drop out of the button one under another, each with its name
-     on a tag to its left, and fold back up into it in turn (src/scripts/menu.ts). It stays until
+     to its left, and fold back up into it in turn (src/scripts/menu.ts). It stays until
      the button (or Escape) closes it. */
   .tv-menu {
     --tile: 52px;
@@ -209,21 +209,28 @@ const items = NAV.map((l) => ({ ...l, tile: tileFor(l.href) }));
     box-shadow: none;
   }
 
-  /* The name, on the plaza's dark tag; the section you are in has a blue one. */
+  /* The name, as plain text: stronger when pointed at, blue for the section you are in and while
+     pressed. A soft glow of the screen behind it keeps it readable over the page. */
   .tv-name {
-    padding: 0 12px;
-    border-radius: 99px;
-    background: light-dark(rgb(63 67 70 / 0.92), rgb(78 88 94 / 0.95));
-    box-shadow: 0 2px 8px -2px rgb(0 0 0 / 0.3);
+    color: var(--color-ink-mid);
     font-size: 0.875rem;
     font-weight: 700;
     line-height: 30px;
     white-space: nowrap;
-    transition: background 0.18s ease;
+    text-shadow:
+      0 0 2px var(--color-screen),
+      0 0 8px var(--color-screen);
+    transition: color 0.18s ease;
   }
 
-  .tv-item[aria-current] .tv-name {
-    background: #1f9fdb;
+  .tv-item:hover .tv-name,
+  .tv-item:focus-visible .tv-name {
+    color: var(--color-ink-strong);
+  }
+
+  .tv-item[aria-current] .tv-name,
+  .tv-item:active .tv-name {
+    color: #1f9fdb;
   }
 
   .tv-tile {

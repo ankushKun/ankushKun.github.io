@@ -73,20 +73,18 @@ import { LOBBY_NAV, SITE } from '../../site';
     list-style: none;
   }
 
-  /* Each link is a pill whose text lines up with the name; its padding is what you press. */
+  /* Each link is plain text lined up with the name, stronger when pointed at and blue while
+     pressed; its padding is what you press. */
   .lobby a {
     display: block;
     padding: 9px 12px;
-    border-radius: 99px;
     color: var(--color-ink-mid);
     font-size: 15px;
     font-weight: 500;
     line-height: 1;
     text-decoration: none;
     pointer-events: auto;
-    transition:
-      color 0.18s ease,
-      background-color 0.18s ease;
+    transition: color 0.18s ease;
   }
 
   .lobby a:focus-visible {
@@ -95,9 +93,12 @@ import { LOBBY_NAV, SITE } from '../../site';
 
   @media (hover: hover) {
     .lobby a:hover {
-      background: light-dark(rgb(42 47 49 / 0.065), rgb(255 255 255 / 0.07));
       color: var(--color-ink-strong);
     }
+  }
+
+  .lobby a:active {
+    color: #1f9fdb;
   }
 
   /* Without the plaza, your portrait stands in for your Mii. */

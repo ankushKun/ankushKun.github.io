@@ -216,22 +216,38 @@ import { MUSIC } from '../../data/music';
     color: var(--color-ink);
     opacity: 0;
     scale: 0.94;
+    /* Closing retraces opening exactly: the same lengths with each curve run backwards, and the
+       fade last, as it came first. */
     transition:
-      opacity 0.2s ease,
-      scale 0.3s var(--ease-spring),
-      overlay 0.2s allow-discrete,
-      display 0.2s allow-discrete;
+      opacity 0.2s cubic-bezier(0.75, 0, 0.75, 0.9) 0.1s,
+      scale 0.3s var(--ease-spring-back),
+      overlay 0.3s allow-discrete,
+      display 0.3s allow-discrete;
   }
 
   .music-pop:popover-open {
     opacity: 1;
     scale: 1;
+    transition:
+      opacity 0.2s ease,
+      scale 0.3s var(--ease-spring),
+      overlay 0.3s allow-discrete,
+      display 0.3s allow-discrete;
+  }
+
+  /* Over a Mii, it grows out of them and shrinks back into them (widget.ts sets the origin). */
+  .music-pop[data-over]:not(:popover-open) {
+    scale: 0.04;
   }
 
   @starting-style {
     .music-pop:popover-open {
       opacity: 0;
       scale: 0.94;
+    }
+
+    .music-pop[data-over]:popover-open {
+      scale: 0.04;
     }
   }
 
