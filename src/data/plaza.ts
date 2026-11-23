@@ -30,7 +30,7 @@ export const CUBES: Record<string, CubeStyle> = {
  */
 
 /** You, front and center. */
-export const ME = 'AwEAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAABNAGUAAAAAAAAAAAAAAAAAAAAAAEgmAiBLABFrRBgBM0MOgRIPaA0AACkDUkhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAACnk';
+export const ME = 'Ankush.png';
 
 /** Up to nine friends who stand around you and applaud. With fewer than seven, the crowd fills in. */
 export const HERO: string[] = [];
