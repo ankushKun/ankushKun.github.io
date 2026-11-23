@@ -1,0 +1,194 @@
+/* The quick search (Search.astro): a white sheet dropped from the top of the screen, as the Wii U's
+   own search was, with a sunken gloss field and the matches under it as rows of tiles. The row you
+   are on has the console's blue ring. */
+
+.search {
+  position: fixed;
+  inset: 0;
+  width: min(560px, calc(100% - 32px));
+  max-width: none;
+  height: fit-content;
+  max-height: min(600px, calc(100dvh - 13vh - 24px));
+  margin: 13vh auto auto;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 28px;
+  background: var(--color-surface);
+  box-shadow:
+    0 0 0 1px var(--color-line),
+    0 26px 70px rgb(20 50 60 / 0.3);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+.search[open] {
+  display: flex;
+  flex-direction: column;
+  animation: search-in 0.45s var(--ease-spring) both;
+}
+
+.search[data-closing] {
+  animation: search-out 0.2s cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+.search::backdrop {
+  background: rgb(30 60 70 / 0.28);
+  backdrop-filter: blur(5px);
+  animation: search-dim 0.3s ease-out both;
+}
+
+.search[data-closing]::backdrop {
+  animation: search-dim 0.2s ease-in reverse both;
+}
+
+@keyframes search-in {
+  from {
+    opacity: 0;
+    scale: 0.94;
+    translate: 0 -12px;
+  }
+}
+
+@keyframes search-out {
+  to {
+    opacity: 0;
+    scale: 0.97;
+  }
+}
+
+@keyframes search-dim {
+  from {
+    opacity: 0;
+  }
+}
+
+.search-field {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+  height: 58px;
+  margin: 14px;
+  padding: 0 20px;
+  border-radius: 29px;
+  background: linear-gradient(var(--color-gloss-bottom), var(--color-gloss-top));
+  box-shadow:
+    inset 0 1px 3px rgb(0 0 0 / 0.1),
+    0 0 0 1px var(--color-line);
+  color: var(--color-ink-soft);
+  cursor: text;
+  transition: box-shadow 0.2s;
+}
+
+.search-field:focus-within {
+  box-shadow:
+    inset 0 1px 3px rgb(0 0 0 / 0.1),
+    var(--glow);
+}
+
+.search-field svg {
+  flex: none;
+}
+
+.search-field input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-ink-strong);
+  font: inherit;
+  font-size: 1.125rem;
+  font-weight: 500;
+  outline: none;
+}
+
+/* The pill glows instead, round the icon too. */
+.search-field input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.search-field input::placeholder {
+  color: var(--color-ink-faint);
+}
+
+.search-list {
+  margin: 0;
+  padding: 0 10px 12px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+  scroll-padding: 6px 0;
+}
+
+.search-list:empty {
+  display: none;
+}
+
+.search-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 7px 12px 7px 7px;
+  border-radius: 18px;
+  color: inherit;
+  text-decoration: none;
+  outline: none;
+}
+
+.search-item[aria-selected='true'] {
+  background: light-dark(#eaf8fe, #1b3540);
+  box-shadow: inset 0 0 0 2px #46c3f0;
+}
+
+.search-item .tile {
+  --s: 44px;
+}
+
+.search-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-ink-strong);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-kind {
+  flex: none;
+  padding: 0 10px;
+  border-radius: 99px;
+  background: var(--color-tag);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 22px;
+}
+
+.search-none {
+  padding: 16px 14px 22px;
+  color: var(--color-ink-soft);
+  text-align: center;
+}
+
+@media (max-width: 599px) {
+  .search {
+    margin-top: 10vh;
+    border-radius: 24px;
+  }
+
+  .search-kind {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .search[open],
+  .search::backdrop {
+    animation-duration: 0.01s;
+  }
+}

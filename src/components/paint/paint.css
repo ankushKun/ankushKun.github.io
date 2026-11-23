@@ -91,6 +91,21 @@
   color: light-dark(#c3c9cc, #3a4247);
 }
 
+.pt-today {
+  width: auto;
+  margin-left: 2px;
+  padding: 0 12px;
+  border-left: 1px solid var(--color-line);
+  border-radius: 0 10px 10px 0;
+  color: var(--color-ink-strong);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.pt:not([data-past]) .pt-today {
+  display: none;
+}
+
 .pt-lcd-text {
   display: grid;
   flex: 1;
@@ -114,6 +129,12 @@
 .pt-lcd-text span {
   color: var(--color-ink-quiet);
   font-size: 0.8125rem;
+  transition: opacity 0.25s var(--ease-fade);
+}
+
+/* Under the opening prompt until it lands here. */
+.pt[data-introducing] .pt-lcd-text span {
+  opacity: 0;
 }
 
 /* The tray ------------------------------------------------------------------------------------ */
@@ -514,6 +535,16 @@
   padding: 5px 5px 2px;
   overflow-x: auto;
   scrollbar-width: none;
+  /* Edges fade only on a side with more days past it. */
+  mask-image: linear-gradient(to right, transparent, #000 var(--fade-l, 0px), #000 calc(100% - var(--fade-r, 0px)), transparent);
+}
+
+.pt-days[data-more-l] {
+  --fade-l: 40px;
+}
+
+.pt-days[data-more-r] {
+  --fade-r: 40px;
 }
 
 .pt-day {
@@ -594,6 +625,59 @@
 
 .pt[data-replaying] .pt-act .i-stop {
   display: block;
+}
+
+/* The opening prompt: big over the board, then into the LCD (main.ts, intro). No z-index of its
+   own, so the words can rise over the bar while the dim stays under it and under the LCD. */
+
+.pt-intro {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.pt-intro[hidden] {
+  display: none;
+}
+
+.pt-intro-dim {
+  position: absolute;
+  inset: var(--app-bar) 0 0;
+  z-index: 3;
+  background: light-dark(rgb(236 239 241 / 0.7), rgb(21 25 28 / 0.72));
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  pointer-events: auto;
+}
+
+.pt-intro-text {
+  position: absolute;
+  inset: var(--app-bar) 0 0;
+  z-index: 5;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 0 24px 6vh;
+}
+
+.pt-intro-lead {
+  color: var(--color-ink-mid);
+  font-size: clamp(1rem, 0.8rem + 0.8vw, 1.375rem);
+  font-weight: 500;
+  opacity: 0;
+}
+
+.pt-intro-words {
+  max-width: 15em;
+  color: var(--color-ink-strong);
+  font-size: clamp(1.75rem, 1rem + 3vw, 3.25rem);
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  text-wrap: balance;
+  opacity: 0;
 }
 
 /* The gate stands where the tools and the canvas go, and hides them. */

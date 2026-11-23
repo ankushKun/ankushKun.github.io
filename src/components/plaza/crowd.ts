@@ -7,7 +7,9 @@ import type { MiiKit } from '../mii/kit';
 import { MiiSet, randomMii, restPose, withParts, type Pose } from '../mii/rig';
 import { MIRRORED } from './floor';
 import type { Layout } from './layout';
+import type { Track } from '../../data/music';
 import { BeatClock } from './beat';
+import { Leeks } from './leek';
 import * as motion from './motion';
 import * as toss from './toss';
 import type { PlazaMii } from './types';
@@ -81,6 +83,13 @@ const LAG = 0.09;
  * The three on stage are picked most; each fan counts `fan` as much. It fades in over `fade`.
  */
 const SOLO = { first: [5, 10], every: [7, 16], length: 5, fan: 0.35, fade: 0.3 };
+/**
+ * Now and then the stage dances the polka (motion.polka) in place of the routine, all three as one
+ * and once through, with no solos meanwhile: `first` seconds after the music starts, then `every`
+ * seconds after the last one ends (ranges). A track named in the constructor's `polka` gets it
+ * all the way through instead.
+ */
+const POLKA = { first: [15, 30], every: [45, 90] };
 /**
  * While the stage dances, the crowd within `near` of the DJ (depth squeezed) is its audience: each
  * time one of them is free, they turn to the stage and, `share` of the time, cheer along on the
@@ -261,10 +270,11 @@ interface Mii {
   /** The DJ under the Music block, boombox on their shoulder. */
   dj: boolean;
   /**
-   * For the DJ and their dancers: where they stand from the DJ's spot, and which side they dance
-   * on (-1 left as you look, 1 right, 0 the DJ). Null for everyone else.
+   * For the DJ and their dancers: where they stand from the DJ's spot, which side they dance on
+   * (-1 left as you look, 1 right, 0 the DJ), and which of the stage's leeks is theirs. Null for
+   * everyone else.
    */
-  stage: { x: number; z: number; side: number } | null;
+  stage: { x: number; z: number; side: number; leek: number } | null;
   /** Dancing along with the stage (`fan`): which of FANS.places it has, or -1. */
   fan: number;
   /** How far ahead of the beat (or behind, below 0) this dancer dances, in seconds. */
@@ -367,8 +377,22 @@ export class Crowd {
   private djAt = { x: 0, z: 0 };
   private djCube: number;
   private grooving = false;
-  /** The music's beat, which everyone on stage dances to; main.ts moves it on with the radio. */
+  /** The music's beat, which everyone on stage dances to, kept by `listen`. */
   readonly beat = new BeatClock();
+  /** The same beat counted in the polka's bars, at its own pace. */
+  private readonly bars = new BeatClock(motion.POLKA_BAR);
+  /** Video ids of the tracks the polka is danced to all the way through, and whether one is playing. */
+  private readonly polkaTracks: Set<string>;
+  private polkaSong = false;
+  /**
+   * What the stage dances while music is heard: motion.idol, or motion.polka from the top of bar
+   * `from` (of `bars`) until the top of bar `until`. `next` is when the polka may next begin (-1
+   * until the music starts), `bar` the bar it was last frame.
+   */
+  private routine = { clip: motion.idol as motion.Clip, from: 0, until: 0, next: -1, bar: 0 };
+  /** The leeks the stage twirls in the polka, one for each of them. */
+  private readonly leeks: Leeks | null = null;
+  private readonly leekNow = { show: 0, spin: 0 };
   /** Beats gone by while the DJ dances, for the boombox to thump on; null while they stand. */
   djBeats: number | null = null;
   /**
@@ -419,12 +443,15 @@ export class Crowd {
       dj: PlazaMii | null;
       /** Who dances either side of the DJ, left then right as you look. */
       backup: PlazaMii[];
+      /** Video ids of the tracks the stage dances the polka to from start to end. */
+      polka: string[];
       /** Face texture size for the crowd. */
       resolution: number;
       random: Rng;
     },
   ) {
     const r = (this.r = opts.random);
+    this.polkaTracks = new Set(opts.polka);
     type Cast = { data: Uint8Array; who: PlazaMii | null };
     const decode = (miis: PlazaMii[]) =>
       miis.flatMap((who): Cast[] => {
@@ -539,13 +566,14 @@ export class Crowd {
       const m = this.miis[slot];
       m.home = opts.djCube;
       const side = j === 0 ? 0 : j % 2 ? -1 : 1;
-      m.stage = { x: side * BACKUP.gap * Math.ceil(j / 2), z: side ? BACKUP.back : 0, side };
+      m.stage = { x: side * BACKUP.gap * Math.ceil(j / 2), z: side ? BACKUP.back : 0, side, leek: j };
       m.lag = (this.r() * 2 - 1) * LAG;
     });
     if (dj) {
       this.miis[middle.length].dj = true;
       this.dj = middle.length;
       this.djWrist = middleSet.track(middle.length, 'wrist_l');
+      this.leeks = new Leeks(scene, stage.map((_, j) => middleSet.track(middle.length + j, 'wrist_r')));
     }
     others.forEach((c, i) => add(crowdSet, i, false, c.who));
   }
@@ -581,6 +609,23 @@ export class Crowd {
   /** Music is heard (`true`) or not: the DJ and their dancers dance the routine, or they stand. */
   setGroove(on: boolean) {
     this.grooving = on;
+  }
+
+  /**
+   * Keeps the stage in time with the radio: `track` is what is playing out loud (null for nothing
+   * heard), `at` where in it the radio is, in seconds.
+   */
+  listen(dt: number, track: Track | null, at: number) {
+    this.beat.update(dt, track?.beats, at);
+    this.bars.update(dt, track?.beats, at);
+    this.polkaSong = !!track && this.polkaTracks.has(track.videoId);
+  }
+
+  /** Has the stage dance the polka from the top of the next bar (or stop it there with `false`), for checking it. */
+  cuePolka(on = true) {
+    const r = this.routine;
+    if (on) r.next = 0;
+    else if (r.clip === motion.polka) r.until = Math.floor(this.bars.loops) + 1;
   }
 
   /** The batch of Miis in the crowd (everyone but you and your friends). */
@@ -1039,6 +1084,7 @@ export class Crowd {
 
   update(dt: number, time: number, camera: THREE.Vector3, calm: boolean) {
     this.recruit(time, calm);
+    this.program(time, calm);
     this.spotlight(time, calm);
     this.gather(time, calm);
     for (const m of this.miis) this.think(m, dt, time, camera, calm);
@@ -1161,7 +1207,7 @@ export class Crowd {
     // too, and the dancers turn a little in toward them.
     this.turn(m, toCamera + (dancing ? 0 : side ? -side * 0.2 : -0.25), dt);
     this.keepSpot(m, dt);
-    const clip = !dancing ? motion.stand : this.solo.who === m ? this.solo.clip : motion.idol;
+    const clip = !dancing ? motion.stand : this.solo.who === m ? this.solo.clip : this.routine.clip;
     if (m.clip !== clip) this.play(m, clip, time);
     if (m.dj) {
       this.djDancing = dancing;
@@ -1169,6 +1215,42 @@ export class Crowd {
       this.djSpot.z = this.djAt.z + Math.cos(toCamera) * BOOMBOX_DOWN;
       this.djSpot.yaw = toCamera;
     }
+  }
+
+  /**
+   * Starts and ends the polka (see POLKA): it begins at the top of a bar once no solo is going on,
+   * and once through it is back to the routine, unless the track it is danced to all the way
+   * through is still playing.
+   */
+  private program(time: number, calm: boolean) {
+    const r = this.routine;
+    const bar = Math.floor(this.bars.loops);
+    const top = bar !== r.bar;
+    r.bar = bar;
+    const between = ([a, b]: number[]) => a + this.r() * (b - a);
+    if (this.dj < 0 || calm || !this.grooving) {
+      r.clip = motion.idol;
+      r.next = -1;
+      return;
+    }
+    if (r.next < 0) r.next = time + between(POLKA.first);
+    if (!top) return;
+    if (r.clip === motion.polka) {
+      if (bar < r.until) return;
+      if (this.polkaSong) {
+        r.until = bar + motion.POLKA_BEATS / 4;
+        return;
+      }
+      r.clip = motion.idol;
+      r.next = time + between(POLKA.every);
+      // A moment all together again before anyone breaks off for a solo.
+      this.solo.next = Math.max(this.solo.next, time + between(SOLO.first));
+      return;
+    }
+    if (this.solo.who || (time < r.next && !this.polkaSong)) return;
+    r.clip = motion.polka;
+    r.from = bar;
+    r.until = bar + motion.POLKA_BEATS / 4;
   }
 
   /**
@@ -1193,12 +1275,12 @@ export class Crowd {
       if (m.clip !== s.clip) s.who = null;
       else if (top && loop >= s.until) {
         s.who = null;
-        this.play(m, motion.idol, time);
+        this.play(m, this.routine.clip, time);
       }
       if (!s.who) s.next = time + between(SOLO.every);
       return;
     }
-    if (!top || (time < s.next && !s.want)) return;
+    if (!top || this.routine.clip !== motion.idol || (time < s.next && !s.want)) return;
     const pool = this.miis.filter((o) => o.clip === motion.idol && (o.stage || o.act === 'fan'));
     const wanted = s.want && this.miis[s.want.who];
     let who = wanted && pool.includes(wanted) ? wanted : null;
@@ -1331,7 +1413,7 @@ export class Crowd {
   }
 
   /**
-   * A fan runs over to its place, then dances the stage's routine on its beat, square on to you,
+   * A fan runs over to its place, then dances whatever the stage dances on its beat, square on to you,
    * until its time is up or a moment after the music stops, and walks back to its own block.
    */
   private fan(m: Mii, dt: number, time: number, toCamera: number) {
@@ -1339,12 +1421,14 @@ export class Crowd {
       if (!this.grooving || time - m.at > STUCK) return this.unfan(m, time);
       if (this.step(m, RUN * m.pace, 1.75, dt)) {
         m.until = time + FANS.stay[0] + this.r() * (FANS.stay[1] - FANS.stay[0]);
-        this.play(m, motion.idol, time);
+        this.play(m, this.routine.clip, time);
       }
       return;
     }
     this.turn(m, toCamera, dt);
     this.keepSpot(m, dt);
+    // The stage changed dances: so do they, unless dancing a solo of their own.
+    if (this.grooving && (m.clip === motion.idol || m.clip === motion.polka)) this.play(m, this.routine.clip, time);
     // The music stopped: they stop with the stage, and each wanders off in their own moment.
     if (!this.grooving && motion.dancing(m.clip)) {
       this.play(m, motion.stand, time);
@@ -2102,6 +2186,11 @@ export class Crowd {
     return this.beat.beats + m.lag / this.beat.beatLength - m.soloAt;
   }
 
+  /** Beats into the polka `m` is, a touch ahead or behind (`lag`). */
+  private polkaIn(m: Mii) {
+    return (this.bars.loops - this.routine.from) * 4 + (m.lag / this.bars.period) * 4;
+  }
+
   /** Writes one animation's pose for this moment into `out`. */
   private evaluate(m: Mii, clip: motion.Clip, since: number, time: number, calm: boolean, out: Pose) {
     if (clip === HOLD) return motion.copyJoints(m.held, out);
@@ -2116,11 +2205,13 @@ export class Crowd {
     const t =
       clip === motion.idol
         ? (this.beat.loops + m.lag / this.beat.period) * motion.LOOP
-        : solo
-          ? this.beatsIn(m)
-          : gait
-            ? m.stride
-            : Math.max(0, time - since);
+        : clip === motion.polka
+          ? this.polkaIn(m)
+          : solo
+            ? this.beatsIn(m)
+            : gait
+              ? m.stride
+              : Math.max(0, time - since);
     clip(out, t, k);
     if (solo && m.soloSide < 0) motion.mirror(out);
     if (gait) {
@@ -2173,5 +2264,10 @@ export class Crowd {
     pose.roll += m.tipZ;
     pose.scale = SIZE;
     m.set.setPose(m.slot, pose);
+    if (m.stage && this.leeks) {
+      // The leek comes out for the polka's twirl, and goes the moment anything else is danced.
+      const now = m.clip === motion.polka && !m.set.isHidden(m.slot) ? motion.leek(this.polkaIn(m), this.leekNow) : null;
+      this.leeks.place(m.stage.leek, now ? now.show : 0, now ? now.spin : 0, SIZE);
+    }
   }
 }

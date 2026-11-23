@@ -101,6 +101,8 @@ export interface PlazaData {
   dj: PlazaMii | null;
   /** Who dances either side of them, left then right. */
   backup: PlazaMii[];
+  /** Video ids of the tracks the stage dances the polka to from start to end. */
+  polka: string[];
   boombox: 'model' | 'drawn';
   crowd: { desktop: number; mobile: number };
   /** Entries with cover art, other people's games and apps that aren't blocks: what the feature slots turn through. */

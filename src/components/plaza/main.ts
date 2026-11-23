@@ -18,6 +18,7 @@ import { HeadGear } from './headgear';
 import { Crowd, SKYFALL } from './crowd';
 import { GRAVITY, type SoloName } from './motion';
 import { Cubes } from './cubes';
+import { Film } from './film';
 import { Floor, HAZE } from './floor';
 import { HeadCards } from './heads';
 import { drawIcons, thumb } from './icons';
@@ -149,7 +150,8 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     prerendering() ? null : Promise.race([music.ready(), new Promise((done) => setTimeout(done, 3000))]),
   ]);
 
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+  // With an alpha channel, so the Music block can leave a window onto its video (film.ts).
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance' });
   // Resolution steps the plaza can drop through if a device can't keep up (see `govern` below).
   const ratios = [Math.min(devicePixelRatio, 2), 1.5, 1.25, 1, 0.8, 0.65].filter((r, i, all) => r <= all[0] && all.indexOf(r) === i);
   // Sharp from the start: a phone draws its small screen at 2x easily, and `govern` steps down if not.
@@ -204,6 +206,8 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     musicCube >= 0
       ? new NowPlaying(cubes.items[musicCube].mesh.material.uniforms.uIcon, cubes.items[musicCube].mesh.material.uniforms.uIcon.value, renderer.capabilities.getMaxAnisotropy())
       : null;
+  // And, once a track's video is playing, the video itself in place of the cover.
+  const film = musicCube >= 0 && !calm ? new Film(cubes, musicCube, root, canvas) : null;
   const random = rng(2012);
   const crowd = new Crowd(scene, {
     kit,
@@ -215,6 +219,7 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     djCube: musicCube,
     dj: data.dj,
     backup: data.backup,
+    polka: data.polka,
     resolution: 128,
     random,
   });
@@ -1079,7 +1084,7 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     if (press?.holding) crowd.carry(press.mii, rayAt(press.x, press.y));
     // The stage keeps the beat of whatever the radio plays, wherever it is in the track.
     const playing = radio.snapshot();
-    crowd.beat.update(dt, heard && playing.index >= 0 ? playing.tracks[playing.index].beats : null, radio.playhead());
+    crowd.listen(dt, heard && playing.index >= 0 ? playing.tracks[playing.index] : null, radio.playhead());
     crowd.update(dt, time, camera.position, calm);
     for (const { i, worn } of gear) worn.place(crowd.headOf(i));
     if (boombox) {
@@ -1091,8 +1096,19 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     const showing = (opening && time < INTRO.wide) || stepping || diving ? 1 : smoothstep(0.55, 0.78, open);
     blocksShown = calm || dt === 0 ? showing : damp(blocksShown, showing, 4, dt);
     cubes.update(time, dt, calm, camera, v.dist, blocksShown);
-    coverArt?.update();
+    film?.tick(dt, active && blocksShown > 0.98);
+    coverArt?.update(film?.shown ?? false);
     return v;
+  }
+
+  /** Sets the canvas's alpha to full everywhere, so only the Music block's glass can leave it clear. */
+  function opaque() {
+    const gl = renderer.getContext();
+    gl.colorMask(false, false, false, true);
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.colorMask(true, true, true, true);
+    renderer.state.buffers.color.reset();
   }
 
   function draw(target: THREE.Vector3) {
@@ -1100,13 +1116,15 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     cards.update(camera, size.y / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))), true);
     floor.mirror(renderer, scene, camera, target, time);
     renderer.render(scene, camera);
+    opaque();
     // The glass looks through a copy of everything drawn so far, then goes on top of it.
     if (cubes.items.some((item) => item.mesh.visible)) {
       renderer.copyFramebufferToTexture(behind);
+      film?.place(camera, w, h);
       renderer.autoClear = false;
       renderer.render(glass, camera);
       renderer.autoClear = true;
-    }
+    } else film?.release();
     placeLinks();
     placeDj();
     if (press && !press.holding && performance.now() - press.at > 350) liftMii();
@@ -1317,6 +1335,7 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     renderer.setSize(w, h, false);
     floor.resize(renderer);
     sizeBehind();
+    film?.measure();
     arrange(true);
     // Bubbles follow their speakers anyway; only a switch between wide and tall clears them.
     if (flipped) bubbles.clear();
@@ -1380,6 +1399,8 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
         groove: (on = true) => crowd.setGroove(on),
         /** Asks for a solo by name (any, without one) from Mii `i` (anyone dancing, without one), at the top of the next time round. */
         solo: (name?: SoloName, i?: number) => crowd.cue(name, i),
+        /** The stage dances the polka from the next bar, or stops it there with `false`. */
+        polka: (on = true) => crowd.cuePolka(on),
         /** Swaps the DJ's boombox: 'model' or 'drawn'. */
         boombox: (kind: BoomboxKind) => boombox?.show(kind),
         /** Where Mii `i` is on screen (CSS pixels): its feet and the top of its head, and what it is doing. */
@@ -1454,6 +1475,7 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
       hideCard();
       closeOver();
       stopChat();
+      film?.stop();
     },
     wake(from) {
       if (active) return;

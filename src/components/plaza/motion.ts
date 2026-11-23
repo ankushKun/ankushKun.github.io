@@ -804,6 +804,7 @@ function flip(key: Key): Pose {
 /** Both hands on the hips, as the routine measured them. */
 const HIPS: Key = { outR: 0.72, swingR: -0.39, twistR: 0.89, elbowR: 1.87, outL: 0.72, swingL: -0.39, twistL: 0.89, elbowL: 1.87 };
 const HIP_L: Key = { outL: 0.72, swingL: -0.39, twistL: 0.89, elbowL: 1.87 };
+const HIP_R: Key = { outR: 0.72, swingR: -0.39, twistR: 0.89, elbowR: 1.87 };
 
 /** The dab: the face buried in the crook of the left elbow, the right arm flung straight up and out. */
 const DAB: Key = {
@@ -1062,8 +1063,152 @@ export const thriller: Clip = (p, t) => {
   p.expr = 4;
 };
 
+// The polka: the Ievan Polkka dance from Hatsune Miku's Project DIVA video for the song, danced by
+// all three on stage together in place of the routine. Its eight phrases of eight beats come in
+// the video's order, read off it beat by beat wherever the camera shows the whole body: hands on
+// the hips swaying, arms flung open, waving, the leek twirl, flapping and pointing, arms up over
+// the head, pointing off to either side, then a turn to show the back, a kick and a big wave. `t`
+// is beats into it. Left and right are the dancer's own.
+
+/** Beats a time through the polka takes. */
+export const POLKA_BEATS = 64;
+/**
+ * How long a bar of four beats takes at the video's own pace, 119 beats a minute. To music it is
+ * fitted to the beat at the nearest pace to this (plaza/beat.ts).
+ */
+export const POLKA_BAR = (4 * 60) / 119;
+
+/** Arms flung open wide and low, palms up. */
+const OPEN: Key = { crouch: 0.08, nod: -0.06, outR: 0.95, swingR: 0.3, twistR: -0.3, elbowR: 0.35, outL: 0.95, swingL: 0.3, twistL: -0.3, elbowL: 0.35 };
+/** Both arms swept over to the left, the right reaching across the chest, the body turning with them. */
+const SWEEP: Key = {
+  yaw: 0.3, twist: 0.3, headYaw: 0.15, crouch: 0.16, sway: 0.08, leanZ: 0.04,
+  outR: -1.2, swingR: 1.0, twistR: 0.3, elbowR: 0.35, outL: 1.15, swingL: 0.45, twistL: 0, elbowL: 0.3,
+};
+/** One side of the wave: the right forearm up beside the head, palm out, the left arm down and out. */
+const WAVE: Key = {
+  crouch: 0.1, sway: 0.05, leanZ: -0.06, tilt: 0.06,
+  outR: 1.55, swingR: 0.1, twistR: -1.45, elbowR: 1.6, outL: 0.7, swingL: 0.15, twistL: 0.2, elbowL: 0.2,
+};
+/** The leek held out to the right, twirling clear of the face, the left hand on the hip. */
+const LEEK_OUT: Key = { ...HIP_L, yaw: 0.15, crouch: 0.12, headYaw: -0.1, outR: 1.1, swingR: 0.8, twistR: -0.3, elbowR: 0.4 };
+/** Twirled in close in front of the chest. */
+const LEEK_IN: Key = { ...HIP_L, yaw: 0.1, crouch: 0.16, nod: 0.05, outR: 0.35, swingR: 0.85, twistR: 0.5, elbowR: 1.25 };
+/** Thrown up high. */
+const LEEK_UP: Key = { ...HIP_L, yaw: 0.1, crouch: 0.04, nod: -0.12, outR: 2.0, swingR: 0.2, twistR: -0.6, elbowR: 0.15 };
+/** Flapping: the right arm up and bent, the left straight out to the side. */
+const FLAP: Key = {
+  crouch: 0.1, sway: 0.05, leanZ: -0.04,
+  outR: 1.9, swingR: 0.15, twistR: -1.4, elbowR: 1.3, outL: 1.35, swingL: 0.15, twistL: 0, elbowL: 0.15,
+};
+/** Hands brought in to the chest. */
+const CHEST: Key = { crouch: 0.14, nod: 0.06, outR: 0.15, swingR: 0.6, twistR: 1.2, elbowR: 2.0, outL: 0.15, swingL: 0.6, twistL: 1.2, elbowL: 2.0 };
+/** Fists up beside the shoulders, pointing at the sky. */
+const SKY: Key = { crouch: 0.06, nod: -0.1, outR: 1.0, swingR: 0.25, twistR: -1.2, elbowR: 2.0, outL: 1.0, swingL: 0.25, twistL: -1.2, elbowL: 2.0 };
+/** Both arms straight, down and out to either side, pointing at the floor. */
+const FLOOR: Key = { crouch: 0.12, nod: 0.04, outR: 0.8, swingR: 0.35, twistR: 0, elbowR: 0.05, outL: 0.8, swingL: 0.35, twistL: 0, elbowL: 0.05 };
+/** Both arms up over the head, a little bent, palms forward (wide enough to show past a Mii's big head). */
+const OVER: Key = { crouch: 0.06, nod: -0.1, outR: 2.2, swingR: 0.1, twistR: -0.4, elbowR: 0.25, outL: 2.2, swingL: 0.1, twistL: -0.4, elbowL: 0.25 };
+/** Both arms pointing off to the left, the body turned and stepping that way. */
+const AWAY: Key = {
+  yaw: 0.45, twist: 0.2, headYaw: 0.2, crouch: 0.12, spread: 0.22, sway: 0.1,
+  outR: -1.35, swingR: 1.0, twistR: 0.3, elbowR: 0.12, outL: 1.5, swingL: 0.2, twistL: 0, elbowL: 0.05,
+};
+/** The left arm up high for a big wave, the right hand on the hip. */
+const BYE: Key = { ...HIP_R, crouch: 0.08, sway: -0.05, leanZ: 0.04, tilt: -0.06, outL: 1.7, swingL: 0.1, twistL: -1.5, elbowL: 1.2 };
+const ON_HIPS: Key = { ...HIPS, crouch: 0.1 };
+
+/** Keyed by beat, 0 to POLKA_BEATS. Each pose lands on its beat and holds a moment before the next. */
+const POLKA: [number, Key | Pose][] = [
+  // Hands on the hips, swaying on every beat (the sway is added in `polka`).
+  [0, ON_HIPS],
+  [7.4, ON_HIPS],
+  // Arms flung open, swept over to the left, open again, hands on the hips; then to the right.
+  [8, OPEN], [8.55, OPEN], [9, SWEEP], [9.55, SWEEP], [10, OPEN], [10.55, OPEN], [11, ON_HIPS], [11.55, ON_HIPS],
+  [12, OPEN], [12.55, OPEN], [13, flip(SWEEP)], [13.55, flip(SWEEP)], [14, OPEN], [14.55, OPEN], [15, ON_HIPS], [15.5, ON_HIPS],
+  // Waving: one forearm up and the other arm down, changing sides every other beat.
+  [16, WAVE], [17.5, WAVE], [18, flip(WAVE)], [19.5, flip(WAVE)],
+  [20, WAVE], [21.5, WAVE], [22, flip(WAVE)], [23.4, flip(WAVE)],
+  // The leek (shown by plaza/leek.ts): held out twirling, then twirled in close and thrown up high by turns.
+  [24, LEEK_OUT], [27.5, LEEK_OUT],
+  [28, LEEK_IN], [28.55, LEEK_IN], [29, LEEK_UP], [29.55, LEEK_UP],
+  [30, LEEK_IN], [30.55, LEEK_IN], [31, LEEK_UP], [31.5, LEEK_UP],
+  // Arms open low, flapping, hands in to the chest, pointing at the sky, then at the floor either side.
+  [32, OPEN], [32.55, OPEN], [33, FLAP], [33.5, FLAP], [34, flip(FLAP)], [34.5, flip(FLAP)], [35, FLAP], [35.4, FLAP],
+  [35.8, CHEST], [36.2, SKY], [37.6, SKY], [38, FLOOR], [39.5, FLOOR],
+  // Arms up over the head, swaying (added in `polka`).
+  [40, OVER],
+  [47.4, OVER],
+  // Pointing off to the left with a step that way, then to the right, twice over.
+  [48, AWAY], [49.5, AWAY], [50, flip(AWAY)], [51.5, flip(AWAY)],
+  [52, AWAY], [53.5, AWAY], [54, flip(AWAY)], [55.5, flip(AWAY)],
+  // Hands on the hips, turned round to show the back (the turn is added in `polka`), a kick
+  // back, round to the front again and a big wave, then back to the hips to begin again.
+  [56, ON_HIPS], [57.8, { ...HIPS, crouch: 0.14 }],
+  [58.2, { ...HIPS, crouch: 0.02, leanX: 0.12, legL: -0.75, kneeL: 0.5 }],
+  [58.7, { ...HIPS, crouch: 0.12 }], [59.6, ON_HIPS],
+  [60.2, BYE], [63.4, BYE],
+];
+const polkaMove = curve(POLKA.map(([b, key]) => [b / POLKA_BEATS, key]));
+/** The face in each phrase: the video's straight face, or smiling. */
+const POLKA_FACE = [0, 2, 2, 0, 2, 2, 0, 2] as const;
+
+export const polka: Clip = (p, t) => {
+  const b = within(t / POLKA_BEATS) * POLKA_BEATS;
+  polkaMove(p, b / POLKA_BEATS);
+  /** All of it from half a beat into [a, z] until half a beat before its end, eased in and out. */
+  const during = (a: number, z: number) => ramp(b, a, a + 0.5) * (1 - ramp(b, z - 0.5, z));
+  // Knees giving on every beat all the way through.
+  p.crouch += pulse(b) * 0.05;
+  // Swaying with the beat, hips one way and head the other: on the hips, under the arms up over
+  // the head (which lean with it), and with the back turned.
+  const s = cos(b * Math.PI) * (during(0, 8) + 1.1 * during(40, 48) + 0.8 * during(56, 59.6));
+  p.sway += s * 0.15;
+  p.leanZ -= s * 0.07;
+  p.tilt += s * 0.16;
+  const over = during(40, 48);
+  p.outL += s * 0.3 * over;
+  p.outR -= s * 0.3 * over;
+  // The raised hand of the wave waggling.
+  const waggle = sin(b * TAU) * 0.12 * during(16, 24);
+  p.twistR += waggle;
+  p.twistL -= waggle;
+  // The hand holding the leek out circling as it twirls.
+  const twirl = during(24, 28);
+  p.outR += sin(b * TAU) * 0.1 * twirl;
+  p.swingR += cos(b * TAU) * 0.1 * twirl;
+  // Stepping off to the side pointed at: the trailing knee comes up between beats.
+  const step = sin(within(b) * Math.PI) * during(48, 56);
+  const left = Math.floor((b - 48) / 2) % 2 === 0;
+  p.kneeR += step * (left ? 0.45 : 0);
+  p.kneeL += step * (left ? 0 : 0.45);
+  p.y += step * 0.02;
+  // Turned round to show the back, and on round to the front.
+  const turn = Math.PI * (ramp(b, 56.1, 56.9) + ramp(b, 59.4, 60.2));
+  p.yaw += turn - TAU * Math.round(turn / TAU);
+  // The big wave: the forearm swinging from side to side across two beats.
+  const bye = cos(b * Math.PI) * during(60.2, 64);
+  p.outL += bye * 0.1;
+  p.twistL += bye * 0.45;
+  p.sway += bye * 0.05;
+  p.expr = POLKA_FACE[Math.floor(b / 8)];
+};
+
+/**
+ * The leek in each dancer's right hand `t` beats into the polka: how much of it shows (0 to 1),
+ * growing out of the fist as the twirl begins and back in as it ends, and how far it has turned
+ * about the forearm (radians), once round a beat. On each beat it points away from the thumb,
+ * which keeps it clear of the face when the hand is held up high or in close.
+ */
+export function leek(t: number, out: { show: number; spin: number }) {
+  const b = within(t / POLKA_BEATS) * POLKA_BEATS;
+  out.show = ramp(b, 23.5, 24) * (1 - ramp(b, 31.6, 32));
+  out.spin = (b + 0.5) * TAU;
+  return out;
+}
+
 /** Every solo, by name. */
-export const SOLOS = { dab, disco, robot, runningMan, twirl, kicks, roof, gangnam, moonwalk, thriller } as const;
+export const SOLOS ={ dab, disco, robot, runningMan, twirl, kicks, roof, gangnam, moonwalk, thriller } as const;
 export type SoloName = keyof typeof SOLOS;
 const SOLO_SET = new Set<Clip>(Object.values(SOLOS));
 /** Beats a solo takes to come round, for those longer than 4, so it is always danced to the end. */
@@ -1074,8 +1219,8 @@ const LONG = new Map<Clip, number>([
 ]);
 /** Beats `clip` takes to come round: a solo always ends where it began. */
 export const soloBeats = (clip: Clip) => LONG.get(clip) ?? 4;
-/** Whether a clip is one of the stage's dances: the routine or a solo. */
-export const dancing = (clip: Clip) => clip === idol || SOLO_SET.has(clip);
+/** Whether a clip is one of the stage's dances: the routine, the polka or a solo. */
+export const dancing = (clip: Clip) => clip === idol || clip === polka || SOLO_SET.has(clip);
 
 // Cheers: the crowd watching the stage, along with the music. For each, `t` is beats gone by
 // (whole on the beat), so everyone watching keeps the same beat, and `k` the Mii's own number.

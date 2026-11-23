@@ -29,6 +29,7 @@ import './paint.css';
       <span data-prompt></span>
     </div>
     <button type="button" class="pt-lcd-btn" data-day-next aria-label="Day after" data-sfx><HugeIcon icon={ArrowRight01Icon} size={20} strokeWidth={2.2} /></button>
+    <button type="button" class="pt-lcd-btn pt-today" data-today data-sfx>Today</button>
   </div>
 
   <aside class="pt-tray" aria-label="Tools" data-tray>
@@ -96,6 +97,11 @@ import './paint.css';
       </div>
     </div>
   </main>
+
+  <div class="pt-intro" data-intro aria-hidden="true" hidden>
+    <div class="pt-intro-dim"></div>
+    <p class="pt-intro-text"><span class="pt-intro-lead"></span><span class="pt-intro-words"></span></p>
+  </div>
 
   <Gate action="Draw" />
 </div>

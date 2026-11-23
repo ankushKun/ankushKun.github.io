@@ -50,6 +50,14 @@ const CURSOR_GONE = 12000;
 /** Points closer than this, on screen, to the last are left out. */
 const MIN_STEP = 1.5;
 const THUMB = { w: 96, h: 60 };
+/** The opening prompt: wait for the page to arrive, come in, stay, then fly up to the LCD. */
+const ARRIVE = 400;
+const IN = 450;
+const HOLD = 1600;
+const OUT = 620;
+const EASE_FADE = 'cubic-bezier(0.4, 0, 0.2, 1)';
+const EASE_GLIDE = 'cubic-bezier(0.16, 1, 0.3, 1)';
+const EASE_PAGE = 'cubic-bezier(0.3, 0.75, 0.2, 1)';
 /** A replay takes at most this long, however busy the day. */
 const REPLAY_MAX = 20000;
 /** The raster strokes are kept on, as a multiple of the canvas's size. */
@@ -350,6 +358,7 @@ export function mount(root: HTMLElement): () => void {
     daysNav.replaceChildren(...links);
     for (const a of links) seen.observe(a);
     daysNav.querySelector('[aria-current]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    fadeDays();
     const i = list.indexOf(day);
     $<HTMLButtonElement>('[data-day-prev]').disabled = i <= 0;
     $<HTMLButtonElement>('[data-day-next]').disabled = i < 0 || i >= list.length - 1;
@@ -406,6 +415,34 @@ export function mount(root: HTMLElement): () => void {
       play('select');
       openDay(a.dataset.day!);
     }
+  });
+
+  function fadeDays() {
+    const max = daysNav.scrollWidth - daysNav.clientWidth;
+    daysNav.toggleAttribute('data-more-l', daysNav.scrollLeft > 1);
+    daysNav.toggleAttribute('data-more-r', daysNav.scrollLeft < max - 1);
+  }
+  daysNav.addEventListener('scroll', fadeDays, { passive: true });
+  const daysSize = new ResizeObserver(fadeDays);
+  daysSize.observe(daysNav);
+
+  // A plain wheel scrolls the strip sideways, so nobody has to hold Shift.
+  daysNav.addEventListener(
+    'wheel',
+    (e) => {
+      if (e.ctrlKey || Math.abs(e.deltaX) >= Math.abs(e.deltaY)) return;
+      const max = daysNav.scrollWidth - daysNav.clientWidth;
+      if (max <= 0) return;
+      e.preventDefault();
+      daysNav.scrollLeft += e.deltaMode === 1 ? e.deltaY * 32 : e.deltaY;
+    },
+    { passive: false },
+  );
+
+  $('[data-today]').addEventListener('click', () => {
+    if (isToday()) return;
+    play('select');
+    openDay(utcDay());
   });
 
   function step(n: number) {
@@ -915,6 +952,7 @@ export function mount(root: HTMLElement): () => void {
   onView();
   const asked = decodeURIComponent(location.hash.slice(1));
   openDay(isDay(asked) ? asked : utcDay());
+  const stopIntro = intro();
 
   return () => {
     finish();
@@ -922,6 +960,7 @@ export function mount(root: HTMLElement): () => void {
     stopReplay();
     stopWatch();
     seen.disconnect();
+    daysSize.disconnect();
     view.destroy();
     for (const c of [...chains, ...dayChains]) c.off();
     for (const t of timers) {
@@ -936,6 +975,130 @@ export function mount(root: HTMLElement): () => void {
     cancelAnimationFrame(liveQueued);
     removeEventListener('keydown', onKey);
     removeEventListener('keyup', onKeyUp);
+    stopIntro();
     session.destroy();
   };
+
+  // The prompt, large over the board on every visit, then down into its place in the LCD ----------
+
+  function intro() {
+    const el = $('[data-intro]');
+    const dim = $('.pt-intro-dim');
+    const lead = $('.pt-intro-lead');
+    const text = $('.pt-intro-words');
+    const target = $('[data-prompt]');
+    const gate = $('[data-gate]');
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let phase: 'wait' | 'in' | 'out' | 'done' = 'wait';
+    let anims: Animation[] = [];
+    let timer = 0;
+
+    function start() {
+      if (phase !== 'wait') return;
+      phase = 'in';
+      lead.textContent = isToday() ? 'Today, draw' : `On ${dayShort(day)}, everyone drew`;
+      text.textContent = promptFor(day);
+      el.hidden = false;
+      dim.style.pointerEvents = '';
+      const come = still ? { opacity: [0, 1] } : { opacity: [0, 1], transform: ['scale(0.96)', 'none'] };
+      anims = [
+        dim.animate({ opacity: [0, 1] }, { duration: IN, easing: EASE_FADE, fill: 'forwards' }),
+        text.animate(come, { duration: IN, easing: EASE_GLIDE, fill: 'forwards' }),
+        lead.animate(come, { duration: IN, easing: EASE_GLIDE, fill: 'forwards' }),
+      ];
+      timer = window.setTimeout(collapse, IN + HOLD);
+    }
+
+    /** Shrinks the big prompt onto the LCD's line, which fades up under it as it lands. */
+    function collapse() {
+      if (phase !== 'in') return;
+      phase = 'out';
+      clearTimeout(timer);
+      dim.style.pointerEvents = 'none';
+      const big = getComputedStyle(text);
+      const from = { transform: big.transform, opacity: big.opacity, color: big.color };
+      const dimFrom = getComputedStyle(dim).opacity;
+      const leadFrom = getComputedStyle(lead).opacity;
+      for (const a of anims) a.cancel();
+
+      const box = text.getBoundingClientRect();
+      const line = target.getBoundingClientRect();
+      const range = document.createRange();
+      range.selectNodeContents(target);
+      const words = range.getBoundingClientRect();
+      // A prompt too long for the LCD ends in an ellipsis: aim at what shows of it.
+      const left = Math.max(line.left, words.left);
+      const right = Math.min(line.right, words.right || line.right);
+      const dx = (left + right) / 2 - (box.left + box.width / 2);
+      const dy = line.top + line.height / 2 - (box.top + box.height / 2);
+      const scale = parseFloat(getComputedStyle(target).fontSize) / parseFloat(big.fontSize);
+      const time = still ? IN : OUT;
+
+      anims = [
+        dim.animate({ opacity: [dimFrom, '0'] }, { duration: time, easing: EASE_FADE, fill: 'forwards' }),
+        text.animate(
+          still
+            ? { opacity: [from.opacity, '0'] }
+            : [
+                { ...from, offset: 0 },
+                { opacity: from.opacity, offset: 0.6 },
+                { transform: `translate(${dx}px, ${dy}px) scale(${scale})`, opacity: '0', color: getComputedStyle(target).color, offset: 1 },
+              ],
+          { duration: time, easing: EASE_PAGE, fill: 'forwards' },
+        ),
+        // The lead stays behind: only the prompt itself has a place in the LCD.
+        lead.animate({ opacity: [leadFrom, '0'] }, { duration: time * 0.35, easing: EASE_FADE, fill: 'forwards' }),
+      ];
+      timer = window.setTimeout(() => root.removeAttribute('data-introducing'), time * 0.55);
+      anims[1].finished.then(end, () => {});
+    }
+
+    function end() {
+      phase = 'done';
+      reset();
+      root.removeAttribute('data-introducing');
+    }
+
+    function reset() {
+      clearTimeout(timer);
+      for (const a of anims) a.cancel();
+      anims = [];
+      el.hidden = true;
+    }
+
+    // Waits out the page's own arrival, and the gate: it hides the LCD the prompt lands in. A gate
+    // that opens partway through (a saved name someone else has taken) puts it back to wait.
+    const later = (ms: number) => {
+      clearTimeout(timer);
+      timer = window.setTimeout(start, ms);
+    };
+    const watch = new MutationObserver(() => {
+      if (phase === 'done') return;
+      if (!gate.hidden) {
+        reset();
+        phase = 'wait';
+      } else if (phase === 'wait') later(250);
+    });
+    watch.observe(gate, { attributes: true, attributeFilter: ['hidden'] });
+
+    // Any press or key sends it on its way early.
+    const skip = (e: Event) => {
+      if (phase !== 'in') return;
+      if (e.type === 'pointerdown') e.preventDefault();
+      collapse();
+    };
+    dim.addEventListener('pointerdown', skip);
+    addEventListener('keydown', skip, true);
+
+    root.setAttribute('data-introducing', '');
+    if (gate.hidden) later(ARRIVE);
+
+    return () => {
+      watch.disconnect();
+      removeEventListener('keydown', skip, true);
+      reset();
+      phase = 'done';
+      root.removeAttribute('data-introducing');
+    };
+  }
 }

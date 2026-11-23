@@ -115,6 +115,11 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
     -webkit-tap-highlight-color: transparent;
   }
 
+  /* The Music block's video plays just behind the page (film.ts): the canvas is the only cover. */
+  .plaza[data-film] {
+    background: transparent;
+  }
+
   .plaza > canvas {
     position: absolute;
     inset: 0;

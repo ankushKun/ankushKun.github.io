@@ -42,6 +42,10 @@ export interface Events {
   terminal_fallback: undefined;
   game_played: { game: string };
   game_stopped: { game: string; seconds: number };
+  /** The quick search opened, by Ctrl or Cmd and this key. */
+  search_opened: { key: 'k' | 'f' };
+  /** Went to a page from the quick search, with what was typed. */
+  search_picked: { href: string; kind: string; query: string };
 }
 
 const on = Boolean(POSTHOG.key) && (location.hostname === new URL(SITE.url).hostname || Boolean(import.meta.env.PUBLIC_POSTHOG_DEV));

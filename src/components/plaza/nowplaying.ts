@@ -97,8 +97,8 @@ export class NowPlaying {
     return copy;
   }
 
-  /** Each frame. */
-  update() {
+  /** Each frame. `filmed`: the track's video shows in the glass instead (film.ts), so the bars and shade go. */
+  update(filmed = false) {
     if (this.slot.value !== this.texture) return;
     const t = now();
     if (t - this.drawnAt < 1 / FPS) return;
@@ -106,7 +106,7 @@ export class NowPlaying {
     this.drawnAt = t;
     const p = ease(Math.min(1, (t - this.fadeAt) / FADE));
     const onCover = this.to !== this.home;
-    this.over += ((onCover ? 1 : 0) - this.over) * Math.min(1, dt * 5);
+    this.over += ((onCover && !filmed ? 1 : 0) - this.over) * Math.min(1, dt * 5);
 
     // Back on the icon with nothing left to fade: the block carries its own texture again.
     if (!onCover && p >= 1 && this.over < 0.01) {

@@ -1,6 +1,7 @@
 // YouTube's IFrame player, loaded once and kept out of sight. It is mounted on <html> itself, beside
 // the <body> that Astro's router swaps on every page change, so it is never moved or reloaded and
-// the music never stops between pages.
+// the music never stops between pages. The plaza shows its video in the Music block by laying it
+// just behind the page (`stage`), where the block's glass leaves a window onto it.
 
 export const STATE = { UNSTARTED: -1, ENDED: 0, PLAYING: 1, PAUSED: 2, BUFFERING: 3, CUED: 5 } as const;
 
@@ -39,6 +40,28 @@ type Win = Window & { YT?: Api & { loaded?: number }; onYouTubeIframeAPIReady?: 
 
 let api: Promise<Api> | null = null;
 
+/**
+ * The player's size on the page: 16:9 at 480 device pixels tall, which is what YouTube streams to
+ * a player that size, however small it is drawn.
+ */
+const ratio = Math.max(1, Math.min(devicePixelRatio || 1, 3));
+export const FRAME = { width: Math.round((854 / ratio) * 100) / 100, height: Math.round((480 / ratio) * 100) / 100 };
+const OUT_OF_SIGHT = `position:fixed;left:-9999px;top:0;width:${FRAME.width}px;height:${FRAME.height}px;overflow:hidden;opacity:0.01;pointer-events:none`;
+let host: HTMLElement | null = null;
+
+/**
+ * Lays the player just behind the page, placed by `transform` (a CSS matrix from its own pixels to
+ * the screen's), or puts it back out of sight with null. Nothing in the page covers it there except
+ * what is drawn over it, so whatever shows it must leave a window open (plaza/film.ts).
+ */
+export function stage(transform: string | null) {
+  if (!host) return false;
+  host.style.cssText = transform
+    ? `position:fixed;left:0;top:0;z-index:-1;width:${FRAME.width}px;height:${FRAME.height}px;overflow:hidden;pointer-events:none;transform-origin:0 0;will-change:transform;transform:${transform}`
+    : OUT_OF_SIGHT;
+  return true;
+}
+
 function loadApi(): Promise<Api> {
   return (api ??= new Promise<Api>((resolve, reject) => {
     const w = window as Win;
@@ -69,18 +92,19 @@ export interface Handlers {
 /** Makes the one hidden player. Rejects if YouTube can't be reached (blocked, offline). */
 export async function createPlayer(handlers: Handlers): Promise<Player> {
   const YT = await loadApi();
-  const host = document.createElement('div');
-  host.setAttribute('aria-hidden', 'true');
-  host.dataset.music = '';
-  host.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0.01;pointer-events:none';
+  const frame = document.createElement('div');
+  frame.setAttribute('aria-hidden', 'true');
+  frame.dataset.music = '';
+  frame.style.cssText = OUT_OF_SIGHT;
   const mount = document.createElement('div');
-  host.append(mount);
-  document.documentElement.append(host);
+  frame.append(mount);
+  document.documentElement.append(frame);
+  host = frame;
   return new Promise<Player>((resolve, reject) => {
     const timeout = setTimeout(() => reject(new Error('YouTube player timed out')), 15000);
     const player = new YT.Player(mount, {
-      width: '200',
-      height: '200',
+      width: String(FRAME.width),
+      height: String(FRAME.height),
       host: 'https://www.youtube-nocookie.com',
       playerVars: { autoplay: 0, controls: 0, disablekb: 1, fs: 0, iv_load_policy: 3, playsinline: 1, rel: 0, origin: location.origin },
       events: {

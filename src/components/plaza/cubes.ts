@@ -3,6 +3,9 @@
 // really refracts: the scene is drawn without the blocks first and copied (see main.ts), then each
 // block bends its view of that copy through its own surface, so Miis and floor behind it warp
 // through the rim. Rays that reach past the rim fold back onto the picture, as in the real ones.
+// A block can also show a video in place of its picture (`film`, film.ts): the video plays behind
+// the canvas and the glass leaves the canvas clear where the picture would be, so the rim, the
+// sheen and the reflections still lie over it.
 import * as THREE from 'three';
 import { HAZE } from './floor';
 import { CUBE } from './layout';
@@ -17,7 +20,7 @@ const DOME = CUBE.depth * 0.22;
 /** Half width of the flat of the slab, inside the rim. */
 const INNER = HALF - EDGE;
 /** Half width of the picture, concentric with the outline. */
-const PICTURE = INNER * 0.97;
+export const PICTURE = INNER * 0.97;
 /** Half the size of the mark a block leaves on the floor. */
 const RING = { x: CUBE.size * 0.445, z: CUBE.size * 0.34 };
 /** Seconds one block takes to fly in. */
@@ -110,6 +113,7 @@ const glassFragment = /* glsl */ `
   uniform vec2 uFog;
   uniform float uHover;
   uniform float uShow;
+  uniform float uFilm;
   varying vec3 vLocal;
   varying vec3 vNormal;
   varying vec3 vWorld;
@@ -188,12 +192,16 @@ const glassFragment = /* glsl */ `
     through = mix(through, vec3(1.0), 0.04 + 0.05 * rim);
 
     vec3 col = mix(through, art, there);
+    // How much of the picture reaches the eye through everything laid over it below.
+    float seen = there;
 
     // Reflection off the surface: faint head on, strong as it turns away.
     float fresnel = 0.04 + 0.96 * pow(1.0 - facing, 5.0);
     // Facing the sky (the top of the rim from where the camera stands) the glass is mostly mirror.
     float sky = smoothstep(0.15, 0.75, nw.y) * rim;
-    col = mix(col, surroundings(reflect(look, nw)), clamp(fresnel * 0.9 + sky * 0.7, 0.0, 1.0));
+    float mirror = clamp(fresnel * 0.9 + sky * 0.7, 0.0, 1.0);
+    col = mix(col, surroundings(reflect(look, nw)), mirror);
+    seen *= 1.0 - mirror;
 
     // Light on glass: a broad sheen on the top of the rim, a hard glint, and the thin dark line
     // glass shows right at its silhouette.
@@ -201,9 +209,22 @@ const glassFragment = /* glsl */ `
     col += rim * smoothstep(0.2, 0.9, lit) * 0.12;
 
     col += pow(max(dot(reflect(look, nw), normalize(KEY)), 0.0), 90.0) * 0.85;
-    col *= 1.0 - 0.28 * smoothstep(0.82, 0.98, 1.0 - facing);
+    float edge = 1.0 - 0.28 * smoothstep(0.82, 0.98, 1.0 - facing);
+    col *= edge;
+    seen *= edge;
 
-    col = mix(col, uHaze, smoothstep(uFog.x, uFog.y, length(vWorld - cameraPosition)) * 0.7);
+    float fog = smoothstep(uFog.x, uFog.y, length(vWorld - cameraPosition)) * 0.7;
+    col = mix(col, uHaze, fog);
+    seen *= 1.0 - fog;
+
+    if (uFilm > 0.0) {
+      // The video behind the canvas stands in for the picture seen straight through the face; the
+      // picture folded round the rim stays. Drawn without blending, over the scene as copied.
+      float clear = seen * (1.0 - folded) * uFilm * uShow;
+      vec3 scene = texture2D(uBehind, gl_FragCoord.xy / uRes).rgb;
+      gl_FragColor = vec4(mix(scene, col, uShow) - art * clear, 1.0 - clear);
+      return;
+    }
     gl_FragColor = vec4(col, uShow);
   }
 `;
@@ -299,6 +320,7 @@ export class Cubes {
             uFog: { value: this.fog },
             uHover: { value: 0 },
             uShow: { value: 1 },
+            uFilm: { value: 0 },
           },
           transparent: true,
           depthWrite: true,
@@ -336,6 +358,17 @@ export class Cubes {
         flip: null,
       });
     });
+  }
+
+  /**
+   * How far block `i` shows the video behind the canvas in place of its picture, 0 to 1. While it
+   * does, it writes the canvas's alpha itself rather than blending.
+   */
+  film(i: number, amount: number) {
+    const material = this.items[i]?.mesh.material;
+    if (!material) return;
+    material.uniforms.uFilm.value = amount;
+    material.blending = amount > 0 ? THREE.NoBlending : THREE.NormalBlending;
   }
 
   /** The copy of the scene the glass looks through, and its size in pixels. */

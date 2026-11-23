@@ -89,6 +89,13 @@ export const BACKUP: (MiiLook & { name: string; from: string })[] = [
 ];
 
 /**
+ * Now and then the DJ and their dancers dance the Ievan Polkka from Hatsune Miku's Project DIVA
+ * video together (plaza/motion.ts). To these tracks, by YouTube video id, they dance it all the
+ * way through.
+ */
+export const POLKA = ['widZEAJc0QM'];
+
+/**
  * The DJ's boombox: 'model' is Supersiv11's low poly boom box (public/plaza/boombox.glb, CC BY),
  * 'drawn' is built in code in the plaza's own style (plaza/boombox.ts).
  */

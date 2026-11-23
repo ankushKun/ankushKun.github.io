@@ -149,8 +149,8 @@ interface Slot {
   hidden: boolean;
   /** A flat stand-in is drawing this head, so the real one stays hidden. */
   card: boolean;
-  /** A bone whose world placement is kept each pose, for something held (`track`). */
-  track: { bone: number; matrix: THREE.Matrix4 } | null;
+  /** Bones whose world placement is kept each pose, for something held (`track`). */
+  tracks: { bone: number; matrix: THREE.Matrix4 }[];
   /** In short sleeves (`MiiSetOptions.sleeves`). */
   sleeves: boolean;
   /** Without the bun on the back of the head (`MiiSetOptions.noBun`). */
@@ -472,7 +472,7 @@ export class MiiSet {
         full: !!opts.happy,
         hidden: true,
         card: false,
-        track: null,
+        tracks: [],
         sleeves: !!opts.sleeves?.(i),
         noBun: !!opts.noBun?.(i),
       };
@@ -646,8 +646,9 @@ export class MiiSet {
     const body = this.batches[s.gender]?.body;
     const j = body ? body.bone(bone) : -1;
     if (j < 0) throw new Error(`No bone ${bone}`);
-    s.track = { bone: j, matrix: new THREE.Matrix4() };
-    return s.track.matrix;
+    const matrix = new THREE.Matrix4();
+    s.tracks.push({ bone: j, matrix });
+    return matrix;
   }
 
   /** Whether Mii `i` is out of sight. */
@@ -775,7 +776,7 @@ export class MiiSet {
       }
       _m.multiplyMatrices(W[j], body.inverses[j]).toArray(out, base + j * 16);
     }
-    if (s.track) s.track.matrix.copy(W[s.track.bone]);
+    for (const t of s.tracks) t.matrix.copy(W[t.bone]);
 
     // Head: constant size, placed and turned by the head bone.
     const hb = body.bone('head');

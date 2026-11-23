@@ -26,6 +26,7 @@ import ThemeToggle from '../components/ui/ThemeToggle.astro';
 import Plaza from '../components/plaza/Plaza.astro';
 import Lobby from '../components/plaza/Lobby.astro';
 import MusicWidget from '../components/music/Widget.astro';
+import Search from '../components/search/Search.astro';
 import '../styles/global.css';
 
 interface Props {
@@ -276,6 +277,7 @@ const year = new Date().getFullYear();
         </>
       )
     }
+    {!embed && <Search />}
     <script>
       import '../scripts/analytics';
       import '../scripts/sfx';

@@ -1,0 +1,34 @@
+---
+// The quick search: a sheet over any page with one field and the pages that match it, opened by
+// Ctrl or Cmd K anywhere, and Ctrl or Cmd F too on the plaza, where the browser has nothing to find.
+// It is kept from page to page (transition:persist) and run by search.ts; what it searches is
+// /search.json, fetched the first time it opens.
+import { Search01Icon } from '@hugeicons/core-free-icons';
+import HugeIcon from '../ui/HugeIcon.astro';
+import './search.css';
+---
+
+<dialog class="search" data-search aria-label="Search the site" transition:persist="search">
+  <label class="search-field">
+    <HugeIcon icon={Search01Icon} size={22} strokeWidth={2.2} />
+    <input
+      type="text"
+      role="combobox"
+      aria-expanded="true"
+      aria-controls="search-list"
+      aria-autocomplete="list"
+      aria-label="Search the site"
+      placeholder="Search"
+      autocomplete="off"
+      autocapitalize="off"
+      spellcheck="false"
+      enterkeyhint="go"
+      data-search-input
+    />
+  </label>
+  <ul id="search-list" class="search-list" role="listbox" aria-label="Results" data-search-list></ul>
+</dialog>
+
+<script>
+  import './search';
+</script>

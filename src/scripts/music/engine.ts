@@ -12,6 +12,7 @@
 import { MUSIC, type Track } from '../../data/music';
 import { track } from '../analytics';
 import { STATE, createPlayer, type Player } from './youtube';
+export { FRAME, stage } from './youtube';
 
 export type Repeat = 'off' | 'all' | 'one';
 
@@ -114,6 +115,11 @@ export function playhead(): number {
   if (yt !== STATE.PLAYING) return seconds;
   // Never runs on further than a report could be late, should the player stall without saying.
   return seconds + Math.min(1, (now - reported.at) / 1000);
+}
+
+/** The track's video is on screen in the player: playing, and the one asked for, not one loading. */
+export function showing(): boolean {
+  return !!player && !primed && yt === STATE.PLAYING && state.playing && !holds.size && state.index >= 0 && loaded === tracks[state.index].videoId;
 }
 
 // The player -----------------------------------------------------------------------------------
