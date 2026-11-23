@@ -75,7 +75,7 @@ export const resume: {
     {
       role: 'Developer Relations Engineer',
       org: 'Arweave India',
-      url: 'https://arweaveindia.com',
+      url: 'https://web.archive.org/web/20250620094014/https://www.arweaveindia.com/',
       start: '2024-06',
       end: '2025-04',
       summary: 'Mentored 100+ developers, judged 40+ builds and co-organised Arweave Day India 2025.',
