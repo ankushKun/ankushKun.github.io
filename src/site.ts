@@ -92,6 +92,13 @@ export const GIF_PROXY = 'https://ankush-site-worker.ankushkun.workers.dev';
  */
 export const POSTHOG = { key: 'phc_nBvIMuMmaqQkAXL36Bi6eyTRga0A04klevYFyZf4cfc', host: 'https://p1.ankush.one', ui: 'https://eu.posthog.com' };
 
+/**
+ * The other repos served under ankush.one whose names have capitals. GitHub Pages matches addresses
+ * exactly, so the 404 page sends one in the wrong case on to the right spelling: one of these, or
+ * else lowercase, as every page here and every other repo is.
+ */
+export const CASED_SITES = ['3dsDL', '3dsFM', 'Derived-Key-Manager'];
+
 export const BOOKING_URL = 'https://cal.com/ankushkun/call';
 
 /** Newsletter form target. Set `action` to your provider URL (Buttondown, ConvertKit, Resend...) to enable the form. */

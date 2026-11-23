@@ -1,9 +1,22 @@
 ---
 import Base from '../layouts/Base.astro';
 import BackButton from '../components/ui/BackButton.astro';
+import { CASED_SITES } from '../site';
 ---
 
 <Base title="Page not found" description="This page does not exist." noindex>
+  <Fragment slot="head">
+    <script is:inline define:vars={{ cased: CASED_SITES }}>
+      // An address in the wrong case goes on to the right spelling before anything is drawn.
+      var path = location.pathname;
+      var first = path.split('/')[1] || '';
+      var to = path.toLowerCase();
+      cased.forEach(function (site) {
+        if (site.toLowerCase() === first.toLowerCase()) to = '/' + site + (path.slice(first.length + 1) || '/');
+      });
+      if (to !== path) location.replace(to + location.search + location.hash);
+    </script>
+  </Fragment>
   <div class="lost" data-not-found>
     <div class="say">
       <span class="tag">404</span>
