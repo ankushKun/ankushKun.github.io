@@ -152,10 +152,11 @@ function balls(b: Body, out: THREE.Vector3[]) {
  * Two bodies meeting, ball against ball: the deepest pair touching is pushed apart, and if they
  * are closing there, each gets the knock two equal weights would give at that very point, turning
  * as well as moving, with a little rub between them. A head clipping a head spins both; feet swept
- * from under someone tip them over. Returns -1 if they don't touch, otherwise how fast they were
+ * from under someone tip them over. A `fixed` b stands firm, as a wall does: a takes all of the
+ * parting and all of the knock. Returns -1 if they don't touch, otherwise how fast they were
  * closing where they met.
  */
-export function collide(a: Body, b: Body) {
+export function collide(a: Body, b: Body, fixed = false) {
   const near = (a.top + b.top) * 0.6;
   if (Math.abs(a.com.x - b.com.x) > near || Math.abs(a.com.z - b.com.z) > near || Math.abs(a.com.y - b.com.y) > near) return -1;
   balls(a, _ca);
@@ -179,25 +180,27 @@ export function collide(a: Body, b: Body) {
   if (_n.lengthSq() < 1e-10) _n.subVectors(b.com, a.com).setY(0);
   if (_n.lengthSq() < 1e-10) _n.set(1, 0, 0);
   _n.normalize();
-  _p.copy(_ca[ia]).addScaledVector(_n, BALLS[ia][1] * a.top - deepest / 2);
-  a.com.addScaledVector(_n, -deepest / 2);
-  b.com.addScaledVector(_n, deepest / 2);
+  _p.copy(_ca[ia]).addScaledVector(_n, BALLS[ia][1] * a.top - (fixed ? deepest : deepest / 2));
+  a.com.addScaledVector(_n, fixed ? -deepest : -deepest / 2);
+  if (!fixed) b.com.addScaledVector(_n, deepest / 2);
   _ra.subVectors(_p, a.com);
   _rb.subVectors(_p, b.com);
   const closing = relative(a, b).dot(_n);
   if (closing <= 0) return 0;
   const ka = 1 / inertia(a);
-  const kb = 1 / inertia(b);
-  const j = ((1 + BUMP.bounce) * closing) / (2 + _r.crossVectors(_ra, _n).lengthSq() * ka + _r.crossVectors(_rb, _n).lengthSq() * kb);
-  impulse(a, b, _n, j, ka, kb);
+  // A fixed body has no give at all: no weight to shift, no turn to take up.
+  const kb = fixed ? 0 : 1 / inertia(b);
+  const mass = fixed ? 1 : 2;
+  const j = ((1 + BUMP.bounce) * closing) / (mass + _r.crossVectors(_ra, _n).lengthSq() * ka + _r.crossVectors(_rb, _n).lengthSq() * kb);
+  impulse(a, b, _n, j, ka, kb, fixed);
   // The rub: against the slide of one past the other, no more than how hard they met allows.
   _t.copy(relative(a, b));
   _t.addScaledVector(_n, -_t.dot(_n));
   const slide = _t.length();
   if (slide > 1e-5) {
     _t.divideScalar(slide);
-    const most = slide / (2 + _r.crossVectors(_ra, _t).lengthSq() * ka + _r.crossVectors(_rb, _t).lengthSq() * kb);
-    impulse(a, b, _t, Math.min(BUMP.friction * j, most), ka, kb);
+    const most = slide / (mass + _r.crossVectors(_ra, _t).lengthSq() * ka + _r.crossVectors(_rb, _t).lengthSq() * kb);
+    impulse(a, b, _t, Math.min(BUMP.friction * j, most), ka, kb, fixed);
   }
   return closing;
 }
@@ -208,10 +211,11 @@ function relative(a: Body, b: Body) {
   return _v.sub(_rn.crossVectors(b.omega, _rb).add(b.vel));
 }
 
-/** Gives `b` the push `j` along `dir` at the touch, and `a` the same back. */
-function impulse(a: Body, b: Body, dir: THREE.Vector3, j: number, ka: number, kb: number) {
+/** Gives `b` the push `j` along `dir` at the touch, and `a` the same back; a fixed `b` takes none. */
+function impulse(a: Body, b: Body, dir: THREE.Vector3, j: number, ka: number, kb: number, fixed: boolean) {
   a.vel.addScaledVector(dir, -j);
   a.omega.addScaledVector(_r.crossVectors(_ra, dir), -j * ka);
+  if (fixed) return;
   b.vel.addScaledVector(dir, j);
   b.omega.addScaledVector(_r.crossVectors(_rb, dir), j * kb);
 }

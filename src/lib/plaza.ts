@@ -31,18 +31,18 @@ export async function getPlazaData(): Promise<PlazaData> {
     const style = CUBES[SECTION_PATH[section]] ?? CUBES['/blogs/'];
     for (const e of await getEntries(section)) {
       if (!e.data.cover) continue;
-      featured.push({ ...style, label: e.data.title, href: urlOf(e), art: await square(e.data.cover), feature: true });
+      featured.push({ ...style, label: e.data.title, href: urlOf(e), art: await square(e.data.cover), feature: true, kind: section });
     }
   }
   for (const game of GAMES) {
     const art = !game.project && gameArt(game.id);
-    if (art) featured.push({ ...CUBES['/games/'], label: game.label ?? game.id, href: `/games/${game.id}/`, art: await square(art), feature: true });
+    if (art) featured.push({ ...CUBES['/games/'], label: game.label ?? game.id, href: `/games/${game.id}/`, art: await square(art), feature: true, kind: 'games' });
   }
   for (const app of APPS) {
     if (!app.href || sections.some((c) => c.href === app.href)) continue;
     // Block art is named after the href (`/apps/paint/` is `apps-paint.webp`).
     const file = `${app.href.replace(/^\/|\/$/g, '').replace(/[/#]+/g, '-')}.webp`;
-    if (existsSync(`public/plaza/icons/${file}`)) featured.push({ ...CUBES['/apps/'], label: app.label, href: app.href, art: `/plaza/icons/${file}`, feature: true });
+    if (existsSync(`public/plaza/icons/${file}`)) featured.push({ ...CUBES['/apps/'], label: app.label, href: app.href, art: `/plaza/icons/${file}`, feature: true, kind: 'apps' });
   }
   // Without JavaScript the slots show the first few; the plaza swaps in a random pick on each visit.
   const cubes: PlazaCube[] = [...featured.slice(0, FEATURED), ...sections];
@@ -61,7 +61,7 @@ export async function getPlazaData(): Promise<PlazaData> {
         const thumb = cover && (await getImage({ src: cover, width: 144, height: 144, fit: 'cover', format: 'webp', quality: 80 })).src;
         // A timeline event is dated by a little calendar page, as on the timeline board.
         const date = e.collection === 'timeline' ? { iso: isoDate(e.data.date), color: timelineKindMeta(e.data.kind[0]).color } : undefined;
-        return [{ cube, tag: cubes[cube].label, text: e.data.title, href: urlOf(e), ...(thumb && { thumb }), ...(date && { date }) }];
+        return [{ cube, tag: cubes[cube].label, text: e.data.title, href: urlOf(e), kind: e.collection, ...(thumb && { thumb }), ...(date && { date }) }];
       }),
     )
   ).flat();

@@ -1,5 +1,6 @@
-// Recent chat on the plaza: a random few of the room's latest messages, each said by someone under
-// the Chat block, with the sender's Mii and name on the bubble, which opens the chat. Messages the
+// Recent chat on the plaza: a random few of the room's latest messages and drawings, each said by
+// someone under the Chat block, with the sender's Mii and name on the bubble, which opens the chat.
+// A drawing shows large in the bubble. Messages the
 // visitor hasn't seen (newer than their last look at the room, in the chat or here) go ahead of
 // everything else, newest first, and so does anything said while they are on the plaza.
 // Loaded once the plaza is up, so the relay's library never holds up the opening.
@@ -25,7 +26,7 @@ const PROFILE_WAIT = 2500;
 
 /** Where the posts go: the plaza's bubbles. */
 interface Sink {
-  mix(posts: PlazaPost[], first: PlazaPost[]): void;
+  mix(kind: string, posts: PlazaPost[], first: PlazaPost[]): void;
   hurry(post: PlazaPost): void;
 }
 
@@ -68,7 +69,7 @@ export class Chatter {
   private hear(data: unknown, key: string) {
     if (this.stopped) return;
     const m = data ? readMessage(key, data) : null;
-    if (!m || m.kind !== 'msg' || m.deleted || !plain(m)) {
+    if (!m || m.deleted || !(m.kind === 'drawing' ? m.media : m.kind === 'msg' && plain(m))) {
       this.messages.delete(key);
       return;
     }
@@ -99,7 +100,7 @@ export class Chatter {
     if (!fresh.length && !rest.length) return;
     const [first, more] = await Promise.all([Promise.all(fresh.map((m) => this.post(m))), Promise.all(rest.map((m) => this.post(m)))]);
     if (this.stopped) return;
-    this.sink.mix([...first, ...more], first);
+    this.sink.mix('chat', [...first, ...more], first);
     this.tidy();
   }
 
@@ -108,7 +109,8 @@ export class Chatter {
     const mine = m.uuid && m.uuid === this.me ? store.get(STORE.mii) : null;
     const code = (mine && miiBytes(mine) ? mine : m.uuid ? await profile(m.uuid) : null) ?? (await standIn(m.uuid ?? m.nick));
     const shots = code ? await portraits(code) : null;
-    const post: PlazaPost = { cube: this.cube, tag: m.nick, text: plain(m), href: this.href };
+    const post: PlazaPost = { cube: this.cube, tag: m.nick, text: plain(m), href: this.href, kind: 'chat' };
+    if (m.kind === 'drawing' && m.media) post.drawing = { src: m.media, ink: true };
     if (shots) {
       post.thumb = shots[m.feel] ?? shots[0];
       post.mii = true;

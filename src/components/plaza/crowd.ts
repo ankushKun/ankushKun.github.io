@@ -45,8 +45,32 @@ const BOOMBOX_DOWN = 0.9;
  * behind the dancers, and anyone walking by goes round it at `pass`.
  */
 const STAGE = { z: 0.3, keep: 1.25, pass: 2.4 };
+/**
+ * The DJ and their dancers are a wall: nobody on their feet comes nearer to one of them than this
+ * (middle to middle, about two bodies' width), so no one slips between them, and anything thrown
+ * at them bounces off (`physics`).
+ */
+const WALL = 0.55;
 /** Seconds after which a Mii still on its way somewhere is taken to be caught on something (`unstick`). */
 const STUCK = 30;
+/**
+ * While music is heard, now and then someone from the crowd runs over to dance with the stage
+ * (`recruit`): one every `every` seconds (a range), each staying `stay` seconds, in places either
+ * side of the dancers, carrying their row on (from the DJ's spot, nearest first on each side).
+ * `near` is how many of the crowd nearest the stage one is picked from, so nobody crosses the
+ * whole plaza.
+ */
+const FANS = {
+  every: [6, 14],
+  stay: [15, 30],
+  near: 16,
+  places: [
+    { x: -1.75, z: -0.35 },
+    { x: 1.75, z: -0.35 },
+    { x: -2.5, z: -0.45 },
+    { x: 2.5, z: -0.45 },
+  ],
+};
 /** How far each dancer may be ahead of or behind the beat, in seconds, picked afresh each visit. */
 const LAG = 0.09;
 /** Pants for the DJ and their dancers, as on a stage. */
@@ -164,7 +188,7 @@ const ANNOYED: [motion.Clip, number][] = [
   [motion.tantrum, 2.4],
 ];
 
-type Act = 'away' | 'stand' | 'stroll' | 'dash' | 'speak' | 'fall' | 'show' | 'hover' | 'held' | 'flung' | 'down' | 'stunned' | 'flee';
+type Act = 'away' | 'stand' | 'stroll' | 'dash' | 'speak' | 'fall' | 'show' | 'hover' | 'held' | 'flung' | 'down' | 'stunned' | 'flee' | 'fan';
 /** Acts where you have hold of a Mii, or it is getting over it. Nothing else may interrupt them. */
 const HANDLED: ReadonlySet<Act> = new Set(['held', 'flung', 'down', 'stunned', 'flee']);
 
@@ -224,6 +248,8 @@ interface Mii {
    * on (-1 left as you look, 1 right, 0 the DJ). Null for everyone else.
    */
   stage: { x: number; z: number; side: number } | null;
+  /** Dancing along with the stage (`fan`): which of FANS.places it has, or -1. */
+  fan: number;
   /** How far ahead of the beat (or behind, below 0) this dancer dances, in seconds. */
   lag: number;
   spot: Spot | null;
@@ -328,6 +354,9 @@ export class Crowd {
    */
   djDancing = false;
   readonly djSpot = { x: 0, z: 0, yaw: 0 };
+  /** Who has each of FANS.places, and when the next one is asked over (-1 until the music starts). */
+  private fans: (Mii | null)[] = FANS.places.map(() => null);
+  private fanAt = -1;
   /** How much the DJ's left hand is up holding the boombox, eased: 1 holding, 0 dancing. */
   private djHold = 1;
   /** Where the DJ's left wrist (the boombox hand) is in the world, rewritten every frame they are posed. */
@@ -432,6 +461,7 @@ export class Crowd {
         lead: friend && slot === 0,
         dj: false,
         stage: null,
+        fan: -1,
         spot: null,
         detour: 0,
         who: who?.name ? who : null,
@@ -966,10 +996,12 @@ export class Crowd {
   }
 
   update(dt: number, time: number, camera: THREE.Vector3, calm: boolean) {
+    this.recruit(time, calm);
     for (const m of this.miis) this.think(m, dt, time, camera, calm);
     this.djHold += ((this.djDancing ? 0 : 1) - this.djHold) * Math.min(1, dt * 7);
     this.physics(dt, time);
     this.separate();
+    this.wall();
     for (const m of this.miis) this.draw(m, time, calm);
     for (const set of this.sets) set.commit();
   }
@@ -1021,7 +1053,8 @@ export class Crowd {
   private think(m: Mii, dt: number, time: number, camera: THREE.Vector3, calm: boolean) {
     if (time > m.blink + 0.13) m.blink = time + 1.6 + this.r() * 4.5;
     // Standing still, any leftover speed dies away, so strides shrink to nothing rather than stop.
-    if (m.act !== 'dash' && m.act !== 'stroll' && m.act !== 'flee') m.vel *= Math.exp(-8 * dt);
+    const going = m.act === 'dash' || m.act === 'stroll' || m.act === 'flee' || (m.act === 'fan' && m.until === Infinity);
+    if (!going) m.vel *= Math.exp(-8 * dt);
     const toCamera = Math.atan2(camera.x - m.x, camera.z - m.z);
 
     if (HANDLED.has(m.act)) return this.handled(m, dt, time, toCamera);
@@ -1057,6 +1090,8 @@ export class Crowd {
         this.keepSpot(m, dt);
         if (time >= m.until) this.rest(m, time, 1.5 + this.r() * 4);
         return;
+      case 'fan':
+        return this.fan(m, dt, time, toCamera);
       default:
         if (m.stage) return this.onStage(m, dt, time, toCamera, calm);
         this.turn(m, m.face, dt);
@@ -1084,6 +1119,81 @@ export class Crowd {
       this.djSpot.z = this.djAt.z + Math.cos(toCamera) * BOOMBOX_DOWN;
       this.djSpot.yaw = toCamera;
     }
+  }
+
+  /**
+   * While music is heard, now and then asks someone from the crowd near the stage over to dance
+   * with it, if a place is free. Places given up (the fan was picked up, knocked over or set
+   * dancing by the Konami code) are free again.
+   */
+  private recruit(time: number, calm: boolean) {
+    if (this.dj < 0 || calm || !this.grooving) {
+      this.fanAt = -1;
+      return;
+    }
+    const wait = () => FANS.every[0] + this.r() * (FANS.every[1] - FANS.every[0]);
+    // The first comes over a little after the music starts, not on its first beat.
+    if (this.fanAt < 0) this.fanAt = time + wait() * 0.5;
+    if (time < this.fanAt) return;
+    this.fanAt = time + wait();
+    this.fans.forEach((o, i) => {
+      if (o && (o.act !== 'fan' || o.fan !== i)) {
+        if (o.fan === i) o.fan = -1;
+        this.fans[i] = null;
+      }
+    });
+    const place = this.fans.indexOf(null);
+    if (place < 0) return;
+    const free = this.miis.filter((m) => !m.friend && !m.stage && m.act === 'stand' && m.spot);
+    if (!free.length) return;
+    const far = (m: Mii) => (m.x - this.djAt.x) ** 2 + ((m.z - this.djAt.z) / DEEP) ** 2;
+    const near = free.sort((a, b) => far(a) - far(b)).slice(0, FANS.near);
+    const m = near[Math.floor(this.r() * near.length)];
+    if (m.spot) m.spot.owner = null;
+    m.spot = null;
+    m.fan = place;
+    this.fans[place] = m;
+    m.tx = this.djAt.x + FANS.places[place].x;
+    m.tz = this.djAt.z + FANS.places[place].z;
+    m.detour = 0;
+    m.lag = (this.r() * 2 - 1) * LAG;
+    m.act = 'fan';
+    m.at = time;
+    m.until = Infinity;
+    this.play(m, motion.run, time);
+  }
+
+  /**
+   * A fan runs over to its place, then dances the stage's routine on its beat, square on to you,
+   * until its time is up or a moment after the music stops, and walks back to its own block.
+   */
+  private fan(m: Mii, dt: number, time: number, toCamera: number) {
+    if (m.until === Infinity) {
+      if (!this.grooving || time - m.at > STUCK) return this.unfan(m, time);
+      if (this.step(m, RUN * m.pace, 1.75, dt)) {
+        m.until = time + FANS.stay[0] + this.r() * (FANS.stay[1] - FANS.stay[0]);
+        this.play(m, motion.idol, time);
+      }
+      return;
+    }
+    this.turn(m, toCamera, dt);
+    this.keepSpot(m, dt);
+    // The music stopped: they stop with the stage, and each wanders off in their own moment.
+    if (!this.grooving && m.clip === motion.idol) {
+      this.play(m, motion.stand, time);
+      m.until = Math.min(m.until, time + 0.4 + this.r() * 1.4);
+    }
+    if (time >= m.until) this.unfan(m, time);
+  }
+
+  private unfan(m: Mii, time: number) {
+    if (this.fans[m.fan] === m) this.fans[m.fan] = null;
+    m.fan = -1;
+    this.claim(m, this.nearest(m.home, m.x, m.z));
+    m.act = 'stroll';
+    m.at = time;
+    m.until = Infinity;
+    this.play(m, motion.walk, time);
   }
 
   /** Held, flying, down, stunned or running off: the same for the crowd and the middle group. */
@@ -1283,7 +1393,14 @@ export class Crowd {
         const a = moving[i];
         for (let j = i + 1; j < moving.length; j++) this.bump(a, moving[j]);
         for (const o of this.miis) {
-          if (!this.solid(o, time) || Math.abs(o.x - a.body.com.x) > 1.6 || Math.abs(o.z - a.body.com.z) > 1.6) continue;
+          if (Math.abs(o.x - a.body.com.x) > 1.6 || Math.abs(o.z - a.body.com.z) > 1.6) continue;
+          // The stage stands firm: whatever is thrown at the DJ or a dancer bounces off.
+          if (o.stage) {
+            toss.stand(o.body, o.x, o.lift, o.z, o.yaw, o.tipX, o.tipZ, o.set.headTop(o.slot) * SIZE);
+            this.bump(a, o, true);
+            continue;
+          }
+          if (!this.solid(o, time)) continue;
           // Someone on their feet is stood up as a body to be hit.
           toss.stand(o.body, o.x, o.lift, o.z, o.yaw, o.tipX, o.tipZ, o.set.headTop(o.slot) * SIZE);
           _c.copy(o.body.com);
@@ -1317,14 +1434,14 @@ export class Crowd {
     }
   }
 
-  /** Two bodies meeting (see toss.collide); one held passes what it felt on to its swing. */
-  private bump(a: Mii, b: Mii) {
+  /** Two bodies meeting (see toss.collide), b standing firm if `fixed`; one held passes what it felt on to its swing. */
+  private bump(a: Mii, b: Mii, fixed = false) {
     _a.copy(a.body.vel);
     _b.copy(b.body.vel);
-    const hit = toss.collide(a.body, b.body);
+    const hit = toss.collide(a.body, b.body, fixed);
     if (hit < 0) return hit;
     if (a.act === 'held') a.kick.add(a.body.vel).sub(_a);
-    if (b.act === 'held') b.kick.add(b.body.vel).sub(_b);
+    if (b.act === 'held' && !fixed) b.kick.add(b.body.vel).sub(_b);
     return hit;
   }
 
@@ -1616,7 +1733,8 @@ export class Crowd {
   /**
    * One frame of travel toward the target. If the straight way runs through the middle group's
    * circle or across the stage, the Mii heads for a point at its edge on the near side instead, so
-   * it walks round rather than pushing against it. True on arrival.
+   * it walks round rather than pushing against it. Without `avoid` it still goes round the stage,
+   * which everyone does but the dancers. True on arrival.
    */
   private step(m: Mii, speed: number, cadence: number, dt: number, avoid = true) {
     const d = Math.hypot(m.tx - m.x, m.tz - m.z);
@@ -1626,12 +1744,12 @@ export class Crowd {
     }
     _goal.x = m.tx;
     _goal.z = m.tz;
+    // Round the middle group, then round the stage on the way to wherever that leaves it heading.
     if (avoid) {
-      // Round the middle group, then round the stage on the way to wherever that leaves it heading.
       const { hero } = this.layout;
       this.around(m, hero.x + KEEP_OUT.x, hero.z + KEEP_OUT.z, DEEP * 0.75, KEEP_OUT.r + 0.9);
-      if (this.dj >= 0) this.around(m, this.djAt.x, this.djAt.z + STAGE.z, DEEP, STAGE.pass);
     }
+    if (this.dj >= 0 && !m.stage) this.around(m, this.djAt.x, this.djAt.z + STAGE.z, DEEP, STAGE.pass);
     const gx = _goal.x;
     const gz = _goal.z;
     const want = Math.atan2(gx - m.x, gz - m.z);
@@ -1723,7 +1841,8 @@ export class Crowd {
             if (d2 > PERSONAL * PERSONAL || d2 < 1e-6) continue;
             const d = Math.sqrt(d2);
             // Whoever is standing gives way less than whoever is moving.
-            const give = (PERSONAL - d) * (o.friend || o.stage ? 1 : m.act === 'dash' || m.act === 'stroll' ? 0.5 : 0.12);
+            const running = m.act === 'dash' || m.act === 'stroll' || (m.act === 'fan' && m.until === Infinity);
+            const give = (PERSONAL - d) * (o.friend || o.stage ? 1 : running ? 0.5 : 0.12);
             m.x += (dx / d) * give;
             m.z += (dz / d) * give * DEEP;
           }
@@ -1748,6 +1867,32 @@ export class Crowd {
           m.x += (ox / od) * push;
           m.z += (oz / od) * push * DEEP;
         }
+      }
+    }
+  }
+
+  /**
+   * The DJ and their dancers as a wall: anyone on their feet who has come within WALL of one is put
+   * back toward its edge, half the way each frame, so a walker never gets more than a step in and
+   * slides along it rather than through, and one that landed close gets up and eases clear rather
+   * than jumping. Bodies in the air or lying loose meet the stage in `physics` instead.
+   */
+  private wall() {
+    if (this.dj < 0) return;
+    for (const o of this.miis) {
+      if (!o.stage) continue;
+      for (const m of this.miis) {
+        if (m.stage || m.act === 'away' || m.act === 'hover' || m.act === 'fall' || m.act === 'held' || m.act === 'flung' || m.act === 'down') continue;
+        const dx = m.x - o.x;
+        const dz = m.z - o.z;
+        const d2 = dx * dx + dz * dz;
+        if (d2 >= WALL * WALL) continue;
+        const d = Math.sqrt(d2);
+        // Dead on top of them: out toward the camera, the near side of the stage.
+        const nx = d > 1e-6 ? dx / d : 0;
+        const nz = d > 1e-6 ? dz / d : 1;
+        m.x += (o.x + nx * WALL - m.x) * 0.5;
+        m.z += (o.z + nz * WALL - m.z) * 0.5;
       }
     }
   }

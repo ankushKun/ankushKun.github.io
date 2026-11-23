@@ -34,6 +34,8 @@ export interface PlazaCube extends CubeStyle {
   art?: string;
   /** A slot that turns through random picks from `PlazaData.featured`, a new one every few seconds. */
   feature?: boolean;
+  /** What kind of pick it is (a section, games, apps, paint): every kind gets an equal share of turns (rotation.ts). */
+  kind?: string;
 }
 
 export interface PlazaPost {
@@ -53,6 +55,13 @@ export interface PlazaPost {
   by?: number;
   /** `thumb` is a Mii's portrait (a chat message's sender), drawn on a backdrop as the chat draws faces. */
   mii?: boolean;
+  /** What kind of post it is (a section, chat, paint): every kind gets an equal share of turns (rotation.ts). */
+  kind?: string;
+  /**
+   * A drawing shown large in place of `text`: a chat drawing's black ink on no paper of its own
+   * (`ink`, Miiverse's 320 by 120), or a Paint day on its white paper (16:10, the canvas's shape).
+   */
+  drawing?: { src: string; ink: boolean };
 }
 
 /**

@@ -454,6 +454,43 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
     -webkit-line-clamp: 3;
   }
 
+  /* A drawing in place of the text, as Miiverse showed them on the plaza. */
+  .plaza-bubble.has-drawing {
+    padding-right: calc(var(--b) * 2.4);
+  }
+
+  /* A Paint day, on its white paper. */
+  .plaza-bubble img.plaza-bubble-drawing {
+    width: calc(var(--b) * 44);
+    height: auto;
+    aspect-ratio: 16 / 10;
+    background: #fff;
+  }
+
+  /* A chat drawing is black ink with no paper of its own: on the glass by day, and at night turned
+     white, the black left behind blended away, as the chat shows them. */
+  .plaza-bubble img.plaza-bubble-drawing.is-ink {
+    width: calc(var(--b) * 56);
+    aspect-ratio: 320 / 120;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    image-rendering: pixelated;
+    mix-blend-mode: multiply;
+  }
+
+  :root[data-theme='dark'] .plaza-bubble img.plaza-bubble-drawing.is-ink {
+    filter: invert(1);
+    mix-blend-mode: screen;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) .plaza-bubble img.plaza-bubble-drawing.is-ink {
+      filter: invert(1);
+      mix-blend-mode: screen;
+    }
+  }
+
   /* Miis can be picked up. */
   .plaza[data-over='true'] {
     cursor: grab;

@@ -1,13 +1,20 @@
 // Speech bubbles: now and then a Mii says an entry from anywhere on the site, and the bubble links to it.
 // Your own Mii opens with a greeting, alone on screen; the rest only start once it has finished.
-// Recent chat messages join in later (`mix`), and new ones go ahead of the rest (`hurry`).
+// Recent chat messages and Paint's drawings join in later (`mix`), and new messages go ahead of the
+// rest (`hurry`). Each kind (posts, projects, the timeline, chat, Paint) gets an equal share of turns
+// however many it has (rotation.ts).
 import * as THREE from 'three';
 import type { Crowd } from './crowd';
+import { Rotation } from './rotation';
 import type { PlazaPost } from './types';
 import { clamp } from './util';
 
 const LIFE = 8.5;
 const EVERY = 3.4;
+/** Most bubbles up at once: one on a phone, four on a desktop, where they come quicker to fill them. */
+const MOST = { phone: 1, desktop: 4 };
+/** Narrower than this is a phone. */
+const DESKTOP = 720;
 const MARGIN = 12;
 /** How far above the speaker's head a bubble's bottom edge sits, in pixels, its tail between. */
 const ABOVE = 20;
@@ -40,8 +47,7 @@ const _v = new THREE.Vector3();
 
 export class Bubbles {
   private active: Active[] = [];
-  private posts: PlazaPost[];
-  private queue: PlazaPost[];
+  private queue: Rotation<PlazaPost>;
   /** Said ahead of the queue, in order, alongside whatever is up: new chat messages. */
   private soon: PlazaPost[] = [];
   private soonTries = 0;
@@ -66,22 +72,21 @@ export class Bubbles {
     greeting: PlazaPost | null = null,
   ) {
     this.first = greeting;
-    this.posts = posts;
-    // After the greeting, every entry in a new order on every visit, never two from one block running.
-    this.queue = shuffled(posts);
+    // After the greeting, a new order on every visit, never two of one kind running.
+    this.queue = new Rotation(kindOf, posts);
   }
 
-  /** Mixes `more` in with the site's posts, in place of any mixed in before, and says `first` ahead of them all, in order. */
-  mix(more: PlazaPost[], first: PlazaPost[] = []) {
-    this.queue = shuffled([...this.posts, ...more]);
-    this.soon = [...first];
+  /** Mixes in `more` as everything of `kind`, in place of any mixed in before, and says `first` ahead of them all, in order. */
+  mix(kind: string, more: PlazaPost[], first: PlazaPost[] = []) {
+    this.queue.set(kind, more);
+    this.soon = [...this.soon.filter((p) => kindOf(p) !== kind), ...first];
     this.soonTries = 0;
   }
 
   /** A post just made: said ahead of the queue as soon as there is room, then taking its turn with the rest. */
   hurry(post: PlazaPost) {
     this.soon.push(post);
-    this.queue.splice(Math.floor(Math.random() * (this.queue.length + 1)), 0, post);
+    this.queue.add(post);
   }
 
   /** Whether something is waiting to be said first (the greeting), which may come sooner than the rest. */
@@ -143,12 +148,15 @@ export class Bubbles {
     }
 
     if (this.alone && this.active.includes(this.alone)) return;
-    const post = this.first ?? this.soon[0] ?? this.queue[0];
+    const most = w < DESKTOP ? MOST.phone : MOST.desktop;
+    const every = Math.min(EVERY, LIFE / most);
+    const queued = !this.first && !this.soon.length;
+    const post = this.first ?? this.soon[0] ?? this.queue.peek();
     if (this.active.some((a) => a.until === Infinity)) return;
-    if (!open || !post || this.active.length >= (w < 720 ? 1 : 2) || time - this.last < EVERY) return;
+    if (!open || !post || this.active.length >= most || time - this.last < every) return;
     // Already up (a new message, hurried, coming round in the queue too): the next one instead.
     if (this.active.some((a) => a.post === post)) {
-      if (post === this.queue[0]) this.queue.push(this.queue.shift()!);
+      if (queued) this.queue.skip();
       return;
     }
     this.last = time;
@@ -183,11 +191,11 @@ export class Bubbles {
         this.first = null;
         this.firstLife = LIFE;
         this.alone = a;
-        this.last = a.until - EVERY + 0.8;
+        this.last = a.until - every + 0.8;
       } else if (post === this.soon[0]) {
         this.soon.shift();
         this.soonTries = 0;
-      } else this.queue.push(this.queue.shift()!);
+      } else this.queue.skip();
       this.onSay?.(post);
       return;
     }
@@ -199,8 +207,8 @@ export class Bubbles {
         this.soon.shift();
         this.soonTries = 0;
       }
-    } else if (post !== this.first) this.queue.push(this.queue.shift()!);
-    this.last = time - EVERY * 0.75;
+    } else if (queued) this.queue.skip();
+    this.last = time - every * 0.75;
   }
 
   private close(a: Active) {
@@ -263,10 +271,22 @@ export class Bubbles {
       icon.alt = '';
       icon.decoding = 'async';
     }
-    const text = document.createElement('span');
-    text.className = 'plaza-bubble-text';
-    text.textContent = post.text;
-    el.append(svg, tag, icon, text);
+    let body: HTMLElement;
+    if (post.drawing) {
+      // Sized by the page's styles before it loads, so the bubble is measured at its full size.
+      const img = document.createElement('img');
+      img.className = `plaza-bubble-drawing${post.drawing.ink ? ' is-ink' : ''}`;
+      img.src = post.drawing.src;
+      img.alt = post.text;
+      img.decoding = 'async';
+      el.classList.add('has-drawing');
+      body = img;
+    } else {
+      body = document.createElement('span');
+      body.className = 'plaza-bubble-text';
+      body.textContent = post.text;
+    }
+    el.append(svg, tag, icon, body);
     return { el, shadow };
   }
 }
@@ -335,21 +355,8 @@ function bubbleShape(w: number, h: number, tail: number, b: number) {
 }
 
 /** Posts in a random order, taking turns between blocks so the same block never speaks twice running. */
-function shuffled(posts: PlazaPost[]) {
-  const mix = <T>(list: T[]) => {
-    for (let i = list.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [list[i], list[j]] = [list[j], list[i]];
-    }
-    return list;
-  };
-  const byCube = new Map<number, PlazaPost[]>();
-  for (const p of posts) byCube.set(p.cube, [...(byCube.get(p.cube) ?? []), p]);
-  const groups = mix([...byCube.values()].map(mix));
-  const out: PlazaPost[] = [];
-  for (let i = 0; groups.some((g) => i < g.length); i++) for (const g of groups) if (g[i]) out.push(g[i]);
-  return out;
-}
+/** A post's kind for its share of turns: what it says it is, or else its block. */
+const kindOf = (p: PlazaPost) => p.kind ?? `cube-${p.cube}`;
 
 /** How much of two boxes overlaps, in square pixels. */
 function area(a: Box, b: Box) {

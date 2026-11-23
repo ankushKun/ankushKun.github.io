@@ -23,7 +23,8 @@ import { HeadCards } from './heads';
 import { drawIcons, thumb } from './icons';
 import { NowPlaying } from './nowplaying';
 import { CUBE, applyView, blankView, copyView, makeLayout, mixViews, type Layout } from './layout';
-import type { PlazaCube, PlazaData } from './types';
+import type { PlazaCube, PlazaData, PlazaPost } from './types';
+import { Rotation } from './rotation';
 import { clamp, damp, easeInOut, rng, smoothstep } from './util';
 
 /** When the camera has pulled all the way back to the whole plaza, in seconds from the click. */
@@ -103,22 +104,21 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
   const device = navigator as Navigator & { deviceMemory?: number };
   const weak = (device.deviceMemory ?? 8) < 4 || (navigator.hardwareConcurrency || 8) < 4;
 
-  // The feature slots: a random post, project, page or app each, turning to another every
-  // FEATURE_EVERY seconds (`turnFeatures`). Picks come off a shuffled deck, so everything comes
-  // round before anything comes round twice, and never one another slot is showing.
+  // The feature slots: a random post, project, game, app or drawing each, turning to another every
+  // FEATURE_EVERY seconds (`turnFeatures`). Every kind gets an equal share of turns however many it
+  // has, everything of a kind comes round before any of it twice (rotation.ts), and never one
+  // another slot is showing.
   const featureSlots = data.cubes.flatMap((c, i) => (c.feature ? [i] : []));
-  const deck: PlazaCube[] = [];
+  const features = new Rotation<PlazaCube>((c) => c.kind ?? c.href, data.featured);
   function drawFeature(): PlazaCube | null {
-    if (!deck.length) {
-      deck.push(...data.featured);
-      for (let i = deck.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [deck[i], deck[j]] = [deck[j], deck[i]];
-      }
-    }
     const shown = new Set(featureSlots.map((i) => data.cubes[i].href));
-    const at = deck.findIndex((c) => !shown.has(c.href));
-    return at < 0 ? null : deck.splice(at, 1)[0];
+    // A pick already up in another slot is passed over; a few tries always find one that isn't.
+    for (let n = 0; n < featureSlots.length * 4 + 4; n++) {
+      const pick = features.peek();
+      features.skip();
+      if (!pick || !shown.has(pick.href)) return pick;
+    }
+    return null;
   }
   function showFeature(i: number, pick: PlazaCube) {
     data.cubes[i] = pick;
@@ -250,6 +250,31 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     chatter = null;
   }
   bubbles.onSay = (post) => chatter?.said(post);
+
+  // Drawings from Paint join the feature block's picks and the bubbles once the plaza is up
+  // (sketch.ts), the first one next in line for the block, so a visit sees one. Styled as the Paint
+  // app's own pick, for the tag and a failed picture, and said under the Apps block with the app's
+  // icon and the drawing large.
+  const SKETCHES = 5;
+  let sketched = false;
+  function addSketches() {
+    const style = data.featured.find((c) => c.href === '/apps/paint/') ?? data.cubes.find((c) => c.href === '/apps/');
+    const appsCube = data.cubes.findIndex((c) => c.href === '/apps/' && !c.feature);
+    if (sketched || !style) return;
+    sketched = true;
+    const said: PlazaPost[] = [];
+    let found = 0;
+    import('./sketch')
+      .then(({ sketches }) =>
+        sketches(SKETCHES, ({ prompt, href, art, wide }) => {
+          if (featureSlots.length) features.add({ icon: style.icon, colors: style.colors, label: `Paint: ${prompt}`, href, art, feature: true, kind: 'paint' }, found++ === 0);
+          if (appsCube < 0) return;
+          said.push({ cube: appsCube, tag: 'Paint', text: prompt, href, thumb: style.art, kind: 'paint', drawing: { src: wide, ink: false } });
+          bubbles.mix('paint', said);
+        }),
+      )
+      .catch((err: unknown) => console.warn('Paint sketches failed', err));
+  }
 
   // Camera ---------------------------------------------------------------------------------------
 
@@ -1332,7 +1357,10 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     last = performance.now();
     raf = requestAnimationFrame(frame);
     // The chat a moment later, clear of the first frames.
-    setTimeout(hearChat, 1500);
+    setTimeout(() => {
+      hearChat();
+      addSketches();
+    }, 1500);
   });
 
   return {

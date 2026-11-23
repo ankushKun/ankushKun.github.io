@@ -4,7 +4,10 @@
 // each head exists it is photographed from eight angles into one texture, and every head small
 // enough on screen is drawn instead as a picture facing the camera, all of them in a single draw
 // call, showing whichever photograph is nearest the angle it's seen from. (Blending two neighbours
-// laid two half-faces over each other.) Up close the real heads return.
+// laid two half-faces over each other.) Up close the real heads return. Each photograph has a
+// depth picture beside it, so every pixel of a card sits as deep as the head it shows: long hair
+// hanging behind the shoulders goes behind the body, as it does on a real head, while the face and
+// a beard stay in front of it.
 import * as THREE from 'three';
 import { miiUniforms, type MiiSet } from '../mii/rig';
 import { MIRRORED } from './floor';
@@ -18,6 +21,11 @@ const FRAME = { half: 56, mid: 35 };
  * picture would look soft; with a little give either way so it doesn't flicker at the line.
  */
 const SWAP = { up: 1.5, down: 1.3 };
+/**
+ * How far in front of or behind the head's middle a depth picture reaches, in its own units. Depth
+ * pictures are half the photographs' size, one channel: depth needs far less detail than color.
+ */
+const REACH = 80;
 
 const vertex = /* glsl */ `
   attribute vec3 aCenter;
@@ -31,6 +39,13 @@ const vertex = /* glsl */ `
   varying float vShow;
   varying float vDepth;
   varying float vY;
+  // For placing each pixel at its real depth: the card's own depth in view, how far the head's
+  // middle and the card are from the camera, world units per head unit, and the projection's depth terms.
+  varying float vViewZ;
+  varying float vDist;
+  varying float vCard;
+  varying float vScale;
+  varying vec2 vProj;
 
   void main() {
     // Upright, turned to face the camera about the vertical only, like a person would be.
@@ -56,6 +71,11 @@ const vertex = /* glsl */ `
     vY = world.y;
     vec4 view = viewMatrix * vec4(world, 1.0);
     vDepth = -view.z;
+    vViewZ = view.z;
+    vDist = dist;
+    vCard = dist - push;
+    vScale = aSize / ${(FRAME.half * 2).toFixed(1)};
+    vProj = vec2(projectionMatrix[2][2], projectionMatrix[3][2]);
     gl_Position = projectionMatrix * view;
     if (aShow < 0.5) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
   }
@@ -63,6 +83,7 @@ const vertex = /* glsl */ `
 
 const fragment = /* glsl */ `
   uniform sampler2D uAtlas;
+  uniform sampler2D uDepthAtlas;
   uniform vec3 uFogColor;
   uniform float uFogNear;
   uniform float uFogFar;
@@ -70,10 +91,20 @@ const fragment = /* glsl */ `
   varying vec2 vUv0;
   varying float vDepth;
   varying float vY;
+  varying float vViewZ;
+  varying float vDist;
+  varying float vCard;
+  varying float vScale;
+  varying vec2 vProj;
 
   void main() {
     vec4 c = texture2D(uAtlas, vUv0);
     if (c.a < 0.5) discard;
+    // How far toward the camera this pixel of the head is from its middle, in head units, and so
+    // how far along its line of sight the real head is: the card stands in front of it, scaled down.
+    float toward = (texture2D(uDepthAtlas, vUv0).r - 0.5) * ${(2 * REACH).toFixed(1)};
+    float z = vViewZ * (vDist - toward * vScale) / vCard;
+    gl_FragDepth = (vProj.x * z + vProj.y) / -z * 0.5 + 0.5;
     vec3 col = c.rgb / max(c.a, 1e-3);
     col = mix(col, uFogColor, smoothstep(uFogNear, uFogFar, vDepth));
     gl_FragColor = vec4(col, 1.0);
@@ -93,6 +124,25 @@ const _v = new THREE.Vector3();
 
 export class HeadCards {
   private atlas: THREE.WebGLRenderTarget;
+  private depthAtlas: THREE.WebGLRenderTarget;
+  /** Draws a head as its depth toward the eye, for the depth pictures. */
+  private depthOnly = new THREE.ShaderMaterial({
+    vertexShader: /* glsl */ `
+      varying float vToward;
+      void main() {
+        vec4 view = modelViewMatrix * vec4(position, 1.0);
+        vToward = view.z;
+        gl_Position = projectionMatrix * view;
+      }
+    `,
+    fragmentShader: /* glsl */ `
+      varying float vToward;
+      void main() {
+        gl_FragColor = vec4(clamp(0.5 + vToward / ${(2 * REACH).toFixed(1)}, 0.0, 1.0), 0.0, 0.0, 1.0);
+      }
+    `,
+    side: THREE.DoubleSide,
+  });
   private mesh: THREE.InstancedMesh<THREE.PlaneGeometry, THREE.ShaderMaterial>;
   private grid: THREE.Vector2;
   private baked: boolean[];
@@ -125,6 +175,14 @@ export class HeadCards {
       minFilter: THREE.LinearMipmapLinearFilter,
       magFilter: THREE.LinearFilter,
     });
+    // Half size, no smaller copies: the card picks its depth at the same place as its color.
+    this.depthAtlas = new THREE.WebGLRenderTarget((perRow * tile) / 2, (rows * tile) / 2, {
+      depthBuffer: true,
+      format: THREE.RedFormat,
+      generateMipmaps: false,
+      minFilter: THREE.LinearFilter,
+      magFilter: THREE.LinearFilter,
+    });
     this.baked = new Array(n).fill(false);
     this.using = new Array(n).fill(false);
     this.eye = new THREE.OrthographicCamera(-FRAME.half, FRAME.half, FRAME.mid + FRAME.half, FRAME.mid - FRAME.half, -300, 300);
@@ -141,7 +199,7 @@ export class HeadCards {
     const material = new THREE.ShaderMaterial({
       vertexShader: vertex,
       fragmentShader: fragment,
-      uniforms: { uAtlas: { value: this.atlas.texture }, uGrid: { value: this.grid }, ...miiUniforms },
+      uniforms: { uAtlas: { value: this.atlas.texture }, uDepthAtlas: { value: this.depthAtlas.texture }, uGrid: { value: this.grid }, ...miiUniforms },
       alphaToCoverage: true,
     });
     this.mesh = new THREE.InstancedMesh(geo, material, n);
@@ -169,6 +227,7 @@ export class HeadCards {
     // Smaller copies of the texture (for distant heads) are made once at the end, not per photo.
     this.atlas.texture.generateMipmaps = false;
     this.atlas.scissorTest = true;
+    this.depthAtlas.scissorTest = true;
     let done = 0;
     while (this.next < n && (done === 0 || performance.now() < deadline)) {
       const i = this.next;
@@ -187,6 +246,16 @@ export class HeadCards {
           const parent = head.parent;
           this.stage.add(head);
           r.render(this.stage, this.eye);
+          // The same view again as depth, into the same place in the depth pictures.
+          const half = this.tile / 2;
+          this.depthAtlas.viewport.set(x / 2, y / 2, half, half);
+          this.depthAtlas.scissor.set(x / 2, y / 2, half, half);
+          r.setRenderTarget(this.depthAtlas);
+          r.clear();
+          this.stage.overrideMaterial = this.depthOnly;
+          r.render(this.stage, this.eye);
+          this.stage.overrideMaterial = null;
+          r.setRenderTarget(this.atlas);
           parent?.add(head);
         });
       }
@@ -202,6 +271,7 @@ export class HeadCards {
       r.render(this.empty, this.eye);
     }
     this.atlas.scissorTest = false;
+    this.depthAtlas.scissorTest = false;
     r.autoClear = autoClear;
     r.setRenderTarget(target);
     r.setClearColor(clear, clearAlpha);
