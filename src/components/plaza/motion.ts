@@ -1207,6 +1207,63 @@ export function leek(t: number, out: { show: number; spin: number }) {
   return out;
 }
 
+// The Tetoris spin: Kasane Teto's dance in Hiiragi Magnetite's video for the song, danced by the
+// three on stage all the way through it. Read off the video frame by frame, it is one move from
+// the first verse to the last chorus: once round to her right on every beat, facing you on the
+// beat and lingering a moment front and back, singing into a mic held at her mouth in her left
+// hand, the right arm thrown up and out over her head and pumping once a turn, the left knee
+// lifted as she pivots on the right foot. `t` is turns into it. Left and right are the dancer's own.
+
+/** How long a turn takes at the video's own pace, a beat at 85 a minute. */
+export const TETO_TURN = 60 / 85;
+/** How much the turn slows facing front and back (and hurries past side on), 0 for an even turn. */
+const LINGER = 0.2;
+
+/**
+ * The mic up at the mouth in the left hand, the right arm thrown up and out: straight and on the
+ * diagonal, a little forward, as in the video, which on a Mii's short arms is also the one way the
+ * hand clears the big head and hair rather than getting lost beside them.
+ */
+const SING: Key = {
+  crouch: 0.06, leanX: -0.03, nod: -0.06,
+  swingL: 1.0, outL: 0.38, twistL: 0.45, elbowL: 2.2,
+  outR: 2.2, swingR: 0.3, twistR: -0.3, elbowR: 0.12,
+};
+
+/** The spin. A turn a beat. */
+export const tetoris: Clip = (p, t) => {
+  Object.assign(p, SING);
+  const u = within(t);
+  // Up on the right foot, the left knee lifted, a little bounce as each turn begins.
+  const hit = pulse(t);
+  p.kneeL = 1.05;
+  p.legL = 0.18;
+  p.kneeR = 0.08 + hit * 0.12;
+  p.crouch += hit * 0.06;
+  p.y = (1 - hit) * 0.025;
+  // The raised arm pumps once a turn: bent in as she comes round to face you, flung up after.
+  const pump = fold(cos((u + 0.08) * TAU));
+  p.elbowR += pump * 0.45;
+  p.outR -= pump * 0.1;
+  // Swaying a touch with the turn, head the other way.
+  const sway = sin(u * TAU);
+  p.tilt += sway * 0.08;
+  p.leanZ -= sway * 0.03;
+  // Turning to her right: a whole turn a beat, slowest square on and back on.
+  const turn = -(u * TAU - LINGER * sin(u * 2 * TAU));
+  p.yaw = turn - TAU * Math.round(turn / TAU);
+  p.expr = 2;
+};
+
+/** Where she stops: square on, the mic at the mouth and the arm up, swaying gently. `t` is seconds. */
+export const tetoPose: Clip = (p, t) => {
+  Object.assign(p, SING);
+  const breath = sin(t * 2.4);
+  p.tilt += breath * 0.05;
+  p.elbowR += 0.15 + breath * 0.08;
+  p.expr = 2;
+};
+
 /** Every solo, by name. */
 export const SOLOS ={ dab, disco, robot, runningMan, twirl, kicks, roof, gangnam, moonwalk, thriller } as const;
 export type SoloName = keyof typeof SOLOS;
@@ -1219,8 +1276,10 @@ const LONG = new Map<Clip, number>([
 ]);
 /** Beats `clip` takes to come round: a solo always ends where it began. */
 export const soloBeats = (clip: Clip) => LONG.get(clip) ?? 4;
-/** Whether a clip is one of the stage's dances: the routine, the polka or a solo. */
-export const dancing = (clip: Clip) => clip === idol || clip === polka || SOLO_SET.has(clip);
+/** Whether a clip is one of the stage's dances: the routine, the polka, the Tetoris spin or a solo. */
+export const dancing = (clip: Clip) => stageDance(clip) || SOLO_SET.has(clip);
+/** Whether a clip is one the whole stage dances together (and the fans with it): the routine, the polka or the Tetoris spin. */
+export const stageDance = (clip: Clip) => clip === idol || clip === polka || clip === tetoris || clip === tetoPose;
 
 // Cheers: the crowd watching the stage, along with the music. For each, `t` is beats gone by
 // (whole on the beat), so everyone watching keeps the same beat, and `k` the Mii's own number.

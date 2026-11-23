@@ -103,6 +103,8 @@ export interface PlazaData {
   backup: PlazaMii[];
   /** Video ids of the tracks the stage dances the polka to from start to end. */
   polka: string[];
+  /** Video ids of the tracks the stage dances the Tetoris spin to, each with where in it the stage stops. */
+  tetoris: Record<string, [number, number][]>;
   boombox: 'model' | 'drawn';
   crowd: { desktop: number; mobile: number };
   /** Entries with cover art, other people's games and apps that aren't blocks: what the feature slots turn through. */

@@ -10,6 +10,7 @@ import type { Layout } from './layout';
 import type { Track } from '../../data/music';
 import { BeatClock } from './beat';
 import { Leeks } from './leek';
+import { Mics } from './mic';
 import * as motion from './motion';
 import * as toss from './toss';
 import type { PlazaMii } from './types';
@@ -384,6 +385,15 @@ export class Crowd {
   /** Video ids of the tracks the polka is danced to all the way through, and whether one is playing. */
   private readonly polkaTracks: Set<string>;
   private polkaSong = false;
+  /** The same beat counted in pairs of turns of the Tetoris spin, at its own pace. */
+  private readonly spins = new BeatClock(2 * motion.TETO_TURN);
+  /** The tracks the stage dances the Tetoris spin to, by video id, each with where in it the stage stops. */
+  private readonly tetoTracks: Map<string, [number, number][]>;
+  /** Where the stage stops in the Tetoris song playing, null with another playing; and where in it the radio is. */
+  private tetoStops: [number, number][] | null = null;
+  private songAt = 0;
+  /** The spin asked for without its song, for checking it (`cueTetoris`). */
+  private tetoCued = false;
   /**
    * What the stage dances while music is heard: motion.idol, or motion.polka from the top of bar
    * `from` (of `bars`) until the top of bar `until`. `next` is when the polka may next begin (-1
@@ -393,6 +403,9 @@ export class Crowd {
   /** The leeks the stage twirls in the polka, one for each of them. */
   private readonly leeks: Leeks | null = null;
   private readonly leekNow = { show: 0, spin: 0 };
+  /** The mics the stage sings into in the Tetoris spin, one each, and how far each is out (0 to 1) and when that was. */
+  private readonly mics: Mics | null = null;
+  private readonly micOut: { show: number; at: number }[] = [];
   /** Beats gone by while the DJ dances, for the boombox to thump on; null while they stand. */
   djBeats: number | null = null;
   /**
@@ -445,6 +458,8 @@ export class Crowd {
       backup: PlazaMii[];
       /** Video ids of the tracks the stage dances the polka to from start to end. */
       polka: string[];
+      /** Video ids of the tracks the stage dances the Tetoris spin to, each with where in it the stage stops. */
+      tetoris: Record<string, [number, number][]>;
       /** Face texture size for the crowd. */
       resolution: number;
       random: Rng;
@@ -452,6 +467,7 @@ export class Crowd {
   ) {
     const r = (this.r = opts.random);
     this.polkaTracks = new Set(opts.polka);
+    this.tetoTracks = new Map(Object.entries(opts.tetoris));
     type Cast = { data: Uint8Array; who: PlazaMii | null };
     const decode = (miis: PlazaMii[]) =>
       miis.flatMap((who): Cast[] => {
@@ -574,6 +590,8 @@ export class Crowd {
       this.dj = middle.length;
       this.djWrist = middleSet.track(middle.length, 'wrist_l');
       this.leeks = new Leeks(scene, stage.map((_, j) => middleSet.track(middle.length + j, 'wrist_r')));
+      this.mics = new Mics(scene, stage.map((_, j) => middleSet.track(middle.length + j, 'wrist_l')));
+      this.micOut = stage.map(() => ({ show: 0, at: 0 }));
     }
     others.forEach((c, i) => add(crowdSet, i, false, c.who));
   }
@@ -618,7 +636,15 @@ export class Crowd {
   listen(dt: number, track: Track | null, at: number) {
     this.beat.update(dt, track?.beats, at);
     this.bars.update(dt, track?.beats, at);
+    this.spins.update(dt, track?.beats, at);
     this.polkaSong = !!track && this.polkaTracks.has(track.videoId);
+    this.tetoStops = (track && this.tetoTracks.get(track.videoId)) ?? null;
+    this.songAt = at;
+  }
+
+  /** Has the stage dance the Tetoris spin as if its song were playing (or stop with `false`), for checking it. */
+  cueTetoris(on = true) {
+    this.tetoCued = on;
   }
 
   /** Has the stage dance the polka from the top of the next bar (or stop it there with `false`), for checking it. */
@@ -1234,6 +1260,19 @@ export class Crowd {
       return;
     }
     if (r.next < 0) r.next = time + between(POLKA.first);
+    // The Tetoris song: the spin from start to end, standing square on wherever Teto stops, and
+    // neither polka nor solos meanwhile. Once it is over, back to the routine for a while first.
+    const stops = this.tetoStops ?? (this.tetoCued ? [] : null);
+    if (stops) {
+      r.clip = stops.some(([a, z]) => this.songAt >= a && this.songAt < z) ? motion.tetoPose : motion.tetoris;
+      return;
+    }
+    if (r.clip === motion.tetoris || r.clip === motion.tetoPose) {
+      r.clip = motion.idol;
+      r.next = time + between(POLKA.every);
+      this.solo.next = Math.max(this.solo.next, time + between(SOLO.first));
+      return;
+    }
     if (!top) return;
     if (r.clip === motion.polka) {
       if (bar < r.until) return;
@@ -1428,7 +1467,7 @@ export class Crowd {
     this.turn(m, toCamera, dt);
     this.keepSpot(m, dt);
     // The stage changed dances: so do they, unless dancing a solo of their own.
-    if (this.grooving && (m.clip === motion.idol || m.clip === motion.polka)) this.play(m, this.routine.clip, time);
+    if (this.grooving && motion.stageDance(m.clip)) this.play(m, this.routine.clip, time);
     // The music stopped: they stop with the stage, and each wanders off in their own moment.
     if (!this.grooving && motion.dancing(m.clip)) {
       this.play(m, motion.stand, time);
@@ -2207,7 +2246,9 @@ export class Crowd {
         ? (this.beat.loops + m.lag / this.beat.period) * motion.LOOP
         : clip === motion.polka
           ? this.polkaIn(m)
-          : solo
+          : clip === motion.tetoris
+            ? (this.spins.loops + m.lag / this.spins.period) * 2
+            : solo
             ? this.beatsIn(m)
             : gait
               ? m.stride
@@ -2268,6 +2309,14 @@ export class Crowd {
       // The leek comes out for the polka's twirl, and goes the moment anything else is danced.
       const now = m.clip === motion.polka && !m.set.isHidden(m.slot) ? motion.leek(this.polkaIn(m), this.leekNow) : null;
       this.leeks.place(m.stage.leek, now ? now.show : 0, now ? now.spin : 0, SIZE);
+    }
+    if (m.stage && this.mics) {
+      // The mic comes out for the Tetoris spin, quickly, and goes back as quickly after.
+      const mic = this.micOut[m.stage.leek];
+      const want = (m.clip === motion.tetoris || m.clip === motion.tetoPose) && !m.set.isHidden(m.slot) ? 1 : 0;
+      mic.show += (want - mic.show) * clamp01((time - mic.at) * 6);
+      mic.at = time;
+      this.mics.place(m.stage.leek, mic.show < 0.01 && !want ? 0 : mic.show, SIZE);
     }
   }
 }

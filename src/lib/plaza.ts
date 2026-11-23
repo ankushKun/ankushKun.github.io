@@ -1,7 +1,7 @@
 // Build-time data for the home page plaza: cubes from the site nav, speech bubbles from every entry.
 import type { PlazaCube, PlazaData, PlazaMii, PlazaPost } from '../components/plaza/types';
 import { getImage } from 'astro:assets';
-import { BACKUP, BOOMBOX, CROWD, CUBES, DJ, FEATURED, HERO, LOOKS, ME, POLKA, WELCOME, WIDE_SWAPS } from '../data/plaza';
+import { BACKUP, BOOMBOX, CROWD, CUBES, DJ, FEATURED, HERO, LOOKS, ME, POLKA, TETORIS, WELCOME, WIDE_SWAPS } from '../data/plaza';
 import { existsSync } from 'node:fs';
 import { GAMES } from '../data/games';
 import { gameArt } from './games';
@@ -94,5 +94,5 @@ export async function getPlazaData(): Promise<PlazaData> {
 
   const backup = await Promise.all(BACKUP.map(async ({ from, ...made }) => ({ ...made, code: await resolveMii(from, made.name) })));
 
-  return { cubes, wide, posts, welcome, hero, pool, dj, backup, polka: POLKA, boombox: BOOMBOX, crowd: CROWD, featured };
+  return { cubes, wide, posts, welcome, hero, pool, dj, backup, polka: POLKA, tetoris: TETORIS, boombox: BOOMBOX, crowd: CROWD, featured };
 }

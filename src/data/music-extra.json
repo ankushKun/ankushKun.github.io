@@ -3,12 +3,13 @@
   { "videoId": "0iVlSNpq8i8", "title": "BIRDBRAIN", "artist": "Jamie Paige & OK Glass ft. Kasane Teto" },
   { "videoId": "19y8YTbvri8", "title": "Mesmerizer", "artist": "32ki ft. Hatsune Miku & Kasane Teto" },
   { "videoId": "LLjfal8jCYI", "title": "Override", "artist": "Yoshida Yasei ft. Kasane Teto" },
-  { "videoId": "HYxWRTPn9vM", "title": "Miku Miku ni Shite Ageru", "artist": "ika ft. Hatsune Miku" },
+  { "videoId": "8HeOUwFodFc", "title": "Miku Miku ni Shite Ageru", "artist": "ika ft. Hatsune Miku", "art": "HYxWRTPn9vM" },
   { "videoId": "widZEAJc0QM", "title": "Ievan Polkka", "artist": "Otomania ft. Hatsune Miku" },
-  { "videoId": "A2VpR8HahKc", "title": "One More Time", "artist": "Daft Punk" },
+  { "videoId": "Soy4jGPHr3g", "title": "Tetoris", "artist": "Hiiragi Magnetite ft. Kasane Teto", "art": "https://is1-ssl.mzstatic.com/image/thumb/Music211/v4/bb/36/aa/bb36aa2e-dd8d-4392-3fe3-f4a20ceb612b/PA00168049_0_207463_jacket.jpg/640x640bb.jpg" },
+  { "videoId": "FGBhQbmPwH8", "title": "One More Time", "artist": "Daft Punk", "art": "A2VpR8HahKc" },
   { "videoId": "K0HSD_i2DvA", "title": "Around the World", "artist": "Daft Punk" },
-  { "videoId": "yydNF8tuVmU", "title": "Harder, Better, Faster, Stronger", "artist": "Daft Punk" },
-  { "videoId": "4whD6uAryMs", "title": "Digital Love", "artist": "Daft Punk" },
-  { "videoId": "5NV6Rdv1a3I", "title": "Get Lucky", "artist": "Daft Punk ft. Pharrell Williams & Nile Rodgers" },
+  { "videoId": "gAjR4_CbPpQ", "title": "Harder, Better, Faster, Stronger", "artist": "Daft Punk", "art": "yydNF8tuVmU" },
+  { "videoId": "FxzBvqY5PP0", "title": "Digital Love", "artist": "Daft Punk", "art": "4whD6uAryMs" },
+  { "videoId": "CCHdMIEGaaM", "title": "Get Lucky", "artist": "Daft Punk ft. Pharrell Williams & Nile Rodgers", "art": "5NV6Rdv1a3I" },
   { "videoId": "a5uQMwRMHcs", "title": "Instant Crush", "artist": "Daft Punk ft. Julian Casablancas" }
 ]

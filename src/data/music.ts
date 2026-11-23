@@ -7,6 +7,8 @@ export interface Track {
   /** Stable public id, a hash of the video id. */
   id: string;
   videoId: string;
+  /** The playlist's upload of the song, when this one, with real video, plays in its place (music-videos.json). */
+  listedId?: string;
   title: string;
   artist: string;
   durationSec: number;

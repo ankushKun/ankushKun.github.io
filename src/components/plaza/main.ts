@@ -204,7 +204,12 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
   const musicCube = data.cubes.findIndex((c) => c.href === '/apps/music/');
   const coverArt =
     musicCube >= 0
-      ? new NowPlaying(cubes.items[musicCube].mesh.material.uniforms.uIcon, cubes.items[musicCube].mesh.material.uniforms.uIcon.value, renderer.capabilities.getMaxAnisotropy())
+      ? new NowPlaying(
+          cubes.items[musicCube].mesh.material.uniforms.uIcon,
+          cubes.items[musicCube].mesh.material.uniforms.uIcon.value,
+          cubes.items[musicCube].mesh.material.uniforms.uOver,
+          renderer.capabilities.getMaxAnisotropy(),
+        )
       : null;
   // And, once a track's video is playing, the video itself in place of the cover.
   const film = musicCube >= 0 && !calm ? new Film(cubes, musicCube, root, canvas) : null;
@@ -220,6 +225,7 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     dj: data.dj,
     backup: data.backup,
     polka: data.polka,
+    tetoris: data.tetoris,
     resolution: 128,
     random,
   });
@@ -677,6 +683,8 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     document.documentElement.removeAttribute('data-arrive');
     document.documentElement.style.setProperty('--dive', `${DIVE}s`);
     root.dataset.leaving = 'true';
+    // Out before the page starts fading (Plaza.astro), which it would show through.
+    film?.leave(DIVE * 0.18);
     link.blur();
     endOpening();
     dive(point, near, keep);
@@ -1096,8 +1104,8 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     const showing = (opening && time < INTRO.wide) || stepping || diving ? 1 : smoothstep(0.55, 0.78, open);
     blocksShown = calm || dt === 0 ? showing : damp(blocksShown, showing, 4, dt);
     cubes.update(time, dt, calm, camera, v.dist, blocksShown);
-    film?.tick(dt, active && blocksShown > 0.98);
-    coverArt?.update(film?.shown ?? false);
+    film?.tick(dt, active && !root.dataset.leaving && blocksShown > 0.98);
+    coverArt?.update();
     return v;
   }
 
@@ -1401,6 +1409,8 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
         solo: (name?: SoloName, i?: number) => crowd.cue(name, i),
         /** The stage dances the polka from the next bar, or stops it there with `false`. */
         polka: (on = true) => crowd.cuePolka(on),
+        /** The stage dances the Tetoris spin as if its song were playing, or stops with `false`. */
+        tetoris: (on = true) => crowd.cueTetoris(on),
         /** Swaps the DJ's boombox: 'model' or 'drawn'. */
         boombox: (kind: BoomboxKind) => boombox?.show(kind),
         /** Where Mii `i` is on screen (CSS pixels): its feet and the top of its head, and what it is doing. */

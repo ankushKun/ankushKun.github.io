@@ -27,6 +27,8 @@ export class Film {
   /** When the player began showing the track's video (seconds), Infinity while it isn't. */
   private since = Infinity;
   private staged = false;
+  /** Seconds the next fade out takes. */
+  private out = FADE_OUT;
   /** The player's own pixels onto the picture's plane through the middle of the block. */
   private readonly fit: THREE.Matrix4;
   private readonly at = { left: 0, top: 0 };
@@ -62,7 +64,17 @@ export class Film {
     if (!(on && radio.showing())) this.since = Infinity;
     else if (this.since === Infinity) this.since = t;
     const want = t - this.since >= SETTLE;
-    this.level = want ? Math.min(1, this.level + dt / FADE_IN) : Math.max(0, this.level - dt / FADE_OUT);
+    if (want) this.out = FADE_OUT;
+    this.level = want ? Math.min(1, this.level + dt / FADE_IN) : Math.max(0, this.level - dt / this.out);
+  }
+
+  /**
+   * Gone within `seconds`, for leaving the plaza: the page fades out then, but the player sits
+   * outside the page (on <html>), so with the canvas over it fading it would show whole.
+   */
+  leave(seconds: number) {
+    this.since = Infinity;
+    this.out = Math.max(0.01, seconds);
   }
 
   /**

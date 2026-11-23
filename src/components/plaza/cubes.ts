@@ -5,7 +5,8 @@
 // through the rim. Rays that reach past the rim fold back onto the picture, as in the real ones.
 // A block can also show a video in place of its picture (`film`, film.ts): the video plays behind
 // the canvas and the glass leaves the canvas clear where the picture would be, so the rim, the
-// sheen and the reflections still lie over it.
+// sheen and the reflections still lie over it. Over the picture, or the video, a block can carry
+// marks of its own (`uOver`, the Music block's bars: nowplaying.ts), which the video never covers.
 import * as THREE from 'three';
 import { HAZE } from './floor';
 import { CUBE } from './layout';
@@ -106,6 +107,7 @@ const glassVertex = /* glsl */ `
 
 const glassFragment = /* glsl */ `
   uniform sampler2D uIcon;
+  uniform sampler2D uOver;
   uniform sampler2D uBehind;
   uniform vec2 uRes;
   uniform vec3 uEye;
@@ -181,7 +183,11 @@ const glassFragment = /* glsl */ `
     vec2 uv = hit / (2.0 * PICTURE) + 0.5;
     // Seen from behind, the picture reads mirrored.
     if (vLocal.z < 0.0) uv.x = 1.0 - uv.x;
-    vec3 art = texture2D(uIcon, uv).rgb;
+    vec3 picture = texture2D(uIcon, uv).rgb;
+    vec4 over = texture2D(uOver, uv);
+    vec3 art = mix(picture, over.rgb, over.a);
+    // How much of the picture itself is left in the art after the fold dims and the lens whitens it.
+    float dim = mix(1.0, 0.9, folded) * (1.0 - lens * 0.08);
     art *= mix(1.0, 0.9, folded);
     art = mix(art, vec3(1.0), lens * 0.08);
 
@@ -219,10 +225,11 @@ const glassFragment = /* glsl */ `
 
     if (uFilm > 0.0) {
       // The video behind the canvas stands in for the picture seen straight through the face; the
-      // picture folded round the rim stays. Drawn without blending, over the scene as copied.
-      float clear = seen * (1.0 - folded) * uFilm * uShow;
+      // picture folded round the rim stays, and so do the marks over it. Drawn without blending,
+      // over the scene as copied.
+      float clear = seen * (1.0 - folded) * uFilm * uShow * (1.0 - over.a);
       vec3 scene = texture2D(uBehind, gl_FragCoord.xy / uRes).rgb;
-      gl_FragColor = vec4(mix(scene, col, uShow) - art * clear, 1.0 - clear);
+      gl_FragColor = vec4(mix(scene, col, uShow) - picture * dim * clear, 1.0 - clear);
       return;
     }
     gl_FragColor = vec4(col, uShow);
@@ -289,6 +296,9 @@ const _q1 = new THREE.Quaternion();
 const _q2 = new THREE.Quaternion();
 const _up = new THREE.Vector3();
 const _right = new THREE.Vector3();
+/** Nothing over the picture. */
+const BARE = new THREE.DataTexture(new Uint8Array(4), 1, 1);
+BARE.needsUpdate = true;
 const REST = new THREE.Quaternion().setFromEuler(new THREE.Euler(-CUBE.tilt, 0, 0));
 
 export class Cubes {
@@ -313,6 +323,7 @@ export class Cubes {
           fragmentShader: glassFragment,
           uniforms: {
             uIcon: { value: icon },
+            uOver: { value: BARE },
             uBehind: this.behind,
             uRes: this.res,
             uEye: { value: new THREE.Vector3(0, 0, 10) },

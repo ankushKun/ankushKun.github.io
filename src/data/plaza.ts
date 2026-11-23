@@ -96,6 +96,20 @@ export const BACKUP: (MiiLook & { name: string; from: string })[] = [
 export const POLKA = ['widZEAJc0QM'];
 
 /**
+ * To these tracks, by YouTube video id, the DJ and their dancers dance Kasane Teto's Tetoris spin
+ * all the way through (plaza/motion.ts), each with a mic. Listed with each are the stretches of its
+ * video (seconds from, to) where Teto stops turning: the title card, the empty screen of the break
+ * and the last pose. There the stage stops too, square on with the mic up.
+ */
+export const TETORIS: Record<string, [number, number][]> = {
+  Soy4jGPHr3g: [
+    [0, 1.4],
+    [73.8, 74.7],
+    [140.1, 999],
+  ],
+};
+
+/**
  * The DJ's boombox: 'model' is Supersiv11's low poly boom box (public/plaza/boombox.glb, CC BY),
  * 'drawn' is built in code in the plaza's own style (plaza/boombox.ts).
  */

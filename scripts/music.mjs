@@ -4,6 +4,11 @@
 // a square cover for each track (public/music/covers/<videoId>.jpg). Tracks added by hand in
 // src/data/music-extra.json ({ videoId, title, artist }) follow the playlist's, whatever its length.
 // Songs listed in src/data/music-skip.json are left out even though they're on the playlist.
+// Songs listed in src/data/music-videos.json play from another upload of the same song, one with
+// real video (the plaza shows it in the Music block), rather than the playlist's. Its cover is still
+// the playlist upload's, which for an auto-generated track is the album's art. A hand-added track
+// can name where its cover comes from as `art`: another upload's id, or an image's https URL (a
+// release's artwork, where no upload carries it).
 // --extra only brings those up to date, keeping the playlist's tracks as they are in music.json
 // (hand-added tracks are marked `byHand` there, so one taken out of the file goes too). Metadata and thumbnail stills
 // only: no audio is ever downloaded, and the run fails if any turns up. Every track plays through
@@ -23,6 +28,7 @@ const ROOT = new URL('..', import.meta.url).pathname;
 const OUT = join(ROOT, 'src/data/music.json');
 const EXTRA = join(ROOT, 'src/data/music-extra.json');
 const SKIP = join(ROOT, 'src/data/music-skip.json');
+const VIDEOS = join(ROOT, 'src/data/music-videos.json');
 const COVERS = join(ROOT, 'public/music/covers');
 const DEFAULT_URL = 'https://www.youtube.com/playlist?list=PLGYjQsvvGQYQ';
 const MAX = 30;
@@ -52,7 +58,11 @@ const yt = (...more) => JSON.parse(execFileSync('yt-dlp', [...ytArgs, ...more], 
 
 const current = existsSync(OUT) ? JSON.parse(readFileSync(OUT, 'utf8')) : { tracks: [] };
 const known = new Map();
-for (const t of current.tracks ?? []) known.set(t.videoId, t);
+for (const t of current.tracks ?? []) {
+  known.set(t.videoId, t);
+  // A song played from another upload is known by the playlist's too, so its names survive a new pick.
+  if (t.listedId && !known.has(t.listedId)) known.set(t.listedId, t);
+}
 const extras = existsSync(EXTRA) ? JSON.parse(readFileSync(EXTRA, 'utf8')) : [];
 
 let playlist = { title: current.title, entries: [] };
@@ -61,8 +71,12 @@ if (!extraOnly) {
   playlist = yt('--flat-playlist', '--playlist-end', String(limit), url);
 }
 
-/** The biggest real still YouTube has (a missing size comes back as a 120x90 placeholder). */
+/** The biggest real still YouTube has (a missing size comes back as a 120x90 placeholder), or the image at an https URL. */
 async function still(id) {
+  if (id.startsWith('https://')) {
+    const res = await fetch(id).catch(() => null);
+    return res?.ok ? Buffer.from(await res.arrayBuffer()) : null;
+  }
   for (const name of ['maxresdefault.jpg', 'hq720.jpg', 'sddefault.jpg', 'hqdefault.jpg']) {
     const res = await fetch(`https://i.ytimg.com/vi/${id}/${name}`).catch(() => null);
     if (!res?.ok) continue;
@@ -73,9 +87,9 @@ async function still(id) {
   return null;
 }
 
-/** A square cover: the still with its black bars trimmed, cropped to the middle, 640px. */
-async function cover(id) {
-  const buf = await still(id);
+/** Track `id`'s square cover, from upload `from`'s still: the still with its black bars trimmed, cropped to the middle, 640px. */
+async function cover(id, from = id) {
+  const buf = await still(from);
   if (!buf) return `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
   const trimmed = await sharp(buf).trim({ background: '#000', threshold: 30 }).toBuffer().catch(() => buf);
   const { width = 0, height = 0 } = await sharp(trimmed).metadata();
@@ -98,21 +112,28 @@ const extraIds = new Set(extras.map((x) => x.videoId));
 if (extraOnly) tracks.push(...(current.tracks ?? []).filter((t) => !t.byHand && !extraIds.has(t.videoId)));
 // Songs on the playlist that are left out of the mix anyway.
 const skip = new Set(existsSync(SKIP) ? JSON.parse(readFileSync(SKIP, 'utf8')).videoIds ?? [] : []);
+// And songs played from another upload with real video.
+const videos = existsSync(VIDEOS) ? JSON.parse(readFileSync(VIDEOS, 'utf8')).videos ?? {} : {};
 for (const entry of playlist.entries ?? []) {
   if (!entry || tracks.length >= limit) continue;
-  const id = String(entry.id ?? '').match(/^[\w-]{11}$/)?.[0];
-  if (!id || skip.has(id)) continue;
+  const listed = String(entry.id ?? '').match(/^[\w-]{11}$/)?.[0];
+  if (!listed || skip.has(listed)) continue;
+  const id = String(videos[listed] ?? listed).match(/^[\w-]{11}$/)?.[0] ?? listed;
   let title = clean(entry.title ?? entry.track ?? 'Unknown', 80);
   let artist = clean(entry.artist ?? entry.uploader ?? entry.channel ?? entry.creator, 60).replace(/\s+-\s+Topic$/, '');
   if (!artist && title.includes(' - ')) [artist, title] = title.split(' - ', 2).map((s) => clean(s, 80));
+  // The beat belongs to the upload measured; names fixed by hand belong to the song.
   const before = known.get(id);
+  const named = before ?? known.get(listed);
+  const length = id === listed ? Number(entry.duration) : before?.durationSec || Number(yt(`https://www.youtube.com/watch?v=${id}`).duration);
   tracks.push({
     id: createHash('sha256').update(id).digest('hex').slice(0, 12),
     videoId: id,
-    title: before?.title ?? title,
-    artist: before?.artist ?? artist,
-    durationSec: Math.max(0, Math.round(Number(entry.duration) || before?.durationSec || 0)),
-    thumb: await cover(id),
+    ...(id === listed ? {} : { listedId: listed }),
+    title: named?.title ?? title,
+    artist: named?.artist ?? artist,
+    durationSec: Math.max(0, Math.round(length || before?.durationSec || 0)),
+    thumb: await cover(id, listed),
     ...beatOf(before),
   });
   console.error(`  ${tracks.at(-1).title} by ${tracks.at(-1).artist}`);
@@ -130,7 +151,7 @@ for (const extra of extras) {
     title: clean(extra.title, 80) || before?.title || 'Unknown',
     artist: clean(extra.artist, 60) || before?.artist || '',
     durationSec: duration,
-    thumb: await cover(id),
+    thumb: await cover(id, String(extra.art ?? '').match(/^(?:[\w-]{11}|https:\/\/\S+)$/)?.[0] ?? id),
     byHand: true,
     ...beatOf(before),
   });
