@@ -56,20 +56,13 @@
       0 10px 24px -10px light-dark(rgb(30 50 60 / 0.3), rgb(0 0 0 / 0.6));
   }
 
-  /* Light or dark: the device's choice unless you have picked one (Base.astro sets data-theme
-     before the page draws). */
+  /* Light unless you have picked dark (Base.astro sets data-theme before the page draws). */
   :root {
     color-scheme: light;
   }
 
   :root[data-theme='dark'] {
     color-scheme: dark;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme]) {
-      color-scheme: dark;
-    }
   }
 
   /* The TV's measurements, shared by the casing (Frame.astro) and the column. */

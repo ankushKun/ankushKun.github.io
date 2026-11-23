@@ -188,7 +188,7 @@ const year = new Date().getFullYear();
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
     <script is:inline>
       // The lights, set before anything is drawn so a dark page never flashes white: your choice
-      // if you have made one, else the device's (src/scripts/theme.ts switches them).
+      // if you have made one, else light (src/scripts/theme.ts switches them).
       // A prerendered page reads it again when it is shown, in case it changed meanwhile.
       (function () {
         var html = document.documentElement;
@@ -197,7 +197,7 @@ const year = new Date().getFullYear();
           try {
             theme = localStorage.getItem('theme');
           } catch (e) {}
-          if (theme !== 'light' && theme !== 'dark') theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          if (theme !== 'dark') theme = 'light';
           html.dataset.theme = theme;
           var meta = document.querySelector('meta[name="theme-color"]');
           if (meta) meta.content = meta.getAttribute('data-' + theme);

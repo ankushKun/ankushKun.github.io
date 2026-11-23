@@ -1,5 +1,5 @@
-// Light and dark. The device decides unless you pick one with the icon in the bottom left corner;
-// picking what the device already shows forgets your choice, so the site follows the device again.
+// Light and dark. The site is light unless you pick dark with the icon in the bottom left corner;
+// picking light again forgets your choice.
 // Base.astro sets the theme before the page draws, so it never flashes. On the TV, switching is
 // drawn as the new lights spreading in a circle from the icon (the CSS is at the end of
 // global.css), or a short fade with reduced motion. The plaza dims its own lights instead
@@ -11,7 +11,6 @@ type Theme = 'light' | 'dark';
 
 const KEY = 'theme';
 const html = document.documentElement;
-const device = matchMedia('(prefers-color-scheme: dark)');
 
 function stored(): Theme | null {
   try {
@@ -24,7 +23,7 @@ function stored(): Theme | null {
 
 function remember(theme: Theme) {
   try {
-    if (theme === (device.matches ? 'dark' : 'light')) localStorage.removeItem(KEY);
+    if (theme === 'light') localStorage.removeItem(KEY);
     else localStorage.setItem(KEY, theme);
   } catch {
     // Private windows may refuse storage; the switch still holds for this visit.
@@ -66,17 +65,12 @@ document.addEventListener('click', (e) => {
   track('theme_changed', { theme: next });
 });
 
-// The device changing its mind is followed, unless you have picked one yourself.
-device.addEventListener('change', () => {
-  if (!stored()) switchTo(device.matches ? 'dark' : 'light', document.querySelector('[data-theme-toggle]'));
-});
-
 // The router replaces <html>'s attributes with the next page's: the theme goes with you.
 document.addEventListener('astro:before-swap', (event) => {
   paint(current(), (event as TransitionBeforeSwapEvent).newDocument);
 });
 
-paint(stored() ?? (device.matches ? 'dark' : 'light'));
+paint(stored() ?? 'light');
 
 // A prerendered page is put in the theme of the moment it is shown (Base.astro does its root).
-document.addEventListener('prerenderingchange', () => paint(stored() ?? (device.matches ? 'dark' : 'light')), { once: true });
+document.addEventListener('prerenderingchange', () => paint(stored() ?? 'light'), { once: true });
