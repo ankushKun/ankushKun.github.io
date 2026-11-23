@@ -1,0 +1,39 @@
+---
+// The privacy page's switch for analytics in this browser (src/scripts/analytics.ts). It shows once
+// PostHog has loaded, so wherever analytics doesn't run it isn't there to press.
+import MenuButton from './MenuButton.astro';
+
+const STOP = 'Stop analytics on this browser';
+---
+
+<div class="analytics-choice" data-analytics-choice={STOP} hidden>
+  <MenuButton label={STOP} icon="chart" />
+</div>
+
+<script>
+  import { optIn, optOut, optedOut } from '../../scripts/analytics';
+
+  document.addEventListener('astro:page-load', async () => {
+    const box = document.querySelector<HTMLElement>('[data-analytics-choice]');
+    const button = box?.querySelector('button');
+    const label = button?.querySelector('.label');
+    if (!box || !button || !label) return;
+    const show = (off: boolean) => (label.textContent = off ? 'Turn analytics back on' : box.dataset.analyticsChoice!);
+    let off = await optedOut();
+    if (off === null || !box.isConnected) return;
+    show(off);
+    box.hidden = false;
+    button.addEventListener('click', async () => {
+      off = !off;
+      await (off ? optOut() : optIn());
+      show(off);
+    });
+  });
+</script>
+
+<style>
+  .analytics-choice {
+    max-width: 22rem;
+    margin-top: 1.5rem;
+  }
+</style>

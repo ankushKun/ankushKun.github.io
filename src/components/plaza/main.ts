@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { navigate } from 'astro:transitions/client';
 import { sectionOf } from '../../lib/nav';
+import { track } from '../../scripts/analytics';
 import { previousPath } from '../../scripts/motion';
 import * as radio from '../../scripts/music/engine';
 import { closeOver, followPlayer, openOver, playerOpen, showOver, type Spot } from '../../scripts/music/widget';
@@ -348,6 +349,7 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     waiting = false;
     start = time;
     root.dataset.waiting = 'false';
+    track('plaza_started');
     crowd.drop(start + INTRO.drop);
     crowd.applaud(start + INTRO.gaze, start + INTRO.pull + 0.4);
     crowd.arrive(start + INTRO.crowd, SCORE.settled - INTRO.crowd);
@@ -589,6 +591,7 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     if (konami < KONAMI.length) return;
     konami = 0;
     if (waiting) return;
+    track('konami_code_entered');
     endOpening();
     crowd.party(time, camera.position);
     const me = data.welcome[0];
@@ -602,6 +605,7 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
    */
   function leave(link: HTMLAnchorElement, point: THREE.Vector3, near: number, keep?: Element) {
     if (root.dataset.leaving) return;
+    track('plaza_block_pressed', { section: sectionOf(new URL(link.href).pathname), href: link.href, from: keep ? 'bubble' : 'block' });
     // Framed on another site, the plaza stays where it is and the page opens beside it.
     if (embedded) {
       bubbles.dismiss();
@@ -732,9 +736,12 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
   function letGoMii(tap: boolean) {
     if (!press) return;
     if (press.holding) crowd.release(press.mii, time);
-    // A tap on the DJ is a press of their button: it opens the music player.
-    else if (tap && press.mii === crowd.dj) djButton.click();
-    else if (tap) crowd.poke(press.mii, time, camera.position);
+    else if (tap) {
+      track('plaza_mii_poked', { who: press.mii === crowd.dj ? 'dj' : 'crowd' });
+      // A tap on the DJ is a press of their button: it opens the music player.
+      if (press.mii === crowd.dj) djButton.click();
+      else crowd.poke(press.mii, time, camera.position);
+    }
     if (root.hasPointerCapture(press.id)) root.releasePointerCapture(press.id);
     press = null;
     delete root.dataset.holding;

@@ -40,7 +40,7 @@ const external = game.play && !game.play.startsWith('/');
   }
   {
     game.play && !game.newTab && (
-      <div class="screen" data-player data-src={game.play} data-title={game.label} data-aspect={game.aspect ?? 4 / 3} data-external={external ? '' : undefined} hidden>
+      <div class="screen" data-player={game.id} data-src={game.play} data-title={game.label} data-aspect={game.aspect ?? 4 / 3} data-external={external ? '' : undefined} hidden>
         <div class="tube">
           <div class="glass" />
         </div>

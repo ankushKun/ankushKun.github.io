@@ -6,6 +6,7 @@
 // Nodes:
 //   apps/guestbook/entries   <id> = a note (entry.ts), or { deleted } once its writer took it down
 //   apps/guestbook/hidden    <id> = when a mod hid it, or null once shown again
+import { track } from '../../scripts/analytics';
 import { play } from '../../scripts/sfx';
 import { mountPad, type Pad, type Tool } from '../live/pad';
 import { node, parse, type Chain } from '../live/relay';
@@ -48,6 +49,7 @@ export function mount(root: HTMLElement): () => void {
   let lastSave = 0;
 
   const session = mountSession(root, {
+    app: 'guestbook',
     gateFirst: false,
     behind: [editor],
     onChange: () => {
@@ -110,7 +112,7 @@ export function mount(root: HTMLElement): () => void {
     for (const href of links) {
       const b = badgeFor(href);
       const a = span.appendChild(document.createElement('a'));
-      a.className = 'note-link';
+      a.className = b.email ? 'note-link ph-no-capture' : 'note-link';
       a.href = b.href;
       a.rel = 'noopener nofollow ugc';
       a.target = '_blank';
@@ -232,7 +234,7 @@ export function mount(root: HTMLElement): () => void {
       ...links.map((href, i) => {
         const b = badgeFor(href);
         const li = document.createElement('li');
-        li.className = 'gb-link';
+        li.className = b.email ? 'gb-link ph-no-capture' : 'gb-link';
         li.append(badgeEl(b, 14));
         const span = li.appendChild(document.createElement('span'));
         span.className = 'gb-link-text';
@@ -436,6 +438,7 @@ export function mount(root: HTMLElement): () => void {
       return say('That drawing is too detailed to pin. Try fewer colours or less shading.');
     }
     lastSave = now;
+    track('guestbook_signed', { edit: Boolean(before), drawing: Boolean(doodle), links: links.length });
     node('apps/guestbook/entries').get(id).put(writeEntry(entry), (ack) => {
       if (ack.err) say("The guestbook didn't take it. Try again in a moment.");
     });
@@ -448,6 +451,7 @@ export function mount(root: HTMLElement): () => void {
 
   removeBtn.addEventListener('click', () => {
     const id = myId();
+    track('guestbook_removed');
     node('apps/guestbook/entries').get(id).put({ deleted: Date.now(), name: '', blurb: '', doodle: '', links: '' });
     takeDown(id);
     filled = false;

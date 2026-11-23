@@ -32,7 +32,7 @@ const links = e.links.map(badgeFor);
       links.length > 0 && (
         <span class="note-links">
           {links.map((b) => (
-            <a class="note-link" href={b.href} rel="noopener nofollow ugc" target="_blank" aria-label={`${e.name} on ${b.label}`} title={b.short}>
+            <a class:list={['note-link', b.email && 'ph-no-capture']} href={b.href} rel="noopener nofollow ugc" target="_blank" aria-label={`${e.name} on ${b.label}`} title={b.short}>
               <span class="gb-badge" style={`--badge-bg:${b.bg};color:${b.ink}`} aria-hidden="true">
                 <svg viewBox="0 0 24 24" width="13" height="13">
                   {b.stroke ? <path d={b.path} fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" /> : <path d={b.path} fill="currentColor" />}

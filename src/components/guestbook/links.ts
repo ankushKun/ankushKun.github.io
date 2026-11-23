@@ -15,6 +15,8 @@ export interface LinkBadge {
   /** A filled 24 by 24 path (a brand mark), or a stroked glyph. */
   path: string;
   stroke: boolean;
+  /** An email address, which is kept out of analytics (`ph-no-capture`) wherever it shows. */
+  email?: boolean;
 }
 
 const MAIL = 'M3 6.5A1.5 1.5 0 0 1 4.5 5h15A1.5 1.5 0 0 1 21 6.5v11a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5zM4 7l8 6 8-6';
@@ -23,7 +25,7 @@ const GLOBE = 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM3 12h18M12 3c2.5 2.6 3.8 5.6
 export function badgeFor(href: string): LinkBadge {
   if (href.startsWith('mailto:')) {
     const short = href.slice(7);
-    return { href, label: 'Email', short, bg: '#5c6468', ink: '#fff', path: MAIL, stroke: true };
+    return { href, label: 'Email', short, bg: '#5c6468', ink: '#fff', path: MAIL, stroke: true, email: true };
   }
   let host = '';
   try {

@@ -5,6 +5,7 @@
 // global.css), or a short fade with reduced motion. The plaza dims its own lights instead
 // (src/components/plaza/main.ts watches data-theme).
 import type { TransitionBeforeSwapEvent } from 'astro:transitions/client';
+import { track } from './analytics';
 
 type Theme = 'light' | 'dark';
 
@@ -62,6 +63,7 @@ document.addEventListener('click', (e) => {
   const next: Theme = current() === 'dark' ? 'light' : 'dark';
   remember(next);
   switchTo(next, button);
+  track('theme_changed', { theme: next });
 });
 
 // The device changing its mind is followed, unless you have picked one yourself.

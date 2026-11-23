@@ -10,6 +10,7 @@
 // - A game or a video on the page holds it (`hold`): it fades out and waits, then comes back.
 // - One tab plays at a time. M mutes it, along with the UI sounds (sfx.ts).
 import { MUSIC, type Track } from '../../data/music';
+import { track } from '../analytics';
 import { STATE, createPlayer, type Player } from './youtube';
 
 export type Repeat = 'off' | 'all' | 'one';
@@ -234,7 +235,7 @@ function onError(code: number) {
     state.error = 'None of these tracks would play';
     return emit();
   }
-  select(following(true), 0);
+  select(following(true), { auto: true });
 }
 
 /** Watches a start: if nothing plays within a few seconds, the browser has blocked it. */
@@ -291,11 +292,16 @@ function ended() {
     state.position = 0;
     return;
   }
-  select(n, 0);
+  select(n, { auto: true });
 }
 
-function select(i: number, fadeSeconds: number, remembered = true) {
+/**
+ * Starts track `i`, fading in over `fade` seconds. `auto` when the radio moved on by itself rather
+ * than because the visitor asked; `remembered` false when going back, so the way back isn't kept.
+ */
+function select(i: number, { fade: fadeSeconds = 0, auto = false, remembered = true } = {}) {
   if (!tracks[i]) return;
+  track('music_track_changed', { title: tracks[i].title, auto });
   if (remembered && state.index >= 0 && state.index !== i) {
     history.push(state.index);
     if (history.length > 50) history.shift();
@@ -346,8 +352,9 @@ function remember(stopped: boolean) {
 
 export function play() {
   remember(false);
-  if (state.index < 0) return select(random(), 0.6);
+  if (state.index < 0) return select(random(), { fade: 0.6 });
   if (state.playing && yt === STATE.PLAYING) return;
+  track('music_resumed');
   state.playing = true;
   state.blocked = false;
   emit();
@@ -360,6 +367,7 @@ export function play() {
 
 export function pause() {
   if (!state.playing) return;
+  track('music_paused');
   state.playing = false;
   state.blocked = false;
   remember(true);
@@ -377,12 +385,12 @@ export function toggle() {
 /** Plays track `i` from the top, as the visitor asked. */
 export function choose(i: number) {
   remember(false);
-  select(i, 0);
+  select(i);
 }
 
 export function next() {
   remember(false);
-  select(following(true), 0);
+  select(following(true));
 }
 
 /** Back to the top of this track, or to the one before if it has only just begun. */
@@ -390,8 +398,8 @@ export function prev() {
   remember(false);
   if (state.position > 3 && state.index >= 0) return seek(0);
   const before = history.pop();
-  if (before !== undefined) return select(before, 0, false);
-  select(state.index > 0 ? state.index - 1 : tracks.length - 1, 0, false);
+  if (before !== undefined) return select(before, { remembered: false });
+  select(state.index > 0 ? state.index - 1 : tracks.length - 1, { remembered: false });
 }
 
 export function seek(seconds: number) {
@@ -408,6 +416,7 @@ export function setVolume(volume: number) {
 }
 
 export function setMuted(on: boolean) {
+  if (on !== state.muted) track('music_muted', { muted: on });
   state.muted = on;
   apply();
   emit();
@@ -432,7 +441,7 @@ export function cycleRepeat() {
  */
 export function takeOver(seconds: number): Promise<boolean> {
   if (stoppedThisSession() && !state.playing) return Promise.resolve(false);
-  if (!state.playing) select(primedIndex >= 0 ? primedIndex : random(), seconds);
+  if (!state.playing) select(primedIndex >= 0 ? primedIndex : random(), { fade: seconds, auto: true });
   primedIndex = -1;
   return new Promise((resolve) => {
     let done = false;

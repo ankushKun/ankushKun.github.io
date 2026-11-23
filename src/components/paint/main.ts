@@ -12,6 +12,7 @@
 // Space held or the Hand pans. Ctrl or Cmd with + - 0 1 zooms, fits and shows actual size. P pen,
 // E eraser, H hand, [ and ] the size, Alt with a click picks a colour off the canvas, Ctrl or Cmd Z
 // undoes and with Shift redoes. B stays the site's Back.
+import { track } from '../../scripts/analytics';
 import { play } from '../../scripts/sfx';
 import { watchConnection, type Chain } from '../live/relay';
 import { hueOf, mountSession } from '../live/session';
@@ -109,6 +110,7 @@ export function mount(root: HTMLElement): () => void {
   const sorted = () => [...strokes.values()].sort((a, b) => a.ts - b.ts || a.key.localeCompare(b.key));
 
   const session = mountSession(root, {
+    app: 'paint',
     presence: paths.presence(),
     gateFirst: true,
     behind: [$('[data-tray]'), $('[data-stage]')],
@@ -551,6 +553,7 @@ export function mount(root: HTMLElement): () => void {
     if (mode === 'draw') {
       finish();
       sendCursor(at(e), true);
+      track('paint_stroke_drawn', { tool: pen.eraser ? 'eraser' : 'pen' });
     }
     mode = 'idle';
   }
@@ -835,6 +838,7 @@ export function mount(root: HTMLElement): () => void {
     if (replaying) return stopReplay();
     const list = sorted();
     if (!list.length) return play('nope');
+    track('paint_replayed', { day });
     finish();
     const total = list.reduce((n, s) => n + s.pts.length / 2, 0);
     const duration = Math.min(REPLAY_MAX, Math.max(3000, list.length * 150));
@@ -865,6 +869,7 @@ export function mount(root: HTMLElement): () => void {
   replayBtn.addEventListener('click', replay);
 
   $('[data-save]').addEventListener('click', () => {
+    track('paint_saved', { day });
     const out = Object.assign(document.createElement('canvas'), { width: raster.width, height: raster.height });
     const g = out.getContext('2d')!;
     g.fillStyle = '#fff';

@@ -4,6 +4,8 @@
 // every browser before the popover hides. Pressing the button mid-way turns the move around from
 // wherever it has got to.
 
+import { track } from './analytics';
+
 type State = 'closed' | 'opening' | 'open' | 'closing';
 
 const SPRING = 'cubic-bezier(0.3, 1.45, 0.5, 1)';
@@ -56,6 +58,7 @@ export function isMenuOpen() {
 export function openMenu() {
   const m = menu();
   if (!m || state === 'open' || state === 'opening') return;
+  track('menu_opened');
   if (state === 'closing') {
     // Turned around on the way in: the fold plays back out from where it is.
     state = 'opening';

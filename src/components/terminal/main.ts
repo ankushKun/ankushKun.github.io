@@ -4,6 +4,7 @@
 // files instead (shell.ts, fs.json built with the site), with history, Tab to finish a name, and
 // `linux` to try again.
 import { navigate } from 'astro:transitions/client';
+import { track } from '../../scripts/analytics';
 import * as radio from '../../scripts/music/engine';
 import { clock } from '../../data/music';
 import { play } from '../../scripts/sfx';
@@ -231,6 +232,7 @@ export function mount(root: HTMLElement): () => void {
   async function bootLinux() {
     if (linux || booting) return;
     booting = true;
+    const asked = performance.now();
     shellEl.hidden = true;
     linuxEl.hidden = false;
     power.hidden = false;
@@ -245,8 +247,10 @@ export function mount(root: HTMLElement): () => void {
         onCommand: answer,
       });
       if (stopped) linux.stop();
+      else track('terminal_booted', { seconds: Math.round((performance.now() - asked) / 100) / 10 });
     } catch (err) {
       console.warn(err);
+      track('terminal_fallback');
       endLinux();
       screen.print(span("Linux couldn't start here, so this is the lighter shell. Type ", 't-dim'), span('linux', 't-cmd'), span(' to try again.', 't-dim'));
     } finally {
@@ -272,6 +276,7 @@ export function mount(root: HTMLElement): () => void {
   function poweredOff() {
     if (leaving || stopped) return;
     leaving = true;
+    track('terminal_powered_off');
     linux?.stop();
     linux = null;
     void navigate('/apps/');
@@ -294,6 +299,7 @@ export function mount(root: HTMLElement): () => void {
 
   /** The site's side of the Linux's open, play, theme and music. */
   function answer(name: string, arg: string) {
+    track('terminal_bridged', { command: name });
     if (name === 'open') {
       if (/^https?:\/\//.test(arg)) return void window.open(arg, '_blank', 'noopener');
       const site = /\/site\/(.*)$/.exec(arg)?.[1];

@@ -52,7 +52,7 @@ export function closeOver() {
 
 function wire(root: HTMLElement) {
   if (root.dataset.wired) return;
-  root.dataset.wired = '';
+  root.dataset.wired = '1';
   root.hidden = false;
 
   const $ = <E extends Element>(sel: string) => root.querySelector<E>(sel)!;

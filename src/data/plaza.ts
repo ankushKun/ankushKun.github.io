@@ -108,7 +108,7 @@ export const WELCOME: string[] = [
   "I'd shake your hand, but Miis don't really have fingers.",
   'Fun fact: I am mostly head.',
   'This plaza runs on three.js, WebAssembly and vibes.',
-  'No cookies here. Just Miis. So many Miis.',
+  'No ads here. Just Miis. So many Miis.',
   'Please keep your Miis inside the plaza at all times.',
   'Go ahead, pick someone up. They love it. They told me.',
   // Unhinged.

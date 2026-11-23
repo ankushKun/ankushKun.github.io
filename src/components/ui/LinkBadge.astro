@@ -2,7 +2,7 @@
 // The badge at the start of a link button (links.ts decides which): a platform's mark in white on
 // its color, a site's own icon (filling the badge, or on a white tile when it has see-through
 // corners), a section's tile in its glass frame, or a glyph.
-import { Download04Icon, File02Icon, Globe02Icon, Mail01Icon, PrinterIcon, RssIcon } from '@hugeicons/core-free-icons';
+import { Analytics01Icon, Download04Icon, File02Icon, Globe02Icon, Mail01Icon, PrinterIcon, RssIcon } from '@hugeicons/core-free-icons';
 import HugeIcon from './HugeIcon.astro';
 import type { Badge, Glyph } from '../../lib/links';
 
@@ -17,6 +17,7 @@ const GLYPHS = {
   download: Download04Icon,
   file: File02Icon,
   print: PrinterIcon,
+  chart: Analytics01Icon,
 } satisfies Record<Glyph, unknown>;
 
 const { badge } = Astro.props;

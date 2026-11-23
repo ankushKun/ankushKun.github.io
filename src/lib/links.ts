@@ -8,7 +8,7 @@ import { isExternal } from './external';
 import { platformFor } from './platforms';
 import { tileFor } from './tiles';
 
-export type Glyph = 'mail' | 'rss' | 'globe' | 'download' | 'file' | 'print';
+export type Glyph = 'mail' | 'rss' | 'globe' | 'download' | 'file' | 'print' | 'chart';
 
 export type Badge =
   | { type: 'brand'; path: string; bg: string; ink?: string; bleed?: boolean }
@@ -33,6 +33,7 @@ const GLYPH_BG: Record<Glyph, string> = {
   download: SLATE,
   file: SLATE,
   print: SLATE,
+  chart: SLATE,
 };
 
 const glyph = (g: Glyph): Badge => ({ type: 'glyph', glyph: g, bg: GLYPH_BG[g] });

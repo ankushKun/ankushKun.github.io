@@ -1,6 +1,6 @@
 # ankush.one
 
-Personal site built with Astro and Tailwind. Static output. Client JavaScript is the page router (Astro's `ClientRouter`), the 3D plaza (the home page only), the music radio, your Mii on the About page, the Mii viewer at `/mii/`, the apps and the UI sounds. Every page works without it.
+Personal site built with Astro and Tailwind. Static output. Client JavaScript is the page router (Astro's `ClientRouter`), the 3D plaza (the home page only), the music radio, your Mii on the About page, the Mii viewer at `/mii/`, the apps, the UI sounds and analytics. Every page works without it.
 
 ```sh
 pnpm dev      # http://localhost:4321
@@ -29,6 +29,15 @@ The site follows the AEO Spec v1.0 ([dualmark.dev](https://dualmark.dev/docs/spe
 - **Markdown twins** (`src/lib/twins.ts`, built by `pages/[...twin].md.ts`): every page that is something to read has a Markdown copy at its path with `.md` for the trailing slash: `/index.md` for the home page, `/blogs/<slug>.md` for a post, `/about.md`, `/blogs.md` for the list, and so on. Each is made from the same content as its page: the title and description, the facts (dates, tags, stack), the page's own Markdown with site links made absolute and pictures pointed at their built files, its links and FAQ. Home, About, Contact, Resume, Apps and Games add what their pages show from `src/data/` and `src/site.ts`. `/sitemap.md` lists every twin. Each page names its twin in a `<link rel="alternate" type="text/markdown">`. Interactive pages (the apps themselves, the Mii viewer) have none.
 - **GitHub Pages only.** The site, and the other repos served under `ankush.one/*`, are GitHub Pages, so nothing sits in front of them: the twins are served as GitHub serves `.md` files, and the spec's checks for response headers (`X-Markdown-Tokens`, `X-Robots-Tag`, `Vary`, a `Link` header) and for answering by `Accept` or user agent are left unmet on purpose.
 - `robots.txt` lets every crawler in, and `/llms.txt` lists the site for language models.
+
+## Analytics
+
+PostHog on EU Cloud, reached through the first-party proxy at `p1.ankush.one` (`POSTHOG` in `src/site.ts`, where an empty key turns it off). It's the same project the standalone sites under ankush.one (3dsDL, sh23ds, mixtunes) send to, and each event says which site it came from in `site` (`ankush.one` here). `src/scripts/analytics.ts` is the only file that imports `posthog-js`. It runs only on `ankush.one` and loads once the browser is idle. The router keeps one document for the whole visit, so PostHog's own pageviews are off and the module sends a `$pageview` (with `section` and `not_found`) on every `astro:page-load`, and a `$pageleave` before each move. Autocapture, heatmaps, dead clicks, exceptions, web vitals and session replay are on, with typing masked and canvases (the plaza, Paint) recorded at 2 fps. Joining a live app identifies the browser by its live-app id, with the nickname as `name`. The PostHog project needs session replay switched on, and `https://ankush.one` in its authorized URLs for the toolbar.
+
+- **Adding an event:** add it to `Events` in `analytics.ts` with its properties, then call `track('name', { ... })` where it happens. Names are `object_verb`, past tense.
+- **Keeping something out:** the `ph-no-capture` class drops an element from replays and autocapture, as on the Guestbook's email badges.
+- **Trying it locally:** `PUBLIC_POSTHOG_DEV=1 pnpm dev`. PostHog marks events from `localhost` as a test user's.
+- **Not seen:** the Markdown twins, `llms.txt` and the feeds are plain files, so agents and feed readers only show up in Cloudflare's logs. Visitors can turn analytics off on `/privacy/`.
 
 ## Adding content
 
@@ -181,7 +190,7 @@ Miis are real Wii U Miis, drawn by Nintendo's face library (FFL, compiled to Web
 
 ```
 src/
-  site.ts               site identity, socials, nav, newsletter
+  site.ts               site identity, socials, nav, newsletter, analytics
   content.config.ts     content schemas
   content/              all writing and images
   data/resume.ts        experience, education, skills
@@ -199,6 +208,7 @@ src/
   assets/channels/      banners for the apps' channels on /apps/
   scripts/motion.ts     page transitions, the menu, B to go back
   scripts/sfx.ts        UI sounds
+  scripts/analytics.ts  PostHog: pageviews, the named events (Events), opting out
   scripts/music/        the radio: YouTube player, engine, widget, app
   data/music.json       the radio's mix (pnpm music)
   lib/

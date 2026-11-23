@@ -3,6 +3,7 @@
 // on the app's own node, and everyone's Mii on their faces. The chat keeps its own copy of this, with
 // feelings and typing on top.
 import { CHAT_MODS } from '../../site';
+import { identify, track } from '../../scripts/analytics';
 import { play } from '../../scripts/sfx';
 import { miiBytes } from '../mii/data';
 import { portraits, randomMiiCode, releasePortraits, standIn } from '../chat/portraits';
@@ -56,6 +57,7 @@ export interface Session {
 export function mountSession(
   root: HTMLElement,
   opts: {
+    app: 'paint' | 'guestbook';
     /** Where presence lives, or none for an app that doesn't show who is there. */
     presence?: Chain;
     /** The gate stands over the app until you're in (Paint), rather than only when asked (the Guestbook). */
@@ -209,6 +211,8 @@ export function mountSession(
     me.nick = nick;
     me.joined = true;
     store.set(STORE.nick, nick);
+    identify(me.uuid, nick);
+    track('live_joined', { app: opts.app });
     saveProfile();
     announce();
     gate.close();

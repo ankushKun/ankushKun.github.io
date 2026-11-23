@@ -86,6 +86,12 @@ export const CHAT_MODS = ['ankush'];
  */
 export const GIF_PROXY = 'https://ankush-site-worker.ankushkun.workers.dev';
 
+/**
+ * PostHog analytics (src/scripts/analytics.ts): the EU project's key, the first-party proxy that
+ * carries everything to it, and the app its links open. Empty `key` turns analytics off.
+ */
+export const POSTHOG = { key: 'phc_nBvIMuMmaqQkAXL36Bi6eyTRga0A04klevYFyZf4cfc', host: 'https://p1.ankush.one', ui: 'https://eu.posthog.com' };
+
 export const BOOKING_URL = 'https://cal.com/ankushkun/call';
 
 /** Newsletter form target. Set `action` to your provider URL (Buttondown, ConvertKit, Resend...) to enable the form. */

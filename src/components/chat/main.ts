@@ -2,6 +2,7 @@
 // joined, and once you have, posts, Yeah!s, says you are here and when you are typing. Everything
 // it is given by other people goes through net.ts's readers first and is drawn as text.
 import { CHAT_MODS } from '../../site';
+import { identify, track } from '../../scripts/analytics';
 import { play } from '../../scripts/sfx';
 import { encodeMii, miiBytes } from '../mii/data';
 import { miiFromQrImage } from '../mii/qr';
@@ -727,6 +728,8 @@ export function mount(root: HTMLElement): () => void {
     me.nick = nick;
     me.joined = true;
     store.set(STORE.nick, nick);
+    identify(me.uuid, nick);
+    track('live_joined', { app: 'chat' });
     saveProfile();
     arrived.add(me.uuid);
     announce();
@@ -786,6 +789,7 @@ export function mount(root: HTMLElement): () => void {
       return false;
     }
     sent.push(now);
+    track('chat_posted', { kind: fields.type === 'drawing' || fields.type === 'gif' ? fields.type : 'text' });
     const key = messageKey();
     const row = { nick: me.nick, uuid: me.uuid, time: now, action: false, type: 'msg', feel: me.feel, ...fields };
     paths.messages().get(key).put(row);

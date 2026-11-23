@@ -29,5 +29,6 @@ Read `README.md` first. Conventions to keep:
 - Query entries with `getEntries()` from `src/lib/content.ts`, never `getCollection()` directly, so drafts and sort order stay consistent.
 - Every page renders through `Base.astro`, usually via `Page.astro` or `Entry.astro`. Pass schema.org nodes from `src/lib/schema.ts` instead of writing JSON-LD inline.
 - Site identity and placeholder values live in `src/site.ts`. Do not hardcode names, emails or URLs in templates.
+- Track with `track()` from `src/scripts/analytics.ts` and add the event to `Events` there. Never import `posthog-js` anywhere else.
 - Hard rule: Never use em dashes (U+2014) or en dashes (U+2013) anywhere in this repo (content, UI copy, metadata, comments, docs, or commit messages). Use standard ASCII hyphens (`-`), commas, colons, parentheses, or separate sentences instead.
 - Run `pnpm check && pnpm build` before calling a change done.

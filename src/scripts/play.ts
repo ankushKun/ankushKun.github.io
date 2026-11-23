@@ -4,6 +4,7 @@
 // fades in inside it. A power button takes the plaza button's place meanwhile; pressing it removes
 // the game's frame, which ends it, and plays the morph in reverse. The TV's buttons stay where they
 // always are; the screen fits under them. The radio waits while a game plays.
+import { track } from './analytics';
 import { hold, release } from './music/engine';
 
 /** A CRT's outline on a 1000 unit square: a start point, then edge, corner, edge, corner... */
@@ -101,7 +102,9 @@ export function wirePlay() {
   playBtn.dataset.wired = '1';
   const html = document.documentElement;
   const aspect = Number(screen.dataset.aspect) || 4 / 3;
+  const game = screen.dataset.player ?? '';
   let playing = false;
+  let since = 0;
 
   /** Places the screen and returns the casing's hole round it. */
   const place = () => {
@@ -122,6 +125,8 @@ export function wirePlay() {
   playBtn.addEventListener('click', () => {
     if (playing) return;
     playing = true;
+    since = performance.now();
+    track('game_played', { game });
     const from = casing(tvScreen());
     html.dataset.playing = '';
     screen.style.setProperty('--crt-mask', MASK);
@@ -156,6 +161,7 @@ export function wirePlay() {
   const end = async (animate: boolean) => {
     if (!playing) return;
     playing = false;
+    track('game_stopped', { game, seconds: Math.round((performance.now() - since) / 1000) });
     removeEventListener('resize', onResize);
     tube.querySelector('iframe')?.remove();
     release('game');
