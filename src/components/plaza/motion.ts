@@ -1,5 +1,6 @@
 // What a Mii's body does: every clip writes joint angles for one moment. Where a Mii stands and
-// which way it faces belongs to the crowd; clips only touch height, joints, a turn on the spot and the face.
+// which way it faces belongs to the crowd; clips only touch height, joints, a turn on the spot and
+// the face (the moonwalk's glide is the one exception, given separately by `moonSlide`).
 import type { Pose } from '../mii/rig';
 
 /** `t` is seconds since the clip began (or stride phase for the two gaits), `k` a per Mii offset in 0..1. */
@@ -702,55 +703,63 @@ const ROUTINE: [number, Key][] = [
   [0.985, { crouch: 0.16, leanX: 0.03, nod: 0.02, outR: 0.02, swingR: 0.25, twistR: 0.72, elbowR: 0.33, outL: 0.45, swingL: -0.25, twistL: -0.50, elbowL: 1.40 }],
 ];
 
-/** The keys as whole poses (anything a key leaves out stays as `neutral` has it), with each joint's slope there. */
-const KEYS = ROUTINE.map(([at, key]) => {
-  const p = {} as Pose;
-  neutral(p);
-  Object.assign(p, key);
-  return { at, pose: FIELDS.map((f) => p[f]), slope: FIELDS.map(() => 0) };
-});
 /** How far round the loop it is from `a` to `b`, the way the routine goes. */
 const ahead = (a: number, b: number) => (b - a + 1) % 1 || 1;
-// Slopes for a smooth curve through every key that never overshoots one: flat where a joint turns
-// back, otherwise a weighted mean of the two sides (Fritsch and Butland's, as in PCHIP).
-KEYS.forEach((k, i) => {
-  const prev = KEYS[(i + KEYS.length - 1) % KEYS.length];
-  const next = KEYS[(i + 1) % KEYS.length];
-  const h0 = ahead(prev.at, k.at);
-  const h1 = ahead(k.at, next.at);
-  for (let j = 0; j < FIELDS.length; j++) {
-    const d0 = (k.pose[j] - prev.pose[j]) / h0;
-    const d1 = (next.pose[j] - k.pose[j]) / h1;
-    if (d0 * d1 <= 0) continue;
-    const w0 = 2 * h1 + h0;
-    const w1 = h1 + 2 * h0;
-    k.slope[j] = (w0 + w1) / (w0 / d0 + w1 / d1);
-  }
-});
 
-/** Sets `p` to the routine `u` of the way round (0 to 1). */
-function sample(p: Pose, u: number) {
-  let i = KEYS.length - 1;
-  while (i >= 0 && KEYS[i].at > u) i--;
-  const a = KEYS[i < 0 ? KEYS.length - 1 : i];
-  const b = KEYS[(i + 1) % KEYS.length];
-  const h = ahead(a.at, b.at);
-  const s = ((u - a.at + 1) % 1) / h;
-  const s2 = s * s;
-  const s3 = s2 * s;
-  // Cubic Hermite between the two keys.
-  const ka = 2 * s3 - 3 * s2 + 1;
-  const ma = (s3 - 2 * s2 + s) * h;
-  const kb = 3 * s2 - 2 * s3;
-  const mb = (s3 - s2) * h;
-  for (let j = 0; j < FIELDS.length; j++) p[FIELDS[j]] = ka * a.pose[j] + ma * a.slope[j] + kb * b.pose[j] + mb * b.slope[j];
+/**
+ * A looping move from poses keyed by how far round it they fall (0 to 1): a smooth curve through
+ * every key that never overshoots one, coming back round to the first. Anything a key leaves out
+ * stays as `neutral` has it. Returns a sampler that sets `p` to the move `u` of the way round.
+ */
+function curve(keys: [number, Key | Pose][]) {
+  const all = keys.map(([at, key]) => {
+    const p = {} as Pose;
+    neutral(p);
+    Object.assign(p, key);
+    return { at, pose: FIELDS.map((f) => p[f]), slope: FIELDS.map(() => 0) };
+  });
+  // Slopes flat where a joint turns back, otherwise a weighted mean of the two sides (Fritsch and
+  // Butland's, as in PCHIP).
+  all.forEach((k, i) => {
+    const prev = all[(i + all.length - 1) % all.length];
+    const next = all[(i + 1) % all.length];
+    const h0 = ahead(prev.at, k.at);
+    const h1 = ahead(k.at, next.at);
+    for (let j = 0; j < FIELDS.length; j++) {
+      const d0 = (k.pose[j] - prev.pose[j]) / h0;
+      const d1 = (next.pose[j] - k.pose[j]) / h1;
+      if (d0 * d1 <= 0) continue;
+      const w0 = 2 * h1 + h0;
+      const w1 = h1 + 2 * h0;
+      k.slope[j] = (w0 + w1) / (w0 / d0 + w1 / d1);
+    }
+  });
+  return (p: Pose, u: number) => {
+    u = ((u % 1) + 1) % 1;
+    let i = all.length - 1;
+    while (i >= 0 && all[i].at > u) i--;
+    const a = all[i < 0 ? all.length - 1 : i];
+    const b = all[(i + 1) % all.length];
+    const h = ahead(a.at, b.at);
+    const s = ((u - a.at + 1) % 1) / h;
+    const s2 = s * s;
+    const s3 = s2 * s;
+    // Cubic Hermite between the two keys.
+    const ka = 2 * s3 - 3 * s2 + 1;
+    const ma = (s3 - 2 * s2 + s) * h;
+    const kb = 3 * s2 - 2 * s3;
+    const mb = (s3 - s2) * h;
+    for (let j = 0; j < FIELDS.length; j++) p[FIELDS[j]] = ka * a.pose[j] + ma * a.slope[j] + kb * b.pose[j] + mb * b.slope[j];
+  };
 }
+
+const sample = curve(ROUTINE);
 
 const PAIRS = [['legL', 'legR'], ['kneeL', 'kneeR'], ['swingL', 'swingR'], ['outL', 'outR'], ['twistL', 'twistR'], ['elbowL', 'elbowR']] as const;
 const SIDEWAYS = ['yaw', 'roll', 'sway', 'leanZ', 'twist', 'tilt', 'headYaw'] as const;
 
 /** The same pose the other way round: left for right, and every lean, turn and shift reversed. */
-function mirror(p: Pose) {
+export function mirror(p: Pose) {
   for (const [l, r] of PAIRS) {
     const v = p[l];
     p[l] = p[r];
@@ -773,10 +782,422 @@ const SWAP = 0.93;
  */
 export const idol: Clip = (p, t) => {
   const u = t / LOOP;
-  sample(p, ((u % 1) + 1) % 1);
+  sample(p, u);
   p.expr = 0;
   if (Math.floor(u + 1 - SWAP) % 2 === 1) mirror(p);
 };
+
+// Solos: now and then one dancer breaks off the routine for a move of their own, then falls back
+// in. Each is keyed by beats, not seconds, so it lands on the music, and comes back round every
+// so many beats (2 or 4) so it ends where the routine picks up. For each, `t` is beats since it
+// began. Left and right are the dancer's own; the crowd mirrors a whole solo at random.
+
+/** A key and the same key the other way round, as a whole pose. */
+function flip(key: Key): Pose {
+  const p = {} as Pose;
+  neutral(p);
+  Object.assign(p, key);
+  mirror(p);
+  return p;
+}
+
+/** Both hands on the hips, as the routine measured them. */
+const HIPS: Key = { outR: 0.72, swingR: -0.39, twistR: 0.89, elbowR: 1.87, outL: 0.72, swingL: -0.39, twistL: 0.89, elbowL: 1.87 };
+const HIP_L: Key = { outL: 0.72, swingL: -0.39, twistL: 0.89, elbowL: 1.87 };
+
+/** The dab: the face buried in the crook of the left elbow, the right arm flung straight up and out. */
+const DAB: Key = {
+  crouch: 0.14, spread: 0.22, leanX: 0.12, leanZ: 0.14, twist: 0.16, nod: 0.4, headYaw: 0.32, tilt: 0.1,
+  outR: 2.0, swingR: 0.12, twistR: 0, elbowR: 0.02,
+  outL: 1.5, swingL: 0.75, twistL: 0.3, elbowL: 2.15,
+};
+/** Gathering for the next one: hands crossed low, knees bent. */
+const GATHER: Key = { crouch: 0.24, spread: 0.18, leanX: 0.06, nod: 0.08, outR: -0.1, swingR: 0.35, twistR: 1.3, elbowR: 0.5, outL: -0.1, swingL: 0.35, twistL: 1.3, elbowL: 0.5 };
+const dabMove = curve([
+  [0.0, DAB],
+  [0.3, { ...DAB, crouch: 0.18, nod: 0.44 }],
+  [0.42, GATHER],
+  [0.5, flip(DAB)],
+  [0.8, flip({ ...DAB, crouch: 0.18, nod: 0.44 })],
+  [0.92, GATHER],
+]);
+/** Dab on the one, the other way on the three. 4 beats. */
+export const dab: Clip = (p, t) => {
+  dabMove(p, t / 4);
+};
+
+/** The disco point: up to the corner of the ceiling, then down across to the floor, hips popping. */
+const POINT_UP: Key = {
+  ...HIP_L, crouch: 0.06, sway: 0.34, leanZ: -0.1, kneeR: 0.28, legR: 0.08, headYaw: -0.3, nod: -0.24, tilt: -0.06,
+  outR: 2.45, swingR: 0.45, twistR: 0, elbowR: 0.03,
+};
+const POINT_DOWN: Key = {
+  ...HIP_L, crouch: 0.17, sway: -0.3, leanZ: 0.1, leanX: 0.06, kneeL: 0.28, headYaw: 0.24, nod: 0.3,
+  outR: -0.4, swingR: 0.55, twistR: 1.2, elbowR: 0.05,
+};
+const discoMove = curve([
+  [0.0, POINT_UP],
+  [0.22, POINT_UP],
+  [0.5, POINT_DOWN],
+  [0.72, POINT_DOWN],
+]);
+/** Up on the beat, down on the next. 2 beats. */
+export const disco: Clip = (p, t) => {
+  discoMove(p, t / 2);
+  p.expr = 2;
+};
+
+/** The robot: four stiff poses, each snapped to on its beat and held dead still until the next. */
+const BOX: Key = { crouch: 0.05, outR: 0.18, elbowR: 1.57, outL: 0.18, elbowL: 1.57 };
+const SIGNAL: Key = { crouch: 0.08, twist: -0.18, headYaw: -0.55, outR: 1.45, twistR: -1.5, elbowR: 1.57, outL: 1.45, twistL: 1.5, elbowL: 1.57 };
+const REACH: Key = { crouch: 0.12, nod: 0.14, outR: 0.1, swingR: 1.5, elbowR: 0.03, outL: 0.1, swingL: 1.5, elbowL: 0.03 };
+/** How far into a beat each snap takes, as a share of the whole move. */
+const SNAP = 0.06;
+const robotMove = curve([
+  [0.0, REACH],
+  [SNAP, BOX],
+  [0.25, BOX],
+  [0.25 + SNAP, SIGNAL],
+  [0.5, SIGNAL],
+  [0.5 + SNAP, flip(SIGNAL)],
+  [0.75, flip(SIGNAL)],
+  [0.75 + SNAP, REACH],
+]);
+/** A pose a beat, deadpan. 4 beats. */
+export const robot: Clip = (p, t) => {
+  robotMove(p, t / 4);
+};
+
+/** The running man: a knee up on the off beat, the foot down and the other sliding back on the beat. */
+const STRIDE: Key = {
+  yaw: -0.55, crouch: 0.14, leanX: 0.08, legR: 0.32, kneeR: 0.12, legL: -0.36, kneeL: 0.32,
+  swingR: -0.2, twistR: 0.3, elbowR: 1.35, swingL: 0.6, twistL: 0.3, elbowL: 1.35,
+};
+const KNEE: Key = {
+  yaw: -0.55, crouch: 0.03, y: 0.03, leanX: 0.05, legR: -0.1, kneeR: 0.08, legL: 1.3, kneeL: 1.7,
+  swingR: 0.7, twistR: 0.3, elbowR: 1.4, swingL: -0.3, twistL: 0.3, elbowL: 1.4,
+};
+/** The other foot, still turned the same way (a knee coming straight at you is lost). */
+const other = (key: Key): Pose => Object.assign(flip(key), { yaw: key.yaw });
+const runningMove = curve([
+  [0.0, STRIDE],
+  [0.25, KNEE],
+  [0.5, other(STRIDE)],
+  [0.75, other(KNEE)],
+]);
+/** A step a beat, turned three quarters on so the knees show. 2 beats. */
+export const runningMan: Clip = (p, t) => {
+  runningMove(p, t / 2);
+  p.expr = 2;
+};
+
+/** The twirl: wound up low, a full turn on the spot with arms out, and a V with a wink to finish. */
+const twirlMove = curve([
+  [0.0, { crouch: 0.26, twist: 0.35, headYaw: 0.2, outR: 0.15, swingR: 0.5, twistR: 1.1, elbowR: 1.7, outL: 0.15, swingL: 0.5, twistL: 1.1, elbowL: 1.7 }],
+  [0.2, { crouch: 0.3, twist: 0.38, headYaw: 0.22, outR: 0.15, swingR: 0.5, twistR: 1.1, elbowR: 1.75, outL: 0.15, swingL: 0.5, twistL: 1.1, elbowL: 1.75 }],
+  [0.32, { crouch: 0.04, y: 0.05, outR: 1.3, elbowR: 0.15, outL: 1.3, elbowL: 0.15 }],
+  [0.55, { crouch: 0.02, y: 0.08, leanZ: 0.05, nod: -0.08, outR: 1.38, elbowR: 0.15, outL: 1.38, elbowL: 0.15 }],
+  [0.66, { crouch: 0.14, spread: 0.3, nod: -0.12, outR: 2.5, swingR: 0.2, elbowR: 0.1, outL: 2.5, swingL: 0.2, elbowL: 0.1 }],
+  [0.88, { crouch: 0.1, spread: 0.3, nod: -0.1, outR: 2.45, swingR: 0.2, elbowR: 0.12, outL: 2.45, swingL: 0.2, elbowL: 0.12 }],
+]);
+/** Once round a beat and a half after winding up, then the pose. 4 beats. */
+export const twirl: Clip = (p, t) => {
+  const u = (((t / 4) % 1) + 1) % 1;
+  twirlMove(p, u);
+  // Wound a little the other way first, then all the way round, quickest in the middle.
+  const turn = 0.5 * ramp(u, 0, 0.2) - (TAU + 0.5) * ramp(u, 0.24, 0.62);
+  p.yaw = turn - TAU * Math.round(turn / TAU);
+  p.expr = u > 0.64 && u < 0.92 ? 6 : 2;
+};
+
+/** Kicks: hands on the hips, a high kick on every beat, left then right. */
+const KICK: Key = { ...HIPS, yaw: -0.5, y: 0.05, leanX: -0.12, nod: -0.05, sway: -0.08, legL: 1.6, kneeL: 0.04, kneeR: 0.08 };
+const LAND: Key = { ...HIPS, yaw: -0.5, crouch: 0.14, sway: -0.04, legL: 0.1, kneeL: 0.35 };
+const SET: Key = { ...HIPS, yaw: -0.5, crouch: 0.12 };
+const kickMove = curve([
+  [0.0, KICK],
+  [0.18, LAND],
+  [0.25, SET],
+  [0.5, other(KICK)],
+  [0.68, other(LAND)],
+  [0.75, SET],
+]);
+/** Turned three quarters on so the kicks show. 2 beats. */
+export const kicks: Clip = (p, t) => {
+  kickMove(p, t / 2);
+  p.expr = 2;
+};
+
+/** Raise the roof: palms pushed up on the beat from beside the head, hips swinging side to side. */
+const PUSH: Key = { crouch: 0.02, sway: 0.2, leanZ: -0.05, nod: -0.15, outR: 2.3, swingR: 0.15, twistR: -1.5, elbowR: 0.5, outL: 2.3, swingL: 0.15, twistL: -1.5, elbowL: 0.5 };
+const READY: Key = { crouch: 0.16, nod: 0.05, outR: 1.45, twistR: -1.5, elbowR: 1.7, outL: 1.45, twistL: -1.5, elbowL: 1.7 };
+const roofMove = curve([
+  [0.0, PUSH],
+  [0.25, READY],
+  [0.5, flip(PUSH)],
+  [0.75, READY],
+]);
+/** 2 beats. */
+export const roof: Clip = (p, t) => {
+  roofMove(p, t / 2);
+  p.expr = 2;
+};
+
+/** Where in its beat `t` is, 0 on the beat to 1 just before the next. */
+const within = (t: number) => ((t % 1) + 1) % 1;
+/** 0 to 1 over [a, b], straight. */
+const lin = (t: number, a: number, b: number) => clamp01((t - a) / (b - a));
+
+/**
+ * The horse dance: wrists crossed in front as if on the reins, galloping from foot to foot with a
+ * bounce on every beat, then the right hand swings a lasso round over the head. 8 beats.
+ */
+export const gangnam: Clip = (p, t) => {
+  const u = within(t / 8);
+  const hit = pulse(t);
+  const air = sin(within(t) * Math.PI);
+  // Two hops on one foot, then two on the other.
+  const s = sin((t * Math.PI) / 2);
+  const onL = clamp01(0.5 + s * 1.5);
+  p.legL = air * 0.55 * (1 - onL);
+  p.kneeL = 0.12 + air * 0.95 * (1 - onL);
+  p.legR = air * 0.55 * onL;
+  p.kneeR = 0.12 + air * 0.95 * onL;
+  p.y = air * 0.05;
+  p.crouch = 0.14 + hit * 0.07;
+  p.sway = s * 0.12;
+  p.leanX = -0.04;
+  p.nod = -0.05 + hit * 0.04;
+  p.swingL = p.swingR = 0.95;
+  p.outL = p.outR = -0.12;
+  p.twistL = p.twistR = 1.15;
+  p.elbowL = p.elbowR = 1.4 + hit * 0.12;
+  // The lasso, one turn a beat, over the second half.
+  const lasso = ramp(u, 0.46, 0.53) * (1 - ramp(u, 0.94, 1));
+  const a = t * TAU;
+  p.outR = mix(p.outR, 2.65 + cos(a) * 0.18, lasso);
+  p.swingR = mix(p.swingR, 0.25 + sin(a) * 0.25, lasso);
+  p.twistR = mix(p.twistR, -0.6, lasso);
+  p.elbowR = mix(p.elbowR, 0.5, lasso);
+  p.headYaw = -0.15 * lasso;
+  p.expr = 2;
+};
+
+/** How far the moonwalk glides each way, in world units. */
+const MOON = 0.45;
+/**
+ * The moonwalk: side on, gliding backwards a step a beat, one foot flat and sliding back while
+ * the other rests on its toes, then round the other way to glide back, and up on the toes facing
+ * you, a hand at the hat, to finish. Where it has glided to is `moonSlide`. 8 beats.
+ */
+export const moonwalk: Clip = (p, t) => {
+  const u = within(t / 8);
+  const glide = ramp(u, 0.03, 0.07) * (1 - ramp(u, 0.44, 0.48)) + ramp(u, 0.52, 0.56) * (1 - ramp(u, 0.86, 0.9));
+  const toes = ramp(u, 0.9, 0.95) * (1 - ramp(u, 0.985, 1));
+  p.yaw = (-Math.PI / 2) * ramp(u, 0, 0.06) + Math.PI * ramp(u, 0.45, 0.55) - (Math.PI / 2) * ramp(u, 0.88, 0.94);
+  // Each leg in turn: flat and sliding back for a beat, then resting bent on its toes for one.
+  const leg = (q: number) => {
+    if (q < 1) {
+      const e = smooth(q / 0.15);
+      return [mix(-0.05, mix(0.15, -0.25, q), e), mix(0.55, 0.05, e)];
+    }
+    const e = smooth((q - 1) / 0.15);
+    return [mix(-0.25, -0.05, e), mix(0.05, 0.55, e)];
+  };
+  const q = within(t / 2) * 2;
+  const [legL, kneeL] = leg(q);
+  const [legR, kneeR] = leg((q + 1) % 2);
+  p.legL = legL * glide;
+  p.kneeL = kneeL * glide;
+  p.legR = legR * glide;
+  p.kneeR = kneeR * glide;
+  const step = sin(t * Math.PI);
+  p.crouch = 0.06 * glide;
+  p.leanX = 0.05 * glide;
+  p.nod = 0.05 * glide - 0.1 * toes;
+  p.swingL = step * 0.15 * glide;
+  p.swingR = -step * 0.15 * glide;
+  p.elbowL = 0.16 + 0.5 * glide;
+  p.elbowR = 0.16 + 0.5 * glide;
+  // Up on the toes, the right hand at the brim of a hat.
+  p.y += 0.05 * toes;
+  p.spread = -0.03 * toes;
+  p.outR = mix(p.outR, 1.25, toes);
+  p.swingR = mix(p.swingR, 0.4, toes);
+  p.twistR = mix(p.twistR, -1.4, toes);
+  p.elbowR = mix(p.elbowR, 2.3, toes);
+  p.outL = mix(p.outL, 0.35, toes);
+  p.expr = toes > 0.5 ? 6 : 0;
+};
+
+/** How far the moonwalk has glided toward the dancer's own left, `t` beats into it, in world units. */
+export function moonSlide(t: number) {
+  const u = within(t / 8);
+  return MOON * (lin(u, 0.06, 0.45) - lin(u, 0.55, 0.88));
+}
+
+/** Both hands clawed and up off to the left, a foot dragging. */
+const CLAW: Key = {
+  twist: 0.3, leanZ: 0.1, leanX: 0.06, tilt: -0.16, headYaw: 0.25, crouch: 0.12, spread: 0.22, kneeR: 0.3, legR: -0.1,
+  outL: 1.85, swingL: 0.3, twistL: -1.2, elbowL: 1.2,
+  outR: -0.2, swingR: 1.45, twistR: 1.0, elbowR: 1.0,
+};
+const thrillerMove = curve([
+  [0.0, CLAW],
+  [0.42, CLAW],
+  [0.5, flip(CLAW)],
+  [0.92, flip(CLAW)],
+]);
+/** Thriller's zombies: claws up to the left, the claws and the head jerking on every beat, then over to the right. 8 beats. */
+export const thriller: Clip = (p, t) => {
+  const u = within(t / 8);
+  thrillerMove(p, u);
+  const jerk = pulse(t) ** 2;
+  const side = u < 0.46 ? 1 : -1;
+  p.elbowL += jerk * 0.3;
+  p.elbowR += jerk * 0.3;
+  p.nod += jerk * 0.1;
+  p.headYaw += side * jerk * 0.12;
+  p.crouch += jerk * 0.05;
+  p.expr = 4;
+};
+
+/** Every solo, by name. */
+export const SOLOS = { dab, disco, robot, runningMan, twirl, kicks, roof, gangnam, moonwalk, thriller } as const;
+export type SoloName = keyof typeof SOLOS;
+const SOLO_SET = new Set<Clip>(Object.values(SOLOS));
+/** Beats a solo takes to come round, for those longer than 4, so it is always danced to the end. */
+const LONG = new Map<Clip, number>([
+  [gangnam, 8],
+  [moonwalk, 8],
+  [thriller, 8],
+]);
+/** Beats `clip` takes to come round: a solo always ends where it began. */
+export const soloBeats = (clip: Clip) => LONG.get(clip) ?? 4;
+/** Whether a clip is one of the stage's dances: the routine or a solo. */
+export const dancing = (clip: Clip) => clip === idol || SOLO_SET.has(clip);
+
+// Cheers: the crowd watching the stage, along with the music. For each, `t` is beats gone by
+// (whole on the beat), so everyone watching keeps the same beat, and `k` the Mii's own number.
+
+/** Clapping along, hands meeting on every beat, knees giving with it. */
+export const clapAlong: Clip = (p, t) => {
+  const open = 1 - pulse(t);
+  p.swingL = p.swingR = 0.62;
+  p.outL = p.outR = 0.03 + open * 0.12;
+  p.twistL = p.twistR = 0.97 - open * 0.42;
+  p.elbowL = p.elbowR = 1.56 - open * 0.12;
+  p.crouch = 0.03 + (1 - open) * 0.05;
+  p.nod = 0.03 - open * 0.05;
+  p.leanX = 0.04;
+  p.expr = 2;
+};
+
+/** A fist punched up on every beat (the right, or the left for half of them), a little hop with it. */
+export const fistPump: Clip = (p, t, k) => {
+  const hit = pulse(t);
+  p.outR = mix(1.5, 2.65, hit);
+  p.swingR = 0.25;
+  p.twistR = mix(-1.5, -0.4, hit);
+  p.elbowR = mix(1.7, 0.2, hit);
+  p.outL = 0.2;
+  p.elbowL = 0.5;
+  p.y = hit * 0.035;
+  p.crouch = (1 - hit) * 0.06;
+  p.nod = -0.08 * hit;
+  p.expr = 2;
+  if (k < 0.5) mirror(p);
+};
+
+/** Both arms up, swaying over the head from side to side across two beats, as with penlights. */
+export const penlight: Clip = (p, t, k) => {
+  const s = sin(t * Math.PI + k * 0.4);
+  const hit = pulse(t);
+  p.outL = 2.35 + s * 0.4;
+  p.outR = 2.35 - s * 0.4;
+  p.swingL = p.swingR = 0.3;
+  p.elbowL = p.elbowR = 0.22;
+  p.sway = s * 0.25;
+  p.leanZ = -s * 0.07;
+  p.tilt = s * 0.08;
+  p.crouch = 0.02 + hit * 0.04;
+  p.nod = -0.12;
+  p.expr = 2;
+};
+
+/** Jumping on the spot, up between beats and landing on them, both fists up. */
+export const jumpAlong: Clip = (p, t) => {
+  const air = sin(within(t) * Math.PI);
+  const land = pulse(t);
+  p.y = air * 0.13;
+  p.crouch = land * 0.1;
+  p.outL = p.outR = 2.4 + air * 0.2;
+  p.twistL = p.twistR = -0.5;
+  p.elbowL = p.elbowR = 0.6 - air * 0.3;
+  p.kneeL = p.kneeR = air * 0.2;
+  p.nod = -0.1;
+  p.expr = 2;
+};
+
+/** Hands cupped round the mouth, calling out on every beat. */
+export const callOut: Clip = (p, t, k) => {
+  const hit = pulse(t);
+  p.swingL = p.swingR = 0.85;
+  p.outL = p.outR = 0.28;
+  p.twistL = p.twistR = 1.1;
+  p.elbowL = p.elbowR = 2.25;
+  p.leanX = 0.06 + hit * 0.08;
+  p.nod = -0.12 + hit * 0.06;
+  p.crouch = hit * 0.06;
+  p.tilt = sin(t * 0.5 + k * 6) * 0.06;
+  p.expr = 3;
+};
+
+/** Just nodding along, weight going from foot to foot. */
+export const nodAlong: Clip = (p, t, k) => {
+  const hit = pulse(t);
+  const s = sin(t * Math.PI + k * 3);
+  p.nod = 0.02 + hit * 0.12;
+  p.crouch = hit * 0.045;
+  p.sway = s * 0.16;
+  p.leanZ = -s * 0.03;
+  p.swingL = s * 0.08;
+  p.swingR = -s * 0.08;
+  p.elbowL = p.elbowR = 0.3;
+  p.kneeL = Math.max(0, s) * 0.12;
+  p.kneeR = Math.max(0, -s) * 0.12;
+};
+
+/** Going wild for a solo: jumping, both arms waving over the head, mouth open. */
+export const hype: Clip = (p, t, k) => {
+  const air = sin(within(t) * Math.PI);
+  const a = sin(t * TAU + k * 4);
+  p.y = air * 0.11;
+  p.crouch = pulse(t) * 0.08;
+  p.outL = 2.35 + a * 0.35;
+  p.outR = 2.35 - a * 0.35;
+  p.swingL = p.swingR = 0.2;
+  p.elbowL = 0.35 + fold(a) * 0.5;
+  p.elbowR = 0.35 + fold(-a) * 0.5;
+  p.twistL = p.twistR = -0.5;
+  p.nod = -0.14;
+  p.expr = 3;
+};
+
+/** The cheers the crowd picks from, and how often each comes up against the others. */
+export const CHEERS: readonly [Clip, number][] = [
+  [clapAlong, 3],
+  [penlight, 2],
+  [fistPump, 2],
+  [nodAlong, 2],
+  [jumpAlong, 1.5],
+  [callOut, 1],
+];
+const CHEER_SET = new Set<Clip>([...CHEERS.map(([c]) => c), hype]);
+/** Whether a clip is one of the crowd's cheers. */
+export const cheering = (clip: Clip) => CHEER_SET.has(clip);
+/** Whether a clip keeps time by beats (a solo or a cheer) rather than seconds. */
+export const onBeat = (clip: Clip) => SOLO_SET.has(clip) || CHEER_SET.has(clip);
 
 /**
  * A boombox up on the left shoulder (a headset's mic is on the right), over whatever else the

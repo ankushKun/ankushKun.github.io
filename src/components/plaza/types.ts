@@ -88,6 +88,8 @@ export interface PlazaMii extends MiiLook {
 
 export interface PlazaData {
   cubes: PlazaCube[];
+  /** The slot each block takes on a wide screen (a phone puts block `i` in slot `i`). */
+  wide: number[];
   posts: PlazaPost[];
   /** What your own Mii may open with; one is picked on each visit and said before anything else. */
   welcome: PlazaPost[];

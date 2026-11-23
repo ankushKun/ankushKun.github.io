@@ -496,7 +496,9 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
     cursor: grab;
   }
 
-  .plaza[data-holding] {
+  .plaza[data-holding],
+  .plaza[data-panning],
+  .plaza[data-panning] * {
     cursor: grabbing;
   }
 
@@ -523,7 +525,7 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
     font-display: block;
   }
 
-  /* Frames a second, in development only (main.ts). */
+  /* Frames a second (main.ts). */
   .plaza-fps {
     position: absolute;
     z-index: 9;

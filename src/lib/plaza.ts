@@ -1,7 +1,7 @@
 // Build-time data for the home page plaza: cubes from the site nav, speech bubbles from every entry.
 import type { PlazaCube, PlazaData, PlazaMii, PlazaPost } from '../components/plaza/types';
 import { getImage } from 'astro:assets';
-import { BACKUP, BOOMBOX, CROWD, CUBES, DJ, FEATURED, HERO, LOOKS, ME, WELCOME } from '../data/plaza';
+import { BACKUP, BOOMBOX, CROWD, CUBES, DJ, FEATURED, HERO, LOOKS, ME, WELCOME, WIDE_SWAPS } from '../data/plaza';
 import { existsSync } from 'node:fs';
 import { GAMES } from '../data/games';
 import { gameArt } from './games';
@@ -47,6 +47,13 @@ export async function getPlazaData(): Promise<PlazaData> {
   // Without JavaScript the slots show the first few; the plaza swaps in a random pick on each visit.
   const cubes: PlazaCube[] = [...featured.slice(0, FEATURED), ...sections];
   const cubeOf = (href: string) => cubes.findIndex((c) => !c.feature && c.href === href);
+  // Which slot each block takes on a wide screen: its own, unless WIDE_SWAPS trades it.
+  const wide = cubes.map((_, i) => i);
+  for (const [a, b] of WIDE_SWAPS) {
+    const i = cubeOf(a);
+    const j = cubeOf(b);
+    if (i >= 0 && j >= 0) [wide[i], wide[j]] = [wide[j], wide[i]];
+  }
 
   // Bubbles: every entry on the site (posts, projects, the timeline), each said by someone near its
   // section's block, in a new order on every visit (bubbles.ts).
@@ -87,5 +94,5 @@ export async function getPlazaData(): Promise<PlazaData> {
 
   const backup = await Promise.all(BACKUP.map(async ({ from, ...made }) => ({ ...made, code: await resolveMii(from, made.name) })));
 
-  return { cubes, posts, welcome, hero, pool, dj, backup, boombox: BOOMBOX, crowd: CROWD, featured };
+  return { cubes, wide, posts, welcome, hero, pool, dj, backup, boombox: BOOMBOX, crowd: CROWD, featured };
 }

@@ -98,7 +98,8 @@ export function copyView(from: View, out: View) {
 
 const _ray = new THREE.Vector3();
 
-export function makeLayout(aspect: number, count: number): Layout {
+/** `wide` is the slot each block takes on a wide screen; a tall one puts block `i` in slot `i`. */
+export function makeLayout(aspect: number, count: number, wide: readonly number[] = []): Layout {
   const tall = aspect < 0.9;
   // Keep the long lens and step back until the cubes fit the width.
   const span = tall ? Math.max(27.5, 13.4 / aspect) : Math.max(SPAN, 22.3 / aspect);
@@ -138,7 +139,7 @@ export function makeLayout(aspect: number, count: number): Layout {
     ],
     // Up in the haze, level with your Mii floating there, the floor a pale blur far below.
     sky: view(new THREE.Vector3(hero.x, SKYFALL.height + 0.72, hero.z), 7, 10, Math.max(4.2, 2.4 / aspect), [1.3, 4.2]),
-    anchors: slots.slice(0, count),
+    anchors: Array.from({ length: count }, (_, i) => slots[tall ? i : (wide[i] ?? i)]),
     hero,
     far: { z: corner.z, halfWidth: corner.x },
   };

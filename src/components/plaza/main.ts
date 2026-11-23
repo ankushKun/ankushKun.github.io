@@ -16,7 +16,7 @@ import { Bubbles } from './bubbles';
 import type { Chatter } from './chatter';
 import { HeadGear } from './headgear';
 import { Crowd, SKYFALL } from './crowd';
-import { GRAVITY } from './motion';
+import { GRAVITY, type SoloName } from './motion';
 import { Cubes } from './cubes';
 import { Floor, HAZE } from './floor';
 import { HeadCards } from './heads';
@@ -61,6 +61,12 @@ const ZOOM = { min: 0, rest: 0, max: 3, close: 2.5 };
  */
 const TAG_SIZE = 0.18;
 const TAG_MIN = 11;
+/**
+ * Panning with the middle mouse button, zoomed in past `from`: it takes full effect by `full`, and
+ * the view's middle can go no further than `pad` beyond the outermost blocks. Zoomed back out to
+ * `from`, the camera recenters.
+ */
+const PAN = { from: 0.15, full: 1, pad: 1.5 };
 /** Seconds the camera takes to zoom into a block you pressed, and to pull back out of it when you come back. */
 const DIVE = 0.7;
 const STEP_BACK = 1.5;
@@ -86,8 +92,8 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
   const bubbleLayer = need(root.querySelector<HTMLElement>('.plaza-bubbles'));
   const begin = need(root.querySelector<HTMLButtonElement>('.plaza-start'));
   const card = need(root.querySelector<HTMLElement>('.plaza-who'));
-  // Frames a second, counted over each half second, shown while developing.
-  const fps = import.meta.env.DEV ? root.querySelector<HTMLElement>('.plaza-fps') : null;
+  // Frames a second, counted over each half second, always shown in the corner.
+  const fps = root.querySelector<HTMLElement>('.plaza-fps');
   if (fps) fps.hidden = false;
   const counted = { frames: 0, from: 0 };
   const djButton = need(root.querySelector<HTMLButtonElement>('.plaza-dj'));
@@ -278,7 +284,7 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
 
   // Camera ---------------------------------------------------------------------------------------
 
-  let layout: Layout = makeLayout(w / h, data.cubes.length);
+  let layout: Layout = makeLayout(w / h, data.cubes.length, data.wide);
   const now = blankView();
   const landing = blankView();
   /** The hold on the middle group after landing, where the pull back starts from. */
@@ -289,6 +295,9 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
   let zoomTo: number = ZOOM.rest;
   let zoom: number = ZOOM.rest;
   let close = false;
+  /** How far the middle of the view has been dragged across the floor (x and z), and the drag going on. */
+  const pan = new THREE.Vector2();
+  let panning: { id: number; x: number; y: number; moved: boolean } | null = null;
   /** The pointer, -1..1 across and up the screen, and the camera's eased response to it. */
   const pointer = new THREE.Vector2();
   const follow = new THREE.Vector2();
@@ -349,7 +358,7 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
   let built = false;
 
   function arrange(moveCrowd: boolean) {
-    layout = makeLayout(w / h, data.cubes.length);
+    layout = makeLayout(w / h, data.cubes.length, data.wide);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     applyView(camera, layout.views[1]);
@@ -458,6 +467,29 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     return mixViews(views[i], views[i + 1], level - i, out);
   }
 
+  /** The view for the current zoom, moved across the floor by however far it has been panned. */
+  function restView(out: typeof now) {
+    zoomView(zoom, out);
+    const weight = smoothstep(PAN.from, PAN.full, zoom);
+    if (zoomTo <= PAN.from && zoom <= PAN.from + 0.05) pan.set(0, 0);
+    // Never off past the outermost blocks.
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minZ = Infinity;
+    let maxZ = -Infinity;
+    for (const a of [...layout.anchors, layout.hero]) {
+      minX = Math.min(minX, a.x);
+      maxX = Math.max(maxX, a.x);
+      minZ = Math.min(minZ, a.z);
+      maxZ = Math.max(maxZ, a.z);
+    }
+    pan.x = clamp(pan.x, minX - PAN.pad - out.target.x, maxX + PAN.pad - out.target.x);
+    pan.y = clamp(pan.y, minZ - PAN.pad - out.target.z, maxZ + PAN.pad - out.target.z);
+    out.target.x += pan.x * weight;
+    out.target.z += pan.y * weight;
+    return out;
+  }
+
   /** Where block `i` floats, for the camera to close in on. */
   const blockAt = (i: number) => {
     const at = layout.anchors[i];
@@ -564,10 +596,10 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     if (stepping) {
       // Held on the block until the page change has shown it, then pulled back, slowing to rest.
       const p = (time - stepAt) / STEP_BACK;
-      if (p < 1) return mixViews(stepFrom, zoomView(zoom, zoomed), p <= 0 ? 0 : 1 - (1 - p) ** 3, now);
+      if (p < 1) return mixViews(stepFrom, restView(zoomed), p <= 0 ? 0 : 1 - (1 - p) ** 3, now);
       stepping = false;
     }
-    return mixViews(now, zoomView(zoom, zoomed), calm ? 1 : 1 - Math.exp(-14 * dt), now);
+    return mixViews(now, restView(zoomed), calm ? 1 : 1 - Math.exp(-14 * dt), now);
   }
 
   /** In dev, `__plaza.look(i)` holds the camera up close on Mii `i`. */
@@ -683,6 +715,47 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     },
     { passive: false },
   );
+  // Zoomed in, holding the middle mouse button drags the floor, to look round other parts of the
+  // plaza: the spot under the pointer stays under it, as with a map. Zooming back out recenters.
+  root.addEventListener('pointerdown', (e) => {
+    if (e.button !== 1 || e.pointerType !== 'mouse' || waiting || opening || diving || zoomTo <= PAN.from) return;
+    e.preventDefault();
+    panning = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false };
+    root.setPointerCapture(e.pointerId);
+    root.dataset.panning = '';
+  });
+  root.addEventListener('pointermove', (e) => {
+    if (panning?.id !== e.pointerId) return;
+    const dx = e.clientX - panning.x;
+    const dy = e.clientY - panning.y;
+    panning.x = e.clientX;
+    panning.y = e.clientY;
+    if (Math.abs(dx) + Math.abs(dy) > 0) panning.moved = true;
+    // World units a pixel covers at the middle of the view; up and down the screen runs across the
+    // floor at a slant, so each pixel there covers more of it.
+    const perPixel = (2 * shown.dist * Math.tan(THREE.MathUtils.degToRad(shown.fov / 2))) / h / Math.max(0.2, smoothstep(PAN.from, PAN.full, zoom));
+    const deep = 1 / Math.max(0.2, Math.sin(shown.pitch));
+    const cos = Math.cos(shown.yaw);
+    const sin = Math.sin(shown.yaw);
+    pan.x += (-cos * dx - sin * dy * deep) * perPixel;
+    pan.y += (sin * dx - cos * dy * deep) * perPixel;
+  });
+  const endPan = (e: PointerEvent) => {
+    if (panning?.id !== e.pointerId) return;
+    if (root.hasPointerCapture(e.pointerId)) root.releasePointerCapture(e.pointerId);
+    // A drag isn't a middle click: it mustn't open a block in a new tab.
+    if (panning.moved) {
+      const stop = (a: MouseEvent) => a.button === 1 && a.preventDefault();
+      addEventListener('auxclick', stop, { capture: true, once: true });
+      setTimeout(() => removeEventListener('auxclick', stop, { capture: true }), 0);
+    }
+    panning = null;
+    delete root.dataset.panning;
+  };
+  root.addEventListener('pointerup', endPan);
+  root.addEventListener('pointercancel', endPan);
+  // No autoscroll arrows from the middle button over the plaza.
+  root.addEventListener('mousedown', (e) => e.button === 1 && e.preventDefault());
   // Touch does what the mouse does. One finger on open floor is the cursor: the camera drifts
   // toward it and the blocks turn to face it, easing back when it lifts. Two fingers pinch to
   // zoom, and a second finger landing turns any block being spun into a pinch instead.
@@ -1238,7 +1311,7 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     const nw = root.clientWidth;
     const nh = root.clientHeight;
     if (!nw || !nh || (nw === w && nh === h)) return;
-    const flipped = makeLayout(nw / nh, data.cubes.length).tall !== layout.tall;
+    const flipped = makeLayout(nw / nh, data.cubes.length, data.wide).tall !== layout.tall;
     w = nw;
     h = nh;
     renderer.setSize(w, h, false);
@@ -1305,6 +1378,8 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
         camera: () => ({ x: camera.position.x, y: camera.position.y, z: camera.position.z, fov: camera.fov }),
         /** The stage dances as if music were heard, or stops with `false`, without the radio. */
         groove: (on = true) => crowd.setGroove(on),
+        /** Asks for a solo by name (any, without one) from Mii `i` (anyone dancing, without one), at the top of the next time round. */
+        solo: (name?: SoloName, i?: number) => crowd.cue(name, i),
         /** Swaps the DJ's boombox: 'model' or 'drawn'. */
         boombox: (kind: BoomboxKind) => boombox?.show(kind),
         /** Where Mii `i` is on screen (CSS pixels): its feet and the top of its head, and what it is doing. */
@@ -1315,7 +1390,7 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
           _at.y -= crowd.headTop(i, new THREE.Vector3()).y - crowd.miis[i].lift;
           _at.project(camera);
           const m = crowd.miis[i];
-          return { top, feet: [(_at.x + 1) * 0.5 * w, (1 - _at.y) * 0.5 * h], act: m.act, lift: +m.lift.toFixed(2), who: crowd.who(i)?.name ?? null, vel: +m.vel.toFixed(2), x: +m.x.toFixed(2), z: +m.z.toFixed(2), legL: +m.shown.legL.toFixed(2) };
+          return { top, feet: [(_at.x + 1) * 0.5 * w, (1 - _at.y) * 0.5 * h], act: m.act, clip: m.clip.name, lift: +m.lift.toFixed(2), who: crowd.who(i)?.name ?? null, vel: +m.vel.toFixed(2), x: +m.x.toFixed(2), z: +m.z.toFixed(2), legL: +m.shown.legL.toFixed(2) };
         },
         /** What a frame costs: draw calls, triangles, textures. */
         info() {

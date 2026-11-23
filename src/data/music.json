@@ -1,8 +1,8 @@
 {
   "version": 1,
   "title": "Top Picks",
-  "updated": "2026-11-22",
-  "manifestHash": "f451c632b9c2776f",
+  "updated": "2026-11-23",
+  "manifestHash": "020541ee91bb20f6",
   "tracks": [
     {
       "id": "b0805e1131e1",
@@ -569,6 +569,104 @@
       "beats": [
         [-0.016, 121.87],
         [9.921, 118.99]
+      ]
+    },
+    {
+      "id": "e8e1e99195fa",
+      "videoId": "A2VpR8HahKc",
+      "title": "One More Time",
+      "artist": "Daft Punk",
+      "durationSec": 320,
+      "thumb": "/music/covers/A2VpR8HahKc.jpg",
+      "byHand": true,
+      "bpm": 122.88,
+      "beats": [
+        [0.573, 122.88],
+        [141.075, 124.88],
+        [150.503, 126.77],
+        [158.187, 126.39],
+        [165.875, 122.35],
+        [175.84, 122.76],
+        [205.072, 121.21],
+        [212.857, 120.23],
+        [222.746, 122.89]
+      ]
+    },
+    {
+      "id": "343b1fd21f40",
+      "videoId": "K0HSD_i2DvA",
+      "title": "Around the World",
+      "artist": "Daft Punk",
+      "durationSec": 242,
+      "thumb": "/music/covers/K0HSD_i2DvA.jpg",
+      "byHand": true,
+      "bpm": 121.29,
+      "beats": [
+        [2.438, 121.29],
+        [160.527, 122.32],
+        [168.401, 121.29],
+        [191.945, 122.51],
+        [199.814, 121.28]
+      ]
+    },
+    {
+      "id": "c9878cbcfe2f",
+      "videoId": "yydNF8tuVmU",
+      "title": "Harder, Better, Faster, Stronger",
+      "artist": "Daft Punk",
+      "durationSec": 225,
+      "thumb": "/music/covers/yydNF8tuVmU.jpg",
+      "byHand": true,
+      "bpm": 123.45,
+      "beats": [
+        [1.715, 123.82],
+        [25, 123.45],
+        [202.007, 125.79],
+        [209.682, 123.22]
+      ]
+    },
+    {
+      "id": "87453da7a8b8",
+      "videoId": "4whD6uAryMs",
+      "title": "Digital Love",
+      "artist": "Daft Punk",
+      "durationSec": 301,
+      "thumb": "/music/covers/4whD6uAryMs.jpg",
+      "byHand": true,
+      "bpm": 124.68,
+      "beats": [
+        [1.972, 124.61],
+        [23.366, 124.4],
+        [33, 124.66],
+        [96.724, 123.47],
+        [104.466, 124.68],
+        [287.294, 124.96]
+      ]
+    },
+    {
+      "id": "fdf2e0662024",
+      "videoId": "5NV6Rdv1a3I",
+      "title": "Get Lucky",
+      "artist": "Daft Punk ft. Pharrell Williams & Nile Rodgers",
+      "durationSec": 249,
+      "thumb": "/music/covers/5NV6Rdv1a3I.jpg",
+      "byHand": true,
+      "bpm": 116.04,
+      "beats": [
+        [0.714, 116.04]
+      ]
+    },
+    {
+      "id": "9564fbfb0f01",
+      "videoId": "a5uQMwRMHcs",
+      "title": "Instant Crush",
+      "artist": "Daft Punk ft. Julian Casablancas",
+      "durationSec": 340,
+      "thumb": "/music/covers/a5uQMwRMHcs.jpg",
+      "byHand": true,
+      "bpm": 109.95,
+      "beats": [
+        [0.84, 109.95]
       ]
     }
   ]

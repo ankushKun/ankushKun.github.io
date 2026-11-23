@@ -31,6 +31,16 @@ export class BeatClock {
   /** Beats to a time round now. */
   private fit = OWN;
 
+  /** Beats to a time round now, for anyone dancing by the beat rather than the time round. */
+  get perLoop() {
+    return this.fit;
+  }
+
+  /** Seconds a beat takes now. */
+  get beatLength() {
+    return this.period / this.fit;
+  }
+
   /**
    * Moves on by `dt` seconds. `map` is the playing track's beat (Track.beats), or null with none
    * to follow, and `at` where in the track it is now, in seconds.

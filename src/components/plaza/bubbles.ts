@@ -11,8 +11,8 @@ import { clamp } from './util';
 
 const LIFE = 8.5;
 const EVERY = 3.4;
-/** Most bubbles up at once: one on a phone, four on a desktop, where they come quicker to fill them. */
-const MOST = { phone: 1, desktop: 4 };
+/** Most bubbles up at once: one on a phone, six on a desktop, where they come quicker to fill them. */
+const MOST = { phone: 1, desktop: 6 };
 /** Narrower than this is a phone. */
 const DESKTOP = 720;
 const MARGIN = 12;

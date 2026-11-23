@@ -73,6 +73,23 @@ const FANS = {
 };
 /** How far each dancer may be ahead of or behind the beat, in seconds, picked afresh each visit. */
 const LAG = 0.09;
+/**
+ * While the stage dances, now and then one dancer breaks off the routine for a solo of its own
+ * (`spotlight`): the first `first` seconds after the music starts, then `every` seconds after the
+ * last one ends (ranges). A solo begins at the top of a time round the routine and lasts whole
+ * times round, about `length` seconds, so its dancer falls back in where the routine starts again.
+ * The three on stage are picked most; each fan counts `fan` as much. It fades in over `fade`.
+ */
+const SOLO = { first: [5, 10], every: [7, 16], length: 5, fan: 0.35, fade: 0.3 };
+/**
+ * While the stage dances, the crowd within `near` of the DJ (depth squeezed) is its audience: each
+ * time one of them is free, they turn to the stage and, `share` of the time, cheer along on the
+ * beat for `hold` seconds (a range), otherwise just watch a moment, or `leave` of the time wander
+ * off to another block. Every `every` seconds (a range) someone from further off comes over to a
+ * free spot near the stage (`gather`), so who is watching keeps changing. When a solo starts,
+ * `hype` of those cheering go wild for it.
+ */
+const AUDIENCE = { near: 5, share: 0.8, hold: [4, 9], leave: 0.15, every: [3, 7], hype: 0.6 };
 /** Pants for the DJ and their dancers, as on a stage. */
 const STAGE_PANTS = 0x2a2c30;
 /** How much deeper than wide everything is spaced, to look even through the lens. */
@@ -252,6 +269,12 @@ interface Mii {
   fan: number;
   /** How far ahead of the beat (or behind, below 0) this dancer dances, in seconds. */
   lag: number;
+  /**
+   * Its last solo or cheer: the beat it began on (0 for a cheer, which keeps the music's count), and
+   * which way round it is danced (1, or -1 mirrored).
+   */
+  soloAt: number;
+  soloSide: number;
   spot: Spot | null;
   /** Which way it is going round the middle group on this trip: 1, -1, or 0 for not yet chosen. */
   detour: number;
@@ -357,6 +380,23 @@ export class Crowd {
   /** Who has each of FANS.places, and when the next one is asked over (-1 until the music starts). */
   private fans: (Mii | null)[] = FANS.places.map(() => null);
   private fanAt = -1;
+  /** When the next of the crowd comes over to watch the stage (-1 until the music starts). */
+  private gatherAt = -1;
+  /** Who danced the last solo, so the next goes to someone else. */
+  private lastSolo: Mii | null = null;
+  /**
+   * The solo going on: who dances it (null for nobody), which, and the time round it ends at the
+   * top of. `next` is when the next may begin (-1 until the music starts), `loop` the time round
+   * the routine was on last frame, and `want` a solo asked for by name (`cue`).
+   */
+  private solo = {
+    who: null as Mii | null,
+    clip: motion.idol as motion.Clip,
+    until: 0,
+    next: -1,
+    loop: 0,
+    want: null as { clip: motion.Clip; who: number } | null,
+  };
   /** How much the DJ's left hand is up holding the boombox, eased: 1 holding, 0 dancing. */
   private djHold = 1;
   /** Where the DJ's left wrist (the boombox hand) is in the world, rewritten every frame they are posed. */
@@ -488,6 +528,8 @@ export class Crowd {
         pokes: 0,
         pokedAt: -Infinity,
         lag: 0,
+        soloAt: 0,
+        soloSide: 1,
       });
     middle.forEach((c, i) => add(middleSet, i, true, c.who));
     // The DJ, then their dancers, out to either side in turn, left first.
@@ -997,6 +1039,8 @@ export class Crowd {
 
   update(dt: number, time: number, camera: THREE.Vector3, calm: boolean) {
     this.recruit(time, calm);
+    this.spotlight(time, calm);
+    this.gather(time, calm);
     for (const m of this.miis) this.think(m, dt, time, camera, calm);
     this.djHold += ((this.djDancing ? 0 : 1) - this.djHold) * Math.min(1, dt * 7);
     this.physics(dt, time);
@@ -1084,12 +1128,18 @@ export class Crowd {
         this.keepSpot(m, dt);
         if (time >= m.until) this.rest(m, time, 2 + this.r() * 3);
         return;
-      case 'show':
+      case 'show': {
         if (m.clip === motion.spin) m.yaw += m.spinning * dt;
         else this.turn(m, m.face, dt);
         this.keepSpot(m, dt);
-        if (time >= m.until) this.rest(m, time, 1.5 + this.r() * 4);
+        // The music stopped: the audience stops cheering, each in their own moment.
+        const cheering = motion.cheering(m.clip);
+        if (cheering && !this.grooving && m.until > time + 1.5) m.until = time + this.r() * 1.5;
+        if (time < m.until) return;
+        if (cheering && !calm && this.watching(m)) this.decide(m, time, toCamera);
+        else this.rest(m, time, 1.5 + this.r() * 4);
         return;
+      }
       case 'fan':
         return this.fan(m, dt, time, toCamera);
       default:
@@ -1111,7 +1161,7 @@ export class Crowd {
     // too, and the dancers turn a little in toward them.
     this.turn(m, toCamera + (dancing ? 0 : side ? -side * 0.2 : -0.25), dt);
     this.keepSpot(m, dt);
-    const clip = dancing ? motion.idol : motion.stand;
+    const clip = !dancing ? motion.stand : this.solo.who === m ? this.solo.clip : motion.idol;
     if (m.clip !== clip) this.play(m, clip, time);
     if (m.dj) {
       this.djDancing = dancing;
@@ -1119,6 +1169,123 @@ export class Crowd {
       this.djSpot.z = this.djAt.z + Math.cos(toCamera) * BOOMBOX_DOWN;
       this.djSpot.yaw = toCamera;
     }
+  }
+
+  /**
+   * Starts and ends solos (see SOLO). One dancer at a time, never the same one or the same move
+   * twice running, and only someone dancing the routine right now.
+   */
+  private spotlight(time: number, calm: boolean) {
+    const s = this.solo;
+    const loop = Math.floor(this.beat.loops);
+    const top = loop !== s.loop;
+    s.loop = loop;
+    const between = ([a, b]: number[]) => a + this.r() * (b - a);
+    if (this.dj < 0 || calm || !this.grooving) {
+      s.who = null;
+      s.next = -1;
+      return;
+    }
+    if (s.next < 0) s.next = time + between(SOLO.first);
+    const m = s.who;
+    if (m) {
+      // Picked up, knocked over or gone home mid solo: it is over.
+      if (m.clip !== s.clip) s.who = null;
+      else if (top && loop >= s.until) {
+        s.who = null;
+        this.play(m, motion.idol, time);
+      }
+      if (!s.who) s.next = time + between(SOLO.every);
+      return;
+    }
+    if (!top || (time < s.next && !s.want)) return;
+    const pool = this.miis.filter((o) => o.clip === motion.idol && (o.stage || o.act === 'fan'));
+    const wanted = s.want && this.miis[s.want.who];
+    let who = wanted && pool.includes(wanted) ? wanted : null;
+    if (!who) {
+      const fresh = pool.filter((o) => o !== this.lastSolo);
+      const from = fresh.length ? fresh : pool;
+      const weight = (o: Mii) => (o.stage ? 1 : SOLO.fan);
+      let pick = this.r() * from.reduce((sum, o) => sum + weight(o), 0);
+      who = from.find((o) => (pick -= weight(o)) < 0) ?? from[0];
+    }
+    if (!who) return;
+    const moves = Object.values(motion.SOLOS).filter((c) => c !== s.clip);
+    s.clip = s.want?.clip ?? moves[Math.floor(this.r() * moves.length)];
+    s.want = null;
+    s.who = who;
+    this.lastSolo = who;
+    // Whole times round, and whole times round the solo, so it ends where it began.
+    let n = Math.max(1, Math.round(SOLO.length / this.beat.period));
+    while ((n * this.beat.perLoop) % motion.soloBeats(s.clip)) n++;
+    s.until = loop + n;
+    who.soloAt = Math.round(this.beat.beats);
+    who.soloSide = this.r() < 0.5 ? 1 : -1;
+    this.play(who, s.clip, time, false, SOLO.fade);
+    // The audience goes wild for it, for as long as it lasts.
+    for (const o of this.miis) {
+      if (o.act === 'show' && motion.cheering(o.clip) && this.r() < AUDIENCE.hype) this.cheer(o, time, motion.hype, n * this.beat.period);
+    }
+  }
+
+  /** Whether `m`, from the crowd and on its own spot, is near enough the dancing stage to watch it. */
+  private watching(m: Mii) {
+    if (this.dj < 0 || !this.grooving || m.friend || m.stage || m.fan >= 0 || !m.spot) return false;
+    return this.byStage(m.x, m.z);
+  }
+
+  /** Whether a place is near enough the stage to watch it from. */
+  private byStage(x: number, z: number) {
+    return (x - this.djAt.x) ** 2 + ((z - this.djAt.z) / DEEP) ** 2 < AUDIENCE.near ** 2;
+  }
+
+  /**
+   * While the stage dances, now and then someone standing about further off comes over to a free
+   * spot near it to watch, at a walk or, keen, at a run.
+   */
+  private gather(time: number, calm: boolean) {
+    if (this.dj < 0 || calm || !this.grooving) {
+      this.gatherAt = -1;
+      return;
+    }
+    const wait = () => AUDIENCE.every[0] + this.r() * (AUDIENCE.every[1] - AUDIENCE.every[0]);
+    if (this.gatherAt < 0) this.gatherAt = time + wait();
+    if (time < this.gatherAt) return;
+    this.gatherAt = time + wait();
+    const free = this.spots.filter((s) => !s.owner && this.byStage(s.x, s.z));
+    const idle = this.miis.filter((m) => !m.friend && !m.stage && m.fan < 0 && m.act === 'stand' && m.spot && !this.byStage(m.x, m.z));
+    if (!free.length || !idle.length) return;
+    const m = idle[Math.floor(this.r() * idle.length)];
+    this.claim(m, free[Math.floor(this.r() * free.length)]);
+    m.at = time;
+    if (this.r() < 0.5) {
+      m.act = 'dash';
+      this.play(m, motion.run, time);
+    } else {
+      m.act = 'stroll';
+      this.play(m, motion.walk, time);
+    }
+  }
+
+  /** Cheers the stage on (one of motion.CHEERS, or `clip`) for `seconds`, on the beat give or take a little. */
+  private cheer(m: Mii, time: number, clip?: motion.Clip, seconds?: number) {
+    if (!clip) {
+      let pick = this.r() * motion.CHEERS.reduce((sum, [, w]) => sum + w, 0);
+      clip = (motion.CHEERS.find(([, w]) => (pick -= w) < 0) ?? motion.CHEERS[0])[0];
+    }
+    m.lag = (this.r() * 2 - 1) * LAG;
+    m.soloAt = 0;
+    m.soloSide = 1;
+    this.perform(m, clip, time, seconds ?? AUDIENCE.hold[0] + this.r() * (AUDIENCE.hold[1] - AUDIENCE.hold[0]));
+  }
+
+  /**
+   * Asks for a solo by name (any, without one) from Mii `who` (whoever is picked, without one) at
+   * the top of the next time round, for checking them one by one.
+   */
+  cue(name?: motion.SoloName, who = -1) {
+    const all = Object.values(motion.SOLOS);
+    this.solo.want = { clip: name ? motion.SOLOS[name] : all[Math.floor(this.r() * all.length)], who };
   }
 
   /**
@@ -1179,7 +1346,7 @@ export class Crowd {
     this.turn(m, toCamera, dt);
     this.keepSpot(m, dt);
     // The music stopped: they stop with the stage, and each wanders off in their own moment.
-    if (!this.grooving && m.clip === motion.idol) {
+    if (!this.grooving && motion.dancing(m.clip)) {
       this.play(m, motion.stand, time);
       m.until = Math.min(m.until, time + 0.4 + this.r() * 1.4);
     }
@@ -1507,6 +1674,20 @@ export class Crowd {
   private decide(m: Mii, time: number, toCamera: number) {
     const roll = this.r();
     m.at = time;
+    if (this.watching(m)) {
+      if (this.r() < AUDIENCE.leave && this.layout.anchors.length > 1) {
+        const others = this.layout.anchors.length - 1;
+        const to = (this.djCube + 1 + Math.floor(this.r() * others)) % this.layout.anchors.length;
+        m.act = 'stroll';
+        this.claim(m, this.nearest(to, null, null));
+        this.play(m, motion.walk, time);
+        return;
+      }
+      m.face = Math.atan2(this.djAt.x - m.x, this.djAt.z - m.z);
+      if (roll < AUDIENCE.share) this.cheer(m, time);
+      else this.rest(m, time, 0.8 + this.r() * 2);
+      return;
+    }
     const a = this.layout.anchors[m.home % this.layout.anchors.length];
     // A few at a time cross the plaza to another cube; the rest keep to their own.
     const dashing = this.miis.reduce((n, o) => n + (o.act === 'dash' ? 1 : 0), 0);
@@ -1916,6 +2097,11 @@ export class Crowd {
     return want;
   }
 
+  /** Beats into its solo or cheer `m` is, a touch ahead or behind (`lag`). */
+  private beatsIn(m: Mii) {
+    return this.beat.beats + m.lag / this.beat.beatLength - m.soloAt;
+  }
+
   /** Writes one animation's pose for this moment into `out`. */
   private evaluate(m: Mii, clip: motion.Clip, since: number, time: number, calm: boolean, out: Pose) {
     if (clip === HOLD) return motion.copyJoints(m.held, out);
@@ -1926,8 +2112,17 @@ export class Crowd {
     if (calm && gait) return;
     // Dancing keeps the music's beat, so everyone on stage dances together however they came to
     // start, each a touch ahead or behind (`lag`).
-    const t = clip === motion.idol ? (this.beat.loops + m.lag / this.beat.period) * motion.LOOP : gait ? m.stride : Math.max(0, time - since);
+    const solo = motion.onBeat(clip);
+    const t =
+      clip === motion.idol
+        ? (this.beat.loops + m.lag / this.beat.period) * motion.LOOP
+        : solo
+          ? this.beatsIn(m)
+          : gait
+            ? m.stride
+            : Math.max(0, time - since);
     clip(out, t, k);
+    if (solo && m.soloSide < 0) motion.mirror(out);
     if (gait) {
       // Strides grow with speed: barely a shuffle when starting off, full swing at pace.
       motion.neutral(still);
@@ -1952,7 +2147,7 @@ export class Crowd {
     motion.copyJoints(pose, m.shown);
     if (m.dj) {
       if (this.djHold > 0.001) motion.carry(pose, this.djHold);
-      this.djBeats = m.clip === motion.idol ? this.beat.beats : null;
+      this.djBeats = motion.dancing(m.clip) ? this.beat.beats : null;
     }
 
 
@@ -1966,6 +2161,12 @@ export class Crowd {
     pose.expr = this.face(m, pose.expr, time);
     pose.x = m.x;
     pose.z = m.z;
+    if (m.clip === motion.moonwalk) {
+      // The moonwalk is the one solo that goes anywhere: off to the dancer's side and back.
+      const d = motion.moonSlide(this.beatsIn(m)) * m.soloSide;
+      pose.x += Math.cos(m.yaw) * d;
+      pose.z -= Math.sin(m.yaw) * d;
+    }
     pose.y += m.lift;
     pose.yaw += m.yaw;
     pose.pitch += m.tipX;

@@ -23,6 +23,12 @@ export const CUBES: Record<string, CubeStyle> = {
   '/apps/': { icon: 'apps', colors: ['#b184ff', '#6a3fd6'] },
 };
 
+/** Blocks that trade places on a wide screen, by href. A phone keeps the order of CUBES. */
+export const WIDE_SWAPS: [string, string][] = [
+  ['/games/', '/apps/music/'],
+  ['/blogs/', '/resume/'],
+];
+
 /**
  * Miis are Wii U / 3DS Mii data. Drop Mii QR code images (from a 3DS, a Wii U, Miitomo or any site
  * that shares them) into src/data/miis/: each one joins the crowd. ME and HERO take either one of
