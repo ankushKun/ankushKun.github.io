@@ -3,7 +3,8 @@
 // wave), beside your name, what you build and the way to reach you; the story (content/pages/
 // about.md); your work as plain rows, years, company, role and what came of it (data/resume.ts);
 // and your socials (site.ts). Each company's logo is src/assets/work/<company>.png, named as its
-// name in lower case with dashes: a transparent square, no background of its own.
+// name in lower case with dashes: a transparent square, no background of its own. A logo drawn in
+// black alone is named <company>.mono.png instead, and turns white in the dark.
 import type { ImageMetadata } from 'astro';
 import { Image } from 'astro:assets';
 import { render } from 'astro:content';
@@ -24,12 +25,16 @@ const { Content } = await render(await getPage('about'));
 const year = (ym?: string) => (ym ? ym.slice(0, 4) : 'Now');
 const years = (start: string, end?: string) => (year(start) === year(end) ? year(start) : `${year(start)} to ${year(end)}`);
 const LOGOS = import.meta.glob<{ default: ImageMetadata }>('../assets/work/*.png', { eager: true });
-const logoOf = (org: string) => LOGOS[`../assets/work/${org.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.png`]?.default;
-const work = resume.experience.map((e) => ({ ...e, logo: logoOf(e.org), badge: resolveLink(e.url, e.org).badge }));
+const logoOf = (org: string) => {
+  const name = `../assets/work/${org.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+  const mono = LOGOS[`${name}.mono.png`]?.default;
+  return { logo: mono ?? LOGOS[`${name}.png`]?.default, mono: Boolean(mono) };
+};
+const work = resume.experience.map((e) => ({ ...e, ...logoOf(e.org), badge: resolveLink(e.url, e.org).badge }));
 const socials = SOCIALS.map((s) => ({ ...s, badge: resolveLink(s.url, s.platform).badge }));
 ---
 
-<Page id="about" pageType="ProfilePage" type="profile" layout="bare">
+<Page id="about" pageType="ProfilePage" type="profile" layout="bare" centered>
   <div class="about">
     <section class="intro" aria-label="Profile">
       <div class="mii" data-stage-wrap>
@@ -70,7 +75,7 @@ const socials = SOCIALS.map((s) => ({ ...s, badge: resolveLink(s.url, s.platform
           work.map((w) => (
             <li>
               <span class="years">{years(w.start, w.end)}</span>
-              {w.logo ? <Image class="logo" src={w.logo} alt="" width={40} height={40} densities={[1, 2, 3]} /> : <LinkBadge badge={w.badge} />}
+              {w.logo ? <Image class:list={['logo', w.mono && 'mono']} src={w.logo} alt="" width={40} height={40} densities={[1, 2, 3]} /> : <LinkBadge badge={w.badge} />}
               <div class="job">
                 <p class="title">
                   <span class="job-role">{w.role}</span>
@@ -132,7 +137,6 @@ const socials = SOCIALS.map((s) => ({ ...s, badge: resolveLink(s.url, s.platform
   .about {
     display: grid;
     gap: 56px;
-    max-width: 720px;
   }
 
   /* Who you are ------------------------------------------------------------------------------- */
@@ -344,6 +348,10 @@ const socials = SOCIALS.map((s) => ({ ...s, badge: resolveLink(s.url, s.platform
   /* A dark logo keeps its edge against the night. */
   :global(:root[data-theme='dark']) .work :global(.logo) {
     filter: drop-shadow(0 0 0.6px rgb(255 255 255 / 0.55));
+  }
+
+  :global(:root[data-theme='dark']) .work :global(.logo.mono) {
+    filter: invert(1);
   }
 
   .title {

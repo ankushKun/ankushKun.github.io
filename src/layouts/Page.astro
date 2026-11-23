@@ -2,7 +2,8 @@
 // A page whose title, description and text come from src/content/pages/<id>.md, on the TV's
 // column. `panel` pages (the default) set their text under the title with anything in the default
 // slot after it; `menu` pages (section lists) put the text under the title as a short intro and
-// their list below; `bare` pages lay out everything under the title themselves.
+// their list below; `bare` pages lay out everything under the title themselves. `centered` keeps
+// the title and everything under it on one reading measure in the middle of the column.
 import { render } from 'astro:content';
 import Base from './Base.astro';
 import Tile from '../components/ui/Tile.astro';
@@ -18,9 +19,11 @@ interface Props {
   schema?: Record<string, unknown>[];
   type?: 'website' | 'profile';
   layout?: 'menu' | 'panel' | 'bare';
+  centered?: boolean;
 }
 
-const { id, pageType = 'WebPage', schema = [], type, layout = 'panel' } = Astro.props;
+const { id, pageType = 'WebPage', schema = [], type, layout = 'panel', centered = false } = Astro.props;
+const Measure = centered ? 'div' : Fragment;
 const page = await getPage(id);
 const { Content } = await render(page);
 const { title, description, cover, updated } = page.data;
@@ -40,39 +43,50 @@ const hasTile = Boolean(tileFor(path));
   modified={updated}
   schema={[webPage(pageType, path, title, description, aboutYou), ...crumbs, ...schema]}
 >
-  <header class="head">
-    <div class="head-bar">
-      {hasTile && <Tile {path} size={58} class="head-tile" />}
-      <div class="head-copy">
-        <h1>{title}</h1>
-        {
-          layout === 'menu' && hasText && (
-            <div class="intro">
-              <Content />
-            </div>
-          )
-        }
+  <Measure {...centered ? { class: 'measure' } : {}}>
+    <header class="head">
+      <div class="head-bar">
+        {hasTile && <Tile {path} size={58} class="head-tile" />}
+        <div class="head-copy">
+          <h1>{title}</h1>
+          {
+            layout === 'menu' && hasText && (
+              <div class="intro">
+                <Content />
+              </div>
+            )
+          }
+        </div>
       </div>
-    </div>
-  </header>
-  {
-    layout === 'panel' && hasText && (
-      <div class="prose">
-        <Content />
-      </div>
-    )
-  }
-  <slot />
-  {
-    layout === 'panel' && updated && (
-      <p class="updated">
-        Updated <time datetime={isoDate(updated)}>{formatDate(updated, 'long')}</time>
-      </p>
-    )
-  }
+    </header>
+    {
+      layout === 'panel' && hasText && (
+        <div class="prose">
+          <Content />
+        </div>
+      )
+    }
+    <slot />
+    {
+      layout === 'panel' && updated && (
+        <p class="updated">
+          Updated <time datetime={isoDate(updated)}>{formatDate(updated, 'long')}</time>
+        </p>
+      )
+    }
+  </Measure>
 </Base>
 
 <style>
+  .measure {
+    max-width: 720px;
+    margin-inline: auto;
+  }
+
+  .measure :global(.prose) {
+    max-width: none;
+  }
+
   .updated {
     margin-top: 2.5rem;
     color: var(--color-ink-soft);
