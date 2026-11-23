@@ -1,6 +1,8 @@
 // What people type, drawn safely: a little Markdown (bold, italic, strike, code), @mentions and
 // links, always built as DOM nodes so nothing anyone writes is ever read as HTML.
 
+import { LITERALS } from './faces';
+
 type Rule = { re: RegExp; make: (m: RegExpExecArray, mention: Mentioner) => Node };
 export type Mentioner = (nick: string) => HTMLElement | null;
 
@@ -17,8 +19,17 @@ const wrap = (tag: string) => (m: RegExpExecArray, mention: Mentioner) => {
   return e;
 };
 
-// First match wins, earliest in the text first.
+/** Faces from the slash commands (or typed by hand), longest first so none is cut short. */
+const FACE = new RegExp(
+  [...LITERALS]
+    .sort((a, b) => b.length - a.length)
+    .map((f) => f.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .join('|'),
+);
+
+// First match wins, earliest in the text first; at the same place, the rule higher up.
 const RULES: Rule[] = [
+  { re: FACE, make: (m) => document.createTextNode(m[0]) },
   { re: /```([\s\S]+?)```/, make: (m) => el('pre', undefined, m[1].replace(/^\n/, '')) },
   { re: /`([^`\n]+)`/, make: (m) => el('code', undefined, m[1]) },
   {

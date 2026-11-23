@@ -26,6 +26,8 @@ export interface Events {
   /** Came into a live app under a name, which also links this browser to that name. */
   live_joined: { app: 'chat' | 'paint' | 'guestbook' };
   chat_posted: { kind: 'text' | 'drawing' | 'gif' };
+  /** Posted through a slash command, by its name (aliases resolved). */
+  chat_command: { name: string };
   paint_stroke_drawn: { tool: string };
   paint_replayed: { day: string };
   paint_saved: { day: string };

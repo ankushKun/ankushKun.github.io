@@ -10,6 +10,7 @@ import { HELP, parse } from './commands';
 import { mountPad, type Pad } from '../live/pad';
 import { mountGifPicker } from './gifpicker';
 import { mountMentions, type Person } from './mentions';
+import { mountSlash } from './slash';
 import { growFrom, placeAbove } from './sheets';
 import { gifsOn } from './gifs';
 import { dayLabel, inline, mentionsIn, stamp } from './format';
@@ -809,6 +810,7 @@ export function mount(root: HTMLElement): () => void {
     const cmd = parse(line);
     if (cmd.do === 'post') {
       if (!send({ text: cmd.text, action: !!cmd.action })) return;
+      if (cmd.name) track('chat_command', { name: cmd.name });
     } else if (cmd.do === 'nick') {
       const nick = cleanNick(cmd.nick);
       if (!nick) note('Usage: **/nick** newname');
@@ -929,8 +931,18 @@ export function mount(root: HTMLElement): () => void {
     },
   });
 
+  // Slash commands: a list of them while a / name is alone in the box.
+  const slash = mountSlash({
+    input,
+    list: $('[data-commands]'),
+    changed: () => {
+      grow();
+      typing();
+    },
+  });
+
   input.addEventListener('keydown', (e) => {
-    if (mentions.key(e)) return;
+    if (mentions.key(e) || slash.key(e)) return;
     if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
       e.preventDefault();
       submit();
@@ -939,6 +951,7 @@ export function mount(root: HTMLElement): () => void {
   input.addEventListener('input', () => {
     typing();
     mentions.update();
+    slash.update();
   });
 
   for (const b of $$('[data-tool]')) {
@@ -1165,6 +1178,7 @@ export function mount(root: HTMLElement): () => void {
     grown.disconnect();
     stopGifs();
     mentions.destroy();
+    slash.destroy();
     gifSheet.hidePopover?.();
     for (const c of chains) c.off();
     for (const t of timers) {

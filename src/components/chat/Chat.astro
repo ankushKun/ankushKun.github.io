@@ -121,7 +121,7 @@ const sections = NAV.map((l) => ({ ...l, tile: tileFor(l.href)?.src, current: se
             placeholder="Say something"
             enterkeyhint="send"
             aria-autocomplete="list"
-            aria-controls="chat-mentions"></textarea>
+            aria-controls="chat-mentions chat-commands"></textarea>
         </span>
       </label>
       <button type="button" class="composer-gif" popovertarget="chat-gifs" aria-label="GIF" data-sfx>GIF</button>
@@ -167,6 +167,7 @@ const sections = NAV.map((l) => ({ ...l, tile: tileFor(l.href)?.src, current: se
   </div>
 
   <div class="mention-list" id="chat-mentions" popover="manual" role="listbox" aria-label="People" data-mentions></div>
+  <div class="mention-list command-list" id="chat-commands" popover="manual" role="listbox" aria-label="Commands" data-commands></div>
 
   <div class="chat-people" id="chat-people" popover aria-label="Here now" data-people>
     <h2>Here now <span data-count>0</span></h2>

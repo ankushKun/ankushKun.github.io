@@ -911,12 +911,13 @@ button.yeah:active {
   color: #d9473b;
 }
 
-/* /me and friends: something someone does, said in passing. */
+/* /me and friends: something someone does, said in passing, on a pill of the cards' paper so it
+   reads over the feed's pattern without being a post of its own. */
 .post.is-action {
   align-items: center;
   gap: 10px;
   padding-left: calc(var(--face) - 40px);
-  color: var(--mv-soft);
+  color: var(--mv-ink);
   font-style: italic;
 }
 
@@ -925,7 +926,16 @@ button.yeah:active {
 }
 
 .post.is-action p {
+  min-width: 0;
   margin: 0;
+  padding: 7px 16px;
+  border-radius: 18px;
+  background: var(--mv-panel);
+  box-shadow:
+    0 0 0 1px var(--mv-line),
+    0 2px 6px -3px var(--mv-shadow);
+  font-size: 0.9375rem;
+  font-weight: 500;
   overflow-wrap: anywhere;
 }
 
@@ -1390,6 +1400,51 @@ button.face:hover {
   flex: 1;
   min-width: 0;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The / list: every command, scrolling, with what it posts beside its name. */
+.command-list {
+  max-height: min(320px, 50dvh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-padding: 6px;
+}
+
+.command-option {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 11px;
+  font-size: 0.9375rem;
+  cursor:
+    url('/ui/hand.svg') 11 1,
+    pointer;
+}
+
+.command-option[aria-selected='true'] {
+  background: var(--mv-pick);
+}
+
+.command-name {
+  font-weight: 700;
+}
+
+.command-arg {
+  color: var(--mv-soft);
+  font-weight: 500;
+}
+
+.command-peek {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--mv-soft);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  text-align: right;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
