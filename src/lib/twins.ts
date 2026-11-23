@@ -26,9 +26,13 @@ function clean(body: string, file: string) {
   const dir = file.slice(0, file.lastIndexOf('/') + 1);
   return body
     .replace(/!\[([^\]]*)\]\(\.\/([^)\s]+)(\s+"[^"]*")?\)/g, (_all, alt: string, rel: string, title = '') => {
+      // A chart's dark twin (<name>.dark.webp, swapped in by global.css) is the same picture again.
+      if (rel.includes('.dark.')) return '';
       const img = IMAGES[`/${dir}${rel}`];
       return img ? `![${alt}](${absUrl(img.src)}${title})` : alt ? `*${alt}*` : '';
     })
+    // A live embed (<figure data-embed>, src/scripts/embeds.ts) is its plain link.
+    .replace(/<figure data-embed="[^"]*">\s*<a href="([^"]+)"[^>]*>([^<]+)<\/a>\s*<\/figure>/g, (_all, href: string, label: string) => `[${label}](${href})`)
     .replace(/\]\((\/[^)\s]*)/g, (_all, path: string) => `](${absUrl(path)}`)
     .replace(/\n{3,}/g, '\n\n')
     .trim();

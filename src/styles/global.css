@@ -241,6 +241,12 @@
     object-fit: cover;
   }
 
+  /* A cover with a dark version (Thumb.astro) shows the one that matches the theme. */
+  :root:not([data-theme='dark']) .thumb .dark-only,
+  :root[data-theme='dark'] .thumb .light-only {
+    display: none;
+  }
+
   /* The plaza's dark name tag. */
   .pill {
     display: inline-flex;
@@ -982,6 +988,39 @@ html[data-playing] .tv-btn.tv-home {
   text-align: center;
 }
 
+/* A picture with a dark version beside it (<name>.dark.webp right after <name>.webp in the
+   Markdown) shows the one that matches the theme. */
+:root:not([data-theme='dark']) .prose img[src*='.dark.'],
+:root[data-theme='dark'] .prose img:has(+ img[src*='.dark.']) {
+  display: none;
+}
+
+/* A live embed (src/scripts/embeds.ts): the link shows until the page inside says it's ready. */
+.prose :where(figure[data-embed]) {
+  align-items: stretch;
+}
+
+.prose :where(figure[data-embed] iframe) {
+  width: 100%;
+  height: 0;
+  border: 0;
+  margin: 0;
+  background: var(--color-surface);
+}
+
+.prose :where(figure[data-embed][data-ready] iframe) {
+  height: 560px;
+}
+
+.prose :where(figure[data-embed][data-ready] > a) {
+  display: none;
+}
+
+.prose :where(figure[data-embed]:not([data-ready]) iframe) {
+  position: absolute;
+  visibility: hidden;
+}
+
 .prose :where(pre) {
   border-radius: 14px;
   padding: 1.1em 1.3em;
@@ -1008,8 +1047,45 @@ html[data-playing] .tv-btn.tv-home {
   font-weight: 500;
 }
 
+/* Tables scroll inside themselves on a narrow screen, and numbers line up in their columns. */
 .prose :where(table) {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 14px;
+  box-shadow: var(--rim);
+  background: var(--color-surface);
   font-size: 0.9375rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.prose :where(thead th) {
+  padding: 0.7em 1em;
+  background: light-dark(rgb(47 178 230 / 0.08), rgb(47 178 230 / 0.12));
+  color: var(--color-ink-strong);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.prose :where(tbody td) {
+  padding: 0.55em 1em;
+}
+
+.prose :where(tbody tr:nth-child(even)) {
+  background: light-dark(rgb(55 70 78 / 0.035), rgb(255 255 255 / 0.03));
+}
+
+.prose :where(tbody tr:last-child) {
+  border-bottom: 0;
+}
+
+.prose :where(details > summary) {
+  cursor: pointer;
+  color: var(--color-ink-strong);
+  font-weight: 700;
 }
 
 .prose > :first-child {
