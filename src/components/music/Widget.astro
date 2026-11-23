@@ -1,7 +1,7 @@
 ---
 // The radio's controls, on every screen: a quiet note that turns into dancing bars while music is
-// heard; a tag beside it naming each new track for a moment; and a small player that drops out of
-// it. The track's cover shows on the plaza's Music block instead (plaza/nowplaying.ts). One element for the whole visit
+// heard; a tag beside it naming each new track for a moment (on the plaza and in an app's bar, where
+// there is room beside it); and a small player that drops out of it. The track's cover shows on the plaza's Music block instead (plaza/nowplaying.ts). One element for the whole visit
 // (transition:persist), like the light switch. On the plaza it sits left of the light switch; on
 // the TV, in the casing's top left corner, mirroring it (on a phone, at the top beside it).
 // src/scripts/music/widget.ts runs it.
@@ -15,7 +15,7 @@ import { MUSIC } from '../../data/music';
     <HugeIcon icon={MusicNote01Icon} size={20} strokeWidth={1.8} class="music-note" />
     <span class="music-bars" aria-hidden="true"><i></i><i></i><i></i></span>
   </button>
-  <p class="music-now" aria-hidden="true"><span></span></p>
+  <p class="music-now" aria-hidden="true"><span class="music-now-clip"><span class="music-now-text"></span></span></p>
   <div id="music-pop" class="music-pop" popover aria-label="Music">
     <div class="music-head">
       <span class="music-art">
@@ -70,7 +70,8 @@ import { MUSIC } from '../../data/music';
     left: calc((1.4142 * (var(--bezel) + var(--crt-x)) - var(--crt-x)) / 2.4142 - 16px);
     display: flex;
     align-items: center;
-    gap: 6px;
+    /* Only the button and the player take presses; the rest of the box never covers what is under it. */
+    pointer-events: none;
     view-transition-name: music;
     transition:
       opacity 0.25s ease,
@@ -79,6 +80,11 @@ import { MUSIC } from '../../data/music';
 
   .music[hidden] {
     display: none;
+  }
+
+  .music-btn,
+  .music-pop {
+    pointer-events: auto;
   }
 
   .music-btn {
@@ -153,12 +159,17 @@ import { MUSIC } from '../../data/music';
     }
   }
 
-  /* The track's name on a dark tag, as names are on the plaza, for a moment after it changes. */
+  /* The track's name on a dark tag, as names are on the plaza, for a moment after it changes. It
+     floats beside the button, out of the layout, so it takes no room and no presses while hidden.
+     The TV has no room for it beside the button, so it only shows on the plaza and in an app's bar. */
   .music-now {
+    position: absolute;
+    top: 50%;
+    right: calc(100% + 6px);
+    display: none;
     max-width: min(240px, 50vw);
     margin: 0;
-    overflow: hidden;
-    padding: 5px 11px;
+    padding: 5px 4px;
     border-radius: 999px;
     background: var(--color-tag);
     color: #fff;
@@ -167,24 +178,44 @@ import { MUSIC } from '../../data/music';
     line-height: 1.2;
     white-space: nowrap;
     opacity: 0;
-    translate: -6px 0;
-    pointer-events: none;
+    visibility: hidden;
+    translate: 6px -50%;
     transition:
       opacity 0.3s ease,
-      translate 0.4s var(--ease-glide);
+      translate 0.4s var(--ease-glide),
+      visibility 0s linear 0.4s;
   }
 
-  .music-now span {
+  :root[data-home] .music-now {
+    display: block;
+  }
+
+  /* The name keeps clear of the tag's rounded ends; a long one fades out at them as it slides. */
+  .music-now-clip {
+    display: block;
+    overflow: hidden;
+    padding: 0 7px;
+  }
+
+  .music-now[data-long] .music-now-clip {
+    mask-image: linear-gradient(90deg, transparent, #000 7px, #000 calc(100% - 7px), transparent);
+  }
+
+  .music-now-text {
     display: inline-block;
   }
 
   .music[data-telling] .music-now {
     opacity: 1;
-    translate: 0 0;
+    visibility: visible;
+    translate: 0 -50%;
+    transition:
+      opacity 0.3s ease,
+      translate 0.4s var(--ease-glide);
   }
 
   /* A long name slides along to its end and back. */
-  .music[data-telling] .music-now[data-long] span {
+  .music[data-telling] .music-now[data-long] .music-now-text {
     animation: music-marquee 9s ease-in-out 0.8s infinite alternate;
   }
 
@@ -491,14 +522,6 @@ import { MUSIC } from '../../data/music';
     color: light-dark(rgb(63 68 70 / 0.8), rgb(220 230 235 / 0.85));
   }
 
-  :root[data-home] .music-now {
-    translate: 6px 0;
-  }
-
-  :root[data-home] .music[data-telling] .music-now {
-    translate: 0 0;
-  }
-
   /* An app has the screen: in its bar, left of the light switch. The Music app is the player itself. */
   @media (min-width: 880px) {
     html:has(.col-app) .music {
@@ -511,6 +534,10 @@ import { MUSIC } from '../../data/music';
 
     html:has(.col-app) .music-btn {
       color: rgb(255 255 255 / 0.85);
+    }
+
+    html:has(.col-app) .music-now {
+      display: block;
     }
 
     html:has(.col-app) .music[data-audible] .music-btn {
@@ -540,7 +567,7 @@ import { MUSIC } from '../../data/music';
       right: calc(max(16px, env(safe-area-inset-right)) + 44px);
     }
 
-    html[data-reading] .music:not(:focus-within) {
+    html[data-reading] .music:not(:focus-within, :has(.music-pop:popover-open)) {
       opacity: 0;
       translate: 0 -90px;
       pointer-events: none;
@@ -550,7 +577,6 @@ import { MUSIC } from '../../data/music';
   html[data-playing] .music {
     opacity: 1;
     translate: 0 0;
-    pointer-events: auto;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -559,7 +585,7 @@ import { MUSIC } from '../../data/music';
       scale: 1 0.7;
     }
 
-    .music[data-telling] .music-now[data-long] span {
+    .music[data-telling] .music-now[data-long] .music-now-text {
       animation: none;
     }
   }

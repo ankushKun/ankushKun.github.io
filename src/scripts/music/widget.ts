@@ -59,7 +59,8 @@ function wire(root: HTMLElement) {
   const button = $<HTMLButtonElement>('.music-btn');
   const pop = $<HTMLElement>('.music-pop');
   const now = $<HTMLElement>('.music-now');
-  const nowText = $<HTMLElement>('.music-now span');
+  const nowClip = $<HTMLElement>('.music-now-clip');
+  const nowText = $<HTMLElement>('.music-now-text');
   const art = $<HTMLImageElement>('.music-art img');
   const title = $<HTMLElement>('.music-title');
   const artist = $<HTMLElement>('.music-artist');
@@ -91,8 +92,11 @@ function wire(root: HTMLElement) {
     music.setVolume(+volume.value);
     paintRange(volume);
   });
-  // Opening the app closes the player on the way.
-  $('.music-open').addEventListener('click', () => pop.hidePopover());
+  // Changing page closes the player properly first. Left open, the router would pull it out of the
+  // page mid-swap, which shuts it without its close events, leaving it set to open over the DJ.
+  document.addEventListener('astro:before-preparation', () => {
+    if (pop.matches(':popover-open')) pop.hidePopover();
+  });
 
   // The player drops out of the button into the corner it sits in, its corner just past the note's,
   // as far from the side of the screen as from the top, so it sits square in that corner. On a
@@ -179,18 +183,13 @@ function wire(root: HTMLElement) {
     nowText.textContent = text;
     root.dataset.telling = '';
     requestAnimationFrame(() => {
-      const over = nowText.scrollWidth - (now.clientWidth - 22);
+      const over = nowText.offsetWidth - (nowClip.clientWidth - 14);
       now.toggleAttribute('data-long', over > 0);
       now.style.setProperty('--shift', `${-Math.max(0, over)}px`);
     });
     clearTimeout(tellTimer);
     tellTimer = window.setTimeout(() => delete root.dataset.telling, TELL_MS);
   }
-  root.addEventListener('pointerenter', () => {
-    const s = music.snapshot();
-    const t = s.tracks[s.index];
-    if (t && s.playing && !pop.matches(':popover-open')) tell(`${t.title} by ${t.artist}`);
-  });
   button.addEventListener('click', () => {
     delete root.dataset.telling;
     over = null;

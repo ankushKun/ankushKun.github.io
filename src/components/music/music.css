@@ -19,7 +19,7 @@
   color: var(--color-ink);
 }
 
-/* The night stage, after the site's lights (theme.ts), or the device's until one is picked. */
+/* The night stage, after the site's lights (theme.ts). */
 :root[data-theme='dark'] .mu {
   --mu-stage: radial-gradient(120% 90% at 50% 0%, #3a4246, #15191b 60%, #050607);
   --mu-stage-ink: #fff;
