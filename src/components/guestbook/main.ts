@@ -129,7 +129,9 @@ export function mount(root: HTMLElement): () => void {
     b.type = 'button';
     b.className = 'note-hide';
     b.dataset.hide = li.dataset.id!;
-    b.textContent = 'Hide';
+    b.setAttribute('aria-label', 'Hide note');
+    b.innerHTML =
+      '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.7 5.1A10 10 0 0 1 12 5c5 0 8.5 4.5 9.5 7a13 13 0 0 1-2.2 3.3M6.6 6.6C4.5 8 3.1 10.1 2.5 12c1 2.5 4.5 7 9.5 7 1.9 0 3.6-.6 5-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2M3 3l18 18"/></svg>';
   }
 
   function place(id: string, el: HTMLLIElement, ts: number) {

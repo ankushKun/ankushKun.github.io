@@ -281,24 +281,36 @@
   display: block;
 }
 
-/* A mod's Hide, only for names in CHAT_MODS. */
+/* A mod's Hide, only for names in CHAT_MODS: a quiet round button in the note's corner, as the
+   chat's delete is, that turns red when pointed at. */
 .note-hide {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 6px;
+  right: 6px;
   display: none;
-  padding: 4px 10px;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
   border: 0;
-  border-radius: 99px;
-  background: rgb(0 0 0 / 0.65);
-  color: #fff;
-  font-size: 0.75rem;
-  font-weight: 700;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.9);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.08);
+  color: #8a9499;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.note-hide:hover {
+  background: #fdecea;
+  color: #d9473b;
 }
 
 .gb[data-mod] .note:hover .note-hide,
-.gb[data-mod] .note-hide:focus-visible {
-  display: block;
+.gb[data-mod] .note:focus-within .note-hide {
+  display: grid;
 }
 
 /* Sign ----------------------------------------------------------------------------------------- */
