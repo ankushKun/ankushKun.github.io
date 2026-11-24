@@ -42,6 +42,8 @@ export interface Soundtrack {
   setMuted(on: boolean): void;
   /** Calls `fn` whenever the sound starts or stops being heard: muted, unmuted, or let out by the browser. */
   onChange(fn: () => void): () => void;
+  /** The audio context it plays on, which the plaza's voices share (voices.ts), or null with no sound. */
+  readonly context: AudioContext | null;
 }
 
 const silent: Soundtrack = {
@@ -58,6 +60,7 @@ const silent: Soundtrack = {
   playing: false,
   setMuted() {},
   onChange: () => () => {},
+  context: null,
 };
 
 export function soundtrack(): Soundtrack {
@@ -189,5 +192,6 @@ export function soundtrack(): Soundtrack {
       listeners.add(fn);
       return () => listeners.delete(fn);
     },
+    context: ctx,
   };
 }

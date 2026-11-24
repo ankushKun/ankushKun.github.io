@@ -651,6 +651,12 @@ export class MiiSet {
     return matrix;
   }
 
+  /** Mii `i`'s gender, and its height from 0 (shortest) to 1 (tallest), which the plaza's voices pitch to. */
+  figure(i: number) {
+    const s = this.slots[i];
+    return { female: s.gender === 1, size: Math.min(1, Math.max(0, (s.sy - 0.5) / 0.764)) };
+  }
+
   /** Whether Mii `i` is out of sight. */
   isHidden(i: number) {
     return this.slots[i].hidden;

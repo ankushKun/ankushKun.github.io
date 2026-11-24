@@ -14,6 +14,7 @@ import { Mics } from './mic';
 import * as motion from './motion';
 import * as toss from './toss';
 import type { PlazaMii } from './types';
+import type { Cue, Speaker } from './voices';
 import { angleDelta, clamp, clamp01, type Rng } from './util';
 
 /**
@@ -222,6 +223,8 @@ type Act = 'away' | 'stand' | 'stroll' | 'dash' | 'speak' | 'fall' | 'show' | 'h
 const HANDLED: ReadonlySet<Act> = new Set(['held', 'flung', 'down', 'stunned', 'flee']);
 
 interface Mii {
+  /** Its index in `Crowd.miis`. */
+  i: number;
   set: MiiSet;
   slot: number;
   x: number;
@@ -436,6 +439,16 @@ export class Crowd {
     loop: 0,
     want: null as { clip: motion.Clip; who: number } | null,
   };
+  /**
+   * Told whenever someone starts something that may make a sound, or hits the floor: the plaza's
+   * voices (voices.ts) decide what it sounds like. `now` is the scene's clock as of the last update.
+   */
+  onCue: ((i: number, cue: Cue) => void) | null = null;
+  private now = 0;
+  /** Set while the visitor's own hand is behind what happens: a poke, a grab, a throw. */
+  private yours = false;
+  /** Set while a Mii starts saying a bubble's line: how many characters long it is. */
+  private line = 0;
   /** How much the DJ's left hand is up holding the boombox, eased: 1 holding, 0 dancing. */
   private djHold = 1;
   /** Where the DJ's left wrist (the boombox hand) is in the world, rewritten every frame they are posed. */
@@ -516,6 +529,7 @@ export class Crowd {
 
     const add = (set: MiiSet, slot: number, friend: boolean, who: PlazaMii | null) =>
       this.miis.push({
+        i: this.miis.length,
         set, slot,
         x: 0, z: 0, yaw: 0,
         tx: 0, tz: 0, face: 0,
@@ -591,7 +605,11 @@ export class Crowd {
       this.miis[middle.length].dj = true;
       this.dj = middle.length;
       this.djWrist = middleSet.track(middle.length, 'wrist_l');
-      this.leeks = new Leeks(scene, stage.map((_, j) => middleSet.track(middle.length + j, 'wrist_r')));
+      this.leeks = new Leeks(
+        scene,
+        stage.map((_, j) => middleSet.track(middle.length + j, 'wrist_r')),
+        stage.map((c) => c.who?.prop ?? 'leek'),
+      );
       this.mics = new Mics(scene, stage.map((_, j) => middleSet.track(middle.length + j, 'wrist_l')));
       this.micOut = stage.map(() => ({ show: 0, at: 0 }));
     }
@@ -957,13 +975,15 @@ export class Crowd {
     return m.act === 'stand' && m.vel < STILL;
   }
 
-  /** Mii `i` turns to the camera and talks for `seconds`. */
-  say(i: number, time: number, seconds: number) {
+  /** Mii `i` turns to the camera and talks for `seconds`, saying `line` (out loud, as a Mii would: voices.ts). */
+  say(i: number, time: number, seconds: number, line = '') {
     const m = this.miis[i];
     m.act = 'speak';
     m.at = time;
     m.until = time + seconds;
+    this.line = line.length;
     this.play(m, motion.talk, time);
+    this.line = 0;
   }
 
   /** Mii `i` stops talking, if it was: its bubble was pressed. */
@@ -1040,7 +1060,9 @@ export class Crowd {
     if (pick[0] === m.clip) pick = list[(list.indexOf(pick) + 1) % list.length];
     const [clip, seconds] = pick;
     if (clip === motion.spin) m.spinning = (this.r() < 0.5 ? -1 : 1) * (8 + this.r() * 4);
+    this.yours = true;
     this.perform(m, clip, time, seconds);
+    this.yours = false;
   }
 
   /** Picks Mii `i` up by the back of its shirt, the hand following `ray` (see `carry`). */
@@ -1068,7 +1090,9 @@ export class Crowd {
     m.vel = 0;
     m.act = 'held';
     m.at = time;
+    this.yours = true;
     this.play(m, motion.dangle, time, true);
+    this.yours = false;
     // It is lifted straight up where it was, whatever part of it was pressed: through the long lens
     // the pointer's spot at carrying height can be well behind or in front of the Mii itself.
     m.grab.set(0, 0, 0);
@@ -1116,6 +1140,7 @@ export class Crowd {
   }
 
   update(dt: number, time: number, camera: THREE.Vector3, calm: boolean) {
+    this.now = time;
     this.recruit(time, calm);
     this.program(time, calm);
     this.spotlight(time, calm);
@@ -1143,6 +1168,8 @@ export class Crowd {
    */
   private play(m: Mii, clip: motion.Clip, time: number, again = false, fade = FADE) {
     if (m.clip === clip && !again) return;
+    // Restarted every frame (a held Mii's stagger), a clip is heard only the first time.
+    if (this.onCue && (m.clip !== clip || time - m.since > 0.3)) this.heard(m, clip, time);
     // Mid fade, start the new fade from exactly what is on screen, so nothing jumps.
     const w = m.faded >= 0 ? clamp01((time - m.faded) / m.fadeLen) : 1;
     if (w < 1) {
@@ -1156,6 +1183,35 @@ export class Crowd {
     m.fadeLen = fade;
     m.clip = clip;
     m.since = time;
+  }
+
+  /** Tells `onCue` that `m` starts `clip` at `time` (or comes down `hit` hard, with no clip). */
+  private heard(m: Mii, clip: motion.Clip | null, time: number, hit = 0) {
+    const flung = m.act === 'flung';
+    this.onCue?.(m.i, {
+      clip,
+      delay: Math.max(0, time - this.now),
+      seconds: Math.max(0, m.until - time),
+      // Whoever goes flying, the visitor threw something.
+      you: this.yours || flung || clip === null,
+      bubble: m.act === 'speak',
+      line: this.line,
+      flung,
+      hit,
+      beat: this.beat.beatLength,
+    });
+  }
+
+  /** What Mii `i` sounds like: the same all visit, and for a named Mii on every visit. */
+  speaker(i: number): Speaker {
+    const m = this.miis[i];
+    let seed = m.k;
+    if (m.who?.name) {
+      let h = 2166136261;
+      for (const c of m.who.name) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+      seed = (h >>> 0) / 4294967296;
+    }
+    return { id: i, seed, ...m.set.figure(m.slot) };
   }
 
   private rest(m: Mii, time: number, seconds: number) {
@@ -1723,6 +1779,7 @@ export class Crowd {
       }
     }
     for (const m of moving) {
+      if (m.act !== 'held' && m.body.hit > 0) this.heard(m, null, time, m.body.hit);
       if (m.act === 'held') m.body.com.copy(m.next);
       else {
         this.place(m);

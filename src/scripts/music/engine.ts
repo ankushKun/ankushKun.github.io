@@ -5,7 +5,7 @@
 //
 // - The plaza starts it: its opening plays the plaza's own theme, which fades into a random track
 //   once the crowd is in, or as soon as the opening is skipped (`takeOver`). The two never play at once.
-// - Every load starts quiet, at 33%. Nothing about playback is kept across loads except that the
+// - Every load starts quiet, at 25%. Nothing about playback is kept across loads except that the
 //   visitor stopped it, which holds for the rest of the session.
 // - A game or a video on the page holds it (`hold`): it fades out and waits, then comes back.
 // - One tab plays at a time. M mutes it, along with the UI sounds (sfx.ts).
@@ -37,7 +37,7 @@ export interface MusicState {
   error: string | null;
 }
 
-const VOLUME = 33;
+const VOLUME = 25;
 const STOPPED = 'music-stopped';
 const tracks = MUSIC.tracks;
 

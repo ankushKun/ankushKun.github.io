@@ -73,6 +73,7 @@ export const BACKUP: (MiiLook & { name: string; from: string })[] = [
     },
     ponytail: '#fff27e',
     noBun: true,
+    prop: 'phone',
   },
   {
     name: 'Kasane Teto',
@@ -85,6 +86,7 @@ export const BACKUP: (MiiLook & { name: string; from: string })[] = [
     },
     headset: '#ff4a5c',
     noBun: true,
+    prop: 'baguette',
   },
 ];
 

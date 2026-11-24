@@ -45,7 +45,7 @@ function findChrome() {
 
 /** Hides everything over the plaza that isn't the plaza: the corner buttons, the lobby, the prompts. */
 const HIDE = `
-  astro-dev-toolbar, .music, .theme-toggle, .lobby, .plaza-start, .plaza-who, .plaza-fps, .plaza-links span { display: none !important; }
+  astro-dev-toolbar, .music, .theme-toggle, .lobby, .plaza-start, .plaza-who, .plaza-corner, .plaza-fps, .plaza-links span { display: none !important; }
   html[data-og-still] .plaza-bubbles { display: none !important; }
 `;
 

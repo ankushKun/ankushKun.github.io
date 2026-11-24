@@ -41,7 +41,7 @@ export const SOCIALS = [
   { platform: 'LinkedIn', handle: 'ankushkun', url: 'https://linkedin.com/in/ankushkun' },
   { platform: 'YouTube', handle: '@ankushkun', url: 'https://youtube.com/@ankushkun' },
   { platform: 'Telegram', handle: '@ankushKun', url: 'https://t.me/ankushKun' },
-  { platform: 'Discord', handle: '@ankushkun', url: 'https://discord.com/users/666578281142812673' },
+  { platform: 'Discord', handle: '@ankushkun', url: 'https://discord.gg/fpKJebdQKZ' },
   { platform: 'Instagram', handle: '@ankushKun_', url: 'https://instagram.com/ankushKun_' },
   { platform: 'Reddit', handle: 'u/TECHIE6023', url: 'https://reddit.com/user/TECHIE6023' },
   { platform: 'Medium', handle: '@ankushkun', url: 'https://ankushkun.medium.com' },

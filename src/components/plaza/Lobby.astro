@@ -2,13 +2,15 @@
 // The way in for visitors who would rather not play: your name and the site's sections beside your
 // floating Mii, as quiet text so the Mii stays what draws the eye. They are plain links: the lobby
 // sits outside the plaza, so its clicks never start the opening, and main.ts leaves its keys alone.
-// It shows while the plaza loads and waits for its click, and fades as the opening begins
-// (data-waiting, set by main.ts). Without JavaScript or WebGL it stays, with your portrait in the
-// middle. On a big screen a second column on the right mirrors the first: things you've built (LOBBY_BUILT), each
-// opening its own site in a new tab, and under them, set apart, where people can support you (SUPPORT). Every link
-// has a small icon on the outer edge, so each column's icons line up: a section's plaza block art, a project's own
-// icon, a platform's mark. On a phone they become rows of tabs, each icon over a short caption, in one grid of five so
-// the icons line up down the rows too.
+// It shows while the plaza loads and waits for its click. When the opening begins (data-waiting,
+// set by main.ts), the left column fades away while the built/support column on the right animates
+// into an icon-only dock in the top left corner (dock.ts). Without JavaScript or WebGL the full
+// lobby stays, with your portrait in the middle. On a big screen a second column on the right
+// mirrors the first: things you've built (LOBBY_BUILT), each opening its own site in a new tab, and
+// under them, set apart, where people can support you (SUPPORT). Every link has a small icon on the
+// outer edge, so each column's icons line up: a section's plaza block art, a project's own icon, a
+// platform's mark. On a phone they become rows of tabs, each icon over a short caption, in one grid
+// of five so the icons line up down the rows too.
 import { ArrowUpRight01Icon } from '@hugeicons/core-free-icons';
 import HugeIcon from '../ui/HugeIcon.astro';
 import LinkBadge from '../ui/LinkBadge.astro';
@@ -93,26 +95,45 @@ const support = SUPPORT.map((s) => ({ ...s, badge: resolveLink(s.url, s.platform
     transition: opacity var(--vt-in) var(--ease-fade);
   }
 
-  /* The opening has begun (or the plaza came up already settled): the plaza is the menu now. */
-  .plaza[data-waiting='false'] ~ .lobby {
+  .lobby-menu:not(.is-built) {
+    transition: opacity var(--vt-in) var(--ease-fade);
+  }
+
+  /* The opening has begun (or the plaza came up already settled): the left site menu fades away
+     (the 3D plaza blocks take over), while the built/support links dock into the top left corner as
+     icons only (dock.ts flies each icon across on the first click). */
+  .plaza[data-waiting='false'] ~ .lobby .lobby-menu:not(.is-built),
+  .plaza[data-waiting='false'] ~ .lobby .lobby-me {
     visibility: hidden;
     opacity: 0;
+    pointer-events: none;
     transition:
       opacity var(--vt-in) var(--ease-fade),
       visibility 0s linear var(--vt-in);
   }
 
-  /* The two columns share one row, each centred on the middle of the screen whatever it holds. A launch's card coming
-     or going never moves them. */
+  .plaza[data-waiting='false'] ~ .lobby .lobby-menu:not(.is-built) a {
+    pointer-events: none;
+  }
+
+  /* Embedded plaza (/player/) keeps the frame clear of links. */
+  html[data-embed] .plaza[data-waiting='false'] ~ .lobby {
+    display: none;
+  }
+
+  /* Diving into a page: nothing in the top left dock can be pressed mid-dive. */
+  .plaza[data-leaving] ~ .lobby a {
+    pointer-events: none;
+  }
+
+  /* The two columns share one row, each centred on the middle of the screen whatever it holds.
+     No transform here so `.is-built` can fix itself straight to the viewport when docked. */
   .lobby-sides {
     position: absolute;
-    top: 50%;
-    right: clamp(48px, 9vw, 160px);
-    left: clamp(48px, 9vw, 160px);
+    inset: 0 clamp(48px, 9vw, 160px);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    translate: 0 -50%;
   }
 
   .lobby h1 {
@@ -241,9 +262,11 @@ const support = SUPPORT.map((s) => ({ ...s, badge: resolveLink(s.url, s.platform
     .lobby-sides {
       top: calc(max(22px, env(safe-area-inset-top)) + 5px);
       right: max(19px, env(safe-area-inset-right));
+      bottom: auto;
       left: max(19px, env(safe-area-inset-left));
       flex-direction: column;
       align-items: stretch;
+      justify-content: flex-start;
       gap: 16px;
       translate: none;
     }
@@ -311,6 +334,225 @@ const support = SUPPORT.map((s) => ({ ...s, badge: resolveLink(s.url, s.platform
 
     .lobby .lobby-support li:nth-child(3) {
       grid-column: 5;
+    }
+  }
+
+  /* Docked top-left icon row once the plaza starts, aligned vertically with the music and theme
+     switches in the top-right corner. */
+  .plaza[data-waiting='false'] ~ .lobby .is-built {
+    position: fixed;
+    top: max(12px, env(safe-area-inset-top));
+    left: max(12px, env(safe-area-inset-left));
+    display: flex;
+    align-items: center;
+    height: 32px;
+  }
+
+  .plaza[data-waiting='false'] ~ .lobby .is-built nav {
+    display: flex;
+    align-items: center;
+  }
+
+  .plaza[data-waiting='false'] ~ .lobby .is-built nav + nav::before {
+    content: '';
+    flex: none;
+    width: 1px;
+    height: 14px;
+    margin: 0 5px;
+    border-radius: 1px;
+    background: light-dark(rgb(55 70 78 / 0.18), rgb(255 255 255 / 0.16));
+    transition: opacity 0.25s ease;
+  }
+
+  .plaza[data-waiting='false'] ~ .lobby .is-built[data-docking] nav + nav::before {
+    opacity: 0;
+  }
+
+  .plaza[data-waiting='false'] ~ .lobby .is-built ul,
+  .plaza[data-waiting='false'] ~ .lobby .is-built .lobby-support {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    margin: 0;
+  }
+
+  .plaza[data-waiting='false'] ~ .lobby .is-built .lobby-support li:nth-child(2),
+  .plaza[data-waiting='false'] ~ .lobby .is-built .lobby-support li:nth-child(3) {
+    grid-column: auto;
+  }
+
+  .plaza[data-waiting='false'] ~ .lobby .is-built a {
+    position: relative;
+    display: grid;
+    place-items: center;
+    flex-direction: row;
+    gap: 0;
+    padding: 3px;
+    border-radius: 9px;
+  }
+
+  .plaza[data-waiting='false'] ~ .lobby .is-built[data-docking] a {
+    pointer-events: none;
+  }
+
+  .plaza[data-waiting='false'] ~ .lobby .is-built :is(.lobby-icon, .link-badge) {
+    order: 0;
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    opacity: 0.92;
+    box-shadow:
+      0 0 0 1px light-dark(rgb(55 70 78 / 0.13), rgb(255 255 255 / 0.13)),
+      0 2px 6px -2px light-dark(rgb(25 50 65 / 0.24), rgb(0 0 0 / 0.55));
+    transition:
+      opacity 0.18s ease,
+      scale 0.3s var(--ease-spring),
+      translate 0.3s var(--ease-spring),
+      box-shadow 0.18s ease;
+  }
+
+  .plaza[data-waiting='false'] ~ .lobby .is-built .link-badge::after {
+    border-radius: 7px 7px 40% 40% / 7px 7px 20% 20%;
+  }
+
+  .plaza[data-waiting='false'] ~ .lobby .is-built .link-badge:not(.is-bleed) svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .plaza[data-waiting='false'] ~ .lobby .is-built a:focus-visible :is(.lobby-icon, .link-badge) {
+    opacity: 1;
+    scale: 1.14;
+    translate: 0 -1px;
+    box-shadow: var(--glow);
+  }
+
+  .plaza[data-waiting='false'] ~ .lobby .is-built a:focus-visible {
+    box-shadow: none;
+  }
+
+  @media (hover: hover) {
+    .plaza[data-waiting='false'] ~ .lobby .is-built a:hover :is(.lobby-icon, .link-badge) {
+      opacity: 1;
+      scale: 1.15;
+      translate: 0 -1px;
+      box-shadow:
+        0 0 0 1px light-dark(rgb(55 70 78 / 0.18), rgb(255 255 255 / 0.22)),
+        0 4px 10px -2px light-dark(rgb(25 50 65 / 0.32), rgb(0 0 0 / 0.65));
+    }
+  }
+
+  .plaza[data-waiting='false'] ~ .lobby .is-built a:active :is(.lobby-icon, .link-badge) {
+    scale: 0.94;
+    translate: 0 0;
+    transition-duration: 0.08s;
+  }
+
+  .plaza[data-waiting='false'] ~ .lobby .is-built .lobby-out,
+  .plaza[data-waiting='false'] ~ .lobby .is-built .is-short {
+    display: none;
+  }
+
+  .plaza[data-waiting='false'] ~ .lobby .is-built .is-full {
+    display: inline;
+  }
+
+  /* Dark Wii U pill tag drops out under a docked icon when hovered or focused, matching the plaza
+     glass blocks' own name tags. */
+  .plaza[data-waiting='false'] ~ .lobby .is-built .lobby-label {
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 50%;
+    order: 0;
+    padding: 0 10px;
+    border-radius: 99px;
+    background: rgb(66 70 72 / 0.92);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 24px;
+    white-space: nowrap;
+    box-shadow:
+      0 0 0 1px light-dark(transparent, rgb(255 255 255 / 0.08)),
+      0 2px 8px rgb(0 0 0 / 0.24);
+    opacity: 0;
+    translate: -50% -4px;
+    scale: 0.86;
+    transform-origin: 50% -4px;
+    pointer-events: none;
+    transition:
+      opacity 0.16s ease,
+      translate 0.2s cubic-bezier(0.3, 1.4, 0.5, 1),
+      scale 0.22s cubic-bezier(0.3, 1.4, 0.5, 1);
+  }
+
+  /* Keep the leftmost two tooltips inside the left edge of the viewport. */
+  .plaza[data-waiting='false'] ~ .lobby .is-built nav:first-child li:nth-child(-n + 2) .lobby-label {
+    left: 0;
+    translate: 0 -4px;
+    transform-origin: 12px -4px;
+  }
+
+  .plaza[data-waiting='false'] ~ .lobby .is-built:not([data-docking]) a:focus-visible .lobby-label {
+    opacity: 1;
+    translate: -50% 0;
+    scale: 1;
+  }
+
+  .plaza[data-waiting='false'] ~ .lobby .is-built:not([data-docking]) nav:first-child li:nth-child(-n + 2) a:focus-visible .lobby-label {
+    translate: 0 0;
+  }
+
+  @media (hover: hover) {
+    .plaza[data-waiting='false'] ~ .lobby .is-built:not([data-docking]) a:hover .lobby-label {
+      opacity: 1;
+      translate: -50% 0;
+      scale: 1;
+    }
+
+    .plaza[data-waiting='false'] ~ .lobby .is-built:not([data-docking]) nav:first-child li:nth-child(-n + 2) a:hover .lobby-label {
+      translate: 0 0;
+    }
+  }
+
+  @media (max-width: 879px) {
+    .plaza[data-waiting='false'] ~ .lobby .is-built {
+      top: max(22px, env(safe-area-inset-top));
+      left: max(14px, env(safe-area-inset-left));
+      height: auto;
+      min-height: 40px;
+      max-width: calc(100vw - 122px);
+      flex-wrap: wrap;
+      row-gap: 4px;
+    }
+
+    .plaza[data-waiting='false'] ~ .lobby .is-built nav + nav::before {
+      height: 12px;
+      margin: 0 4px;
+    }
+
+    .plaza[data-waiting='false'] ~ .lobby .is-built ul,
+    .plaza[data-waiting='false'] ~ .lobby .is-built .lobby-support {
+      gap: 2px;
+    }
+
+    .plaza[data-waiting='false'] ~ .lobby .is-built a {
+      padding: 2px;
+    }
+
+    .plaza[data-waiting='false'] ~ .lobby .is-built :is(.lobby-icon, .link-badge) {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+    }
+
+    .plaza[data-waiting='false'] ~ .lobby .is-built .link-badge::after {
+      border-radius: 6px 6px 40% 40% / 6px 6px 20% 20%;
+    }
+
+    .plaza[data-waiting='false'] ~ .lobby .is-built .link-badge:not(.is-bleed) svg {
+      width: 13px;
+      height: 13px;
     }
   }
 </style>

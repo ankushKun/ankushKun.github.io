@@ -3,10 +3,19 @@
 // WebGL or JavaScript it is only its haze, under the lobby's links (Lobby.astro).
 import '@fontsource/m-plus-1p/latin-500.css';
 import '@fontsource/m-plus-1p/latin-700.css';
+import LinkBadge from '../ui/LinkBadge.astro';
+import { extAttrs, NEW_TAB } from '../../lib/external';
+import { resolveLink } from '../../lib/links';
 import { getPlazaData } from '../../lib/plaza';
+import { SOCIALS } from '../../site';
 
 const data = await getPlazaData();
 const json = JSON.stringify(data).replace(/</g, '\\u003c');
+const CORNER_SOCIALS = ['GitHub', 'X', 'YouTube', 'Instagram', 'LinkedIn', 'Discord', 'Reddit'];
+const socials = CORNER_SOCIALS.flatMap((name) => {
+  const s = SOCIALS.find((item) => item.platform === name);
+  return s ? [{ ...s, badge: resolveLink(s.url, s.platform).badge }] : [];
+});
 ---
 
 <link rel="preload" href="/ffl/FFLResHigh.dat" as="fetch" crossorigin="anonymous" />
@@ -46,7 +55,21 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
     </defs>
   </svg>
   <div class="plaza-who" aria-hidden="true"></div>
-  <output class="plaza-fps" aria-hidden="true" hidden></output>
+  <div class="plaza-corner">
+    {
+      socials.length > 0 && (
+        <nav class="plaza-socials" aria-label="Socials">
+          {socials.map((s) => (
+            <a class="plaza-social" href={s.url} {...extAttrs(s.url)} aria-label={`${s.platform} ${NEW_TAB}`} data-sfx>
+              <LinkBadge badge={s.badge} />
+              <span class="plaza-social-tag">{s.platform}</span>
+            </a>
+          ))}
+        </nav>
+      )
+    }
+    <output class="plaza-fps" aria-hidden="true" hidden><span data-fps-val></span><small>FPS</small></output>
+  </div>
   <button type="button" class="plaza-start" aria-label="Start">
     <svg class="plaza-start-hand" viewBox="0 0 64 64" aria-hidden="true">
       <path d="M24 30V9.5a5 5 0 0 1 10 0V27l2-.6a5 5 0 0 1 6.300 3.300l.2.700 1.900-.5a5 5 0 0 1 6.100 3.400l.3 1 1-.2a5 5 0 0 1 5.900 3.900l1.200 6.300a17 17 0 0 1-3.700 14.200L52 60H28.500L16.600 45.900a5.300 5.300 0 0 1 .7-7.600 5.300 5.300 0 0 1 6.700.2z"></path>
@@ -141,7 +164,8 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
   }
 
   .plaza[data-state='static'] > *,
-  .plaza[data-state='loading'] > .plaza-links {
+  .plaza[data-state='loading'] > .plaza-links,
+  .plaza[data-state='loading'] > .plaza-corner {
     display: none;
   }
 
@@ -530,20 +554,203 @@ const json = JSON.stringify(data).replace(/</g, '\\u003c');
     font-display: block;
   }
 
-  /* Frames a second (main.ts). */
-  .plaza-fps {
+  /* Bottom-left corner: social icon links matching the top-left dock, with the frame rate right beside them. */
+  .plaza-corner {
     position: absolute;
     z-index: 9;
-    bottom: 6px;
-    left: 6px;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    left: max(12px, env(safe-area-inset-left));
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+  }
+
+  .plaza-socials {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .plaza-social {
+    position: relative;
+    display: grid;
+    place-items: center;
+    padding: 3px;
+    border-radius: 9px;
+    text-decoration: none;
+    pointer-events: auto;
+  }
+
+  .plaza-social .link-badge {
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    opacity: 0.92;
+    box-shadow:
+      0 0 0 1px light-dark(rgb(55 70 78 / 0.13), rgb(255 255 255 / 0.16)),
+      0 2px 6px -2px light-dark(rgb(25 50 65 / 0.24), rgb(0 0 0 / 0.55));
+    transition:
+      opacity 0.18s ease,
+      scale 0.3s var(--ease-spring),
+      translate 0.3s var(--ease-spring),
+      box-shadow 0.18s ease;
+  }
+
+  .plaza-social .link-badge::after {
+    border-radius: 7px 7px 40% 40% / 7px 7px 20% 20%;
+  }
+
+  .plaza-social .link-badge:not(.is-bleed) svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .plaza-social:focus-visible {
+    box-shadow: none;
+  }
+
+  .plaza-social:focus-visible .link-badge {
+    opacity: 1;
+    scale: 1.14;
+    translate: 0 -1px;
+    box-shadow: var(--glow);
+  }
+
+  @media (hover: hover) {
+    .plaza-social:hover .link-badge {
+      opacity: 1;
+      scale: 1.15;
+      translate: 0 -1px;
+      box-shadow:
+        0 0 0 1px light-dark(rgb(55 70 78 / 0.18), rgb(255 255 255 / 0.24)),
+        0 4px 10px -2px light-dark(rgb(25 50 65 / 0.32), rgb(0 0 0 / 0.65));
+    }
+  }
+
+  .plaza-social:active .link-badge {
+    scale: 0.94;
+    translate: 0 0;
+    transition-duration: 0.08s;
+  }
+
+  .plaza-social-tag {
+    position: absolute;
+    bottom: calc(100% + 5px);
+    left: 50%;
+    padding: 0 10px;
+    border-radius: 99px;
+    background: rgb(66 70 72 / 0.92);
+    color: #fff;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 24px;
+    white-space: nowrap;
+    box-shadow:
+      0 0 0 1px light-dark(transparent, rgb(255 255 255 / 0.08)),
+      0 2px 8px rgb(0 0 0 / 0.24);
+    opacity: 0;
+    translate: -50% 4px;
+    scale: 0.86;
+    transform-origin: 50% calc(100% + 4px);
+    pointer-events: none;
+    transition:
+      opacity 0.16s ease,
+      translate 0.2s cubic-bezier(0.3, 1.4, 0.5, 1),
+      scale 0.22s cubic-bezier(0.3, 1.4, 0.5, 1);
+  }
+
+  .plaza-social:nth-child(-n + 2) .plaza-social-tag {
+    left: 0;
+    translate: 0 4px;
+    transform-origin: 12px calc(100% + 4px);
+  }
+
+  .plaza-social:focus-visible .plaza-social-tag {
+    opacity: 1;
+    translate: -50% 0;
+    scale: 1;
+  }
+
+  .plaza-social:nth-child(-n + 2):focus-visible .plaza-social-tag {
+    translate: 0 0;
+  }
+
+  @media (hover: hover) {
+    .plaza-social:hover .plaza-social-tag {
+      opacity: 1;
+      translate: -50% 0;
+      scale: 1;
+    }
+
+    .plaza-social:nth-child(-n + 2):hover .plaza-social-tag {
+      translate: 0 0;
+    }
+  }
+
+  html[data-embed] .plaza-socials {
+    display: none;
+  }
+
+  .plaza[data-leaving] .plaza-social {
+    pointer-events: none;
+  }
+
+  @media (max-width: 879px) {
+    .plaza-corner {
+      bottom: max(12px, env(safe-area-inset-bottom));
+      left: max(14px, env(safe-area-inset-left));
+      gap: 6px;
+    }
+
+    .plaza-socials {
+      gap: 2px;
+    }
+
+    .plaza-social {
+      padding: 2px;
+    }
+
+    .plaza-social .link-badge {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+    }
+
+    .plaza-social .link-badge::after {
+      border-radius: 6px 6px 40% 40% / 6px 6px 20% 20%;
+    }
+
+    .plaza-social .link-badge:not(.is-bleed) svg {
+      width: 13px;
+      height: 13px;
+    }
+  }
+
+  /* Frames a second (main.ts), stacked as two lines right beside the bottom-left social icons. */
+  .plaza-fps {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
     color: var(--ink);
     font-family: 'Monocraft', ui-monospace, monospace;
     font-size: 9px;
-    line-height: 1.2;
+    line-height: 1.05;
     font-variant-numeric: tabular-nums;
     -webkit-font-smoothing: none;
     font-smooth: never;
     pointer-events: none;
+  }
+
+  .plaza-fps[hidden] {
+    display: none;
+  }
+
+  .plaza-fps small {
+    font-size: 8px;
+    opacity: 0.62;
   }
 
   /* Who a Mii is: its name over its head on a square, see-through black tag, as name tags are in

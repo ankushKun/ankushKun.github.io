@@ -184,7 +184,7 @@ export class Bubbles {
       const a: Active = { post, el, shadow, speaker, until: time + life, box: at.box, shapeKey: '' };
       this.move(a, at);
       el.classList.add('is-in');
-      crowd.say(speaker, time, life);
+      crowd.say(speaker, time, life, post.text);
       this.active.push(a);
       if (post === this.first) {
         // Alone until it ends; the others follow a beat after.

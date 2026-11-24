@@ -18,6 +18,7 @@ import { HeadGear } from './headgear';
 import { Crowd, SKYFALL } from './crowd';
 import { GRAVITY, type SoloName } from './motion';
 import { Cubes } from './cubes';
+import { captureLobbyDock } from './dock';
 import { Film } from './film';
 import { Floor, HAZE } from './floor';
 import { HeadCards } from './heads';
@@ -27,6 +28,7 @@ import { CUBE, applyView, blankView, copyView, makeLayout, mixViews, type Layout
 import type { PlazaCube, PlazaData, PlazaPost } from './types';
 import { Rotation } from './rotation';
 import { clamp, damp, easeInOut, rng, smoothstep } from './util';
+import { voices, type Sound } from './voices';
 import { greeting as launchGreeting, openLetter } from '../../scripts/launch';
 
 /** When the camera has pulled all the way back to the whole plaza, in seconds from the click. */
@@ -96,7 +98,7 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
   const card = need(root.querySelector<HTMLElement>('.plaza-who'));
   // Frames a second, counted over each half second, always shown in the corner.
   const fps = root.querySelector<HTMLElement>('.plaza-fps');
-  if (fps) fps.hidden = false;
+  const fpsVal = fps?.querySelector<HTMLElement>('[data-fps-val]') ?? fps;
   const counted = { frames: 0, from: 0 };
   const djButton = need(root.querySelector<HTMLButtonElement>('.plaza-dj'));
   const links = [...root.querySelectorAll<HTMLAnchorElement>('a[data-cube]')];
@@ -235,6 +237,37 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
   // Headsets and ponytails for whoever's look has them.
   const gear = crowd.gear.map(({ i, look }) => ({ i, worn: new HeadGear(scene, look) }));
   let heard = false;
+
+  // The crowd's voices and Mii SFX (voices.ts), on the theme's own audio context: each from where
+  // that Mii is on screen, quieter the further off it is than your Mii, and only while the plaza is up.
+  const voice = voices(music.context);
+  void voice?.ready();
+  const ear = new THREE.Vector3();
+  const you = new THREE.Vector3();
+  if (voice) {
+    crowd.onCue = (i, cue) => {
+      if (!active || waiting || root.dataset.leaving || !voice.hears(cue)) return;
+      const far = crowd.headTop(i, ear).distanceTo(camera.position);
+      const near = crowd.headTop(0, you).distanceTo(camera.position);
+      ear.project(camera);
+      voice.cue(cue, crowd.speaker(i), {
+        pan: clamp(ear.x, -1, 1) * 0.75,
+        gain: clamp((near / far) ** 2, 0.15, 1),
+        seen: ear.z < 1 && Math.abs(ear.x) < 1.1 && Math.abs(ear.y) < 1.1,
+        intro: opening || (scored && since() < SCORE.settled),
+      });
+    };
+  }
+  /**
+   * How loud the voices and Mii SFX are: about half as loud as the theme, the radio and the UI
+   * sounds, following the radio's volume (scaled down below 33, capped at `VOICES`), a little under
+   * that while a track plays, and silent when muted, diving out or away from the plaza.
+   */
+  const VOICES = 0.2;
+  function hearVoices(seconds = 0.4) {
+    const s = radio.snapshot();
+    voice?.setLevel(active && !root.dataset.leaving && !s.muted ? VOICES * Math.min(1, s.volume / 33) * (heard ? 0.8 : 1) : 0, seconds);
+  }
   sizeBehind();
   // Heads small on screen are drawn as flat pictures, all in one draw call.
   const cards = new HeadCards(scene, renderer, crowd.crowdSet, small || weak ? 56 : 80);
@@ -394,7 +427,9 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     if (!waiting) return;
     waiting = false;
     start = time;
+    const dock = captureLobbyDock();
     root.dataset.waiting = 'false';
+    dock();
     track('plaza_started');
     crowd.drop(start + INTRO.drop);
     crowd.applaud(start + INTRO.gaze, start + INTRO.pull + 0.4);
@@ -430,6 +465,7 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     coverArt?.set(s.playing && s.index >= 0 ? s.tracks[s.index].thumb : null, s.audible);
     heard = s.audible;
     crowd.setGroove(heard);
+    hearVoices();
     if (on && !handing && !music.released) {
       handedOver = true;
       music.release(1.5);
@@ -636,6 +672,7 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
   // The first click anywhere starts it all; once it is running, a click skips the opening.
   root.addEventListener('pointerdown', (e) => {
     if (e.button > 0) return;
+    if (e.target instanceof Element && e.target.closest('.plaza-socials')) return;
     if (waiting) go();
     else skip();
   });
@@ -644,7 +681,7 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     if (!active || e.metaKey || e.ctrlKey || e.altKey) return;
     // Keys pressed on the light switch, the music widget and the lobby's links are their own. M
     // mutes the music everywhere (src/scripts/music/engine.ts); the theme follows it.
-    if (e.target instanceof Element && e.target.closest('[data-theme-toggle], [data-music-widget], [data-lobby]')) return;
+    if (e.target instanceof Element && e.target.closest('[data-theme-toggle], [data-music-widget], [data-lobby], .plaza-socials')) return;
     if (e.key === '+' || e.key === '=') zoomBy(0.5);
     else if (e.key === '-' || e.key === '_') zoomBy(-0.5);
     else if (waiting && (e.key === 'Enter' || e.key === ' ')) go();
@@ -690,6 +727,7 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     endOpening();
     dive(point, near, keep);
     music.duck(true, DIVE);
+    hearVoices(DIVE * 0.5);
     handOver(DIVE);
     setTimeout(() => travel(link.href), calm ? 0 : DIVE * 1000);
   }
@@ -884,7 +922,7 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     if (e.pointerType === 'mouse') {
       mouse = { x, y };
       // A Mii behind a speech bubble, a block or a button is out of reach; so is its name.
-      overUi = e.target instanceof Element && !!e.target.closest('.plaza-bubble, a[data-cube], button');
+      overUi = e.target instanceof Element && !!e.target.closest('.plaza-bubble, a[data-cube], button, .plaza-socials');
     }
     if (!press || e.pointerId !== press.id) return;
     if (!press.holding && Math.hypot(x - press.x, y - press.y) > 6) liftMii();
@@ -1284,11 +1322,12 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     }
     if (resized) applyResize();
     const real = Math.max(0, (t - last) / 1000);
-    if (fps) {
+    if (fps && fpsVal) {
       if (!counted.from) counted.from = t;
       counted.frames++;
       if (t - counted.from >= 500) {
-        fps.textContent = String(Math.round((counted.frames * 1000) / (t - counted.from)));
+        fpsVal.textContent = String(Math.round((counted.frames * 1000) / (t - counted.from)));
+        fps.hidden = false;
         counted.frames = 0;
         counted.from = t;
       }
@@ -1405,6 +1444,8 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
           draw(tick(0).target);
         },
         crowd: () => crowd.stats(),
+        /** Mii `i` says `sound` now, whatever else is going on, for checking it by ear. */
+        voice: (sound: Sound, i = 0) => voice?.test(sound, crowd.speaker(i)),
         /** Holds the camera up close on Mii `i` (`near` is how much of the distance is left), or lets it go with no `i`. */
         look(i?: number, near = 0.08) {
           closeUp = i === undefined ? null : { mii: i, near };
@@ -1459,6 +1500,7 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     bubbles.clear();
     delete root.dataset.leaving;
     music.duck(false, 0.6);
+    hearVoices(0.6);
     last = performance.now();
     const from = (navigation as unknown as { activation?: { from?: { url?: string } } } | undefined)?.activation?.from?.url;
     // The switch back to the plaza fades it in over about half a second (global.css): held till then.
@@ -1488,6 +1530,7 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
       delete root.dataset.leaving;
       handOver(0.7);
       music.duck(true, 0.4);
+      hearVoices();
       letGoMii(false);
       touches.clear();
       hideCard();
@@ -1504,6 +1547,7 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
       bubbles.clear();
       delete root.dataset.leaving;
       music.duck(false, 0.6);
+      hearVoices(0.6);
       last = performance.now();
       // The plaza fades in over about half a second (global.css): the pull back waits till then.
       stepOut(from, 0.4);

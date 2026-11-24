@@ -50,6 +50,8 @@
     -webkit-tap-highlight-color: transparent;
     /* The console's glow, for focus and for whatever is pointed at. */
     --glow: 0 0 0 3px #46c3f0, 0 0 18px 3px rgb(70 195 240 / 0.5);
+    /* Subtle resting ring matching the theme, paired with --glow so hover transitions stay smooth. */
+    --ring: 0 0 0 1px light-dark(rgb(55 70 78 / 0.18), rgb(255 255 255 / 0.14)), 0 0 0 0 rgb(70 195 240 / 0);
     --rim: 0 0 0 1px light-dark(rgb(55 70 78 / 0.2), rgb(0 0 0 / 0.6));
     --lift:
       0 2px 3px light-dark(rgb(30 50 60 / 0.08), rgb(0 0 0 / 0.3)),
