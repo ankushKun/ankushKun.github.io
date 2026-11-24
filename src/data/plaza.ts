@@ -123,8 +123,9 @@ export const CROWD = { desktop: 110, mobile: 70 };
  * speaks. Keep each to about 70 characters: a bubble shows three lines. The Konami code one is
  * true: typing it on the plaza starts a party (plaza/main.ts).
  */
-export const WELCOME: string[] = [
+export const WELCOME: (string | { text: string; href: string })[] = [
   // Plain hellos.
+  { text: 'Like what I make? You can buy me a coffee!', href: '/about/#support' },
   'Hi, welcome to my plaza! Tap a block to look around.',
   'Hey, thanks for stopping by. Make yourself at home.',
   'Oh, a visitor! Pick a block, any block.',

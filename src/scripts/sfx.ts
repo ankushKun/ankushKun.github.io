@@ -2,7 +2,7 @@
 // press, a chime when you press it, a softer one going back, a buzz for what can't be opened yet.
 // Browsers only allow sound after a first touch or key, so nothing plays before that. M mutes them
 // along with the music (src/scripts/music/engine.ts).
-type Sound = 'tick' | 'select' | 'back' | 'flip' | 'nope';
+type Sound = 'tick' | 'select' | 'back' | 'flip' | 'nope' | 'letter';
 
 let ctx: AudioContext | null = null;
 let out: GainNode | null = null;
@@ -52,6 +52,11 @@ export function play(sound: Sound) {
     case 'nope':
       tone(220, 0.12, 'square', 0.025);
       return tone(175, 0.16, 'square', 0.025, undefined, 0.09);
+    // A letter from your Mii: two soft rising notes and a third an octave up.
+    case 'letter':
+      tone(880, 0.16, 'sine', 0.045);
+      tone(1175, 0.18, 'sine', 0.04, undefined, 0.1);
+      return tone(1760, 0.24, 'sine', 0.03, undefined, 0.2);
   }
 }
 

@@ -8,6 +8,11 @@ links:
   - label: "NepoNet on Product Hunt"
     url: "https://www.producthunt.com/products/nepo-network"
 related: ["/projects/neponet", "/blogs/where-to-promote-product-hunt-launch"]
+launch:
+  name: "NepoNet"
+  url: "https://www.producthunt.com/products/nepo-network"
+  logo: ./logo.png
+  result: "#9 Product of the Day"
 ---
 Less than a month after Construct's launch I was back on Product Hunt, this time with [NepoNet](/projects/neponet/). Every intro that helped Construct's launch came through a friend of a friend, and finding those chains by hand took weeks, so we built a tool to automate it.
 

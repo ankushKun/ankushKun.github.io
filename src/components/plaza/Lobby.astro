@@ -4,27 +4,81 @@
 // sits outside the plaza, so its clicks never start the opening, and main.ts leaves its keys alone.
 // It shows while the plaza loads and waits for its click, and fades as the opening begins
 // (data-waiting, set by main.ts). Without JavaScript or WebGL it stays, with your portrait in the
-// middle. A column on the left on a big screen, a row across the top on a phone.
-import { LOBBY_NAV, SITE } from '../../site';
+// middle. On a big screen a second column on the right mirrors the first: things you've built (LOBBY_BUILT), each
+// opening its own site in a new tab, and under them, set apart, where people can support you (SUPPORT). Every link
+// has a small icon on the outer edge, so each column's icons line up: a section's plaza block art, a project's own
+// icon, a platform's mark. On a phone they become rows of tabs, each icon over a short caption, in one grid of five so
+// the icons line up down the rows too.
+import { ArrowUpRight01Icon } from '@hugeicons/core-free-icons';
+import HugeIcon from '../ui/HugeIcon.astro';
+import LinkBadge from '../ui/LinkBadge.astro';
+import { extAttrs, NEW_TAB } from '../../lib/external';
+import { resolveLink } from '../../lib/links';
+import { LOBBY_BUILT, LOBBY_NAV, SITE, SUPPORT } from '../../site';
+
+/** A section's plaza block art, named after its path: /blogs/ is blogs.webp. */
+const nav = LOBBY_NAV.map((l) => ({ ...l, icon: `/plaza/icons/${l.href.replace(/\//g, '')}.webp` }));
+const support = SUPPORT.map((s) => ({ ...s, badge: resolveLink(s.url, s.platform).badge }));
 ---
 
 <main id="main" class="lobby" data-lobby>
   <img class="lobby-me" src="/mii/me.webp" alt="" width="256" height="256" decoding="async" />
-  <div class="lobby-menu">
-    <h1>{SITE.title}</h1>
-    <nav aria-label="Menu">
-      <ul>
-        {
-          LOBBY_NAV.map((l) => (
-            <li class:list={[l.wide && 'is-wide']}>
-              <a href={l.href} data-sfx>
-                {l.label}
-              </a>
-            </li>
-          ))
-        }
-      </ul>
-    </nav>
+  <div class="lobby-sides">
+    <div class="lobby-menu">
+      <h1>{SITE.title}</h1>
+      <nav aria-label="Menu">
+        <ul>
+          {
+            nav.map((l) => (
+              <li class:list={[l.wide && 'is-wide']}>
+                <a href={l.href} data-sfx>
+                  <img class="lobby-icon" src={l.icon} alt="" width="48" height="48" decoding="async" />
+                  <span class="lobby-label">{l.label}</span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+    </div>
+    <div class="lobby-menu is-built">
+      <nav aria-label="Things I've built">
+        <ul>
+          {
+            LOBBY_BUILT.map((l) => (
+              <li>
+                <a href={l.href} {...extAttrs(l.href)} aria-label={`${l.label} ${NEW_TAB}`} data-sfx>
+                  <img class="lobby-icon" src={l.icon} alt="" width="48" height="48" decoding="async" />
+                  <span class="lobby-label">
+                    <span class="is-full">{l.label}</span>
+                    <span class="is-short">{l.short}</span>
+                  </span>
+                  <HugeIcon icon={ArrowUpRight01Icon} size={12} strokeWidth={2.2} class="lobby-out" />
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+      <nav aria-label="Support">
+        <ul class="lobby-support">
+          {
+            support.map((s) => (
+              <li>
+                <a href={s.url} {...extAttrs(s.url)} aria-label={`${s.platform} ${NEW_TAB}`} data-sfx>
+                  <LinkBadge badge={s.badge} />
+                  <span class="lobby-label">
+                    <span class="is-full">{s.platform}</span>
+                    <span class="is-short">{s.short}</span>
+                  </span>
+                  <HugeIcon icon={ArrowUpRight01Icon} size={12} strokeWidth={2.2} class="lobby-out" />
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+    </div>
   </div>
   <slot />
 </main>
@@ -48,16 +102,21 @@ import { LOBBY_NAV, SITE } from '../../site';
       visibility 0s linear var(--vt-in);
   }
 
-  .lobby-menu {
+  /* The two columns share one row, each centred on the middle of the screen whatever it holds. A launch's card coming
+     or going never moves them. */
+  .lobby-sides {
     position: absolute;
-    /* Level with the middle of your Mii, which floats a little below the screen's. */
-    top: 52%;
+    top: 50%;
+    right: clamp(48px, 9vw, 160px);
     left: clamp(48px, 9vw, 160px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     translate: 0 -50%;
   }
 
   .lobby h1 {
-    margin: 0 0 14px;
+    margin: 0 0 12px;
     color: var(--color-ink-strong);
     font-size: 20px;
     font-weight: 800;
@@ -73,11 +132,13 @@ import { LOBBY_NAV, SITE } from '../../site';
     list-style: none;
   }
 
-  /* Each link is plain text lined up with the name, stronger when pointed at and blue while
-     pressed; its padding is what you press. */
+  /* Each link is its icon and plain text, stronger when pointed at and blue while pressed; its padding is what you
+     press. */
   .lobby a {
-    display: block;
-    padding: 9px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px;
     color: var(--color-ink-mid);
     font-size: 15px;
     font-weight: 500;
@@ -95,10 +156,68 @@ import { LOBBY_NAV, SITE } from '../../site';
     .lobby a:hover {
       color: var(--color-ink-strong);
     }
+
+    .lobby a:hover :is(.lobby-icon, .link-badge) {
+      scale: 1.1;
+    }
   }
 
   .lobby a:active {
     color: #1f9fdb;
+  }
+
+  /* Every icon the same small rounded square with a hairline, whatever it shows. */
+  .lobby :is(.lobby-icon, .link-badge) {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    object-fit: cover;
+    box-shadow:
+      0 0 0 1px light-dark(rgb(55 70 78 / 0.12), rgb(255 255 255 / 0.1)),
+      0 1px 2px rgb(30 50 60 / 0.12);
+    transition: scale 0.3s var(--ease-spring);
+  }
+
+  .lobby .link-badge::after {
+    border-radius: 6px 6px 40% 40% / 6px 6px 20% 20%;
+  }
+
+  .lobby .link-badge:not(.is-bleed) svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .lobby .is-short {
+    display: none;
+  }
+
+  .lobby-out {
+    color: var(--color-ink-faint);
+  }
+
+  /* The right column mirrors the left: lined up on the right, each icon at the far end so they make a column, the
+     arrow for a new tab just after the name. */
+  .lobby .is-built ul {
+    justify-items: end;
+    margin: 0 -12px 0 0;
+  }
+
+  .lobby .is-built .lobby-label {
+    order: 1;
+  }
+
+  .lobby .is-built .lobby-out {
+    order: 2;
+    margin-left: -6px;
+  }
+
+  .lobby .is-built :is(.lobby-icon, .link-badge) {
+    order: 3;
+  }
+
+  .lobby .is-built .lobby-support {
+    margin-top: 18px;
   }
 
   /* Without the plaza, your portrait stands in for your Mii. */
@@ -116,35 +235,82 @@ import { LOBBY_NAV, SITE } from '../../site';
     display: block;
   }
 
-  /* A phone: the name level with the switches in the top right corner (ThemeToggle.astro), the
-     links spread across one line under it, ending under the light switch's icon. */
+  /* A phone: the name level with the switches in the top right corner (ThemeToggle.astro), then the links as rows of
+     tabs, each icon over a short caption, all in one grid of five so the icons line up down the rows as well. */
   @media (max-width: 879px) {
-    .lobby-menu {
+    .lobby-sides {
       top: calc(max(22px, env(safe-area-inset-top)) + 5px);
-      right: max(25px, env(safe-area-inset-right));
-      left: max(25px, env(safe-area-inset-left));
+      right: max(19px, env(safe-area-inset-right));
+      left: max(19px, env(safe-area-inset-left));
+      flex-direction: column;
+      align-items: stretch;
+      gap: 16px;
       translate: none;
     }
 
     .lobby h1 {
-      margin: 0;
+      margin: 0 0 4px 6px;
       font-size: 18px;
       line-height: 30px;
     }
 
-    .lobby ul {
-      display: flex;
-      justify-content: space-between;
-      margin: 6px 0 0;
+    .lobby ul,
+    .lobby .is-built ul {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      justify-items: stretch;
+      margin: 0;
     }
 
     .lobby a {
-      padding: 12px 0;
-      font-size: 14px;
+      flex-direction: column;
+      gap: 5px;
+      padding: 7px 0;
+      font-size: 12px;
+      text-align: center;
     }
 
-    .lobby .is-wide {
+    .lobby :is(.lobby-icon, .link-badge) {
+      width: 26px;
+      height: 26px;
+      border-radius: 7px;
+    }
+
+    .lobby .link-badge::after {
+      border-radius: 7px 7px 40% 40% / 7px 7px 20% 20%;
+    }
+
+    .lobby .link-badge:not(.is-bleed) svg {
+      width: 15px;
+      height: 15px;
+    }
+
+    .lobby .is-wide,
+    .lobby .is-full,
+    .lobby-out {
       display: none;
+    }
+
+    .lobby .is-short {
+      display: inline;
+    }
+
+    .lobby .is-built :is(.lobby-icon, .link-badge),
+    .lobby .is-built .lobby-label {
+      order: 0;
+    }
+
+    .lobby .is-built .lobby-support {
+      margin-top: 0;
+    }
+
+    /* Sponsor under the first column, Ko-fi and Coffee under the last two, leaving the middle clear above your Mii. */
+    .lobby .lobby-support li:nth-child(2) {
+      grid-column: 4;
+    }
+
+    .lobby .lobby-support li:nth-child(3) {
+      grid-column: 5;
     }
   }
 </style>

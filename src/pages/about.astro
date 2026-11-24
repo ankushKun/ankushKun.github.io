@@ -13,7 +13,7 @@ import Page from '../layouts/Page.astro';
 import HugeIcon from '../components/ui/HugeIcon.astro';
 import LinkBadge from '../components/ui/LinkBadge.astro';
 import MiiStage from '../components/mii/Stage.astro';
-import { AUTHOR, SOCIALS } from '../site';
+import { AUTHOR, SOCIALS, SUPPORT } from '../site';
 import { NEW_TAB, extAttrs } from '../lib/external';
 import { resolveLink } from '../lib/links';
 import { resume } from '../data/resume';
@@ -32,6 +32,7 @@ const logoOf = (org: string) => {
 };
 const work = resume.experience.map((e) => ({ ...e, ...logoOf(e.org), badge: resolveLink(e.url, e.org).badge }));
 const socials = SOCIALS.map((s) => ({ ...s, badge: resolveLink(s.url, s.platform).badge }));
+const support = SUPPORT.map((s) => ({ ...s, badge: resolveLink(s.url, s.platform).badge }));
 ---
 
 <Page id="about" pageType="ProfilePage" type="profile" layout="bare" centered>
@@ -101,6 +102,23 @@ const socials = SOCIALS.map((s) => ({ ...s, badge: resolveLink(s.url, s.platform
           socials.map((s) => (
             <li>
               <a href={s.url} rel="me noopener" target="_blank">
+                <LinkBadge badge={s.badge} />
+                <span>{s.platform}</span>
+                <span class="sr-only">{NEW_TAB}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <section aria-labelledby="support">
+      <h2 class="section-head" id="support">Support</h2>
+      <ul class="socials">
+        {
+          support.map((s) => (
+            <li>
+              <a href={s.url} rel="noopener" target="_blank">
                 <LinkBadge badge={s.badge} />
                 <span>{s.platform}</span>
                 <span class="sr-only">{NEW_TAB}</span>

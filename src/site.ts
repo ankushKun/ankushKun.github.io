@@ -47,6 +47,13 @@ export const SOCIALS = [
   { platform: 'Medium', handle: '@ankushkun', url: 'https://ankushkun.medium.com' },
 ];
 
+/** Where people can chip in for the work. Rendered on About under Socials, where the footer's Support goes, and in the lobby (`short` under its mark on a phone). */
+export const SUPPORT = [
+  { platform: 'GitHub Sponsors', short: 'Sponsor', url: 'https://github.com/sponsors/ankushKun' },
+  { platform: 'Ko-fi', short: 'Ko-fi', url: 'https://ko-fi.com/ankushkun' },
+  { platform: 'Buy Me a Coffee', short: 'Coffee', url: 'https://buymeacoffee.com/ankushkun' },
+];
+
 export const NAV = [
   { label: 'Blog', href: '/blogs/' },
   { label: 'Projects', href: '/projects/' },
@@ -61,6 +68,18 @@ export const NAV = [
  */
 export const LOBBY_NAV: { label: string; href: string; wide?: boolean }[] = [...NAV, { label: 'Games', href: '/games/', wide: true }];
 
+/**
+ * The lobby's other column, on the right on a big screen: things you've built, each opening its own site, with its
+ * icon and, on a phone where it's a caption under the icon, a short name.
+ */
+export const LOBBY_BUILT: { label: string; short: string; href: string; icon: string }[] = [
+  { label: 'Construct Computer', short: 'Construct', href: 'https://construct.computer', icon: '/favicons/construct.computer.png' },
+  { label: 'Nepotism Network', short: 'NepoNet', href: 'https://nepotism.network', icon: '/favicons/nepotism.network.png' },
+  { label: 'Silent Hill 2 on 3DS', short: 'SH2 3DS', href: 'https://ankush.one/sh23ds/', icon: '/lobby/sh23ds.png' },
+  { label: '3dsDL', short: '3dsDL', href: 'https://ankush.one/3dsDL/', icon: '/lobby/3dsdl.png' },
+  { label: 'BetterIDEa', short: 'BetterIDEa', href: 'https://betteridea.dev', icon: '/lobby/betteridea.png' },
+];
+
 /** The footer at the end of every page. Home is the plaza, settled (see the TV's plaza button). */
 export const FOOTER_NAV = [
   { label: 'Home', href: '/#0' },
@@ -69,6 +88,7 @@ export const FOOTER_NAV = [
   { label: 'Projects', href: '/projects/' },
   { label: 'Timeline', href: '/timeline/' },
   { label: 'Apps', href: '/apps/' },
+  { label: 'Support', href: '/about/#support' },
   { label: 'Privacy', href: '/privacy/' },
   { label: 'Credits', href: '/credits/' },
   { label: 'RSS', href: '/blogs/index.xml' },

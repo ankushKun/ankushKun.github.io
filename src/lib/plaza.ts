@@ -76,7 +76,10 @@ export async function getPlazaData(): Promise<PlazaData> {
   // Your own Mii opens with a welcome, one of WELCOME picked on each visit, from the About block.
   const aboutCube = cubeOf('/about/');
   const me = AUTHOR.name.split(' ')[0];
-  const welcome: PlazaPost[] = aboutCube < 0 ? [] : WELCOME.map((text) => ({ cube: aboutCube, tag: me, text, href: '/about/', me: true }));
+  const welcome: PlazaPost[] =
+    aboutCube < 0
+      ? []
+      : WELCOME.map((w) => ({ cube: aboutCube, tag: me, text: typeof w === 'string' ? w : w.text, href: typeof w === 'string' ? '/about/' : w.href, me: true }));
 
   // A Mii from a QR image is named after its file: "Steve Jobs.png" is Steve Jobs.
   const files = await folderMiis();

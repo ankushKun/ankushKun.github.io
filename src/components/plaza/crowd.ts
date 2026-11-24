@@ -161,6 +161,8 @@ export const SKYFALL = { height: 6.5, time: Math.sqrt((2 * 6.5) / motion.GRAVITY
 const FADE = 0.45;
 const RUN = 9.5;
 const WALK = 1.25;
+/** Slower than this, a Mii that has stood still has finished its last stride and is in one place. */
+const STILL = WALK * 0.1;
 /** Your Mii's pants. Everyone else's are picked from the rest on each visit. */
 const YOUR_PANTS = 0x1c1d20;
 const PANTS = [0x8c9096, 0x40474e, 0x2a2c30, 0x28407a, 0x702015, 0x5a4030, 0xc0a030];
@@ -932,11 +934,11 @@ export class Crowd {
     }
   }
 
-  /** Miis under `cube` who are free to speak, shuffled. */
+  /** Miis under `cube` who are free to speak, shuffled: only those standing still in one place, never one on its way. */
   speakers(cube: number) {
     const out: number[] = [];
     this.miis.forEach((m, i) => {
-      if (m.home === cube && !m.stage && (m.act === 'stand' || m.act === 'stroll')) out.push(i);
+      if (m.home === cube && !m.stage && this.still(m)) out.push(i);
     });
     for (let i = out.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -945,9 +947,14 @@ export class Crowd {
     return out;
   }
 
-  /** Whether Mii `i` can take a bubble right now. */
+  /** Whether Mii `i` can take a bubble right now: standing still in one place. */
   free(i: number) {
-    return this.miis[i].act === 'stand';
+    return this.still(this.miis[i]);
+  }
+
+  /** Whether Mii `m` has arrived and stopped: standing, its last stride done, not between one place and the next. */
+  private still(m: Mii) {
+    return m.act === 'stand' && m.vel < STILL;
   }
 
   /** Mii `i` turns to the camera and talks for `seconds`. */

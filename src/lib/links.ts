@@ -47,7 +47,7 @@ function tileOf(path: string) {
 }
 
 function badgeFor(host: string, href: string): Badge {
-  const platform = platformFor(host);
+  const platform = platformFor(host, URL.canParse(href) ? new URL(href).pathname : '');
   if (platform) return { type: 'brand', path: platform.path, bg: platform.bg, ink: platform.ink, bleed: platform.bleed };
   if (host === SELF) return { type: 'favicon', src: '/apple-touch-icon.png', fill: true };
   if (icons[host]) return { type: 'favicon', src: `/favicons/${host}.png`, fill: icons[host] === 'fill' };

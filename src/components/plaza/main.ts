@@ -27,6 +27,7 @@ import { CUBE, applyView, blankView, copyView, makeLayout, mixViews, type Layout
 import type { PlazaCube, PlazaData, PlazaPost } from './types';
 import { Rotation } from './rotation';
 import { clamp, damp, easeInOut, rng, smoothstep } from './util';
+import { greeting as launchGreeting, openLetter } from '../../scripts/launch';
 
 /** When the camera has pulled all the way back to the whole plaza, in seconds from the click. */
 const WIDE = 4.35;
@@ -242,8 +243,8 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     bubbleLayer,
     data.posts,
     icons.map((icon) => thumb(icon, 128)),
-    // A different greeting on every visit.
-    data.welcome[Math.floor(Math.random() * data.welcome.length)] ?? null,
+    // A different greeting on every visit, or the launch you're announcing (scripts/launch.ts).
+    launchGreeting(data.welcome[0]) ?? data.welcome[Math.floor(Math.random() * data.welcome.length)] ?? null,
   );
 
   // The chat's latest messages join the bubbles, said under the Chat block (chatter.ts). It listens
@@ -705,6 +706,13 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
   bubbleLayer.addEventListener('click', (e) => {
     const link = e.target instanceof Element ? e.target.closest<HTMLAnchorElement>('a.plaza-bubble') : null;
     if (!link || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    // Your Mii's word about a launch opens its letter instead of diving anywhere.
+    if (link.getAttribute('href') === '#launch') {
+      e.preventDefault();
+      bubbles.dismiss();
+      openLetter('plaza');
+      return;
+    }
     const speaker = bubbles.speakerOf(link);
     if (speaker < 0) return;
     e.preventDefault();

@@ -55,6 +55,25 @@ const timeline = defineCollection({
     entry(ctx).extend({
       /** Groups events on the timeline page (one or multiple), for example work, win, launch, hackathon, hardware, or milestone. */
       kind: z.union([z.string(), z.array(z.string()).min(1)]).transform((k) => (Array.isArray(k) ? k : [k])),
+      /**
+       * A launch on Product Hunt (src/lib/launches.ts): announced by the message button, its letter and your Mii's
+       * greeting from a day before it to a day after, then listed with the earlier ones. Its day is the entry's
+       * `date`, midnight to midnight in San Francisco, unless `start` says otherwise. `count` is the launch's id on
+       * construct.computer, whose `/_site/launch/<id>` gives its live vote count.
+       */
+      launch: z
+        .object({
+          name: z.string(),
+          url: z.url(),
+          logo: ctx.image(),
+          start: z.coerce.date().optional(),
+          try: z.url().optional(),
+          count: z.string().optional(),
+          result: z.string().optional(),
+          /** The letter's line under its title; the entry's description when left out. */
+          pitch: z.string().max(200).optional(),
+        })
+        .optional(),
     }),
 });
 

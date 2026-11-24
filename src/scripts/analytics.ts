@@ -15,6 +15,14 @@ export interface Events {
   /** Left the plaza through a block or a speech bubble. */
   plaza_block_pressed: { section: string; href: string; from: 'block' | 'bubble' };
   plaza_mii_poked: { who: 'dj' | 'crowd' };
+  /** A launch's card rose into the corner (scripts/launch.ts). */
+  launch_notice_shown: { launch: string; phase: string };
+  /** A launch's card closed for the session. */
+  launch_notice_closed: { launch: string; phase: string };
+  /** The card's button to the launch on Product Hunt pressed. */
+  launch_supported: { launch: string; phase: string; from: 'card' };
+  /** A launch's letter opened, from its card or your Mii's greeting on the plaza. */
+  launch_letter_opened: { launch: string; from: 'card' | 'plaza' };
   konami_code_entered: undefined;
   theme_changed: { theme: string };
   menu_opened: undefined;

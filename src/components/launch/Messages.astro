@@ -1,0 +1,601 @@
+---
+// News from you about your launches (src/lib/launches.ts) on every page: a notification card that rises into the
+// bottom-right corner, your Mii's name on its tag, the launch's moving logo, what you say about it and one big button
+// to it on Product Hunt with its live count. It stays until closed, and closing it lasts the browser session, so the
+// next visit sees it again. Pressing its words opens the letter: the launch, its links and your earlier launches.
+// Everything ships hidden and scripts/launch.ts shows what the visitor's clock says, from a day before a launch to a
+// day after. It persists across pages, like the TV.
+import { Cancel01Icon } from '@hugeicons/core-free-icons';
+import { siProducthunt } from 'simple-icons';
+import HugeIcon from '../ui/HugeIcon.astro';
+import MenuButton from '../ui/MenuButton.astro';
+import { AUTHOR } from '../../site';
+import { getLaunches } from '../../lib/launch-entries';
+
+const launches = await getLaunches();
+const me = AUTHOR.name.split(' ')[0];
+const month = new Intl.DateTimeFormat('en-US', { month: 'short', timeZone: 'America/Los_Angeles' });
+const day = new Intl.DateTimeFormat('en-US', { day: 'numeric', timeZone: 'America/Los_Angeles' });
+---
+
+{
+  launches.length > 0 && (
+    <div class="msg" data-messages transition:persist="messages">
+      <script type="application/json" data-launches set:html={JSON.stringify(launches)} />
+      <aside class="msg-card" data-msg-card hidden aria-label={`News from ${me}`}>
+        <span class="msg-tag">{me}</span>
+        <button type="button" class="msg-card-x" data-msg-dismiss aria-label="Close" data-sfx="back">
+          <HugeIcon icon={Cancel01Icon} size={16} strokeWidth={2.2} />
+        </button>
+        <button type="button" class="msg-card-body" data-msg-more data-sfx>
+          {launches.map((launch) => (
+            <span class="msg-card-logo" data-msg-now={launch.id} hidden>
+              <img src={launch.logo} alt="" width="56" height="56" />
+            </span>
+          ))}
+          <span class="msg-card-says" data-msg-says />
+        </button>
+        {launches.map((launch) => (
+          <a class="msg-card-go" data-msg-now={launch.id} data-msg-go hidden href={launch.url} target="_blank" rel="noopener" data-sfx>
+            <span class="msg-card-ph" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22">
+                <path fill="currentColor" d={siProducthunt.path} />
+              </svg>
+            </span>
+            <span data-msg-go-words>See it on Product Hunt</span>
+            <span class="msg-votes" data-msg-votes hidden>
+              <i aria-hidden="true">▲</i>
+              <b data-msg-number />
+              <span class="sr-only">votes</span>
+            </span>
+          </a>
+        ))}
+      </aside>
+      <dialog class="msg-letter" data-msg-letter>
+        <header class="msg-head">
+          {launches.map((launch) => (
+            <span class="msg-cal" data-msg-now={launch.id} hidden>
+              <b>{month.format(launch.start)}</b>
+              <span>{day.format(launch.start)}</span>
+            </span>
+          ))}
+          <span class="msg-from">
+            <img src="/mii/me-happy.webp" alt="" width="30" height="30" />
+            <strong>{me}</strong>
+          </span>
+          <button type="button" class="msg-x" data-msg-close aria-label="Close" data-sfx="back">
+            <HugeIcon icon={Cancel01Icon} size={20} strokeWidth={2.1} />
+          </button>
+        </header>
+        {launches.map((launch) => (
+          <section class="msg-now" data-msg-now={launch.id} hidden>
+            <span class="msg-block">
+              <img src={launch.logo} alt="" width="86" height="86" />
+            </span>
+            <h2 class="msg-title" id={`msg-title-${launch.id}`} data-msg-title />
+            <p class="msg-lede">{launch.blurb}</p>
+            <span class="msg-votes" data-msg-votes hidden>
+              <i aria-hidden="true">▲</i>
+              <b data-msg-number />
+              <span class="sr-only">votes</span> on Product Hunt
+            </span>
+            <div class="msg-links">
+              <MenuButton href={launch.url} label={`${launch.name} on Product Hunt`} />
+              {launch.try && <MenuButton href={launch.try} label={`Try ${launch.name}`} />}
+            </div>
+          </section>
+        ))}
+        <section class="msg-earlier" data-msg-earlier hidden>
+          <h3>Earlier launches</h3>
+          <ul>
+            {launches.map((launch) => (
+              <li data-msg-ended={launch.id} hidden>
+                <a href={launch.href}>
+                  <img src={launch.logo} alt="" width="36" height="36" loading="lazy" />
+                  <span>
+                    <b>{launch.name}</b>
+                    {launch.result && `, ${launch.result}`}
+                  </span>
+                  <small>{launch.day}</small>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </dialog>
+    </div>
+  )
+}
+
+<script>
+  import '../../scripts/launch';
+</script>
+
+<style>
+  /* Not over a full-screen app or a game, which have the whole screen. */
+  :global(html:has(.col-app)) .msg,
+  :global(html[data-playing]) .msg,
+  :global(html[data-embed]) .msg {
+    display: none;
+  }
+
+  /* The card, frosted like the plaza's bubbles with the TV buttons' sky ring, rising into the corner and pulsing a
+     few times as it lands; across the bottom on a phone. */
+  .msg-card {
+    position: fixed;
+    z-index: 55;
+    right: calc(var(--bezel) + 22px);
+    bottom: calc(var(--bezel-bottom) + 22px);
+    display: grid;
+    gap: 12px;
+    width: min(372px, calc(100vw - 2 * var(--bezel) - 32px));
+    padding: 20px 14px 14px;
+    border-radius: 26px;
+    background: light-dark(rgb(250 252 253 / 0.95), rgb(36 42 46 / 0.94));
+    backdrop-filter: blur(16px) saturate(1.2);
+    -webkit-backdrop-filter: blur(16px) saturate(1.2);
+    box-shadow:
+      0 0 0 3px light-dark(rgb(70 195 240 / 0.55), rgb(42 109 142 / 0.9)),
+      0 24px 50px -18px rgb(20 50 70 / 0.45);
+    color: var(--color-ink);
+    animation:
+      msg-rise 0.5s var(--ease-spring) both,
+      msg-ring 1.4s ease-in-out 0.5s 3;
+  }
+
+  .msg-card[hidden] {
+    display: none;
+  }
+
+  .msg-card.is-out {
+    animation: msg-sink 0.28s cubic-bezier(0.4, 0, 1, 1) both;
+  }
+
+  @keyframes msg-rise {
+    from {
+      opacity: 0;
+      translate: 0 48px;
+      scale: 0.96;
+    }
+  }
+
+  @keyframes msg-sink {
+    to {
+      opacity: 0;
+      translate: 0 36px;
+    }
+  }
+
+  @keyframes msg-ring {
+    50% {
+      box-shadow:
+        0 0 0 3px #46c3f0,
+        0 0 28px 9px rgb(70 195 240 / 0.5),
+        0 24px 50px -18px rgb(20 50 70 / 0.45);
+    }
+  }
+
+  @media (width < 640px) {
+    .msg-card {
+      right: 12px;
+      bottom: calc(12px + env(safe-area-inset-bottom));
+      left: 12px;
+      width: auto;
+    }
+  }
+
+  .msg-tag {
+    position: absolute;
+    top: -15px;
+    left: 18px;
+    padding: 0 13px;
+    border-radius: 99px;
+    background: rgb(66 70 72 / 0.94);
+    color: #fff;
+    font-size: 15px;
+    line-height: 30px;
+    letter-spacing: 0.01em;
+    box-shadow: 0 1px 4px rgb(0 0 0 / 0.18);
+  }
+
+  .msg-card-x {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: var(--color-ink-faint);
+    cursor: pointer;
+    transition:
+      background-color 0.15s ease,
+      color 0.15s ease;
+  }
+
+  .msg-card-x:hover,
+  .msg-card-x:focus-visible {
+    background: light-dark(rgb(55 70 78 / 0.08), rgb(255 255 255 / 0.08));
+    color: var(--color-ink-strong);
+    outline: none;
+  }
+
+  .msg-card-body {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 0 30px 0 0;
+    border: 0;
+    background: none;
+    color: var(--color-ink-strong);
+    font: inherit;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.35;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .msg-card-body:focus-visible {
+    outline: 2px solid var(--color-sky);
+    outline-offset: 4px;
+    border-radius: 14px;
+  }
+
+  .msg-card-logo {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+    background: var(--aero-bg);
+    box-shadow: var(--aero-shadow);
+  }
+
+  .msg-card-logo[hidden],
+  .msg-card-go[hidden] {
+    display: none;
+  }
+
+  .msg-card-logo img {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+  }
+
+  /* One glossy button in Product Hunt's own orange, its mark on a white disc and the count at the end. */
+  .msg-card-go {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 50px;
+    padding: 0 8px 0 7px;
+    border-radius: 99px;
+    background: linear-gradient(#ff8a7c, #ff6154 52%, #ec5442);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.45),
+      inset 0 -2px 6px rgb(160 40 25 / 0.25),
+      0 8px 16px -8px rgb(232 81 63 / 0.75);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+    text-shadow: 0 1px 1px rgb(150 40 25 / 0.35);
+    transition:
+      filter 0.15s ease,
+      scale 0.3s var(--ease-spring);
+  }
+
+  .msg-card-go:hover,
+  .msg-card-go:focus-visible {
+    filter: brightness(1.06);
+    outline: none;
+  }
+
+  .msg-card-go:active {
+    scale: 0.97;
+    transition-duration: 0.08s;
+  }
+
+  .msg-card-ph {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #fff;
+    color: #ff6154;
+  }
+
+  .msg-card-go .msg-votes {
+    margin-left: auto;
+    background: rgb(255 255 255 / 0.24);
+    color: #fff;
+  }
+
+  .msg-card-go .msg-votes i {
+    color: #fff;
+  }
+
+  .msg-votes {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 28px;
+    padding: 0 11px;
+    border-radius: 99px;
+    background: light-dark(rgb(255 97 84 / 0.1), rgb(255 97 84 / 0.18));
+    color: var(--color-ink-strong);
+    font-size: 14px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .msg-votes[hidden] {
+    display: none;
+  }
+
+  .msg-votes i {
+    color: #ff6154;
+    font-style: normal;
+  }
+
+  /* The letter: a sheet of paper over the dimmed page, from the bottom on a phone. */
+  /* Centred on the screen: Tailwind's reset takes away the margin a modal dialog is centred by, so it's put back. */
+  .msg-letter {
+    inset: 0;
+    margin: auto;
+    width: min(460px, calc(100vw - 32px));
+    max-height: calc(100dvh - 48px);
+    padding: 22px;
+    overflow: auto;
+    overscroll-behavior: contain;
+    border: 0;
+    border-radius: 30px;
+    background: var(--color-surface);
+    color: var(--color-ink);
+    box-shadow:
+      0 0 0 1px light-dark(rgb(95 125 142 / 0.2), rgb(0 0 0 / 0.6)),
+      0 30px 70px -20px rgb(20 50 70 / 0.45);
+  }
+
+  .msg-letter::backdrop {
+    background: light-dark(rgb(40 60 70 / 0.22), rgb(0 0 0 / 0.5));
+    backdrop-filter: blur(3px);
+  }
+
+  .msg-letter[open] {
+    animation: msg-letter-in 0.34s var(--ease-spring);
+  }
+
+  @keyframes msg-letter-in {
+    from {
+      opacity: 0;
+      scale: 0.94;
+      translate: 0 12px;
+    }
+  }
+
+  @media (width < 640px) {
+    .msg-letter {
+      width: 100%;
+      max-width: none;
+      margin: auto 0 0;
+      padding: 20px 18px calc(18px + env(safe-area-inset-bottom));
+      border-radius: 30px 30px 0 0;
+    }
+
+    @keyframes msg-letter-in {
+      from {
+        translate: 0 40%;
+      }
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .msg-card,
+    .msg-card.is-out,
+    .msg-letter[open] {
+      animation: msg-fade 0.2s ease both;
+    }
+
+    .msg-card.is-out {
+      animation-direction: reverse;
+    }
+
+    @keyframes msg-fade {
+      from {
+        opacity: 0;
+      }
+    }
+  }
+
+  .msg-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .msg-cal {
+    flex: none;
+    width: 46px;
+    overflow: hidden;
+    border-radius: 9px;
+    background: #fff;
+    box-shadow:
+      0 0 0 1px rgb(55 70 78 / 0.16),
+      0 2px 4px -1px rgb(30 50 60 / 0.2);
+    text-align: center;
+  }
+
+  .msg-cal[hidden] {
+    display: none;
+  }
+
+  .msg-cal b {
+    display: block;
+    padding: 2px 0;
+    background: #ef5350;
+    color: #fff;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .msg-cal span {
+    display: block;
+    color: #3d4245;
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1.35;
+  }
+
+  .msg-from {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+  }
+
+  .msg-from img {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: light-dark(#e9f3f6, #2c3236);
+  }
+
+  .msg-from strong {
+    color: var(--color-ink-strong);
+    font-weight: 700;
+  }
+
+  .msg-x {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    margin-left: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 30%, var(--color-gloss-top) 40%, light-dark(#eaeff1, #262c30));
+    box-shadow: 0 0 0 2px light-dark(#a8def4, #2a6d8e);
+    color: light-dark(#8a9499, #a3b0b6);
+    cursor: pointer;
+  }
+
+  .msg-x:hover,
+  .msg-x:focus-visible {
+    color: var(--color-sky);
+    box-shadow: var(--glow);
+    outline: none;
+  }
+
+  .msg-now[hidden],
+  .msg-earlier[hidden],
+  .msg-earlier li[hidden] {
+    display: none;
+  }
+
+  .msg-block {
+    display: grid;
+    place-items: center;
+    width: 116px;
+    height: 116px;
+    margin-bottom: 18px;
+    border-radius: 30px;
+    background: var(--aero-bg);
+    box-shadow: var(--aero-shadow);
+  }
+
+  .msg-block img {
+    width: 86px;
+    height: 86px;
+    border-radius: 20px;
+  }
+
+  .msg-title {
+    margin: 0 0 8px;
+    color: var(--color-ink-strong);
+    font-size: 25px;
+    font-weight: 800;
+    line-height: 1.2;
+    text-wrap: balance;
+  }
+
+  .msg-lede {
+    margin: 0 0 14px;
+    color: var(--color-ink-soft);
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  .msg-links {
+    display: grid;
+    gap: 10px;
+    margin: 16px 0 4px;
+  }
+
+  .msg-earlier {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--color-line);
+  }
+
+  .msg-earlier h3 {
+    margin: 0 0 6px;
+    color: var(--color-ink-faint);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .msg-earlier ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .msg-earlier a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 6px;
+    border-radius: 12px;
+    color: var(--color-ink);
+    font-size: 15px;
+    text-decoration: none;
+  }
+
+  .msg-earlier a:hover {
+    background: light-dark(rgb(55 70 78 / 0.05), rgb(255 255 255 / 0.05));
+  }
+
+  .msg-earlier img {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #fff;
+    object-fit: cover;
+    box-shadow: 0 0 0 1px rgb(55 70 78 / 0.12);
+  }
+
+  .msg-earlier b {
+    color: var(--color-ink-strong);
+  }
+
+  .msg-earlier small {
+    flex: none;
+    margin-left: auto;
+    color: var(--color-ink-faint);
+    font-size: 13px;
+  }
+</style>

@@ -8,6 +8,11 @@ links:
   - label: "Construct on Product Hunt"
     url: "https://www.producthunt.com/products/construct-computer"
 related: ["/projects/construct-computer", "/blogs/where-to-promote-product-hunt-launch"]
+launch:
+  name: "Construct Computer"
+  url: "https://www.producthunt.com/products/construct-computer"
+  logo: ./logo.png
+  result: "#1 Product of the Day"
 ---
 Our first-ever Product Hunt launch, and [Construct Computer](/projects/construct-computer/) finished **#1 Product of the Day**.
 

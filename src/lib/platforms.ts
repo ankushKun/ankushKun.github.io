@@ -4,6 +4,9 @@
 // Simple Icons only has its wordmark, which is unreadable at badge size.
 import {
   siAppstore,
+  siBuymeacoffee,
+  siGithubsponsors,
+  siKofi,
   siArxiv,
   siChromewebstore,
   siDevpost,
@@ -50,6 +53,7 @@ const si = (icon: { title: string; path: string; hex: string }, hosts: string[],
 });
 
 export const PLATFORMS: Platform[] = [
+  si(siGithubsponsors, ['github.com/sponsors']),
   si(siGithub, ['github.com']),
   si(siX, ['x.com', 'twitter.com']),
   si(siYoutube, ['youtube.com', 'youtu.be']),
@@ -72,10 +76,21 @@ export const PLATFORMS: Platform[] = [
   si(siYcombinator, ['news.ycombinator.com']),
   si(siArxiv, ['arxiv.org']),
   si(siTopdotgg, ['top.gg']),
+  si(siKofi, ['ko-fi.com']),
+  { ...si(siBuymeacoffee, ['buymeacoffee.com']), ink: '#000' },
 ];
 
-/** The platform a host belongs to, its subdomains included (gist.github.com is GitHub). */
-export function platformFor(host: string): Platform | undefined {
+/**
+ * The platform a host belongs to, its subdomains included (gist.github.com is GitHub). A platform listed with a path,
+ * like github.com/sponsors, wins for addresses under that path.
+ */
+export function platformFor(host: string, path = ''): Platform | undefined {
   const h = host.toLowerCase().replace(/^www\./, '');
-  return PLATFORMS.find((p) => p.hosts.some((d) => h === d || h.endsWith(`.${d}`)));
+  const at = `${h}${path.toLowerCase().replace(/\/$/, '')}`;
+  const under = (d: string) => at === d || at.startsWith(`${d}/`);
+  const onHost = (d: string) => h === d || h.endsWith(`.${d}`);
+  return (
+    PLATFORMS.find((p) => p.hosts.some((d) => d.includes('/') && under(d))) ??
+    PLATFORMS.find((p) => p.hosts.some((d) => !d.includes('/') && onHost(d)))
+  );
 }
