@@ -65,7 +65,7 @@ const ZOOM = { min: 0, rest: 0, max: 3, close: 2.5 };
  * where that would be too small to read, it holds at TAG_MIN pixels.
  */
 const TAG_SIZE = 0.18;
-const TAG_MIN = 11;
+const TAG_MIN = 12;
 /**
  * Panning with the middle mouse button, zoomed in past `from`: it takes full effect by `full`, and
  * the view's middle can go no further than `pad` beyond the outermost blocks. Zoomed back out to

@@ -315,7 +315,6 @@ const socials = CORNER_SOCIALS.flatMap((name) => {
     height: calc(100% + var(--tail-h, 0px));
     background: light-dark(rgb(250 252 253 / 0.8), rgb(36 42 46 / 0.78));
     backdrop-filter: blur(calc(var(--b) * 1.2)) saturate(1.15);
-    -webkit-backdrop-filter: blur(calc(var(--b) * 1.2)) saturate(1.15);
     clip-path: var(--bubble-path);
     transition: background-color 0.5s ease;
     pointer-events: none;
@@ -769,8 +768,8 @@ const socials = CORNER_SOCIALS.flatMap((name) => {
     font-weight: 400;
     line-height: 1.25;
     white-space: nowrap;
-    -webkit-font-smoothing: none;
-    font-smooth: never;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     opacity: 0;
     transition: opacity 0.15s ease;
     pointer-events: none;
