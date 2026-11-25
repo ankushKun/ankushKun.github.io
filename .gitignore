@@ -13,6 +13,9 @@ node_modules/
 .env.*
 !.env.example
 
+# GUN's local storage, made when a relay runs in this folder
+radata/
+
 # Logs
 *.log
 npm-debug.log*
