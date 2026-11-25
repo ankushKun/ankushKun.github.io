@@ -1,7 +1,7 @@
 // What the stage twirls in the polka (motion.polka), one in each dancer's right hand: Miku's leek,
 // Neru's yellow flip phone, and Teto's French baguette. Built in code in the same lit colors as the
-// DJ's boombox, each growing out of the fist as the twirl begins, turning about the forearm, and
-// shrinking back in when it ends. One draw call per dancer while it shows, none while put away.
+// DJ's boombox, each growing out of the fist as the twirl begins, turning about the forearm (the
+// phone instead held up to Neru's face as she looks at it), and shrinking back in when it ends. One draw call per dancer while it shows, none while put away.
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
@@ -15,7 +15,7 @@ import type { StageProp } from './types';
  */
 const PROPS: Record<StageProp, { length: number; hand: number; grip: number }> = {
   leek: { length: 0.55, hand: 0.07, grip: 0.22 },
-  phone: { length: 0.44, hand: 0.07, grip: 0.22 },
+  phone: { length: 0.3, hand: 0.05, grip: 0.22 },
   baguette: { length: 0.58, hand: 0.07, grip: 0.28 },
 };
 
@@ -148,6 +148,8 @@ const _thumb = new THREE.Vector3();
 const _side = new THREE.Vector3();
 const _line = new THREE.Vector3();
 const _across = new THREE.Vector3();
+const _screen = new THREE.Vector3();
+const _up = new THREE.Vector3(0, 1, 0);
 
 export class Leeks {
   private readonly meshes: THREE.Mesh[];
@@ -180,9 +182,10 @@ export class Leeks {
 
   /**
    * Places dancer `i`'s prop in their hand, `show` of it (0 puts it away) at Mii size `scale`,
-   * turned `spin` radians about the forearm from standing up off the thumb.
+   * turned `spin` radians about the forearm from standing up off the thumb. A phone isn't twirled:
+   * given `face` (where the head is in the world), it is held up with its screen toward it.
    */
-  place(i: number, show: number, spin: number, scale: number) {
+  place(i: number, show: number, spin: number, scale: number, face?: THREE.Vector3) {
     const mesh = this.meshes[i];
     mesh.visible = show > 0.001;
     if (!mesh.visible) return;
@@ -197,6 +200,15 @@ export class Leeks {
     _across.crossVectors(_along, _line);
     _wrist.setFromMatrixPosition(hand).addScaledVector(_along, spec.hand * scale);
     const k = spec.length * scale * show;
+    if (this.kinds[i] === 'phone' && face) {
+      // The screen (the shape's +x) looks straight up at the face, and the phone stands as upright
+      // as that allows, so it tips back from the fist rather than rising in front of the face.
+      _screen.subVectors(face, _wrist).normalize();
+      _line.copy(_up).addScaledVector(_screen, -_up.dot(_screen)).normalize();
+      _across.crossVectors(_screen, _line);
+      mesh.matrix.makeBasis(_screen.multiplyScalar(k), _line.multiplyScalar(k), _across.multiplyScalar(k)).setPosition(_wrist);
+      return;
+    }
     mesh.matrix.makeBasis(_along.multiplyScalar(k), _line.multiplyScalar(k), _across.multiplyScalar(k)).setPosition(_wrist);
   }
 }

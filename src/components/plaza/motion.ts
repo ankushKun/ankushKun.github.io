@@ -1416,6 +1416,20 @@ export function carry(p: Pose, w = 1) {
   p.tilt += 0.08 * w;
 }
 
+/**
+ * Looking at a phone in the right hand, over whatever else the body is doing: the forearm raised in
+ * front of the chest and the head tipped down to the screen. `w` eases
+ * it on and off (1 holds it).
+ */
+export function texting(p: Pose, w = 1) {
+  p.swingR = mix(p.swingR, 0.4, w);
+  p.outR = mix(p.outR, 0.2, w);
+  p.twistR = mix(p.twistR, 0.45, w);
+  p.elbowR = mix(p.elbowR, 1.0, w);
+  p.nod = mix(p.nod, 0.5, w);
+  p.headYaw = mix(p.headYaw, -0.15, w);
+}
+
 /** How long the clips that end on their own last, in seconds. */
 export const LENGTH = { land: 0.75, thanks: 1.15, wave: 1.8, hop: 1.2, gaze: 2.8, hello: 2.2, stunned: 0.8, shock: 1.6, faint: 3.2, wink: 1.4 } as const;
 

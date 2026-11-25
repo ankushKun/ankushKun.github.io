@@ -2,13 +2,13 @@
 // Your Mii on a small stage, waving. Loads the Mii runtime only where JavaScript and data allow;
 // coming from the plaza it is already loaded.
 import { AUTHOR } from '../../site';
-import { ME } from '../../data/plaza';
+import { LOOKS, ME } from '../../data/plaza';
 import { resolveMii } from '../../lib/miis';
 
 const code = await resolveMii(ME, 'ME');
 ---
 
-<div class="stage" data-mii-stage={code}>
+<div class="stage" data-mii-stage={code} data-left-eye={LOOKS[ME]?.leftEye}>
   <span class="stage-disc" aria-hidden="true"></span>
   <canvas role="img" aria-label={`${AUTHOR.name.split(' ')[0]}'s Mii`}></canvas>
 </div>
@@ -22,7 +22,7 @@ const code = await resolveMii(ME, 'ME');
     const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
     if (!root || saveData || root.dataset.live !== undefined) return;
     root.dataset.live = '';
-    stop = mountStage(root, root.dataset.miiStage ?? '');
+    stop = mountStage(root, root.dataset.miiStage ?? '', { leftEye: root.dataset.leftEye });
   });
   document.addEventListener('astro:before-swap', () => {
     stop?.();

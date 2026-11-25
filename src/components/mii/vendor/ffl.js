@@ -3508,8 +3508,16 @@ function _drawMaskTexture(charModel, rawMaskParam, renderer, module, materialCla
 		stencilBuffer: false
 	};
 	// Create an offscreen scene with no background (for 2D mask rendering).
-	const { scene: offscreenScene } = createSceneFromDrawParams(drawParams,
+	const { scene: offscreenScene, meshes } = createSceneFromDrawParams(drawParams,
 		null, materialClass, module, charModel._textureManager);
+	// ankush.one: a Mii's own iris color for each eye (charModel.eyeColors, [r, g, b] from 0 to 1
+	// per eye, first the one on the left as you look at it), where FFL can only draw one.
+	rawMaskParam.drawParamRawMaskPartsEye.forEach((dp, eye) => {
+		const rgb = charModel.eyeColors?.[eye];
+		// Only an eye drawn in its colors (black, iris, white) has an iris; closed ones are drawn as they are.
+		const mesh = rgb && dp.modulateParam.mode === FFLModulateMode.RGB_LAYERED && meshes[drawParams.indexOf(dp)];
+		if (mesh) /** @type {*} */ (mesh.material).uniforms.u_const3.value.set(rgb[0], rgb[1], rgb[2], 1);
+	});
 	const width = charModel._getResolution();
 
 	const target = createAndRenderToTarget(offscreenScene,

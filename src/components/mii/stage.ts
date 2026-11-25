@@ -4,11 +4,11 @@
 import * as THREE from 'three';
 import { decodeMii } from './data';
 import { loadMiiKit } from './kit';
-import { MiiSet, restPose } from './rig';
+import { MiiSet, restPose, withLook } from './rig';
 import { LENGTH, wave } from '../plaza/motion';
 
 /** Starts the stage. The returned function stops it and frees its GPU memory, at any point. */
-export function mountStage(root: HTMLElement, code: string): () => void {
+export function mountStage(root: HTMLElement, code: string, look?: { leftEye?: string }): () => void {
   const canvas = root.querySelector('canvas');
   const mii = decodeMii(code);
   let stopped = false;
@@ -26,7 +26,7 @@ export function mountStage(root: HTMLElement, code: string): () => void {
       renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(22, 1, 0.1, 50);
-      const set = new MiiSet(kit, renderer, [mii], { resolution: 512, happy: true, shadows: true });
+      const set = new MiiSet(kit, renderer, [withLook(kit, mii, look)], { resolution: 512, happy: true, shadows: true });
       set.build();
       scene.add(set.group);
       const top = set.headTop(0);

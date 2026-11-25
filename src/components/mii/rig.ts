@@ -238,6 +238,23 @@ export function withParts(kit: MiiKit, data: Uint8Array, parts: Record<string, R
   }
 }
 
+/** The eye on the left as you look, for Mii bytes `withLook` returned. */
+const leftEyes = new WeakMap<Uint8Array, [number, number, number]>();
+
+/**
+ * Mii `data` in a look the Mii data can't carry: `parts` as in `withParts`, and `leftEye`, a CSS hex
+ * color for the iris of the eye on the left as you look at it, so the two eyes can differ.
+ */
+export function withLook(kit: MiiKit, data: Uint8Array, look?: { parts?: Record<string, Record<string, number>>; leftEye?: string }) {
+  const out = look?.parts ? withParts(kit, data, look.parts) : data;
+  if (!look?.leftEye) return out;
+  const own = out === data ? data.slice() : out;
+  // FFL's colors are drawn as they are, so the hex is taken without conversion.
+  const c = new THREE.Color().setStyle(look.leftEye, THREE.LinearSRGBColorSpace);
+  leftEyes.set(own, [c.r, c.g, c.b]);
+  return own;
+}
+
 /**
  * Leaves off the pieces of a head's hair that sit wholly up on the back of it, a bun or a puff,
  * and keeps the rest of the style exactly as it is. A piece is whatever its triangles join up
@@ -566,6 +583,8 @@ export class MiiSet {
         this.kit.ffl,
         false,
       );
+      const left = leftEyes.get(s.data);
+      if (left) model.eyeColors = [left];
       initCharModelTextures(model, this.renderer, FFLShaderMaterial);
     } catch (err) {
       console.warn('Skipping a Mii FFL could not build', err);

@@ -38,6 +38,8 @@ export class CharModel {
   readonly facelineColor: THREE.Color;
   readonly gender: number;
   readonly boundingBox: THREE.Box3;
+  /** Each eye's iris color, left then right as you look, set before `initCharModelTextures` (an ankush.one patch). */
+  eyeColors?: ([number, number, number] | undefined)[];
   setExpression(expression: number): void;
   getBodyScale(mode?: number): THREE.Vector3;
   dispose(disposeTargets?: boolean): void;

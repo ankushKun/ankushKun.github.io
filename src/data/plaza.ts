@@ -49,10 +49,11 @@ export const HERO: string[] = [];
 export const DJ = 'Hatsune Miku.png';
 
 /**
- * What a QR code can't carry, by file name in src/data/miis/: Switch colors, a headset, a ponytail,
- * a hairstyle without its bun (MiiLook in plaza/types.ts).
+ * What a QR code can't carry, by file name in src/data/miis/: Switch colors, a second eye color, a
+ * headset, a ponytail, a hairstyle without its bun (MiiLook in plaza/types.ts).
  */
 export const LOOKS: Record<string, MiiLook> = {
+  'Ankush.png': { leftEye: '#a68438' },
   'Hatsune Miku.png': { parts: { hair: { color: 61 }, eyebrow: { color: 61 } }, headset: '#39c5bb' },
   'Gumi.png': { parts: { hair: { color: 69 }, eyebrow: { color: 69 } } },
 };

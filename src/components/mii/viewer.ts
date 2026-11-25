@@ -3,7 +3,8 @@ import * as THREE from 'three';
 import { decodeMii, encodeMii, miiInfo } from './data';
 import { loadMiiKit } from './kit';
 import { miiFromQrImage } from './qr';
-import { MiiSet, restPose, withParts } from './rig';
+import { MiiSet, restPose, withLook } from './rig';
+import type { MiiLook } from '../plaza/types';
 
 /** Starts the viewer. Resolves to a function that stops it and frees its GPU memory. */
 export async function mount(root: HTMLElement): Promise<() => void> {
@@ -20,7 +21,7 @@ export async function mount(root: HTMLElement): Promise<() => void> {
   const crowdEl = root.querySelector<HTMLScriptElement>('[data-crowd]');
   const name = need(root.querySelector<HTMLElement>('[data-name]'));
   const status = need(root.querySelector<HTMLElement>('[data-status]'));
-  const crowd: { name: string; code: string; parts?: Record<string, Record<string, number>> }[] = crowdEl?.textContent ? JSON.parse(crowdEl.textContent) : [];
+  const crowd: ({ name: string; code: string } & Pick<MiiLook, 'parts' | 'leftEye'>)[] = crowdEl?.textContent ? JSON.parse(crowdEl.textContent) : [];
   let lastPick = -1;
 
   const kit = await loadMiiKit();
@@ -40,10 +41,10 @@ export async function mount(root: HTMLElement): Promise<() => void> {
     code.setAttribute('aria-invalid', String(error));
   };
 
-  /** Shows `mii`, with the parts its look changes that the code can't carry (LOOKS in src/data/plaza.ts). */
-  function show(mii: Uint8Array, labelOverride?: string, parts?: Record<string, Record<string, number>>) {
+  /** Shows `mii`, in the look the code can't carry when it is one of the plaza's (LOOKS in src/data/plaza.ts). */
+  function show(mii: Uint8Array, labelOverride?: string) {
     set?.dispose();
-    const drawn = parts ? withParts(kit, mii, parts) : mii;
+    const drawn = withLook(kit, mii, crowd.find((c) => c.code === encodeMii(mii)));
     set = new MiiSet(kit, renderer, [drawn], { resolution: 512, happy: true, shadows: true });
     set.build();
     scene.add(set.group);
@@ -91,7 +92,7 @@ export async function mount(root: HTMLElement): Promise<() => void> {
     const pick = crowd[idx];
     const mii = decodeMii(pick.code);
     if (mii) {
-      show(mii, pick.name, pick.parts);
+      show(mii, pick.name);
       say(`Pulled ${pick.name} from the plaza crowd!`);
     }
   });

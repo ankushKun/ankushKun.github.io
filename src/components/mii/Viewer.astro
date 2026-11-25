@@ -10,6 +10,7 @@ const crowd = [...(await folderMiis())].map(([file, code]) => ({
   name: file.replace(/\.[^.]+$/, ''),
   code,
   parts: LOOKS[file]?.parts,
+  leftEye: LOOKS[file]?.leftEye,
 }));
 ---
 

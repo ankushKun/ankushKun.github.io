@@ -70,13 +70,16 @@ export type StageProp = 'leek' | 'phone' | 'baguette';
 /**
  * What a Mii code can't carry. `parts` change the Mii itself, by FFL's CharInfo names (hair type,
  * eye color, favoriteColor under personal...); the colors of hair, eyes, eyebrows, mouth, beard and
- * glasses are the Switch's hundred (0 to 99), which a QR code can't hold. The rest are drawn on,
+ * glasses are the Switch's hundred (0 to 99), which a QR code can't hold. `leftEye` gives the eye on
+ * the left as you look an iris color of its own, everywhere the Mii is drawn. The rest are drawn on,
  * for the DJ and those around them and the middle group only (far-off crowd heads are flat
  * pictures): `headset` is a headset with a mic, its lights in that color, `ponytail` is a long
  * ponytail tied high on the left, in that color, and `prop` picks what they twirl in the polka.
  */
 export interface MiiLook {
   parts?: Record<string, Record<string, number>>;
+  /** The iris color of the eye on the left as you look, when it differs from the other (a CSS hex). */
+  leftEye?: string;
   headset?: string;
   ponytail?: string;
   /** Leaves off any bun or puff on the back of the head, keeping the rest of the hairstyle. */

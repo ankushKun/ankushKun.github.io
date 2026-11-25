@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { decodeMii } from '../mii/data';
 import type { MiiKit } from '../mii/kit';
-import { MiiSet, randomMii, restPose, withParts, type Pose } from '../mii/rig';
+import { MiiSet, randomMii, restPose, withLook, type Pose } from '../mii/rig';
 import { MIRRORED } from './floor';
 import type { Layout } from './layout';
 import type { Track } from '../../data/music';
@@ -408,6 +408,8 @@ export class Crowd {
   /** The leeks the stage twirls in the polka, one for each of them. */
   private readonly leeks: Leeks | null = null;
   private readonly leekNow = { show: 0, spin: 0 };
+  /** Where the phone dancer's head is, for the phone to face. */
+  private readonly faceAt = new THREE.Vector3();
   /** The mics the stage sings into in the Tetoris spin, one each, and how far each is out (0 to 1) and when that was. */
   private readonly mics: Mics | null = null;
   private readonly micOut: { show: number; at: number }[] = [];
@@ -488,7 +490,7 @@ export class Crowd {
       miis.flatMap((who): Cast[] => {
         const data = decodeMii(who.code);
         if (!data) return [];
-        return [{ data: who.parts ? withParts(opts.kit, data, who.parts) : data, who }];
+        return [{ data: withLook(opts.kit, data, who), who }];
       });
     const named = decode(opts.hero).slice(0, 10);
     // A different set of famous faces stands beside you on each visit.
@@ -2368,11 +2370,16 @@ export class Crowd {
     pose.pitch += m.tipX;
     pose.roll += m.tipZ;
     pose.scale = SIZE;
+    // The leek comes out for the polka's twirl, and goes the moment anything else is danced. A phone
+    // isn't twirled: its dancer looks at it instead.
+    const prop = m.stage && this.leeks && m.clip === motion.polka ? motion.leek(this.polkaIn(m), this.leekNow) : null;
+    const phone = m.who?.prop === 'phone';
+    if (prop && phone) motion.texting(pose, prop.show);
     m.set.setPose(m.slot, pose);
     if (m.stage && this.leeks) {
-      // The leek comes out for the polka's twirl, and goes the moment anything else is danced.
-      const now = m.clip === motion.polka && !m.set.isHidden(m.slot) ? motion.leek(this.polkaIn(m), this.leekNow) : null;
-      this.leeks.place(m.stage.leek, now ? now.show : 0, now ? now.spin : 0, SIZE);
+      const now = prop && !m.set.isHidden(m.slot) ? prop : null;
+      const head = phone && now ? m.set.headMatrix(m.slot) : null;
+      this.leeks.place(m.stage.leek, now ? now.show : 0, now ? now.spin : 0, SIZE, head ? this.faceAt.setFromMatrixPosition(head) : undefined);
     }
     if (m.stage && this.mics) {
       // The mic comes out for the Tetoris spin, quickly, and goes back as quickly after.
