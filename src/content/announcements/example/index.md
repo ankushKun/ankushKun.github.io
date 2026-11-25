@@ -3,7 +3,7 @@
 # The folder name is the id. A new folder is a new announcement, shown once more to everyone.
 text: New Tab Mii Plaza is out for Chrome and Firefox!
 # A path on this site, or an https:// address, which opens in a new tab.
-url: /projects/new-tab-mii-plaza/
+url: https://ankush.one/newtab-mii-plaza/
 # Optional: a square picture beside this file, shown at 128 px. Without one, your Mii's face (or the About block's icon on the plaza).
 # icon: ./icon.png
 date: 2026-01-01

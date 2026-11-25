@@ -81,7 +81,7 @@ An announcement is one short line with a link, shown once to everyone: on this s
 ```yaml
 ---
 text: New Tab Mii Plaza is out for Chrome and Firefox!
-url: https://github.com/ankushKun/new-tab-mii-plaza
+url: https://ankush.one/newtab-mii-plaza/
 icon: ./icon.png
 date: 2026-12-01
 ---
