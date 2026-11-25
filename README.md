@@ -55,6 +55,58 @@ Copy an existing entry to start a new one. All entries share `title`, `descripti
 
 Standalone pages (About, Privacy, Credits...) and the intro of every section index are Markdown files in `src/content/pages/`, named after the page. Resume data lives in `src/data/resume.ts` and also feeds the About page. Name, socials, nav, booking link and newsletter form target live in `src/site.ts`.
 
+## Announcements
+
+An announcement is one short line with a link, shown once to everyone: on this site and in the New Tab Mii Plaza extension. Each visitor sees it a single time, and only the newest one is ever shown.
+
+- **On the site**, your Mii says it as the plaza's greeting on the home page. On any other page, or when the plaza can't run, a card like a launch's rises into the corner. It counts as seen the moment it appears and is remembered in `localStorage` (`announcement_seen`), so no page shows it again. A launch being announced (Launch messages, under Every other page) goes first, and the announcement waits until the launch's days are over.
+- **In the extension**, your Mii says it as a bubble on the plaza and clicking it opens the link. The extension reads `/announcement.json` at most every six hours, so people see it within about six hours of the deploy, on their next new tab. A brand new install shows its welcome tip on the first tab and the announcement on the next.
+
+### Publishing one
+
+1. Make a folder in `src/content/announcements/`. Its name is the announcement's id, so pick something new, for example `2026-12-plaza-update`. Copy `example/index.md` into it.
+2. Fill in the frontmatter:
+
+   | Field | Required | What it does |
+   | --- | --- | --- |
+   | `text` | yes | What your Mii says. 120 characters at most. |
+   | `url` | yes | Where it goes: a path on this site (`/projects/x/`) or an `https://` address, which opens in a new tab. |
+   | `icon` | no | A square picture beside `index.md` (`./icon.png`), shown at 128 px. Without one, the card shows your Mii's face and the extension shows your Mii's portrait. |
+   | `date` | yes | When it starts showing. |
+   | `until` | no | When it stops showing. Defaults to 30 days after `date`. |
+   | `draft` | no | `true` shows it in `pnpm dev` only. |
+
+3. Delete the comments, set `draft: false`, then push to `main`. The deploy publishes it. The build fails if a field is wrong.
+
+```yaml
+---
+text: New Tab Mii Plaza is out for Chrome and Firefox!
+url: https://github.com/ankushKun/new-tab-mii-plaza
+icon: ./icon.png
+date: 2026-12-01
+---
+```
+
+### Rules worth knowing
+
+- **The folder name is the id.** Fixing a typo in `text` keeps the id, so nobody sees it twice. To show something again to everyone, make a new folder.
+- **Only the newest live one shows.** With two live at once, the later `date` wins and the other never appears.
+- **The site is static, so dates take effect at a build.** One dated in the future goes live with the first deploy after its `date`. The daily guestbook workflow redeploys, so that's within a day; push or run the deploy by hand to make it exact.
+- **To end one early**, set `until` to today or `draft: true`, and push. People who already saw it never see it again either way. Keep old folders rather than deleting them, so their ids stay used.
+
+### Trying it locally
+
+- `pnpm dev` includes drafts, so a draft announcement shows on `http://localhost:4321` and in `http://localhost:4321/announcement.json`. To see it again, run `localStorage.removeItem('announcement_seen')` in the browser console and reload.
+- To try it in the extension, run `WXT_ANNOUNCE_URL=http://localhost:4321/announcement.json pnpm dev` in the extension's repo while this dev server runs. To reset it there, run `chrome.storage.local.remove(['announcement', 'announcementsSeen'])` in the new tab's console. The extension shows the welcome tip on the first tab, so open a second one.
+
+### How it fits together
+
+- `src/content.config.ts` (`announcements`) checks each entry.
+- `src/lib/announcement.ts` holds the shared shape and the rule for when one is live. `src/lib/announcement-entries.ts` picks the newest at build time and sizes its icon.
+- `src/pages/announcement.json.ts` serves `{ "v": 1, "announcement": { "id", "text", "url", "icon"?, "date", "until" } }`, or `"announcement": null` when there is none, with absolute URLs. The extension relies on this shape. A change that old readers can't take needs `v` bumped, and installed extensions ignore any version they don't know.
+- `src/components/launch/Messages.astro` renders the card next to the launch card. `src/scripts/announcement.ts` decides when it rises and feeds the plaza's greeting (`src/components/plaza/main.ts`).
+- Analytics: `announcement_shown`, `announcement_opened` and `announcement_closed` (`src/scripts/analytics.ts`). The extension sends none.
+
 ## Every other page
 
 Every page but the plaza is shown on a TV (`src/components/ui/Frame.astro`): a white casing round a pale screen with a CRT's rounded corners, and one white column down the middle of the screen, as wide as two thirds of it, to read. The page scrolls under the casing's edge as under glass. Nothing else is on the screen:

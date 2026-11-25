@@ -10,7 +10,7 @@ This is a static personal website built with Astro. There are no user accounts a
 
 A few small things are kept in your browser's own storage and never sent anywhere:
 
-- In `localStorage`: your theme (`light` or `dark`) once you pick one, and the Terminal's command history and last login.
+- In `localStorage`: your theme (`light` or `dark`) once you pick one, the Terminal's command history and last login, and which announcements you've already seen, so each shows only once.
 - In `sessionStorage`, which clears when you close the tab: whether you've seen the plaza's opening, whether you stopped the music, and whether you closed the card about a launch.
 
 ## Live apps (`/apps/`)

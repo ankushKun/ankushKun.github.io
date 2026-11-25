@@ -23,6 +23,12 @@ export interface Events {
   launch_supported: { launch: string; phase: string; from: 'card' };
   /** A launch's letter opened, from its card or your Mii's greeting on the plaza. */
   launch_letter_opened: { launch: string; from: 'card' | 'plaza' };
+  /** Your announcement shown once, as its card or your Mii's greeting on the plaza (scripts/announcement.ts). */
+  announcement_shown: { id: string; from: 'card' | 'plaza' };
+  /** Its card closed. */
+  announcement_closed: { id: string };
+  /** Pressed through to where it points. */
+  announcement_opened: { id: string; from: 'card' | 'plaza' };
   konami_code_entered: undefined;
   theme_changed: { theme: string };
   menu_opened: undefined;

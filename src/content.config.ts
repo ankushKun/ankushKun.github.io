@@ -89,4 +89,25 @@ const pages = defineCollection({
     }),
 });
 
-export const collections = { blog, projects, timeline, pages };
+/**
+ * One-time announcements (src/lib/announcement.ts): the newest one live is shown once to each visitor, as a card or
+ * your Mii's greeting on the plaza, and served at /announcement.json for New Tab Mii Plaza. The folder name is its id,
+ * so a new folder is a new announcement and editing one never shows it twice. `url` is a path on this site or an
+ * https address. It shows from `date` until `until`, 30 days after `date` when left out. README.md, Announcements.
+ */
+const announcements = defineCollection({
+  loader: bundle('announcements'),
+  schema: ({ image }) =>
+    z
+      .object({
+        text: z.string().trim().min(1).max(120),
+        url: z.string().refine((url) => url.startsWith('https://') || /^\/(?!\/)/.test(url), 'A path on this site (/...) or an https:// address'),
+        icon: image().optional(),
+        date: z.coerce.date(),
+        until: z.coerce.date().optional(),
+        draft: z.boolean().default(false),
+      })
+      .refine((a) => !a.until || a.until > a.date, { message: '`until` must be after `date`', path: ['until'] }),
+});
+
+export const collections = { blog, projects, timeline, pages, announcements };

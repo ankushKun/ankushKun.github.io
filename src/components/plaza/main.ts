@@ -30,6 +30,7 @@ import { Rotation } from './rotation';
 import { clamp, damp, easeInOut, rng, smoothstep } from './util';
 import { voices, type Sound } from './voices';
 import { greeting as launchGreeting, openLetter } from '../../scripts/launch';
+import { greeting as announcementGreeting, openAnnouncement, said as announcementSaid } from '../../scripts/announcement';
 
 /** When the camera has pulled all the way back to the whole plaza, in seconds from the click. */
 const WIDE = 4.35;
@@ -276,8 +277,12 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     bubbleLayer,
     data.posts,
     icons.map((icon) => thumb(icon, 128)),
-    // A different greeting on every visit, or the launch you're announcing (scripts/launch.ts).
-    launchGreeting(data.welcome[0]) ?? data.welcome[Math.floor(Math.random() * data.welcome.length)] ?? null,
+    // A different greeting on every visit, or the launch you're announcing (scripts/launch.ts), or your one-time
+    // announcement (scripts/announcement.ts).
+    launchGreeting(data.welcome[0]) ??
+      announcementGreeting(data.welcome[0]) ??
+      data.welcome[Math.floor(Math.random() * data.welcome.length)] ??
+      null,
   );
 
   // The chat's latest messages join the bubbles, said under the Chat block (chatter.ts). It listens
@@ -300,7 +305,10 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     chatter?.stop();
     chatter = null;
   }
-  bubbles.onSay = (post) => chatter?.said(post);
+  bubbles.onSay = (post) => {
+    chatter?.said(post);
+    announcementSaid(post);
+  };
 
   // Drawings from Paint join the feature block's picks and the bubbles once the plaza is up
   // (sketch.ts), the first one next in line for the block, so a visit sees one. Styled as the Paint
@@ -749,6 +757,13 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
       e.preventDefault();
       bubbles.dismiss();
       openLetter('plaza');
+      return;
+    }
+    // Your Mii's announcement goes where it points, another site in a new tab.
+    if (link.getAttribute('href') === '#announcement') {
+      e.preventDefault();
+      bubbles.dismiss();
+      openAnnouncement('plaza');
       return;
     }
     const speaker = bubbles.speakerOf(link);

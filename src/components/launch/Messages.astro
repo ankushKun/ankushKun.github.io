@@ -5,23 +5,44 @@
 // next visit sees it again. Pressing its words opens the letter: the launch, its links and your earlier launches.
 // Everything ships hidden and scripts/launch.ts shows what the visitor's clock says, from a day before a launch to a
 // day after. It persists across pages, like the TV.
+// The same corner carries your one-time announcement (lib/announcement.ts, scripts/announcement.ts): its icon, or your
+// Mii, and its words, pressing them goes where it points. It shows once per visitor and only when no launch is up.
 import { Cancel01Icon } from '@hugeicons/core-free-icons';
 import { siProducthunt } from 'simple-icons';
 import HugeIcon from '../ui/HugeIcon.astro';
 import MenuButton from '../ui/MenuButton.astro';
 import { AUTHOR } from '../../site';
 import { getLaunches } from '../../lib/launch-entries';
+import { getAnnouncement } from '../../lib/announcement-entries';
+import { isExternal } from '../../lib/announcement';
 
 const launches = await getLaunches();
+const announcement = await getAnnouncement();
+const away = announcement && isExternal(announcement.url) ? { target: '_blank', rel: 'noopener' } : {};
 const me = AUTHOR.name.split(' ')[0];
 const month = new Intl.DateTimeFormat('en-US', { month: 'short', timeZone: 'America/Los_Angeles' });
 const day = new Intl.DateTimeFormat('en-US', { day: 'numeric', timeZone: 'America/Los_Angeles' });
 ---
 
 {
-  launches.length > 0 && (
+  (launches.length > 0 || announcement) && (
     <div class="msg" data-messages transition:persist="messages">
       <script type="application/json" data-launches set:html={JSON.stringify(launches)} />
+      <script type="application/json" data-announcement set:html={JSON.stringify(announcement)} />
+      {announcement && (
+        <aside class="msg-card" data-ann-card hidden aria-label={`News from ${me}`}>
+          <span class="msg-tag">{me}</span>
+          <button type="button" class="msg-card-x" data-ann-dismiss aria-label="Close" data-sfx="back">
+            <HugeIcon icon={Cancel01Icon} size={16} strokeWidth={2.2} />
+          </button>
+          <a class="msg-card-body" href={announcement.url} data-ann-go data-sfx {...away}>
+            <span class="msg-card-logo">
+              <img src={announcement.icon ?? '/mii/me-happy.webp'} alt="" width="56" height="56" />
+            </span>
+            <span>{announcement.text}</span>
+          </a>
+        </aside>
+      )}
       <aside class="msg-card" data-msg-card hidden aria-label={`News from ${me}`}>
         <span class="msg-tag">{me}</span>
         <button type="button" class="msg-card-x" data-msg-dismiss aria-label="Close" data-sfx="back">
@@ -109,6 +130,7 @@ const day = new Intl.DateTimeFormat('en-US', { day: 'numeric', timeZone: 'Americ
 
 <script>
   import '../../scripts/launch';
+  import '../../scripts/announcement';
 </script>
 
 <style>
@@ -235,6 +257,7 @@ const day = new Intl.DateTimeFormat('en-US', { day: 'numeric', timeZone: 'Americ
     font-weight: 600;
     line-height: 1.35;
     text-align: left;
+    text-decoration: none;
     cursor: pointer;
   }
 
