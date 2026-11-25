@@ -15,8 +15,7 @@
     "favicons": "node scripts/favicons.mjs",
     "og:capture": "node scripts/og-capture.mjs",
     "music": "node scripts/music.mjs",
-    "bpm": "node scripts/bpm.mjs",
-    "guestbook": "node scripts/guestbook.mjs"
+    "bpm": "node scripts/bpm.mjs"
   },
   "dependencies": {
     "@astrojs/markdown-satteri": "0.4.7",

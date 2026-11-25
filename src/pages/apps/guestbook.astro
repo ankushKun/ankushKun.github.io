@@ -3,7 +3,6 @@
 import Base from '../../layouts/Base.astro';
 import Guestbook from '../../components/guestbook/Guestbook.astro';
 import { getPage, pagePath } from '../../lib/content';
-import { guestbookEntries, HIDDEN } from '../../lib/guestbook';
 import { ogPathForPage } from '../../lib/og';
 import { breadcrumbs, webPage } from '../../lib/schema';
 
@@ -24,5 +23,5 @@ const path = pagePath(Astro.url);
     ]),
   ]}
 >
-  <Guestbook entries={guestbookEntries()} hidden={HIDDEN} />
+  <Guestbook />
 </Base>

@@ -1,7 +1,6 @@
-// A Guestbook note as it is stored on the relay (apps/guestbook/entries/<id>) and in the snapshot
-// the site is built with (src/data/guestbook.json). Everything in that node was written by a
-// stranger's browser, so nothing is shown unless it survives readEntry, and anything that doesn't
-// is dropped whole. No imports, so scripts/guestbook.mjs can use it as it is (Node strips the types).
+// A Guestbook note as it is stored on the relay (apps/guestbook/entries/<id>). Everything in that
+// node was written by a stranger's browser, so nothing is shown unless it survives readEntry, and
+// anything that doesn't is dropped whole.
 //
 // Fields, new and the old site's (which it still reads):
 //   name, from         who and where, as typed

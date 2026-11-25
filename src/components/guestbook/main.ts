@@ -1,5 +1,5 @@
-// Runs the Guestbook (Guestbook.astro). The board as built is the snapshot; this adds what the relay
-// holds that's newer, takes down what was taken down, and runs the sheet you sign in: the gate if
+// Runs the Guestbook (Guestbook.astro). Fills the board from the relay, the only place notes live,
+// takes down what was taken down, and runs the sheet you sign in: the gate if
 // you haven't a name yet, then your note (drawn, written or both, on a paper you pick), where you're
 // from and your links. One note per person, kept under your id, so signing again changes yours.
 //
@@ -40,10 +40,7 @@ export function mount(root: HTMLElement): () => void {
   const pinLabel = $('[data-pin-label]');
 
   /** Every note on the board, by id: what we know of it and its element. */
-  const notes = new Map<string, { entry: Entry | null; updated: number; ts: number; el: HTMLLIElement }>();
-  for (const el of $$<HTMLLIElement>('.note[data-id]')) {
-    notes.set(el.dataset.id!, { entry: null, updated: Number(el.dataset.updated) || 0, ts: Number(el.dataset.ts) || 0, el });
-  }
+  const notes = new Map<string, { entry: Entry; updated: number; ts: number; el: HTMLLIElement }>();
   const hidden = new Set<string>();
   const chains: Chain[] = [];
   let lastSave = 0;
@@ -149,10 +146,7 @@ export function mount(root: HTMLElement): () => void {
 
   function show(e: Entry) {
     const known = notes.get(e.id);
-    if (known && known.updated >= e.updatedTs) {
-      known.entry ??= e;
-      return;
-    }
+    if (known && known.updated >= e.updatedTs) return;
     const el = noteEl(e);
     if (known) known.el.replaceWith(el);
     notes.set(e.id, { entry: e, updated: e.updatedTs, ts: e.ts, el });
@@ -172,8 +166,7 @@ export function mount(root: HTMLElement): () => void {
   function onEntry(id: string, data: unknown) {
     const raw = parse(data);
     if (!raw) return;
-    // Taken down by its writer. A note that simply isn't there (a relay that lost it) stays as the
-    // snapshot has it.
+    // Taken down by its writer.
     if (raw.deleted && !raw.name) return takeDown(id);
     const e = readEntry(id, raw);
     if (e) show(e);
@@ -205,7 +198,7 @@ export function mount(root: HTMLElement): () => void {
     return session.me.uuid;
   }
 
-  /** Your note as the board knows it, read again from its element's data if it came from the snapshot. */
+  /** Your note as the board knows it. */
   const mine = () => notes.get(myId()) ?? null;
 
   let pad: Pad | null = null;
@@ -359,7 +352,7 @@ export function mount(root: HTMLElement): () => void {
     if (filled) return;
     filled = true;
     const m = mine();
-    const e = m?.entry ?? (m ? await snapshotEntry(myId()) : null);
+    const e = m?.entry;
     removeBtn.hidden = !m;
     pinLabel.textContent = m ? 'Pin again' : 'Pin it';
     if (!e) return;
@@ -372,18 +365,6 @@ export function mount(root: HTMLElement): () => void {
     if (e.doodle) {
       loadedDoodle = e.doodle;
       await pad.load(e.doodle).catch(() => {});
-    }
-  }
-
-  /** A note from the snapshot: read from the page's own copy (the snapshot is built in). */
-  async function snapshotEntry(id: string): Promise<Entry | null> {
-    try {
-      const res = await fetch('/apps/guestbook/notes.json');
-      const all = (await res.json()) as { entries: Record<string, unknown>[] };
-      const raw = all.entries.find((x) => x.id === id);
-      return raw ? readEntry(id, raw) : null;
-    } catch {
-      return null;
     }
   }
 
@@ -468,8 +449,6 @@ export function mount(root: HTMLElement): () => void {
 
   // Start ------------------------------------------------------------------------------------------
 
-  for (const id of JSON.parse(root.dataset.hidden ?? '[]') as string[]) hidden.add(id);
-  for (const n of notes.values()) addHide(n.el);
   const entries = node('apps/guestbook/entries');
   const hides = node('apps/guestbook/hidden');
   chains.push(entries, hides);

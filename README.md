@@ -182,11 +182,10 @@ One shared canvas a day that everyone draws on at once (`src/components/paint/`)
 
 ### Guestbook (`/apps/guestbook/`)
 
-Notes pinned to a green board, as Swapnote's were drawn and written (`src/components/guestbook/`), each with the paper it's on, what was written on its lines and drawn over them, and a white strip at its foot signed with its writer's Mii, where they're from, their links and the date. Notes stay paper by night; the board darkens.
+Notes pinned to a green board, as Swapnote's were drawn and written (`src/components/guestbook/`), each with the paper it's on, what was written on its lines and drawn over them, and a white strip at its foot signed with its writer's Mii, where they're from, their links and the date. Notes stay paper by night; the board darkens. Notes live only on the relay (`apps/guestbook/entries`), never in the repo, and the page fills the board from it.
 
-- **Built in**: the board is built from the daily snapshot (`src/data/guestbook.json`), so it reads without JavaScript and survives the relay losing it; the page then adds what the relay holds that's newer. `pnpm guestbook` takes the snapshot (`scripts/guestbook.mjs`, read only towards the relay), and `.github/workflows/guestbook.yml` runs it every day, commits what changed and redeploys. It reads notes by the page's own rules (`entry.ts`), leaves out emails (a public git history can't forget one) and stops for a human when a run would add or change more than a handful at once.
 - **Signing**: Sign asks for your name and the agreement first (the gate, in the sheet), then your note: draw on Swapnote's 320 by 240 paper in three inks with a pen, a marker and an eraser, write on its lines, or both, on one of five papers. Links take a handle, an address or an email and show each one's own mark (`links.ts`, from `lib/platforms.ts`); a bare `@handle` asks which platform it's on. One note per person, under your id, so signing again changes yours, and you can take it down. Someone who signed the old site keeps their note through its visitor id.
-- **Moderation**: a mod's Hide hides a note for everyone at once (`apps/guestbook/hidden`), by courtesy; `src/data/guestbook-hidden.json` keeps one off the board and out of the snapshot for good. `/apps/guestbook/notes.json` is the book as built.
+- **Moderation**: a mod's Hide hides a note for everyone at once (`apps/guestbook/hidden`), by courtesy.
 
 ### Terminal (`/apps/terminal/`)
 
@@ -281,7 +280,6 @@ public/                 favicon, resume.pdf, ffl/ (Mii runtime and models), play
 scripts/transitions.mjs films every route change (pnpm transitions)
 scripts/music.mjs       syncs the radio's mix from YouTube (pnpm music)
 scripts/bpm.mjs         measures each track's beat for the dancers (pnpm bpm, with tempo.mjs)
-scripts/guestbook.mjs   snapshots the Guestbook from the relay (pnpm guestbook)
 ```
 
 ## SEO, AEO and GEO
