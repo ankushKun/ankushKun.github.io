@@ -446,6 +446,7 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
     crowd.arrive(start + INTRO.crowd, SCORE.settled - INTRO.crowd);
     cubes.launch(start + INTRO.cubes);
     if (withSound) {
+      radio.prepare();
       radio.prime();
       music.begin(() => (scored && since() < SCORE.settled ? since() : null));
     } else scored = false;
@@ -1366,7 +1367,9 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
       // With nothing to wait for, sound joins whenever the browser lets it.
       if (!waiting) music.begin(() => null);
       // The radio's player loads now the plaza is up, so it is ready by the time the theme hands over.
-      setTimeout(radio.prepare, 1200);
+      // Waiting for the click, it loads once someone is there, still well before the handover.
+      if (waiting) radio.prepareOnIntent(1200);
+      else setTimeout(radio.prepare, 1200);
     }
     raf = requestAnimationFrame(frame);
   }

@@ -147,6 +147,22 @@ export function prepare() {
   void ensure();
 }
 
+/**
+ * Loads YouTube once someone is there: on their first move, touch, scroll or key. Its player is
+ * about a megabyte and sets Google's cookies, so a visit nobody touches never loads it. iOS needs
+ * the player ready inside the press that starts the plaza (`prime`), which a first touch is too
+ * late for, so there it loads after `ms` as before.
+ */
+export function prepareOnIntent(ms: number) {
+  if (ios) return void setTimeout(prepare, ms);
+  const events = ['pointermove', 'pointerdown', 'keydown', 'wheel', 'touchstart'] as const;
+  const go = () => {
+    for (const type of events) removeEventListener(type, go, true);
+    prepare();
+  };
+  for (const type of events) addEventListener(type, go, { capture: true, passive: true });
+}
+
 function apply() {
   player?.setVolume(Math.round(state.muted ? 0 : state.volume * gain));
 }

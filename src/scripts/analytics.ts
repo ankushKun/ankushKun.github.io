@@ -97,6 +97,8 @@ async function load() {
     capture_pageleave: true,
     enable_heatmaps: true,
     capture_dead_clicks: true,
+    // No surveys run here, so their 50KB script never needs to load.
+    disable_surveys: true,
     capture_exceptions: true,
     capture_performance: { web_vitals: true, network_timing: true },
     enable_recording_console_log: true,

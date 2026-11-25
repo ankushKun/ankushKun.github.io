@@ -18,8 +18,10 @@ import { extAttrs, NEW_TAB } from '../../lib/external';
 import { resolveLink } from '../../lib/links';
 import { LOBBY_BUILT, LOBBY_NAV, SITE, SUPPORT } from '../../site';
 
-/** A section's plaza block art, named after its path: /blogs/ is blogs.webp. */
-const nav = LOBBY_NAV.map((l) => ({ ...l, icon: `/plaza/icons/${l.href.replace(/\//g, '')}.webp` }));
+/** A section's plaza block art, named after its path: /blogs/ is blogs.webp, as a small copy (art/lobby/). */
+const nav = LOBBY_NAV.map((l) => ({ ...l, icon: `/art/lobby/${l.href.replace(/\//g, '')}.webp` }));
+/** Icons kept in public/lobby/ have small copies too; the rest (favicons) are small already. */
+const built = LOBBY_BUILT.map((l) => ({ ...l, icon: l.icon.replace(/^\/lobby\/([\w-]+)\.\w+$/, '/art/lobby/$1.webp') }));
 const support = SUPPORT.map((s) => ({ ...s, badge: resolveLink(s.url, s.platform).badge }));
 ---
 
@@ -47,7 +49,7 @@ const support = SUPPORT.map((s) => ({ ...s, badge: resolveLink(s.url, s.platform
       <nav aria-label="Things I've built">
         <ul>
           {
-            LOBBY_BUILT.map((l) => (
+            built.map((l) => (
               <li>
                 <a href={l.href} {...extAttrs(l.href)} aria-label={`${l.label} ${NEW_TAB}`} data-sfx>
                   <img class="lobby-icon" src={l.icon} alt="" width="48" height="48" decoding="async" />

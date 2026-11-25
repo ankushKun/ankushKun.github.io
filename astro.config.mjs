@@ -176,6 +176,8 @@ export default defineConfig({
   },
   vite: {
     plugins: [tailwindcss()],
+    // The repo is public, so shipping maps costs nothing and lets errors and devtools point at source.
+    build: { sourcemap: true },
     server: {
       // The chat's GIF search in dev: the GIF proxy only answers ankush.one, so the dev server
       // asks it as ankush.one (GIF_PROXY in src/site.ts, src/components/chat/gifs.ts).

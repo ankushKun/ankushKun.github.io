@@ -10,6 +10,10 @@ import { getPlazaData } from '../../lib/plaza';
 import { SOCIALS } from '../../site';
 
 const data = await getPlazaData();
+const later = [
+  ...['/ffl/FFLResHigh.dat', '/ffl/ffl.wasm', '/ffl/body-m.glb', '/ffl/body-f.glb', '/media/warawara-plaza.mp3'].map((href) => [href, 'fetch']),
+  ...data.cubes.flatMap((c) => (c.art && !c.feature ? [[c.art, 'image']] : [])),
+];
 const json = JSON.stringify(data).replace(/</g, '\\u003c');
 const CORNER_SOCIALS = ['GitHub', 'X', 'YouTube', 'Instagram', 'LinkedIn', 'Discord', 'Reddit'];
 const socials = CORNER_SOCIALS.flatMap((name) => {
@@ -18,13 +22,24 @@ const socials = CORNER_SOCIALS.flatMap((name) => {
 });
 ---
 
-<link rel="preload" href="/ffl/FFLResHigh.dat" as="fetch" crossorigin="anonymous" />
-<link rel="preload" href="/ffl/ffl.wasm" as="fetch" crossorigin="anonymous" />
-<link rel="preload" href="/ffl/body-m.glb" as="fetch" crossorigin="anonymous" />
-<link rel="preload" href="/ffl/body-f.glb" as="fetch" crossorigin="anonymous" />
-<link rel="preload" href="/media/warawara-plaza.mp3" as="fetch" crossorigin="anonymous" />
 <link rel="preload" href="/fonts/monocraft-latin.otf" as="font" type="font/otf" crossorigin="anonymous" />
-{data.cubes.map((c) => c.art && !c.feature && <link rel="preload" href={c.art} as="image" />)}
+<script is:inline define:vars={{ later }}>
+  // The plaza's heavy files (the Mii kit, its theme, the block art) start loading once the lobby has
+  // painted, so they don't hold up its first frame, yet are well on their way before main.ts asks.
+  requestAnimationFrame(() =>
+    setTimeout(() => {
+      for (const [href, as] of later) {
+        if (document.querySelector(`link[rel="preload"][href="${href}"]`)) continue;
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.href = href;
+        link.as = as;
+        if (as === 'fetch') link.crossOrigin = 'anonymous';
+        document.head.append(link);
+      }
+    }),
+  );
+</script>
 
 <section class="plaza" data-plaza data-state="static" transition:persist="plaza">
   <script is:inline>

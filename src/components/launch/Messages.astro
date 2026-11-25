@@ -37,7 +37,7 @@ const day = new Intl.DateTimeFormat('en-US', { day: 'numeric', timeZone: 'Americ
           </button>
           <a class="msg-card-body" href={announcement.url} data-ann-go data-sfx {...away}>
             <span class="msg-card-logo">
-              <img src={announcement.icon ?? '/mii/me-happy.webp'} alt="" width="56" height="56" />
+              <img src={announcement.icon ?? '/mii/me-happy.webp'} alt="" width="56" height="56" loading="lazy" />
             </span>
             <span>{announcement.text}</span>
           </a>
@@ -51,7 +51,7 @@ const day = new Intl.DateTimeFormat('en-US', { day: 'numeric', timeZone: 'Americ
         <button type="button" class="msg-card-body" data-msg-more data-sfx>
           {launches.map((launch) => (
             <span class="msg-card-logo" data-msg-now={launch.id} hidden>
-              <img src={launch.logo} alt="" width="56" height="56" />
+              <img src={launch.logo} alt="" width="56" height="56" loading="lazy" />
             </span>
           ))}
           <span class="msg-card-says" data-msg-says />
@@ -81,7 +81,7 @@ const day = new Intl.DateTimeFormat('en-US', { day: 'numeric', timeZone: 'Americ
             </span>
           ))}
           <span class="msg-from">
-            <img src="/mii/me-happy.webp" alt="" width="30" height="30" />
+            <img src="/mii/me-happy.webp" alt="" width="30" height="30" loading="lazy" />
             <strong>{me}</strong>
           </span>
           <button type="button" class="msg-x" data-msg-close aria-label="Close" data-sfx="back">
@@ -91,7 +91,7 @@ const day = new Intl.DateTimeFormat('en-US', { day: 'numeric', timeZone: 'Americ
         {launches.map((launch) => (
           <section class="msg-now" data-msg-now={launch.id} hidden>
             <span class="msg-block">
-              <img src={launch.logo} alt="" width="86" height="86" />
+              <img src={launch.logo} alt="" width="86" height="86" loading="lazy" />
             </span>
             <h2 class="msg-title" id={`msg-title-${launch.id}`} data-msg-title />
             <p class="msg-lede">{launch.blurb}</p>
