@@ -3,6 +3,7 @@ import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 import { satteri } from '@astrojs/markdown-satteri';
 import { externalLinks } from './src/lib/external-links.ts';
+import { GIF_PROXY } from './src/site.ts';
 
 export default defineConfig({
   site: 'https://ankush.one',
@@ -176,11 +177,11 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
     server: {
-      // The chat's GIF search in dev: the site worker only answers ankush.one, so the dev server
+      // The chat's GIF search in dev: the GIF proxy only answers ankush.one, so the dev server
       // asks it as ankush.one (GIF_PROXY in src/site.ts, src/components/chat/gifs.ts).
       proxy: {
         '/__gif': {
-          target: 'https://ankush-site-worker.ankushkun.workers.dev',
+          target: GIF_PROXY,
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/__gif/, '/gif'),
           headers: { Origin: 'https://ankush.one', Referer: 'https://ankush.one/apps/chat/' },

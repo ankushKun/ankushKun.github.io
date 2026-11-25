@@ -55,6 +55,9 @@ const presentKinds = Object.entries(TIMELINE_KINDS).filter(([k]) => (counts.get(
                     <span class="top-row">
                       <span class="title">{e.data.title}</span>
                       <span class="kind-tags">
+                        <span class="new-tag" data-new={urlOf(e)} hidden>
+                          New
+                        </span>
                         {metas.map((meta) => (
                           <span class="kind-tag" style={`--k:${meta.color}`}>
                             {meta.label}

@@ -1,6 +1,6 @@
-// GIF search for the chat, from Klipy through the site worker (GIF_PROXY in src/site.ts), which
+// GIF search for the chat, from Klipy through the GIF proxy (workers/gif-proxy, GIF_PROXY in src/site.ts), which
 // holds the Klipy key so it never reaches the page. In dev, Vite forwards /__gif to the worker as
-// ankush.one (astro.config.mjs), the only site the worker answers.
+// ankush.one (astro.config.mjs), the only site the proxy answers.
 import { GIF_PROXY } from '../../site';
 import { isGifUrl } from './net';
 

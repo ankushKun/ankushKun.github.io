@@ -39,6 +39,9 @@ function topicFor(entry: Entry): string[] {
                   <span class="title">{post.data.title}</span>
                   <span class="desc">{post.data.description}</span>
                   <span class="meta">
+                    <span class="new-tag" data-new={urlOf(post)} hidden>
+                      New
+                    </span>
                     <time datetime={isoDate(post.data.date)} title={formatDate(post.data.date, 'long')}>
                       {day(post.data.date)}
                     </time>
@@ -129,6 +132,10 @@ function topicFor(entry: Entry): string[] {
     color: var(--color-ink-faint);
     font-size: 0.8125rem;
     font-weight: 600;
+  }
+
+  .meta .new-tag {
+    margin-right: 6px;
   }
 
   @media (max-width: 559px) {

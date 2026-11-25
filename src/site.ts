@@ -101,10 +101,10 @@ export const FOOTER_NAV = [
 export const CHAT_MODS = ['ankush'];
 
 /**
- * The site worker (ankushKun.github.io/workers/site-worker) that searches Klipy for the chat's GIFs
- * with the key kept on its side. It answers only https://ankush.one. Empty turns GIFs off.
+ * The Worker in workers/gif-proxy that searches Klipy for the chat's GIFs, with the key kept on
+ * its side as a secret. It answers only https://ankush.one. Empty turns GIFs off.
  */
-export const GIF_PROXY = 'https://ankush-site-worker.ankushkun.workers.dev';
+export const GIF_PROXY = 'https://ankush-gif-proxy.ankushkun.workers.dev';
 
 /**
  * PostHog analytics (src/scripts/analytics.ts): the EU project's key, the first-party proxy that

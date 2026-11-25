@@ -1,0 +1,7 @@
+# The chat's GIF search proxy (src/index.js), on workers.dev only: nothing of it sits on ankush.one.
+# Deploy from this folder with the ankush Cloudflare account; the Klipy key is the KLIPY_KEY secret.
+name = "ankush-gif-proxy"
+account_id = "c19bfc6b0c700c267321ea7affb78bbd"
+main = "src/index.js"
+compatibility_date = "2026-11-01"
+workers_dev = true

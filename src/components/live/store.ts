@@ -44,5 +44,8 @@ export const agree = () => store.set(STORE.agreed, AGREEMENT);
 
 /** Notes that the visitor has seen a chat message sent at `time`, if it is newer than any before. */
 export function saw(time: number) {
-  if (time > (Number(store.get(STORE.seen)) || 0)) store.set(STORE.seen, String(time));
+  if (time <= (Number(store.get(STORE.seen)) || 0)) return;
+  store.set(STORE.seen, String(time));
+  // The unread count on the Chat block and channel goes down with it (scripts/updates/).
+  window.dispatchEvent(new Event('chat-seen'));
 }

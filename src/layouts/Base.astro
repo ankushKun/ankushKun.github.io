@@ -21,6 +21,7 @@ import { OG_HEIGHT, OG_WIDTH, ogAlt, ogPathForPage } from '../lib/og';
 import { person, website } from '../lib/schema';
 import { tileFor } from '../lib/tiles';
 import { hasTwin, twinOf } from '../lib/twins';
+import { getUpdates } from '../lib/updates';
 import Frame from '../components/ui/Frame.astro';
 import ThemeToggle from '../components/ui/ThemeToggle.astro';
 import Plaza from '../components/plaza/Plaza.astro';
@@ -112,10 +113,12 @@ const jsonLd = { '@context': 'https://schema.org', '@graph': [website(), person(
 const colors = tileFor(path)?.colors;
 const accent = colors ? `--c1:${colors[0]};--c2:${colors[1]}` : undefined;
 const year = new Date().getFullYear();
+// What's new since a visitor was last here is worked out in the browser (src/scripts/updates/), from this hash.
+const updates = embed ? undefined : (await getUpdates()).hash;
 ---
 
 <!doctype html>
-<html lang={SITE.lang} data-home={fullscreen ? '' : undefined} data-embed={embed ? '' : undefined}>
+<html lang={SITE.lang} data-home={fullscreen ? '' : undefined} data-embed={embed ? '' : undefined} data-updates={updates}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -286,6 +289,7 @@ const year = new Date().getFullYear();
       import '../scripts/motion';
       import '../scripts/theme';
       import '../scripts/embeds';
+      import '../scripts/updates';
     </script>
   </body>
 </html>

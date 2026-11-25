@@ -425,6 +425,8 @@ export function mount(root: HTMLElement): () => void {
     node('apps/guestbook/entries').get(id).put(writeEntry(entry), (ack) => {
       if (ack.err) say("The guestbook didn't take it. Try again in a moment.");
     });
+    // A new note lights the Guestbook's badge for everyone else (scripts/updates/).
+    if (!before) node('apps/guestbook').get('latest').put(now);
     show(checked);
     filled = false;
     play('select');

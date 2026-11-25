@@ -59,6 +59,8 @@ export class Bubbles {
   private viewH = 0;
   /** Said before anything else, once: the greeting, or something asked for with `sayNext`. */
   private first: PlazaPost | null;
+  /** The greeting the plaza opened with, until it is said. */
+  private welcome: PlazaPost | null;
   /** How many seconds `first` stays up. */
   private firstLife = LIFE;
   /** While it is up, nobody else speaks. */
@@ -71,7 +73,7 @@ export class Bubbles {
     private thumbs: string[],
     greeting: PlazaPost | null = null,
   ) {
-    this.first = greeting;
+    this.first = this.welcome = greeting;
     // After the greeting, a new order on every visit, never two of one kind running.
     this.queue = new Rotation(kindOf, posts);
   }
@@ -92,6 +94,11 @@ export class Bubbles {
   /** Whether something is waiting to be said first (the greeting), which may come sooner than the rest. */
   get greeting() {
     return this.first !== null;
+  }
+
+  /** Puts `post` in place of the greeting, if it is still waiting to be said. */
+  regreet(post: PlazaPost) {
+    if (this.first && this.first === this.welcome) this.first = this.welcome = post;
   }
 
   /** Says `post` next, alone, as soon as it can, clearing whatever is up, for `life` seconds. */

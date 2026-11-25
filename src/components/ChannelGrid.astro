@@ -47,6 +47,7 @@ const empty = Math.ceil(Math.max(channels.length, 1) / PAGE) * PAGE - channels.l
                 {app.art && <img class="art" src={app.art} alt="" width="560" height="315" decoding="async" />}
                 <span class="name">{app.label}</span>
                 {app.soon && <span class="status soon">Soon</span>}
+                {!app.soon && <b class="news-badge" data-badge={app.href} aria-hidden="true" hidden />}
               </a>
             ) : (
               <button

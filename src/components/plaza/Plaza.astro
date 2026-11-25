@@ -36,6 +36,7 @@ const socials = CORNER_SOCIALS.flatMap((name) => {
       data.cubes.map((c, i) => (
         <a href={c.href} data-cube={i} aria-label={c.label}>
           <span>{c.label}</span>
+          {!c.feature && <b class="news-badge" data-badge={c.href} aria-hidden="true" hidden />}
         </a>
       ))
     }
@@ -231,6 +232,28 @@ const socials = CORNER_SOCIALS.flatMap((name) => {
       translate 0.2s cubic-bezier(0.3, 1.4, 0.5, 1),
       scale 0.22s cubic-bezier(0.3, 1.4, 0.5, 1);
     pointer-events: none;
+  }
+
+  /* What's new behind a block, on its corner, sized with the plaza. */
+  .plaza-links .news-badge {
+    top: 7%;
+    right: 7%;
+    min-width: calc(var(--u) * 3.6);
+    height: calc(var(--u) * 3.6);
+    padding: 0 calc(var(--u) * 0.9);
+    font-size: calc(var(--u) * 1.9);
+    translate: 50% -50%;
+  }
+
+  .plaza-links .news-badge.is-dot {
+    min-width: 0;
+    width: calc(var(--u) * 2.6);
+    height: calc(var(--u) * 2.6);
+    padding: 0;
+  }
+
+  .plaza:not([data-state='live']) .news-badge {
+    display: none;
   }
 
   .plaza[data-state='live'] .plaza-links a:is(:hover, :focus-visible) span {

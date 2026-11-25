@@ -29,6 +29,8 @@ export interface Events {
   announcement_closed: { id: string };
   /** Pressed through to where it points. */
   announcement_opened: { id: string; from: 'card' | 'plaza' };
+  /** A returning visit began with something new to see, counted per section (scripts/updates/). */
+  updates_found: { blog: number; projects: number; timeline: number; games: number; apps: number };
   konami_code_entered: undefined;
   theme_changed: { theme: string };
   menu_opened: undefined;

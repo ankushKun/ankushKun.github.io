@@ -50,6 +50,11 @@ function categoriesFor(entry: Entry): string[] {
               <Thumb {entry} width={featured ? 640 : 480} class="art" eager={i < eager} />
               {showKind && <span class={`badge-kind is-${entry.collection}`}>{KIND_LABEL[entry.collection]}</span>}
               {archived && !featured && !showKind && <span class="badge-archived">Archived</span>}
+              {!archived && (
+                <span class="new-tag" data-new={urlOf(entry)} hidden>
+                  New
+                </span>
+              )}
             </span>
             <span class="info">
               <span class="name">{entry.data.title}</span>
@@ -150,6 +155,13 @@ function categoriesFor(entry: Entry): string[] {
     font-size: 0.6875rem;
     font-weight: 800;
     letter-spacing: 0.02em;
+  }
+
+  .glass .new-tag {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 2;
   }
 
   .badge-archived {

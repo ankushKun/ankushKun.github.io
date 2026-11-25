@@ -30,6 +30,7 @@ import { Rotation } from './rotation';
 import { clamp, damp, easeInOut, rng, smoothstep } from './util';
 import { voices, type Sound } from './voices';
 import { greeting as launchGreeting, openLetter } from '../../scripts/launch';
+import { greeting as updatesGreeting } from '../../scripts/updates';
 import { greeting as announcementGreeting, openAnnouncement, said as announcementSaid } from '../../scripts/announcement';
 
 /** When the camera has pulled all the way back to the whole plaza, in seconds from the click. */
@@ -273,17 +274,18 @@ export async function start(root: HTMLElement, data: PlazaData): Promise<PlazaCo
   // Heads small on screen are drawn as flat pictures, all in one draw call.
   const cards = new HeadCards(scene, renderer, crowd.crowdSet, small || weak ? 56 : 80);
   let carded = false;
+  // A different greeting on every visit, or the launch you're announcing (scripts/launch.ts), or your one-time
+  // announcement (scripts/announcement.ts), or for a returning visitor, what's new since (scripts/updates/).
+  const news = launchGreeting(data.welcome[0]) ?? announcementGreeting(data.welcome[0]);
   const bubbles = new Bubbles(
     bubbleLayer,
     data.posts,
     icons.map((icon) => thumb(icon, 128)),
-    // A different greeting on every visit, or the launch you're announcing (scripts/launch.ts), or your one-time
-    // announcement (scripts/announcement.ts).
-    launchGreeting(data.welcome[0]) ??
-      announcementGreeting(data.welcome[0]) ??
-      data.welcome[Math.floor(Math.random() * data.welcome.length)] ??
-      null,
+    news ?? data.welcome[Math.floor(Math.random() * data.welcome.length)] ?? null,
   );
+  if (!news) {
+    void updatesGreeting(data.welcome[0]).then((post) => post && bubbles.regreet(post));
+  }
 
   // The chat's latest messages join the bubbles, said under the Chat block (chatter.ts). It listens
   // while the plaza is open, and starts over on coming back, so what was read in the chat meanwhile

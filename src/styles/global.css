@@ -1408,6 +1408,71 @@ html[data-plaza-move]::view-transition-new(root) {
 
 }
 
+/* Since your last visit (src/scripts/updates/): a count or a dot on whatever leads to something new,
+   and a New tag on entries that were new as the visit began. */
+
+.news-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border: 2px solid #fff;
+  border-radius: 99px;
+  background: linear-gradient(to bottom, #ff9a3d, #f0560f);
+  box-shadow: 0 2px 6px rgb(160 50 0 / 0.4);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  pointer-events: none;
+  translate: 30% -30%;
+  animation: news-pop 0.45s var(--ease-spring) both;
+}
+
+.news-badge.is-dot {
+  min-width: 0;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+}
+
+.news-badge[hidden],
+.new-tag[hidden] {
+  display: none;
+}
+
+.new-tag {
+  display: inline-block;
+  flex: none;
+  padding: 1px 7px;
+  border-radius: 99px;
+  background: linear-gradient(to bottom, #ff9a3d, #f0560f);
+  color: #fff;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  line-height: 1.5;
+  vertical-align: 0.15em;
+}
+
+@keyframes news-pop {
+  from {
+    scale: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .news-badge {
+    animation: none;
+  }
+}
+
 @media print {
   .skip-link,
   .site-foot {
