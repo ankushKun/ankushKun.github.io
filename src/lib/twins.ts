@@ -9,7 +9,7 @@ import { APPS } from '../data/apps';
 import { resume } from '../data/resume';
 import { HEADLINE } from '../data/profile';
 import { getGames } from './games';
-import { SECTION_PATH, absUrl, getAllEntries, getEntries, getPage, isoDate, urlOf, type Entry, type Section } from './content';
+import { SECTION_PATH, absUrl, getAllEntries, getEntries, getPage, getTimeline, isoDate, urlOf, type Entry, type Section } from './content';
 import { AUTHOR, BOOKING_URL, SITE, SOCIALS } from '../site';
 
 /** A page's twin: its path with `.md` for the trailing slash. */
@@ -63,7 +63,7 @@ function entryTwin(e: Entry) {
 
 async function sectionTwin(section: Section) {
   const p = await getPage(section);
-  const entries: Entry[] = await getEntries(section);
+  const entries: Entry[] = section === 'timeline' ? await getTimeline() : await getEntries(section);
   const rows = entries.map((e) => linkTo(e.data.title, urlOf(e), `${isoDate(e.data.date)}. ${e.data.description}`));
   return page(p.data.title, p.data.description, clean(p.body ?? '', p.filePath ?? ''), `## All ${rows.length}\n\n${list(rows)}`);
 }
@@ -94,7 +94,7 @@ async function homeTwin() {
       linkTo('About', '/about/', 'who he is and what he has worked on'),
       linkTo('Blog', '/blogs/', 'posts on AI agents, developer tools and Nintendo 3DS homebrew'),
       linkTo('Projects', '/projects/', 'things he has built'),
-      linkTo('Timeline', '/timeline/', 'wins, launches and milestones by date'),
+      linkTo('Timeline', '/timeline/', 'wins, launches, projects and milestones by date'),
       linkTo('Resume', '/resume/', 'experience, education and skills'),
       linkTo('Apps', '/apps/', 'a live chat, Paint, a Guestbook, a Terminal with a real Linux, and more'),
       linkTo('Games', '/games/', 'his game jam entries and classics that play in the browser'),

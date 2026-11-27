@@ -1,20 +1,19 @@
 ---
-// The timeline as the Wii's message board: each event a memo under its year, dated by a little
-// calendar page whose top is the color of its kind (a win, a launch, work...), with a color-coded
-// kind legend & filter bar at the top.
-import type { CollectionEntry } from 'astro:content';
-import { byYear, isoDate, urlOf } from '../lib/content';
-import { TIMELINE_KINDS, timelineKindMeta } from '../lib/timeline';
+// The timeline as the Wii's message board: each event, and each project on the day it started, a memo
+// under its year, dated by a little calendar page whose top is the color of its kind (a win, a launch,
+// work, a project...), with a color-coded kind legend & filter bar at the top.
+import { byYear, isoDate, urlOf, type TimelineItem } from '../lib/content';
+import { TIMELINE_KINDS, kindsOf, timelineKindMeta } from '../lib/timeline';
 
 interface Props {
-  items: CollectionEntry<'timeline'>[];
+  items: TimelineItem[];
 }
 
 const month = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
 
 const counts = new Map<string, number>();
 for (const e of Astro.props.items) {
-  for (const k of e.data.kind) counts.set(k, (counts.get(k) ?? 0) + 1);
+  for (const k of kindsOf(e)) counts.set(k, (counts.get(k) ?? 0) + 1);
 }
 const presentKinds = Object.entries(TIMELINE_KINDS).filter(([k]) => (counts.get(k) ?? 0) > 0);
 ---
@@ -41,11 +40,12 @@ const presentKinds = Object.entries(TIMELINE_KINDS).filter(([k]) => (counts.get(
         <h2 class="year">{year}</h2>
         <ol>
           {events.map((e) => {
-            const metas = e.data.kind.map((k) => timelineKindMeta(k));
+            const kinds = kindsOf(e);
+            const metas = kinds.map((k) => timelineKindMeta(k));
             const primary = metas[0];
             const calTitle = metas.map((m) => m.label).join(' / ');
             return (
-              <li data-kinds={e.data.kind.join(' ')}>
+              <li data-kinds={kinds.join(' ')}>
                 <a href={urlOf(e)} class="memo" data-sfx>
                   <time class="cal" datetime={isoDate(e.data.date)} style={`--k:${primary.color}`} title={calTitle}>
                     <span>{month(e.data.date)}</span>

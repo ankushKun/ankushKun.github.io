@@ -23,6 +23,17 @@ export async function getAllEntries(): Promise<Entry[]> {
   return (await Promise.all(sections.map((s) => getEntries(s)))).flat();
 }
 
+export type TimelineItem = CollectionEntry<'timeline'> | CollectionEntry<'projects'>;
+
+/**
+ * What the timeline page and its twin list: its own events and every project on the day it started, newest first.
+ * Anything that wants the timeline's events alone (the plaza's bubbles, launches) uses `getEntries('timeline')`.
+ */
+export async function getTimeline(): Promise<TimelineItem[]> {
+  const [events, projects] = await Promise.all([getEntries('timeline'), getEntries('projects')]);
+  return [...events, ...projects].sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+}
+
 export async function getPage(id: string) {
   const page = await getEntry('pages', id);
   if (!page) throw new Error(`Missing src/content/pages/${id}.md`);
