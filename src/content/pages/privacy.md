@@ -1,7 +1,7 @@
 ---
 title: Privacy
 description: "What ankush.one collects when you visit: PostHog analytics and session recordings, what stays in your browser, the live apps, and third-party embeds."
-updated: 2026-11-24
+updated: 2026-11-28
 ---
 
 This is a static personal website built with Astro. There are no user accounts and no ads. It does have analytics, described at the end of this page along with a button to turn them off. Questions about any of it go to [ankush4singh@gmail.com](mailto:ankush4singh@gmail.com).
@@ -35,7 +35,7 @@ A small number of individual project and blog pages embed external content:
 
 ## Standalone project pages
 
-Standalone web apps and project microsites hosted separately under `ankush.one` (such as `/3dsDL/`, `/3dsFM/`, `/sh23ds/`, `/mixtunes/`, and `/animedoro-timer/`) are built and maintained in their own repositories and may have their own storage or analytics settings.
+Standalone web apps and project microsites hosted separately under `ankush.one` (such as `/3dsDL/`, `/3dsFM/`, `/sh23ds/`, `/newtab-mii-plaza/`, `/mixtunes/`, and `/animedoro-timer/`) are built and maintained in their own repositories and may have their own storage or analytics settings.
 
 ## Analytics
 
